@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --navy: #0a0f1e; --navy2: #0f2650; --blue: #2563eb; --blue-light: #eff6ff;
+  --sky: #60a5fa; --white: #fff; --bg: #f5f7fb;
+  --gray50: #f8fafc; --gray100: #f1f5f9; --gray200: #e2e8f0;
+  --gray300: #cbd5e1; --gray400: #94a3b8; --gray500: #64748b;
+  --gray600: #475569; --gray800: #1e293b;
+  --green: #10b981; --green-light: #ecfdf5;
+  --red: #ef4444; --red-light: #fef2f2;
+  --orange: #f59e0b; --orange-light: #fffbeb;
+  --purple: #8b5cf6; --purple-light: #f5f3ff;
+  --sidebar-w: 240px;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:50}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sidebar-logo .wordmark{font-family:var(--font-display);font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.sidebar-logo .dot{color:var(--blue)}
+.sidebar-logo .underline{height:2px;width:70%;margin-top:4px;background:linear-gradient(90deg,var(--blue),var(--sky),transparent);border-radius:99px}
+.sidebar-section{padding:16px 12px 8px}
+.sidebar-section-label{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.2);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;margin-bottom:2px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:13px;font-weight:500}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(37,99,235,0.2);color:#fff;font-weight:600}
+.nav-item.active .nav-icon{color:var(--sky)}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,0.06)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;transition:all .15s}
+.user-card:hover{background:rgba(255,255,255,0.07)}
+.user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--navy2));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info .user-name{font-size:13px;font-weight:600;color:#fff;line-height:1.2}
+.user-info .user-plan{font-size:10px;color:rgba(255,255,255,0.3);margin-top:1px}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:64px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
+.topbar-search{display:flex;align-items:center;gap:8px;background:var(--gray100);border:1px solid var(--gray200);border-radius:10px;padding:8px 14px;width:240px;transition:all .2s}
+.topbar-search:focus-within{background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.topbar-search input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:13px;color:var(--gray800);width:100%}
+.topbar-search input::placeholder{color:var(--gray400)}
+.topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.topbar-btn:hover{background:var(--gray100)}
+
+/* CONTENT */
+.content{padding:28px;flex:1}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-header h1{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--gray800)}
+.page-header p{font-size:13px;color:var(--gray500);margin-top:3px}
+.header-actions{display:flex;gap:10px;align-items:center}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 12px rgba(37,99,235,0.3);transform:translateY(-1px)}
+.btn-outline{background:#fff;color:var(--gray600);border:1px solid var(--gray200)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{width:34px;height:34px;padding:0;justify-content:center;border-radius:8px}
+
+/* STATS */
+.inv-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.inv-stat{background:#fff;border:1px solid var(--gray200);border-radius:14px;padding:18px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px}
+.inv-stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.inv-stat-val{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--gray800);line-height:1}
+.inv-stat-label{font-size:11px;color:var(--gray500);margin-top:3px}
+
+/* TABS */
+.tabs-row{display:flex;gap:4px;background:var(--gray100);padding:4px;border-radius:12px;width:fit-content;margin-bottom:20px}
+.tab-btn{padding:8px 18px;border-radius:9px;border:none;background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray500);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:var(--shadow-sm)}
+
+/* FILTERS */
+.filters-row{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filter-select{background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 12px;font-family:var(--font-body);font-size:13px;color:var(--gray700);outline:none;cursor:pointer;transition:all .2s}
+.filter-select:focus{border-color:var(--blue)}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 14px;flex:1;max-width:300px}
+.search-box input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:13px;color:var(--gray800);width:100%}
+.search-box input::placeholder{color:var(--gray400)}
+
+/* TABLE */
+.table-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase;padding:12px 16px;border-bottom:1px solid var(--gray100);background:var(--gray50);white-space:nowrap}
+td{padding:13px 16px;font-size:13px;color:var(--gray600);border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray50)}
+.td-product{display:flex;align-items:center;gap:12px}
+.product-img{width:38px;height:38px;border-radius:9px;background:var(--gray100);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.product-img img{width:100%;height:100%;object-fit:cover}
+.product-name{font-weight:600;color:var(--gray800);font-size:13px}
+.product-sku{font-size:11px;color:var(--gray400);margin-top:1px}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:#065f46}
+.badge-orange{background:var(--orange-light);color:#92400e}
+.badge-red{background:var(--red-light);color:#991b1b}
+.badge-blue{background:var(--blue-light);color:#1e40af}
+.badge-gray{background:var(--gray100);color:var(--gray600)}
+.stock-bar{width:80px;height:6px;background:var(--gray200);border-radius:99px;overflow:hidden;margin-top:4px}
+.stock-fill{height:100%;border-radius:99px;transition:width .3s}
+.row-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,0.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.2);transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:24px 28px 20px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800)}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--gray400);transition:all .15s}
+.modal-close:hover{background:var(--gray100);color:var(--gray800)}
+.modal-body{padding:24px 28px}
+.modal-footer{padding:16px 28px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--gray100)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid.cols-1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:600;color:var(--gray500);letter-spacing:.3px}
+.field input,.field select,.field textarea{background:var(--gray50);border:1px solid var(--gray200);border-radius:9px;padding:10px 14px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;transition:all .2s;width:100%}
+.field textarea{resize:vertical;min-height:80px}
+.field input:focus,.field select:focus,.field textarea:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.field input.error{border-color:var(--red)}
+
+/* MOVEMENT MODAL */
+.movement-type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.movement-type-btn{border:1px solid var(--gray200);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.movement-type-btn:hover{border-color:var(--blue);background:var(--blue-light)}
+.movement-type-btn.selected{border-color:var(--blue);background:var(--blue-light)}
+.movement-type-btn .mt-icon{font-size:24px;margin-bottom:6px}
+.movement-type-btn .mt-label{font-size:12px;font-weight:600;color:var(--gray700)}
+.movement-type-btn.selected .mt-label{color:var(--blue)}
+
+/* LOW STOCK ALERT */
+.low-stock-banner{background:var(--orange-light);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.low-stock-banner .icon{font-size:20px}
+.low-stock-banner .text{flex:1;font-size:13px;color:#92400e;font-weight:500}
+.low-stock-banner .count{font-weight:700}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:64px 24px}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);margin-bottom:8px}
+.empty-state p{font-size:13px;color:var(--gray500);margin-bottom:24px}
+
+/* LOADING */
+.skeleton{background:linear-gradient(90deg,var(--gray100) 25%,var(--gray50) 50%,var(--gray100) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray800);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+@media(max-width:900px){.inv-stats{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">solvenin<span class="dot">.</span></div>
+    <div class="underline"></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
+    <a class="nav-item active" href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
+    <a class="nav-item" href="#"><span class="nav-icon">💰</span> Sales</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🛒</span> Purchasing</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🏭</span> Production</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Management</div>
+    <a class="nav-item" href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
+    <a class="nav-item" href="#"><span class="nav-icon">💳</span> Finance</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🚚</span> Shipping</a>
+    <a class="nav-item" href="#"><span class="nav-icon">📅</span> Projects</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🔧</span> Maintenance</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item" href="#"><span class="nav-icon">📊</span> Reports</a>
+    <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-plan" id="user-plan">Free Plan</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">Inventory</div>
+    <div class="topbar-search">
+      <span>🔍</span>
+      <input type="text" id="global-search" placeholder="Search products..." oninput="filterProducts()">
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <h1>📦 Inventory</h1>
+        <p>Manage your products, stock levels and movements</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" onclick="openMovementModal()">📊 Stock Movement</button>
+        <button class="btn btn-outline" onclick="openWarehouseModal()">🏪 Warehouses</button>
+        <button class="btn btn-outline" onclick="openCategoryModal()">🏷️ Categories</button>
+        <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+      </div>
+    </div>
+
+    <!-- LOW STOCK BANNER -->
+    <div class="low-stock-banner" id="low-stock-banner" style="display:none">
+      <span class="icon">⚠️</span>
+      <span class="text">You have <span class="count" id="low-stock-count">0</span> products below minimum stock level.</span>
+      <button class="btn btn-sm btn-outline" onclick="filterLowStock()">View →</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="inv-stats" id="inv-stats">
+      <div class="inv-stat">
+        <div class="inv-stat-icon" style="background:var(--blue-light)">📦</div>
+        <div><div class="inv-stat-val" id="stat-total">—</div><div class="inv-stat-label">Total Products</div></div>
+      </div>
+      <div class="inv-stat">
+        <div class="inv-stat-icon" style="background:var(--green-light)">✅</div>
+        <div><div class="inv-stat-val" id="stat-instock">—</div><div class="inv-stat-label">In Stock</div></div>
+      </div>
+      <div class="inv-stat">
+        <div class="inv-stat-icon" style="background:var(--orange-light)">⚠️</div>
+        <div><div class="inv-stat-val" id="stat-low">—</div><div class="inv-stat-label">Low Stock</div></div>
+      </div>
+      <div class="inv-stat">
+        <div class="inv-stat-icon" style="background:var(--purple-light)">💰</div>
+        <div><div class="inv-stat-val" id="stat-value">—</div><div class="inv-stat-label">Total Value</div></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="setTab(this,'products')">Products</button>
+      <button class="tab-btn" onclick="setTab(this,'movements')">Stock Movements</button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-row" id="filters-products">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="product-search" placeholder="Search by name, SKU, barcode..." oninput="filterProducts()">
+      </div>
+      <select class="filter-select" id="filter-category" onchange="filterProducts()">
+        <option value="">All Categories</option>
+      </select>
+      <select class="filter-select" id="filter-warehouse" onchange="filterProducts()">
+        <option value="">All Warehouses</option>
+      </select>
+      <select class="filter-select" id="filter-status" onchange="filterProducts()">
+        <option value="">All Status</option>
+        <option value="instock">In Stock</option>
+        <option value="low">Low Stock</option>
+        <option value="out">Out of Stock</option>
+      </select>
+    </div>
+
+    <!-- PRODUCTS TABLE -->
+    <div class="table-card" id="tab-products">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Barcode</th>
+              <th>Warehouse</th>
+              <th>Stock</th>
+              <th>Cost</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody">
+            <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📦</div><h3>No products yet</h3><p>Add your first product to get started.</p><button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MOVEMENTS TABLE -->
+    <div class="table-card" id="tab-movements" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Type</th>
+              <th>Quantity</th>
+              <th>Warehouse</th>
+              <th>Reference</th>
+              <th>Notes</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="movements-tbody">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📊</div><h3>No movements yet</h3><p>Record stock movements to track inventory changes.</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="product-modal-title">Add Product</div>
+      <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Product Name *</label>
+          <input type="text" id="p-name" placeholder="e.g. Steel Bolt M8x20">
+        </div>
+        <div class="field">
+          <label>SKU</label>
+          <input type="text" id="p-sku" placeholder="e.g. BOLT-M8-20">
+        </div>
+        <div class="field">
+          <label>Barcode</label>
+          <input type="text" id="p-barcode" placeholder="e.g. 8691234567890">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="p-category">
+            <option value="">Select category</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <select id="p-unit">
+            <option value="pcs">Pieces (pcs)</option>
+            <option value="kg">Kilogram (kg)</option>
+            <option value="g">Gram (g)</option>
+            <option value="l">Liter (l)</option>
+            <option value="ml">Milliliter (ml)</option>
+            <option value="m">Meter (m)</option>
+            <option value="m2">Square meter (m²)</option>
+            <option value="box">Box</option>
+            <option value="pack">Pack</option>
+            <option value="pair">Pair</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cost Price ($)</label>
+          <input type="number" id="p-cost" placeholder="0.00" step="0.01">
+        </div>
+        <div class="field">
+          <label>Sale Price ($)</label>
+          <input type="number" id="p-price" placeholder="0.00" step="0.01">
+        </div>
+        <div class="field">
+          <label>Minimum Stock</label>
+          <input type="number" id="p-minstock" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>Initial Stock</label>
+          <input type="number" id="p-initstock" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>Warehouse</label>
+          <select id="p-warehouse">
+            <option value="">Select warehouse</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea id="p-notes" placeholder="Optional product notes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('product-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVEMENT MODAL -->
+<div class="modal-overlay" id="movement-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Stock Movement</div>
+      <button class="modal-close" onclick="closeModal('movement-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="movement-type-grid">
+        <div class="movement-type-btn selected" onclick="selectMovType(this,'in')">
+          <div class="mt-icon">📥</div>
+          <div class="mt-label">Stock In</div>
+        </div>
+        <div class="movement-type-btn" onclick="selectMovType(this,'out')">
+          <div class="mt-icon">📤</div>
+          <div class="mt-label">Stock Out</div>
+        </div>
+        <div class="movement-type-btn" onclick="selectMovType(this,'transfer')">
+          <div class="mt-icon">🔄</div>
+          <div class="mt-label">Transfer</div>
+        </div>
+        <div class="movement-type-btn" onclick="selectMovType(this,'adjustment')">
+          <div class="mt-icon">🔧</div>
+          <div class="mt-label">Adjustment</div>
+        </div>
+      </div>
+      <input type="hidden" id="mov-type" value="in">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Product *</label>
+          <select id="mov-product">
+            <option value="">Select product</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Warehouse *</label>
+          <select id="mov-warehouse">
+            <option value="">Select warehouse</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Quantity *</label>
+          <input type="number" id="mov-qty" placeholder="0" min="0.01" step="0.01">
+        </div>
+        <div class="field full">
+          <label>Reference</label>
+          <input type="text" id="mov-ref" placeholder="e.g. PO-001, SO-042">
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea id="mov-notes" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('movement-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMovement()">Save Movement</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="category-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Categories</div>
+      <button class="modal-close" onclick="closeModal('category-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-1" style="margin-bottom:20px">
+        <div class="field">
+          <label>Category Name</label>
+          <input type="text" id="cat-name" placeholder="e.g. Electronics">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:20px" onclick="saveCategory()">+ Add Category</button>
+      <div id="categories-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WAREHOUSE MODAL -->
+<div class="modal-overlay" id="warehouse-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Warehouses</div>
+      <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-1" style="margin-bottom:20px">
+        <div class="field">
+          <label>Warehouse Name</label>
+          <input type="text" id="wh-name" placeholder="e.g. Main Warehouse">
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input type="text" id="wh-location" placeholder="e.g. Istanbul, Turkey">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:20px" onclick="saveWarehouse()">+ Add Warehouse</button>
+      <div id="warehouses-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+
+let companyId = null;
+let products = [], categories = [], warehouses = [], movements = [], stock = [];
+let editingProductId = null;
+let selectedMovType = 'in';
+let showingLowStock = false;
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return; }
+
+  const user = session.user;
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('user-name').textContent = name;
+
+  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
+  if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
+  companyId = profile.company_id;
+  document.getElementById('user-plan').textContent = (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
+
+  await Promise.all([loadCategories(), loadWarehouses()]);
+  await loadProducts();
+  await loadMovements();
+}
+
+// ===== LOAD =====
+async function loadProducts() {
+  const { data } = await sb.from('products').select('*, categories(name,color), stock(quantity, warehouses(name))').eq('company_id', companyId).eq('active', true).order('created_at', { ascending: false });
+  products = data || [];
+  renderProducts(products);
+  updateStats();
+}
+
+async function loadMovements() {
+  const { data } = await sb.from('stock_movements').select('*, products(name), warehouses(name)').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100);
+  movements = data || [];
+  renderMovements(movements);
+}
+
+async function loadCategories() {
+  const { data } = await sb.from('categories').select('*').eq('company_id', companyId).order('name');
+  categories = data || [];
+  updateCategorySelects();
+  renderCategoriesList();
+}
+
+async function loadWarehouses() {
+  const { data } = await sb.from('warehouses').select('*').eq('company_id', companyId).order('name');
+  warehouses = data || [];
+  updateWarehouseSelects();
+  renderWarehousesList();
+}
+
+// ===== RENDER PRODUCTS =====
+function renderProducts(list) {
+  const tbody = document.getElementById('products-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📦</div><h3>No products found</h3><p>Add your first product to get started.</p><button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => {
+    const totalStock = (p.stock || []).reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const stockPct = p.min_stock > 0 ? Math.min(100, (totalStock / (p.min_stock * 3)) * 100) : (totalStock > 0 ? 100 : 0);
+    const isLow = totalStock <= p.min_stock && p.min_stock > 0;
+    const isOut = totalStock <= 0;
+    const statusBadge = isOut ? '<span class="badge badge-red">Out</span>' : isLow ? '<span class="badge badge-orange">Low</span>' : '<span class="badge badge-green">In Stock</span>';
+    const fillColor = isOut ? 'var(--red)' : isLow ? 'var(--orange)' : 'var(--green)';
+    const warehouseNames = (p.stock || []).filter(s => s.quantity > 0).map(s => `${s.warehouses?.name || '—'}: ${s.quantity}`).join(', ') || '—';
+
+    return `<tr>
+      <td>
+        <div class="td-product">
+          <div class="product-img">📦</div>
+          <div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-sku">${p.sku || '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td>${p.categories ? `<span class="badge badge-blue">${p.categories.name}</span>` : '—'}</td>
+      <td><code style="font-size:11px;color:var(--gray500)">${p.barcode || '—'}</code></td>
+      <td style="font-size:12px;color:var(--gray500);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${warehouseNames}</td>
+      <td>
+        <div style="font-weight:700;color:var(--gray800)">${totalStock} ${p.unit}</div>
+        <div class="stock-bar"><div class="stock-fill" style="width:${stockPct}%;background:${fillColor}"></div></div>
+        <div style="font-size:10px;color:var(--gray400)">Min: ${p.min_stock}</div>
+      </td>
+      <td>$${parseFloat(p.cost_price||0).toFixed(2)}</td>
+      <td><strong>$${parseFloat(p.sale_price||0).toFixed(2)}</strong></td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="editProduct('${p.id}')" title="Edit">✏️</button>
+          <button class="btn btn-sm btn-outline btn-icon" onclick="quickMovement('${p.id}')" title="Stock movement">📊</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deleteProduct('${p.id}')" title="Delete">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderMovements(list) {
+  const tbody = document.getElementById('movements-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📊</div><h3>No movements yet</h3><p>Record stock movements to track inventory changes.</p></div></td></tr>`;
+    return;
+  }
+  const typeLabels = { in:'📥 In', out:'📤 Out', transfer:'🔄 Transfer', adjustment:'🔧 Adjustment' };
+  const typeBadge = { in:'badge-green', out:'badge-red', transfer:'badge-blue', adjustment:'badge-orange' };
+  tbody.innerHTML = list.map(m => `<tr>
+    <td><strong>${m.products?.name || '—'}</strong></td>
+    <td><span class="badge ${typeBadge[m.type]||'badge-gray'}">${typeLabels[m.type]||m.type}</span></td>
+    <td><strong>${m.type==='out'?'-':'+'} ${m.quantity}</strong></td>
+    <td>${m.warehouses?.name || '—'}</td>
+    <td><code style="font-size:11px">${m.reference||'—'}</code></td>
+    <td style="color:var(--gray500)">${m.notes||'—'}</td>
+    <td style="color:var(--gray400);font-size:12px">${new Date(m.created_at).toLocaleDateString()}</td>
+  </tr>`).join('');
+}
+
+// ===== STATS =====
+function updateStats() {
+  const total = products.length;
+  let inStock = 0, lowStock = 0, totalValue = 0;
+  products.forEach(p => {
+    const qty = (p.stock || []).reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    if (qty > p.min_stock) inStock++;
+    else if (qty > 0 && qty <= p.min_stock && p.min_stock > 0) lowStock++;
+    totalValue += qty * parseFloat(p.cost_price || 0);
+  });
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-instock').textContent = inStock;
+  document.getElementById('stat-low').textContent = lowStock;
+  document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString('en', { maximumFractionDigits: 0 });
+  if (lowStock > 0) {
+    document.getElementById('low-stock-banner').style.display = 'flex';
+    document.getElementById('low-stock-count').textContent = lowStock;
+  }
+}
+
+// ===== FILTERS =====
+function filterProducts() {
+  const search = (document.getElementById('product-search').value || document.getElementById('global-search').value || '').toLowerCase();
+  const cat = document.getElementById('filter-category').value;
+  const wh = document.getElementById('filter-warehouse').value;
+  const status = document.getElementById('filter-status').value;
+  let filtered = products.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.barcode||'').toLowerCase().includes(search);
+    const matchCat = !cat || p.category_id === cat;
+    const matchWh = !wh || (p.stock||[]).some(s => s.warehouses?.name === warehouses.find(w=>w.id===wh)?.name);
+    const qty = (p.stock || []).reduce((s, i) => s + parseFloat(i.quantity || 0), 0);
+    const matchStatus = !status || (status==='instock' && qty > p.min_stock) || (status==='low' && qty > 0 && qty <= p.min_stock && p.min_stock > 0) || (status==='out' && qty <= 0);
+    return matchSearch && matchCat && matchWh && matchStatus;
+  });
+  renderProducts(filtered);
+}
+
+function filterLowStock() {
+  document.getElementById('filter-status').value = 'low';
+  filterProducts();
+}
+
+// ===== SELECTS =====
+function updateCategorySelects() {
+  const opts = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('p-category').innerHTML = '<option value="">Select category</option>' + opts;
+  document.getElementById('filter-category').innerHTML = '<option value="">All Categories</option>' + opts;
+  document.getElementById('mov-product').innerHTML = '<option value="">Select product</option>' + products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+function updateWarehouseSelects() {
+  const opts = warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+  document.getElementById('p-warehouse').innerHTML = '<option value="">Select warehouse</option>' + opts;
+  document.getElementById('filter-warehouse').innerHTML = '<option value="">All Warehouses</option>' + opts;
+  document.getElementById('mov-warehouse').innerHTML = '<option value="">Select warehouse</option>' + opts;
+}
+
+// ===== PRODUCT CRUD =====
+function openProductModal(id = null) {
+  editingProductId = id;
+  document.getElementById('product-modal-title').textContent = id ? 'Edit Product' : 'Add Product';
+  if (!id) {
+    ['p-name','p-sku','p-barcode','p-cost','p-price','p-minstock','p-initstock','p-notes'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('p-unit').value = 'pcs';
+    document.getElementById('p-category').value = '';
+    document.getElementById('p-warehouse').value = '';
+  } else {
+    const p = products.find(x => x.id === id);
+    if (p) {
+      document.getElementById('p-name').value = p.name;
+      document.getElementById('p-sku').value = p.sku || '';
+      document.getElementById('p-barcode').value = p.barcode || '';
+      document.getElementById('p-unit').value = p.unit || 'pcs';
+      document.getElementById('p-cost').value = p.cost_price || '';
+      document.getElementById('p-price').value = p.sale_price || '';
+      document.getElementById('p-minstock').value = p.min_stock || '';
+      document.getElementById('p-notes').value = p.notes || '';
+      document.getElementById('p-category').value = p.category_id || '';
+    }
+  }
+  updateCategorySelects();
+  updateWarehouseSelects();
+  openModal('product-modal');
+}
+
+async function saveProduct() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { showToast('Product name is required', 'error'); return; }
+
+  const payload = {
+    company_id: companyId,
+    name,
+    sku: document.getElementById('p-sku').value.trim() || null,
+    barcode: document.getElementById('p-barcode').value.trim() || null,
+    unit: document.getElementById('p-unit').value,
+    cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
+    sale_price: parseFloat(document.getElementById('p-price').value) || 0,
+    min_stock: parseInt(document.getElementById('p-minstock').value) || 0,
+    notes: document.getElementById('p-notes').value.trim() || null,
+    category_id: document.getElementById('p-category').value || null,
+  };
+
+  let productId = editingProductId;
+
+  if (editingProductId) {
+    const { error } = await sb.from('products').update(payload).eq('id', editingProductId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('Product updated ✓', 'success');
+  } else {
+    const { data, error } = await sb.from('products').insert(payload).select().single();
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    productId = data.id;
+
+    // Initial stock
+    const initQty = parseFloat(document.getElementById('p-initstock').value) || 0;
+    const whId = document.getElementById('p-warehouse').value;
+    if (initQty > 0 && whId) {
+      await sb.from('stock').upsert({ product_id: productId, warehouse_id: whId, quantity: initQty });
+      await sb.from('stock_movements').insert({ company_id: companyId, product_id: productId, warehouse_id: whId, type: 'in', quantity: initQty, reference: 'Initial Stock', created_by: (await sb.auth.getUser()).data.user.id });
+    }
+    showToast('Product added ✓', 'success');
+  }
+
+  closeModal('product-modal');
+  await loadProducts();
+  await loadMovements();
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product? This cannot be undone.')) return;
+  await sb.from('products').update({ active: false }).eq('id', id);
+  showToast('Product deleted', 'success');
+  await loadProducts();
+}
+
+function editProduct(id) { openProductModal(id); }
+
+function quickMovement(productId) {
+  document.getElementById('mov-product').value = productId;
+  openMovementModal();
+}
+
+// ===== MOVEMENT =====
+function openMovementModal() {
+  document.getElementById('mov-product').innerHTML = '<option value="">Select product</option>' + products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  updateWarehouseSelects();
+  ['mov-qty','mov-ref','mov-notes'].forEach(i => document.getElementById(i).value = '');
+  selectMovType(document.querySelector('.movement-type-btn'), 'in');
+  openModal('movement-modal');
+}
+
+function selectMovType(el, type) {
+  document.querySelectorAll('.movement-type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMovType = type;
+  document.getElementById('mov-type').value = type;
+}
+
+async function saveMovement() {
+  const productId = document.getElementById('mov-product').value;
+  const whId = document.getElementById('mov-warehouse').value;
+  const qty = parseFloat(document.getElementById('mov-qty').value);
+
+  if (!productId || !whId || !qty) { showToast('Please fill required fields', 'error'); return; }
+
+  const type = selectedMovType;
+  const { data: { user } } = await sb.auth.getUser();
+
+  // Update stock
+  const { data: existing } = await sb.from('stock').select('quantity').eq('product_id', productId).eq('warehouse_id', whId).single();
+  const current = parseFloat(existing?.quantity || 0);
+  const newQty = type === 'in' ? current + qty : type === 'out' ? Math.max(0, current - qty) : qty;
+
+  await sb.from('stock').upsert({ product_id: productId, warehouse_id: whId, quantity: newQty });
+
+  // Log movement
+  await sb.from('stock_movements').insert({
+    company_id: companyId, product_id: productId, warehouse_id: whId,
+    type, quantity: qty,
+    reference: document.getElementById('mov-ref').value.trim() || null,
+    notes: document.getElementById('mov-notes').value.trim() || null,
+    created_by: user.id
+  });
+
+  showToast('Stock movement saved ✓', 'success');
+  closeModal('movement-modal');
+  await loadProducts();
+  await loadMovements();
+}
+
+// ===== CATEGORIES =====
+function openCategoryModal() { openModal('category-modal'); renderCategoriesList(); }
+
+async function saveCategory() {
+  const name = document.getElementById('cat-name').value.trim();
+  if (!name) return;
+  await sb.from('categories').insert({ company_id: companyId, name });
+  document.getElementById('cat-name').value = '';
+  await loadCategories();
+  showToast('Category added ✓', 'success');
+}
+
+function renderCategoriesList() {
+  document.getElementById('categories-list').innerHTML = categories.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--gray50);border-radius:9px;margin-bottom:6px">
+      <span style="font-size:13px;font-weight:500">${c.name}</span>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCategory('${c.id}')">🗑️</button>
+    </div>`).join('') || '<p style="text-align:center;color:var(--gray400);font-size:13px;padding:16px">No categories yet</p>';
+}
+
+async function deleteCategory(id) {
+  await sb.from('categories').delete().eq('id', id);
+  await loadCategories();
+  showToast('Category deleted', 'success');
+}
+
+// ===== WAREHOUSES =====
+function openWarehouseModal() { openModal('warehouse-modal'); renderWarehousesList(); }
+
+async function saveWarehouse() {
+  const name = document.getElementById('wh-name').value.trim();
+  if (!name) return;
+  await sb.from('warehouses').insert({ company_id: companyId, name, location: document.getElementById('wh-location').value.trim() || null });
+  document.getElementById('wh-name').value = '';
+  document.getElementById('wh-location').value = '';
+  await loadWarehouses();
+  showToast('Warehouse added ✓', 'success');
+}
+
+function renderWarehousesList() {
+  document.getElementById('warehouses-list').innerHTML = warehouses.map(w => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--gray50);border-radius:9px;margin-bottom:6px">
+      <div><div style="font-size:13px;font-weight:500">${w.name}</div>${w.location ? `<div style="font-size:11px;color:var(--gray400)">${w.location}</div>` : ''}</div>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="deleteWarehouse('${w.id}')">🗑️</button>
+    </div>`).join('') || '<p style="text-align:center;color:var(--gray400);font-size:13px;padding:16px">No warehouses yet</p>';
+}
+
+async function deleteWarehouse(id) {
+  await sb.from('warehouses').delete().eq('id', id);
+  await loadWarehouses();
+  showToast('Warehouse deleted', 'success');
+}
+
+// ===== TABS =====
+function setTab(btn, tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-products').style.display = tab === 'products' ? 'block' : 'none';
+  document.getElementById('tab-movements').style.display = tab === 'movements' ? 'block' : 'none';
+  document.getElementById('filters-products').style.display = tab === 'products' ? 'flex' : 'none';
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+// ===== TOAST =====
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✓ ' : type === 'error' ? '✕ ' : '') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== LOGOUT =====
+async function handleLogout() { await sb.auth.signOut(); window.location.href = '/auth.html'; }
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
