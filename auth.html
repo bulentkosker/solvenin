@@ -848,7 +848,7 @@ async function handleLogin() {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
-    window.location.href = '/dashboard';
+    window.location.href = '/dashboard.html';
   } catch (err) {
     showMsg('msg-login', 'error', t.err_login);
   }
@@ -873,7 +873,7 @@ async function handleForgot() {
 async function handleGoogle() {
   await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + '/dashboard' }
+    options: { redirectTo: window.location.origin + '/dashboard.html' }
   });
 }
 
