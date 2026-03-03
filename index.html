@@ -1490,8 +1490,9 @@ function toggleBilling() {
 function changeUsers(delta) {
   userCount = Math.max(1, userCount + delta);
   document.getElementById('user-count').textContent = userCount;
+document.addEventListener('DOMContentLoaded', function() {
   updatePrices();
-}
+});}
 function updatePrices() {
   const sr = RATES.standard[billingCycle];
   const pr = RATES.professional[billingCycle];
