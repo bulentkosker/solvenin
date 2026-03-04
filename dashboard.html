@@ -680,6 +680,25 @@ tr:hover td { background: var(--gray50); }
 }
 </style>
 <script src="i18n.js"></script>
+<script>
+const _origSetLangDash = typeof setLang !== 'undefined' ? setLang : null;
+function setLang(lang) {
+  if (_origSetLangDash) _origSetLangDash(lang);
+  // Re-render greeting
+  const h = new Date().getHours();
+  const greetEl = document.querySelector('.welcome-text h1');
+  const nameEl = document.getElementById('greeting-name');
+  if (greetEl && nameEl) {
+    const name = nameEl.textContent;
+    const greet = h < 12 ? t('welcome_morning') : h < 17 ? t('welcome_afternoon') : t('welcome_evening');
+    greetEl.innerHTML = `${greet}, <span id="greeting-name">${name}</span>! 👋`;
+  }
+  // Re-translate status badges in table
+  document.querySelectorAll('[data-status]').forEach(el => {
+    el.textContent = t('status_' + el.dataset.status) || el.dataset.status;
+  });
+}
+</script>
 </head>
 <body>
 
@@ -739,7 +758,7 @@ tr:hover td { background: var(--gray50); }
     <div class="topbar-title" id="page-title" data-i18n="page_dashboard">Dashboard</div>
     <div class="topbar-search">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search anything...">
+      <input type="text" placeholder="Search anything..." data-i18n-ph="search_placeholder">
     </div>
     <div class="topbar-actions">
       <div class="topbar-btn" title="Notifications">
@@ -776,8 +795,8 @@ tr:hover td { background: var(--gray50); }
     <!-- WELCOME -->
     <div class="welcome-row fade-up">
       <div class="welcome-text">
-        <h1>Good morning, <span id="greeting-name">there</span>! 👋</h1>
-        <p>Here's what's happening with your business today.</p>
+        <h1 id="greeting-h1">Good morning, <span id="greeting-name">there</span>! 👋</h1>
+        <p data-i18n="welcome_sub">Here's what's happening with your business today.</p>
       </div>
       <div class="welcome-date" id="today-date">—</div>
     </div>
@@ -785,33 +804,33 @@ tr:hover td { background: var(--gray50); }
     <!-- PLAN BANNER (free users) -->
     <div class="plan-banner fade-up fade-up-1" id="plan-banner" style="display:none">
       <div class="plan-info">
-        <h3>You're on the Free Plan</h3>
-        <p>Upgrade to unlock all modules, unlimited records and advanced reports.</p>
+        <h3 data-i18n="plan_banner_title">You're on the Free Plan</h3>
+        <p data-i18n="plan_banner_sub">Upgrade to unlock all modules, unlimited records and advanced reports.</p>
       </div>
-      <button class="upgrade-btn" onclick="window.location.href='subscription.html'">Upgrade Now →</button>
+      <button class="upgrade-btn" onclick="window.location.href='subscription.html'" data-i18n="upgrade_now">Upgrade Now →</button>
     </div>
 
     <!-- STATS -->
     <div class="stats-grid fade-up fade-up-1">
       <div class="stat-card blue">
         <div class="stat-header">
-          <span class="stat-label">Total Revenue</span>
+          <span class="stat-label" data-i18n="stat_revenue">Total Revenue</span>
           <div class="stat-icon blue">💰</div>
         </div>
         <div class="stat-value">$24,580</div>
-        <div class="stat-change up">↑ 12.5% <span class="change-label">vs last month</span></div>
+        <div class="stat-change up">↑ 12.5% <span class="change-label" data-i18n="vs_last_month_short">vs last month</span></div>
       </div>
       <div class="stat-card green">
         <div class="stat-header">
-          <span class="stat-label">Active Orders</span>
+          <span class="stat-label" data-i18n="stat_orders">Active Orders</span>
           <div class="stat-icon green">📋</div>
         </div>
         <div class="stat-value">143</div>
-        <div class="stat-change up">↑ 8.2% <span class="change-label">vs last month</span></div>
+        <div class="stat-change up">↑ 8.2% <span class="change-label" data-i18n="vs_last_month_short">vs last month</span></div>
       </div>
       <div class="stat-card orange">
         <div class="stat-header">
-          <span class="stat-label">Low Stock Items</span>
+          <span class="stat-label" data-i18n="stat_low_stock">Low Stock Items</span>
           <div class="stat-icon orange">📦</div>
         </div>
         <div class="stat-value">7</div>
@@ -819,7 +838,7 @@ tr:hover td { background: var(--gray50); }
       </div>
       <div class="stat-card purple">
         <div class="stat-header">
-          <span class="stat-label">Active Employees</span>
+          <span class="stat-label" data-i18n="stat_employees">Active Employees</span>
           <div class="stat-icon purple">👥</div>
         </div>
         <div class="stat-value">28</div>
@@ -834,8 +853,8 @@ tr:hover td { background: var(--gray50); }
       <div class="chart-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Revenue Overview</div>
-            <div class="card-subtitle">Monthly sales performance</div>
+            <div class="card-title" data-i18n="card_revenue_overview">Revenue Overview</div>
+            <div class="card-subtitle" data-i18n="card_revenue_sub">Monthly sales performance</div>
           </div>
           <div class="chart-period">
             <button class="period-btn" onclick="setPeriod(this,'weekly')">7D</button>
@@ -850,8 +869,8 @@ tr:hover td { background: var(--gray50); }
       <div class="notif-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Notifications</div>
-            <div class="card-subtitle">3 unread alerts</div>
+            <div class="card-title" data-i18n="card_notifications">Notifications</div>
+            <div class="card-subtitle" data-i18n="card_notif_sub">3 unread alerts</div>
           </div>
           <a href="#" class="view-all">All →</a>
         </div>
@@ -910,19 +929,19 @@ tr:hover td { background: var(--gray50); }
       <div class="table-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Recent Transactions</div>
-            <div class="card-subtitle">Latest sales and purchases</div>
+            <div class="card-title" data-i18n="card_recent">Recent Transactions</div>
+            <div class="card-subtitle" data-i18n="card_recent_sub">Latest sales and purchases</div>
           </div>
-          <a href="#" class="view-all">View all →</a>
+          <a href="#" class="view-all" data-i18n="view_all">View all →</a>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Customer</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th data-i18n="col_customer">Customer</th>
+                <th data-i18n="col_amount">Amount</th>
+                <th data-i18n="col_status">Status</th>
+                <th data-i18n="col_date">Date</th>
               </tr>
             </thead>
             <tbody>
@@ -965,46 +984,46 @@ tr:hover td { background: var(--gray50); }
       <div class="quick-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Quick Access</div>
-            <div class="card-subtitle">Jump to any module</div>
+            <div class="card-title" data-i18n="card_quick">Quick Access</div>
+            <div class="card-subtitle" data-i18n="card_quick_sub">Jump to any module</div>
           </div>
         </div>
         <div class="modules-grid">
           <a class="module-btn" href="#">
             <span class="m-icon">📦</span>
-            <span class="m-label">Inventory</span>
+            <span class="m-label" data-i18n="nav_inventory">Inventory</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">💰</span>
-            <span class="m-label">Sales</span>
+            <span class="m-label" data-i18n="nav_sales">Sales</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">🛒</span>
-            <span class="m-label">Purchasing</span>
+            <span class="m-label" data-i18n="nav_purchasing">Purchasing</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">🏭</span>
-            <span class="m-label">Production</span>
+            <span class="m-label" data-i18n="nav_production">Production</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">👥</span>
-            <span class="m-label">HR</span>
+            <span class="m-label" data-i18n="nav_hr_short">HR</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">💳</span>
-            <span class="m-label">Finance</span>
+            <span class="m-label" data-i18n="nav_finance">Finance</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">🚚</span>
-            <span class="m-label">Shipping</span>
+            <span class="m-label" data-i18n="nav_shipping">Shipping</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">📅</span>
-            <span class="m-label">Projects</span>
+            <span class="m-label" data-i18n="nav_projects">Projects</span>
           </a>
           <a class="module-btn" href="#">
             <span class="m-icon">📊</span>
-            <span class="m-label">Reports</span>
+            <span class="m-label" data-i18n="nav_reports">Reports</span>
           </a>
         </div>
       </div>
@@ -1054,7 +1073,7 @@ async function init() {
 
   // Greeting by time
   const h = now.getHours();
-  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const greet = h < 12 ? t('welcome_morning') : h < 17 ? t('welcome_afternoon') : t('welcome_evening');
   document.querySelector('.welcome-text h1').innerHTML = `${greet}, <span id="greeting-name">${firstName}</span>! 👋`;
 
   // Hide loading

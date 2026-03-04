@@ -165,6 +165,26 @@ tr:hover .row-actions{opacity:1}
 @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
 </style>
 <script src="i18n.js"></script>
+<script>
+const _origSetLangPurch = typeof setLang !== 'undefined' ? setLang : null;
+function setLang(lang) {
+  if (_origSetLangPurch) _origSetLangPurch(lang);
+  if (typeof filterOrders === 'function') filterOrders();
+  if (typeof filterSuppliers === 'function') filterSuppliers();
+  if (typeof updateStats === 'function') updateStats();
+  if (typeof updateSupplierSelects === 'function') updateSupplierSelects();
+  // Refresh status filter
+  const stSel = document.getElementById('filter-status');
+  if (stSel) {
+    const opts = [['','all_status'],['draft','status_draft'],['sent','status_sent'],['confirmed','status_confirmed'],['received','status_received'],['cancelled','status_cancelled']];
+    Array.from(stSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
+  }
+  const srch = document.getElementById('order-search');
+  if (srch) srch.placeholder = t('search_orders');
+  const ssrch = document.getElementById('supplier-search');
+  if (ssrch) ssrch.placeholder = t('search_suppliers');
+}
+</script>
 </head>
 <body>
 
@@ -237,43 +257,43 @@ tr:hover .row-actions{opacity:1}
   <div class="content">
     <div class="page-header">
       <div>
-        <h1>🛒 Purchasing</h1>
-        <p>Manage suppliers, purchase orders and stock receiving</p>
+        <h1 data-i18n="page_purchasing">🛒 Purchasing</h1>
+        <p data-i18n="page_purchasing_sub">Manage suppliers, purchase orders and stock receiving</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="openSupplierModal()">🏭 Suppliers</button>
-        <button class="btn btn-primary" onclick="openOrderModal()">+ New Purchase Order</button>
+        <button class="btn btn-outline" onclick="openSupplierModal()" data-i18n="btn_suppliers">🏭 Suppliers</button>
+        <button class="btn btn-primary" onclick="openOrderModal()" data-i18n="btn_new_po">+ New Purchase Order</button>
       </div>
     </div>
 
     <!-- STATS -->
     <div class="stats-grid">
       <div class="stat-card blue">
-        <div class="stat-label">Total Purchases</div>
+        <div class="stat-label" data-i18n="stat_total_purchases">Total Purchases</div>
         <div class="stat-val" id="stat-total">$0</div>
-        <div class="stat-sub">All time</div>
+        <div class="stat-sub" data-i18n="all_time">All time</div>
       </div>
       <div class="stat-card orange">
-        <div class="stat-label">Pending Orders</div>
+        <div class="stat-label" data-i18n="stat_pending_orders">Pending Orders</div>
         <div class="stat-val" id="stat-pending">0</div>
         <div class="stat-sub" id="stat-pending-amt">$0 outstanding</div>
       </div>
       <div class="stat-card green">
-        <div class="stat-label">Received</div>
+        <div class="stat-label" data-i18n="stat_received">Received</div>
         <div class="stat-val" id="stat-received">0</div>
-        <div class="stat-sub">Orders completed</div>
+        <div class="stat-sub" data-i18n="orders_completed">Orders completed</div>
       </div>
       <div class="stat-card teal">
-        <div class="stat-label">Suppliers</div>
+        <div class="stat-label" data-i18n="stat_suppliers">Suppliers</div>
         <div class="stat-val" id="stat-suppliers">0</div>
-        <div class="stat-sub">Active vendors</div>
+        <div class="stat-sub" data-i18n="active_vendors">Active vendors</div>
       </div>
     </div>
 
     <!-- TABS -->
     <div class="tabs-row">
-      <button class="tab-btn active" onclick="setTab(this,'orders')">Purchase Orders</button>
-      <button class="tab-btn" onclick="setTab(this,'suppliers')">Suppliers</button>
+      <button class="tab-btn active" onclick="setTab(this,'orders')" data-i18n="tab_purchase_orders">Purchase Orders</button>
+      <button class="tab-btn" onclick="setTab(this,'suppliers')" data-i18n="tab_suppliers">Suppliers</button>
     </div>
 
     <!-- ORDERS TAB -->
@@ -281,15 +301,15 @@ tr:hover .row-actions{opacity:1}
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="order-search" placeholder="Search orders..." oninput="filterOrders()">
+          <input type="text" id="order-search" placeholder="Search orders..." data-i18n-ph="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="sent">Sent</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="received">Received</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="" data-i18n="all_status">All Status</option>
+          <option value="draft" data-i18n="status_draft">Draft</option>
+          <option value="sent" data-i18n="status_sent">Sent</option>
+          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+          <option value="received" data-i18n="status_received">Received</option>
+          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="filter-supplier" onchange="filterOrders()">
           <option value="">All Suppliers</option>
@@ -300,12 +320,12 @@ tr:hover .row-actions{opacity:1}
           <table>
             <thead>
               <tr>
-                <th>PO Number</th>
-                <th>Supplier</th>
-                <th>Issue Date</th>
-                <th>Expected</th>
-                <th>Total</th>
-                <th>Status</th>
+                <th data-i18n="col_po_number">PO Number</th>
+                <th data-i18n="col_supplier">Supplier</th>
+                <th data-i18n="label_issue_date">Issue Date</th>
+                <th data-i18n="col_expected">Expected</th>
+                <th data-i18n="col_total">Total</th>
+                <th data-i18n="col_status">Status</th>
                 <th></th>
               </tr>
             </thead>
@@ -330,10 +350,10 @@ tr:hover .row-actions{opacity:1}
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Payment Terms</th><th>Orders</th><th></th></tr>
+              <tr><th data-i18n="col_name">Name</th><th data-i18n="col_email">Email</th><th data-i18n="col_phone">Phone</th><th data-i18n="col_city">City</th><th data-i18n="col_payment_terms">Payment Terms</th><th data-i18n="col_orders">Orders</th><th></th></tr>
             </thead>
             <tbody id="suppliers-tbody">
-              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><h3>No suppliers yet</h3><p>Add your first supplier.</p><button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><h3>${t('no_suppliers')}</h3><p>${t('no_suppliers_sub')}</p><button class="btn btn-primary" onclick="openSupplierModal()">${t('btn_add_supplier')}</button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -352,37 +372,37 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:20px">
         <div class="field">
-          <label>Supplier *</label>
+          <label data-i18n="label_supplier_req">Supplier *</label>
           <select id="o-supplier"><option value="">Select supplier</option></select>
         </div>
         <div class="field">
-          <label>PO Number</label>
+          <label data-i18n="col_po_number">PO Number</label>
           <input type="text" id="o-number" placeholder="Auto-generated">
         </div>
         <div class="field">
-          <label>Issue Date</label>
+          <label data-i18n="label_issue_date">Issue Date</label>
           <input type="date" id="o-date">
         </div>
         <div class="field">
-          <label>Expected Delivery</label>
+          <label data-i18n="label_expected_delivery">Expected Delivery</label>
           <input type="date" id="o-expected">
         </div>
         <div class="field">
-          <label>Status</label>
+          <label data-i18n="col_status">Status</label>
           <select id="o-status">
-            <option value="draft">Draft</option>
+            <option value="draft" data-i18n="status_draft">Draft</option>
             <option value="sent">Sent to Supplier</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="received">Received</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+            <option value="received" data-i18n="status_received">Received</option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
           </select>
         </div>
         <div class="field">
-          <label>Tax Rate (%)</label>
+          <label data-i18n="label_tax_rate">Tax Rate (%)</label>
           <input type="number" id="o-tax" value="0" min="0" max="100" oninput="recalcOrder()">
         </div>
         <div class="field">
-          <label>Discount ($)</label>
+          <label data-i18n="label_discount">Discount ($)</label>
           <input type="number" id="o-discount" value="0" min="0" oninput="recalcOrder()">
         </div>
       </div>
@@ -410,7 +430,7 @@ tr:hover .row-actions{opacity:1}
       </div>
 
       <div class="field full" style="margin-top:16px">
-        <label>Notes</label>
+        <label data-i18n="label_notes">Notes</label>
         <textarea id="o-notes" placeholder="Delivery instructions, payment terms..."></textarea>
       </div>
     </div>
@@ -431,15 +451,15 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field full"><label>Supplier Name *</label><input type="text" id="s-name" placeholder="ABC Supplies Co."></div>
-        <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="contact@supplier.com"></div>
-        <div class="field"><label>Phone</label><input type="tel" id="s-phone" placeholder="+1 555 000 0000"></div>
-        <div class="field full"><label>Address</label><input type="text" id="s-address" placeholder="123 Supplier Street"></div>
-        <div class="field"><label>City</label><input type="text" id="s-city" placeholder="Chicago"></div>
-        <div class="field"><label>Country</label><input type="text" id="s-country" placeholder="USA"></div>
-        <div class="field"><label>Tax Number</label><input type="text" id="s-tax" placeholder="Tax/VAT ID"></div>
-        <div class="field"><label>Payment Terms (days)</label><input type="number" id="s-terms" value="30" min="0"></div>
-        <div class="field full"><label>Notes</label><textarea id="s-notes" placeholder="Optional notes..."></textarea></div>
+        <div class="field full"><label data-i18n="label_supplier_name">Supplier Name *</label><input type="text" id="s-name" placeholder="ABC Supplies Co."></div>
+        <div class="field"><label data-i18n="col_email">Email</label><input type="email" id="s-email" placeholder="contact@supplier.com"></div>
+        <div class="field"><label data-i18n="col_phone">Phone</label><input type="tel" id="s-phone" placeholder="+1 555 000 0000"></div>
+        <div class="field full"><label data-i18n="label_address">Address</label><input type="text" id="s-address" placeholder="123 Supplier Street"></div>
+        <div class="field"><label data-i18n="col_city">City</label><input type="text" id="s-city" placeholder="Chicago"></div>
+        <div class="field"><label data-i18n="label_country">Country</label><input type="text" id="s-country" placeholder="USA"></div>
+        <div class="field"><label data-i18n="col_tax_no">Tax Number</label><input type="text" id="s-tax" placeholder="Tax/VAT ID"></div>
+        <div class="field"><label data-i18n="label_payment_terms">Payment Terms (days)</label><input type="number" id="s-terms" value="30" min="0"></div>
+        <div class="field full"><label data-i18n="label_notes">Notes</label><textarea id="s-notes" placeholder="Optional notes..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -463,11 +483,11 @@ tr:hover .row-actions{opacity:1}
       <input type="hidden" id="receive-order-id">
       <div id="receive-items"></div>
       <div class="field" style="margin-top:16px">
-        <label>Warehouse</label>
+        <label data-i18n="label_warehouse">Warehouse</label>
         <select id="receive-warehouse"><option value="">Select warehouse</option></select>
       </div>
       <div class="field" style="margin-top:12px">
-        <label>Notes</label>
+        <label data-i18n="label_notes">Notes</label>
         <textarea id="receive-notes" placeholder="Optional receiving notes..."></textarea>
       </div>
     </div>
@@ -490,7 +510,10 @@ let editingOrderId = null, editingSupplierId = null;
 let orderItems = [];
 
 const statusBadge = { draft:'badge-gray', sent:'badge-blue', confirmed:'badge-purple', received:'badge-green', cancelled:'badge-red' };
-const statusLabel = { draft:'Draft', sent:'Sent', confirmed:'Confirmed', received:'Received', cancelled:'Cancelled' };
+const statusLabel = {};
+function getStatusLabels() {
+  return { draft:t('status_draft'), sent:t('status_sent'), confirmed:t('status_confirmed'), received:t('status_received'), cancelled:t('status_cancelled') };
+}
 
 // ===== INIT =====
 async function init() {
@@ -538,7 +561,7 @@ async function loadWarehouses() {
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🛒</div><h3>No purchase orders found</h3><p>Create your first purchase order.</p><button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🛒</div><h3>${t('no_po_found')}</h3><p>${t('no_po_sub')}</p><button class="btn btn-primary" onclick="openOrderModal()">${t('btn_new_po')}</button></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(o => `<tr>
@@ -547,11 +570,11 @@ function renderOrders(list) {
     <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
     <td style="color:${o.expected_date && new Date(o.expected_date) < new Date() && o.status !== 'received' ? 'var(--red)' : 'var(--gray500)'}">${o.expected_date||'—'}</td>
     <td><strong>$${parseFloat(o.total||0).toFixed(2)}</strong></td>
-    <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${statusLabel[o.status]||o.status}</span></td>
+    <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
     <td><div class="row-actions">
-      ${o.status !== 'received' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="Receive Stock">📥</button>` : ''}
-      <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>
-      <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>
+      ${o.status !== 'received' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
+      <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>
     </div></td>
   </tr>`).join('');
 }
@@ -559,7 +582,7 @@ function renderOrders(list) {
 function renderSuppliers(list) {
   const tbody = document.getElementById('suppliers-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><h3>No suppliers yet</h3><p>Add your first supplier.</p><button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><h3>${t('no_suppliers')}</h3><p>${t('no_suppliers_sub')}</p><button class="btn btn-primary" onclick="openSupplierModal()">${t('btn_add_supplier')}</button></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(s => {
@@ -572,8 +595,8 @@ function renderSuppliers(list) {
       <td><span class="badge badge-blue">Net ${s.payment_terms||30}</span></td>
       <td><span class="badge badge-teal">${orderCount}</span></td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="editSupplier('${s.id}')" title="Edit">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteSupplier('${s.id}')" title="Delete">🗑️</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="editSupplier('${s.id}')" title="${t('btn_edit')}">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteSupplier('${s.id}')" title="${t('btn_delete')}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -586,15 +609,15 @@ function updateStats() {
   const pendingAmt = pending.reduce((s,o) => s + parseFloat(o.total||0), 0);
   document.getElementById('stat-total').textContent = '$'+total.toLocaleString('en',{maximumFractionDigits:0});
   document.getElementById('stat-pending').textContent = pending.length;
-  document.getElementById('stat-pending-amt').textContent = '$'+pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' outstanding';
+  document.getElementById('stat-pending-amt').textContent = '$'+pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' '+t('outstanding');
   document.getElementById('stat-received').textContent = received.length;
   document.getElementById('stat-suppliers').textContent = suppliers.length;
 }
 
 function updateSupplierSelects() {
   const opts = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('o-supplier').innerHTML = '<option value="">Select supplier</option>' + opts;
-  document.getElementById('filter-supplier').innerHTML = '<option value="">All Suppliers</option>' + opts;
+  document.getElementById('o-supplier').innerHTML = `<option value="">${t('select_supplier')}</option>` + opts;
+  document.getElementById('filter-supplier').innerHTML = `<option value="">${t('all_suppliers')}</option>` + opts;
 }
 
 // ===== FILTERS =====
@@ -693,9 +716,9 @@ function recalcOrder() {
 
 async function saveOrder(statusOverride) {
   const supplierId = document.getElementById('o-supplier').value;
-  if (!supplierId) { showToast('Please select a supplier', 'error'); return; }
+  if (!supplierId) { showToast(t('toast_select_supplier'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && (i.product_id || i.description));
-  if (!validItems.length) { showToast('Add at least one item', 'error'); return; }
+  if (!validItems.length) { showToast(t('toast_add_item'), 'error'); return; }
 
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price, 0);
   const taxRate = parseFloat(document.getElementById('o-tax').value)||0;
@@ -761,7 +784,7 @@ async function deleteOrder(id) {
   if (!confirm('Delete this purchase order?')) return;
   await sb.from('purchase_order_items').delete().eq('order_id', id);
   await sb.from('purchase_orders').delete().eq('id', id);
-  showToast('Order deleted','success');
+  showToast(t('toast_order_deleted'),'success');
   await loadOrders();
 }
 
@@ -785,7 +808,7 @@ async function openReceiveModal(orderId) {
 async function saveReceiving() {
   const orderId = document.getElementById('receive-order-id').value;
   const whId = document.getElementById('receive-warehouse').value;
-  if (!whId) { showToast('Please select a warehouse', 'error'); return; }
+  if (!whId) { showToast(t('toast_select_warehouse'), 'error'); return; }
 
   const { data: items } = await sb.from('purchase_order_items').select('*, products(id)').eq('order_id', orderId);
   const { data: { user } } = await sb.auth.getUser();
@@ -809,7 +832,7 @@ async function saveReceiving() {
   // Mark order as received
   await sb.from('purchase_orders').update({ status: 'received' }).eq('id', orderId);
 
-  showToast('Stock received and updated ✓', 'success');
+  showToast(t('toast_stock_received'), 'success');
   closeModal('receive-modal');
   await loadOrders();
 }
@@ -828,10 +851,10 @@ function openSupplierModal(id=null) {
 
 async function saveSupplier() {
   const name = document.getElementById('s-name').value.trim();
-  if (!name) { showToast('Supplier name required','error'); return; }
+  if (!name) { showToast(t('toast_supplier_name_required'),'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('s-email').value.trim()||null, phone: document.getElementById('s-phone').value.trim()||null, address: document.getElementById('s-address').value.trim()||null, city: document.getElementById('s-city').value.trim()||null, country: document.getElementById('s-country').value.trim()||null, tax_number: document.getElementById('s-tax').value.trim()||null, payment_terms: parseInt(document.getElementById('s-terms').value)||30, notes: document.getElementById('s-notes').value.trim()||null };
-  if (editingSupplierId) { await sb.from('suppliers').update(payload).eq('id',editingSupplierId); showToast('Supplier updated ✓','success'); }
-  else { await sb.from('suppliers').insert(payload); showToast('Supplier added ✓','success'); }
+  if (editingSupplierId) { await sb.from('suppliers').update(payload).eq('id',editingSupplierId); showToast(t('toast_supplier_updated'),'success'); }
+  else { await sb.from('suppliers').insert(payload); showToast(t('toast_supplier_added'),'success'); }
   closeModal('supplier-modal');
   await loadSuppliers();
 }
@@ -841,7 +864,7 @@ function editSupplier(id) { openSupplierModal(id); }
 async function deleteSupplier(id) {
   if (!confirm('Delete this supplier?')) return;
   await sb.from('suppliers').delete().eq('id',id);
-  showToast('Supplier deleted','success');
+  showToast(t('toast_supplier_deleted'),'success');
   await loadSuppliers();
 }
 
