@@ -198,45 +198,6 @@ body {
 .eye-btn:hover { color: #fff; }
 
 /* PLAN SELECT */
-.plan-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.plan-opt {
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all .2s;
-  position: relative;
-}
-.plan-opt:hover { border-color: var(--blue); background: rgba(37,99,235,0.06); }
-.plan-opt.selected { border-color: var(--blue); background: rgba(37,99,235,0.12); }
-.plan-opt .plan-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 2px;
-}
-.plan-opt .plan-price {
-  font-size: 11px;
-  color: var(--gray400);
-}
-.plan-opt .plan-check {
-  position: absolute;
-  top: 10px; right: 10px;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: var(--blue);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #fff;
-}
-.plan-opt.selected .plan-check { display: flex; }
 
 /* SUBMIT BTN */
 .btn-submit {
@@ -392,27 +353,38 @@ body {
 .lang-row {
   display: flex;
   justify-content: center;
-  gap: 8px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
 }
-.lang-pill {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: var(--gray400);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 99px;
-  cursor: pointer;
-  transition: all .2s;
+.lang-dropdown { position: relative; }
+.lang-dropdown-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 7px 14px;
+  color: rgba(255,255,255,0.7);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .15s;
+}
+.lang-dropdown-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.lang-arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform .2s; }
+.lang-dropdown.open .lang-arrow { transform: rotate(180deg); }
+.lang-menu {
+  display: none; position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: #1a2540; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: 6px; min-width: 160px; z-index: 999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  display: none;
+}
+.lang-dropdown.open .lang-menu { display: block; }
+.lang-option {
+  padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  color: rgba(255,255,255,0.7); cursor: pointer; transition: all .15s;
   font-family: 'DM Sans', sans-serif;
 }
-.lang-pill:hover, .lang-pill.active {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.15);
-  color: #fff;
-}
+.lang-option:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.lang-option.active { color: #fff; font-weight: 600; }
 
 @media(max-width: 480px) {
   .card { padding: 28px 20px; }
@@ -426,14 +398,25 @@ body {
 
   <!-- LANG -->
   <div class="lang-row">
-    <button class="lang-pill active" onclick="setLang('en')">EN</button>
-    <button class="lang-pill" onclick="setLang('tr')">TR</button>
-    <button class="lang-pill" onclick="setLang('de')">DE</button>
-    <button class="lang-pill" onclick="setLang('fr')">FR</button>
-    <button class="lang-pill" onclick="setLang('es')">ES</button>
-    <button class="lang-pill" onclick="setLang('ar')">AR</button>
-    <button class="lang-pill" onclick="setLang('zh')">ZH</button>
-    <button class="lang-pill" onclick="setLang('ru')">RU</button>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <button class="lang-dropdown-btn" onclick="toggleLangMenu()">
+        <span id="current-lang-code">EN</span>
+        <span id="current-lang-name">English</span>
+        <span class="lang-arrow">&#9662;</span>
+      </button>
+      <div class="lang-menu" id="lang-menu">
+        <div class="lang-option active" onclick="selectLang('en','EN','English')">EN &nbsp; English</div>
+        <div class="lang-option" onclick="selectLang('tr','TR','Türkçe')">TR &nbsp; Türkçe</div>
+        <div class="lang-option" onclick="selectLang('de','DE','Deutsch')">DE &nbsp; Deutsch</div>
+        <div class="lang-option" onclick="selectLang('fr','FR','Français')">FR &nbsp; Français</div>
+        <div class="lang-option" onclick="selectLang('es','ES','Español')">ES &nbsp; Español</div>
+        <div class="lang-option" onclick="selectLang('ar','AR','العربية')">AR &nbsp; العربية</div>
+        <div class="lang-option" onclick="selectLang('zh','ZH','中文')">ZH &nbsp; 中文</div>
+        <div class="lang-option" onclick="selectLang('ru','RU','Русский')">RU &nbsp; Русский</div>
+        <div class="lang-option" onclick="selectLang('pt','PT','Português')">PT &nbsp; Português</div>
+        <div class="lang-option" onclick="selectLang('ja','JA','日本語')">JA &nbsp; 日本語</div>
+      </div>
+    </div>
   </div>
 
   <!-- LOGO -->
@@ -489,32 +472,7 @@ body {
       </div>
 
       <div class="field">
-        <label data-i18n="label_plan">Choose Your Plan</label>
-        <div class="plan-grid">
-          <div class="plan-opt selected" onclick="selectPlan(this, 'free')">
-            <div class="plan-name" data-i18n="plan_free">Free</div>
-            <div class="plan-price" data-i18n="plan_free_p">$0 forever</div>
-            <div class="plan-check">✓</div>
-          </div>
-          <div class="plan-opt" onclick="selectPlan(this, 'starter')">
-            <div class="plan-name" data-i18n="plan_starter">Starter</div>
-            <div class="plan-price">$6/user/mo</div>
-            <div class="plan-check">✓</div>
-          </div>
-          <div class="plan-opt" onclick="selectPlan(this, 'professional')">
-            <div class="plan-name" data-i18n="plan_pro">Professional</div>
-            <div class="plan-price">$9/user/mo</div>
-            <div class="plan-check">✓</div>
-          </div>
-          <div class="plan-opt" onclick="selectPlan(this, 'enterprise')">
-            <div class="plan-name" data-i18n="plan_ent">Enterprise</div>
-            <div class="plan-price">$14/user/mo</div>
-            <div class="plan-check">✓</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-submit" id="btn-signup" onclick="handleSignup()">
+            <button class="btn-submit" id="btn-signup" onclick="handleSignup()">
         <span data-i18n="btn_signup">Create Account →</span>
       </button>
 
@@ -729,15 +687,29 @@ const T = {
 let lang = 'en';
 function setLang(l) {
   lang = l;
-  document.querySelectorAll('.lang-pill').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.lang-pill[onclick="setLang('${l}')"]`).classList.add('active');
   const t = T[l] || T['en'];
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    const k = el.getAttribute('data-i18n');
-    if (t[k] !== undefined) el.innerHTML = t[k];
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.innerHTML = t[key];
   });
   document.body.style.direction = l === 'ar' ? 'rtl' : 'ltr';
 }
+function toggleLangMenu() {
+  document.getElementById('lang-dropdown').classList.toggle('open');
+}
+function selectLang(l, code, name) {
+  document.getElementById('current-lang-code').textContent = code;
+  document.getElementById('current-lang-name').textContent = name;
+  document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('lang-dropdown').classList.remove('open');
+  setLang(l);
+}
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('lang-dropdown');
+  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
 
 function showTab(tab) {
   const isSignup = tab === 'signup';
@@ -877,7 +849,19 @@ async function handleGoogle() {
   });
 }
 
-setLang('en');
+// Auto-detect language
+(function() {
+  const supported = ['en','tr','de','fr','es','ar','zh','ru','pt','ja'];
+  const names = { en:'English',tr:'Türkçe',de:'Deutsch',fr:'Français',es:'Español',ar:'العربية',zh:'中文',ru:'Русский',pt:'Português',ja:'日本語' };
+  const codes = { en:'EN',tr:'TR',de:'DE',fr:'FR',es:'ES',ar:'AR',zh:'ZH',ru:'RU',pt:'PT',ja:'JA' };
+  const detected = supported.includes((navigator.language||'en').split('-')[0].toLowerCase())
+    ? (navigator.language||'en').split('-')[0].toLowerCase() : 'en';
+  const flagEl = document.getElementById('current-lang-code');
+  const nameEl = document.getElementById('current-lang-name');
+  if(flagEl) flagEl.textContent = codes[detected];
+  if(nameEl) nameEl.textContent = names[detected];
+  setLang(detected);
+})();
 </script>
 </body>
 </html>
