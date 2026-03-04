@@ -197,28 +197,6 @@ tr:hover .row-actions{opacity:1}
 @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
 </style>
 <script src="i18n.js"></script>
-<script>
-const _origSetLang = typeof setLang !== 'undefined' ? setLang : null;
-function setLang(lang) {
-  if (_origSetLang) _origSetLang(lang);
-  if (typeof filterOrders === 'function') filterOrders();
-  if (typeof filterCustomers === 'function') filterCustomers();
-  if (typeof renderPayments === 'function') renderPayments(payments||[]);
-  if (typeof updateStats === 'function') updateStats();
-  refreshSalesSelects();
-}
-function refreshSalesSelects() {
-  const stSel = document.getElementById('filter-status');
-  if (stSel) {
-    const opts = [['','all_status'],['draft','status_draft'],['confirmed','status_confirmed'],['shipped','status_shipped'],['delivered','status_delivered'],['cancelled','status_cancelled']];
-    Array.from(stSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
-  }
-  const srch = document.getElementById('order-search');
-  if (srch) srch.placeholder = t('search_orders');
-  const csrch = document.getElementById('customer-search');
-  if (csrch) csrch.placeholder = t('search_customers');
-}
-</script>
 </head>
 <body>
 
@@ -293,34 +271,34 @@ function refreshSalesSelects() {
   <div class="content">
     <div class="page-header">
       <div>
-        <h1 data-i18n="page_sales">💰 Sales & Invoicing</h1>
-        <p data-i18n="page_sales_sub">Manage orders, invoices and customer payments</p>
+        <h1>💰 Sales & Invoicing</h1>
+        <p>Manage orders, invoices and customer payments</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="openCustomerModal()" data-i18n="btn_customers">👤 Customers</button>
-        <button class="btn btn-primary" onclick="openOrderModal()" data-i18n="btn_new_order">+ New Order</button>
+        <button class="btn btn-outline" onclick="openCustomerModal()">👤 Customers</button>
+        <button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button>
       </div>
     </div>
 
     <!-- STATS -->
     <div class="stats-grid">
       <div class="stat-card blue">
-        <div class="stat-label" data-i18n="stat_revenue">Total Revenue</div>
+        <div class="stat-label">Total Revenue</div>
         <div class="stat-val" id="stat-revenue">$0</div>
-        <div class="stat-sub" data-i18n="all_time">All time</div>
+        <div class="stat-sub">All time</div>
       </div>
       <div class="stat-card green">
-        <div class="stat-label" data-i18n="stat_paid_invoices">Paid Invoices</div>
+        <div class="stat-label">Paid Invoices</div>
         <div class="stat-val" id="stat-paid">0</div>
         <div class="stat-sub" id="stat-paid-amt">$0 collected</div>
       </div>
       <div class="stat-card orange">
-        <div class="stat-label" data-i18n="stat_pending">Pending</div>
+        <div class="stat-label">Pending</div>
         <div class="stat-val" id="stat-pending">0</div>
         <div class="stat-sub" id="stat-pending-amt">$0 outstanding</div>
       </div>
       <div class="stat-card purple">
-        <div class="stat-label" data-i18n="stat_customers">Total Customers</div>
+        <div class="stat-label">Total Customers</div>
         <div class="stat-val" id="stat-customers">0</div>
         <div class="stat-sub">Active accounts</div>
       </div>
@@ -328,9 +306,9 @@ function refreshSalesSelects() {
 
     <!-- TABS -->
     <div class="tabs-row">
-      <button class="tab-btn active" onclick="setTab(this,'orders')" data-i18n="tab_orders">Orders & Invoices</button>
-      <button class="tab-btn" onclick="setTab(this,'customers')" data-i18n="nav_customers">Customers</button>
-      <button class="tab-btn" onclick="setTab(this,'payments')" data-i18n="tab_payments">Payments</button>
+      <button class="tab-btn active" onclick="setTab(this,'orders')">Orders & Invoices</button>
+      <button class="tab-btn" onclick="setTab(this,'customers')">Customers</button>
+      <button class="tab-btn" onclick="setTab(this,'payments')">Payments</button>
     </div>
 
     <!-- ORDERS TAB -->
@@ -338,15 +316,15 @@ function refreshSalesSelects() {
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="order-search" placeholder="Search orders..." data-i18n-ph="search_orders" oninput="filterOrders()">
+          <input type="text" id="order-search" placeholder="Search orders..." oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="" data-i18n="all_status">All Status</option>
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="shipped" data-i18n="status_shipped">Shipped</option>
-          <option value="delivered" data-i18n="status_delivered">Delivered</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="filter-customer" onchange="filterOrders()">
           <option value="">All Customers</option>
@@ -357,18 +335,18 @@ function refreshSalesSelects() {
           <table>
             <thead>
               <tr>
-                <th data-i18n="col_order_num">Order #</th>
-                <th data-i18n="col_customer">Customer</th>
-                <th data-i18n="col_date">Date</th>
-                <th data-i18n="col_due_date">Due Date</th>
-                <th data-i18n="col_total">Total</th>
-                <th data-i18n="col_status">Status</th>
-                <th data-i18n="col_payment">Payment</th>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Due Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Payment</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders yet</h3><p>Create your first order to get started.</p><button class="btn btn-primary" onclick="openOrderModal()" data-i18n="btn_new_order">+ New Order</button></div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders yet</h3><p>Create your first order to get started.</p><button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -388,10 +366,10 @@ function refreshSalesSelects() {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th data-i18n="col_name">Name</th><th data-i18n="col_email">Email</th><th data-i18n="col_phone">Phone</th><th data-i18n="col_city">City</th><th>Tax No</th><th data-i18n="col_orders">Orders</th><th></th></tr>
+              <tr><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Tax No</th><th>Orders</th><th></th></tr>
             </thead>
             <tbody id="customers-tbody">
-              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>${t('no_customers')}</h3><p>${t('no_customers_sub')}</p><button class="btn btn-primary" onclick="openCustomerModal()">${t('btn_add_customer')}</button></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>No customers yet</h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -404,10 +382,10 @@ function refreshSalesSelects() {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th data-i18n="col_order">Order</th><th data-i18n="col_customer">Customer</th><th data-i18n="col_amount">Amount</th><th data-i18n="col_method">Method</th><th data-i18n="col_ref">Reference</th><th data-i18n="col_date">Date</th></tr>
+              <tr><th>Order</th><th>Customer</th><th>Amount</th><th>Method</th><th>Reference</th><th>Date</th></tr>
             </thead>
             <tbody id="payments-tbody">
-              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')}</h3><p>Payments will appear here when orders are marked as paid.</p></div></td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>No payments yet</h3><p>Payments will appear here when orders are marked as paid.</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -426,39 +404,39 @@ function refreshSalesSelects() {
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:20px">
         <div class="field">
-          <label data-i18n="label_customer">Customer *</label>
+          <label>Customer *</label>
           <select id="o-customer">
             <option value="">Select customer</option>
           </select>
         </div>
         <div class="field">
-          <label data-i18n="label_order_number">Order Number</label>
+          <label>Order Number</label>
           <input type="text" id="o-number" placeholder="Auto-generated">
         </div>
         <div class="field">
-          <label data-i18n="label_issue_date">Issue Date</label>
+          <label>Issue Date</label>
           <input type="date" id="o-date">
         </div>
         <div class="field">
-          <label data-i18n="label_due_date">Due Date</label>
+          <label>Due Date</label>
           <input type="date" id="o-duedate">
         </div>
         <div class="field">
-          <label data-i18n="col_status">Status</label>
+          <label>Status</label>
           <select id="o-status">
-            <option value="draft" data-i18n="status_draft">Draft</option>
-            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-            <option value="shipped" data-i18n="status_shipped">Shipped</option>
-            <option value="delivered" data-i18n="status_delivered">Delivered</option>
-            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+            <option value="draft">Draft</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
         <div class="field">
-          <label data-i18n="label_tax_rate">Tax Rate (%)</label>
+          <label>Tax Rate (%)</label>
           <input type="number" id="o-tax" value="0" min="0" max="100" oninput="recalcOrder()">
         </div>
         <div class="field">
-          <label data-i18n="label_discount">Discount ($)</label>
+          <label>Discount ($)</label>
           <input type="number" id="o-discount" value="0" min="0" oninput="recalcOrder()">
         </div>
       </div>
@@ -489,7 +467,7 @@ function refreshSalesSelects() {
       </div>
 
       <div class="field full" style="margin-top:16px">
-        <label data-i18n="label_notes">Notes</label>
+        <label>Notes</label>
         <textarea id="o-notes" placeholder="Payment terms, delivery notes..."></textarea>
       </div>
     </div>
@@ -510,14 +488,14 @@ function refreshSalesSelects() {
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field full"><label data-i18n="label_customer_name">Customer Name *</label><input type="text" id="c-name" placeholder="Acme Corporation"></div>
-        <div class="field"><label data-i18n="col_email">Email</label><input type="email" id="c-email" placeholder="contact@acme.com"></div>
-        <div class="field"><label data-i18n="col_phone">Phone</label><input type="tel" id="c-phone" placeholder="+1 555 000 0000"></div>
-        <div class="field full"><label data-i18n="label_address">Address</label><input type="text" id="c-address" placeholder="123 Main Street"></div>
-        <div class="field"><label data-i18n="col_city">City</label><input type="text" id="c-city" placeholder="New York"></div>
-        <div class="field"><label data-i18n="label_country">Country</label><input type="text" id="c-country" placeholder="USA"></div>
-        <div class="field"><label data-i18n="col_tax_no">Tax Number</label><input type="text" id="c-tax" placeholder="Tax/VAT ID"></div>
-        <div class="field full"><label data-i18n="label_notes">Notes</label><textarea id="c-notes" placeholder="Optional notes..."></textarea></div>
+        <div class="field full"><label>Customer Name *</label><input type="text" id="c-name" placeholder="Acme Corporation"></div>
+        <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="contact@acme.com"></div>
+        <div class="field"><label>Phone</label><input type="tel" id="c-phone" placeholder="+1 555 000 0000"></div>
+        <div class="field full"><label>Address</label><input type="text" id="c-address" placeholder="123 Main Street"></div>
+        <div class="field"><label>City</label><input type="text" id="c-city" placeholder="New York"></div>
+        <div class="field"><label>Country</label><input type="text" id="c-country" placeholder="USA"></div>
+        <div class="field"><label>Tax Number</label><input type="text" id="c-tax" placeholder="Tax/VAT ID"></div>
+        <div class="field full"><label>Notes</label><textarea id="c-notes" placeholder="Optional notes..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -537,8 +515,8 @@ function refreshSalesSelects() {
     <div class="modal-body">
       <input type="hidden" id="pay-order-id">
       <div class="form-grid cols-1">
-        <div class="field"><label data-i18n="label_amount">Amount *</label><input type="number" id="pay-amount" step="0.01"></div>
-        <div class="field"><label data-i18n="col_method">Payment Method</label>
+        <div class="field"><label>Amount *</label><input type="number" id="pay-amount" step="0.01"></div>
+        <div class="field"><label>Payment Method</label>
           <select id="pay-method">
             <option value="cash">Cash</option>
             <option value="bank">Bank Transfer</option>
@@ -546,8 +524,8 @@ function refreshSalesSelects() {
             <option value="other">Other</option>
           </select>
         </div>
-        <div class="field"><label data-i18n="col_ref">Reference</label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
-        <div class="field"><label data-i18n="label_notes">Notes</label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
+        <div class="field"><label>Reference</label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
+        <div class="field"><label>Notes</label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -601,6 +579,7 @@ async function init() {
   document.getElementById('user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
   await Promise.all([loadCustomers(), loadProducts()]);
   await Promise.all([loadOrders(), loadPayments()]);
+  applyTranslations();
 }
 
 // ===== LOAD =====
@@ -631,19 +610,12 @@ async function loadPayments() {
 
 // ===== RENDER ORDERS =====
 const statusBadge = { draft:'badge-gray', confirmed:'badge-blue', shipped:'badge-orange', delivered:'badge-green', cancelled:'badge-red' };
-const statusLabel = {};
-function getStatusLabels() {
-  return {
-    draft: t('status_draft'), confirmed: t('status_confirmed'),
-    shipped: t('status_shipped'), delivered: t('status_delivered'),
-    cancelled: t('status_cancelled')
-  };
-}
+const statusLabel = { draft:'Draft', confirmed:'Confirmed', shipped:'Shipped', delivered:'Delivered', cancelled:'Cancelled' };
 
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders found</h3><p>Create your first order.</p><button class="btn btn-primary" onclick="openOrderModal()" data-i18n="btn_new_order">+ New Order</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders found</h3><p>Create your first order.</p><button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button></div></td></tr>`;
     return;
   }
   const paidOrders = new Set(payments.map(p => p.order_id));
@@ -651,20 +623,20 @@ function renderOrders(list) {
     const isPaid = paidOrders.has(o.id);
     const paidAmt = payments.filter(p => p.order_id === o.id).reduce((s,p) => s + parseFloat(p.amount), 0);
     const remaining = parseFloat(o.total) - paidAmt;
-    const payBadge = isPaid || remaining <= 0 ? `<span class="badge badge-green">${t('pay_paid')}</span>` : paidAmt > 0 ? `<span class="badge badge-orange">${t('pay_partial')}</span>` : `<span class="badge badge-red">${t('pay_unpaid')}</span>`;
+    const payBadge = isPaid || remaining <= 0 ? '<span class="badge badge-green">Paid</span>' : paidAmt > 0 ? `<span class="badge badge-orange">Partial</span>` : '<span class="badge badge-red">Unpaid</span>';
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
       <td><strong>${o.customers?.name || '—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date || '—'}</td>
       <td style="color:${o.due_date && new Date(o.due_date) < new Date() && remaining > 0 ? 'var(--red)' : 'var(--gray500)'}">${o.due_date || '—'}</td>
       <td><strong>$${parseFloat(o.total||0).toFixed(2)}</strong></td>
-      <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
+      <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${statusLabel[o.status]||o.status}</span></td>
       <td>${payBadge}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="Invoice">🧾</button>
-        <button class="btn btn-sm btn-success btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)-paidAmt}')" title="${t('btn_record_payment')}">💳</button>
-        <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>
+        <button class="btn btn-sm btn-success btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)-paidAmt}')" title="Record Payment">💳</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -673,7 +645,7 @@ function renderOrders(list) {
 function renderCustomers(list) {
   const tbody = document.getElementById('customers-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>${t('no_customers')}</h3><p>${t('no_customers_sub')}</p><button class="btn btn-primary" onclick="openCustomerModal()">${t('btn_add_customer')}</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>No customers yet</h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(c => {
@@ -686,8 +658,8 @@ function renderCustomers(list) {
       <td><code style="font-size:11px">${c.tax_number||'—'}</code></td>
       <td><span class="badge badge-blue">${orderCount}</span></td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="editCustomer('${c.id}')" title="${t('btn_edit')}">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCustomer('${c.id}')" title="${t('btn_delete')}">🗑️</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="editCustomer('${c.id}')" title="Edit">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -696,10 +668,10 @@ function renderCustomers(list) {
 function renderPayments(list) {
   const tbody = document.getElementById('payments-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')}</h3></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>No payments yet</h3></div></td></tr>`;
     return;
   }
-  const methodLabel = { cash:`💵 ${t('pay_cash')}`, bank:`🏦 ${t('pay_bank')}`, card:`💳 ${t('pay_card')}`, other:`📋 ${t('pay_other')}` };
+  const methodLabel = { cash:'💵 Cash', bank:'🏦 Bank', card:'💳 Card', other:'📋 Other' };
   tbody.innerHTML = list.map(p => `<tr>
     <td><strong style="color:var(--blue)">${p.sales_orders?.order_number||'—'}</strong></td>
     <td>${p.sales_orders?.customers?.name||'—'}</td>
@@ -844,9 +816,9 @@ function recalcOrder() {
 
 async function saveOrder(statusOverride) {
   const customerId = document.getElementById('o-customer').value;
-  if (!customerId) { showToast(t('toast_select_customer'), 'error'); return; }
+  if (!customerId) { showToast('Please select a customer', 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && i.price >= 0 && (i.product_id || i.description));
-  if (!validItems.length) { showToast(t('toast_add_item'), 'error'); return; }
+  if (!validItems.length) { showToast('Add at least one item', 'error'); return; }
 
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price * (1-(i.disc||0)/100), 0);
   const taxRate = parseFloat(document.getElementById('o-tax').value) || 0;
@@ -914,7 +886,7 @@ async function deleteOrder(id) {
   if (!confirm('Delete this order?')) return;
   await sb.from('sales_order_items').delete().eq('order_id', id);
   await sb.from('sales_orders').delete().eq('id', id);
-  showToast(t('toast_order_deleted'), 'success');
+  showToast('Order deleted', 'success');
   await loadOrders();
 }
 
@@ -932,10 +904,10 @@ function openCustomerModal(id = null) {
 
 async function saveCustomer() {
   const name = document.getElementById('c-name').value.trim();
-  if (!name) { showToast(t('toast_customer_name_required'), 'error'); return; }
+  if (!name) { showToast('Customer name required', 'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('c-email').value.trim()||null, phone: document.getElementById('c-phone').value.trim()||null, address: document.getElementById('c-address').value.trim()||null, city: document.getElementById('c-city').value.trim()||null, country: document.getElementById('c-country').value.trim()||null, tax_number: document.getElementById('c-tax').value.trim()||null, notes: document.getElementById('c-notes').value.trim()||null };
-  if (editingCustomerId) { await sb.from('customers').update(payload).eq('id', editingCustomerId); showToast(t('toast_customer_updated'),'success'); }
-  else { await sb.from('customers').insert(payload); showToast(t('toast_customer_added'),'success'); }
+  if (editingCustomerId) { await sb.from('customers').update(payload).eq('id', editingCustomerId); showToast('Customer updated ✓','success'); }
+  else { await sb.from('customers').insert(payload); showToast('Customer added ✓','success'); }
   closeModal('customer-modal');
   await loadCustomers();
 }
@@ -945,7 +917,7 @@ function editCustomer(id) { openCustomerModal(id); }
 async function deleteCustomer(id) {
   if (!confirm('Delete this customer?')) return;
   await sb.from('customers').delete().eq('id', id);
-  showToast(t('toast_customer_deleted'),'success');
+  showToast('Customer deleted','success');
   await loadCustomers();
 }
 
@@ -962,9 +934,9 @@ function openPaymentModal(orderId, remaining) {
 async function savePayment() {
   const orderId = document.getElementById('pay-order-id').value;
   const amount = parseFloat(document.getElementById('pay-amount').value);
-  if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
+  if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
   await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method: document.getElementById('pay-method').value, reference: document.getElementById('pay-ref').value.trim()||null, notes: document.getElementById('pay-notes').value.trim()||null });
-  showToast(t('toast_payment_recorded'), 'success');
+  showToast('Payment recorded ✓', 'success');
   closeModal('payment-modal');
   await Promise.all([loadOrders(), loadPayments()]);
 }
@@ -1147,7 +1119,7 @@ async function downloadPDF() {
   doc.text('Thank you for your business! · Generated by Solvenin · solvenin.com', 105, 285, { align:'center' });
 
   doc.save(`${order.order_number}.pdf`);
-  showToast(t('toast_pdf_downloaded'), 'success');
+  showToast('PDF downloaded ✓', 'success');
 }
 
 // ===== TABS =====
@@ -1165,7 +1137,6 @@ function showToast(msg, type='') { const t=document.getElementById('toast'); t.t
 async function handleLogout() { await sb.auth.signOut(); window.location.href='/auth.html'; }
 
 init();
-applyTranslations();
 </script>
 </body>
 </html>

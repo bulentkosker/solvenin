@@ -169,20 +169,22 @@ tr:hover .row-actions{opacity:1}
 const _origSetLangPurch = typeof setLang !== 'undefined' ? setLang : null;
 function setLang(lang) {
   if (_origSetLangPurch) _origSetLangPurch(lang);
-  if (typeof filterOrders === 'function') filterOrders();
-  if (typeof filterSuppliers === 'function') filterSuppliers();
-  if (typeof updateStats === 'function') updateStats();
-  if (typeof updateSupplierSelects === 'function') updateSupplierSelects();
-  // Refresh status filter
+  // Refresh status filter options via JS (avoids data-i18n duplication)
   const stSel = document.getElementById('filter-status');
   if (stSel) {
     const opts = [['','all_status'],['draft','status_draft'],['sent','status_sent'],['confirmed','status_confirmed'],['received','status_received'],['cancelled','status_cancelled']];
     Array.from(stSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
   }
+  // Refresh placeholders
   const srch = document.getElementById('order-search');
   if (srch) srch.placeholder = t('search_orders');
   const ssrch = document.getElementById('supplier-search');
   if (ssrch) ssrch.placeholder = t('search_suppliers');
+  // Re-render tables to update status badges
+  if (typeof filterOrders === 'function') filterOrders();
+  if (typeof filterSuppliers === 'function') filterSuppliers();
+  if (typeof updateStats === 'function') updateStats();
+  if (typeof updateSupplierSelects === 'function') updateSupplierSelects();
 }
 </script>
 </head>
@@ -304,12 +306,12 @@ function setLang(lang) {
           <input type="text" id="order-search" placeholder="Search orders..." data-i18n-ph="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="" data-i18n="all_status">All Status</option>
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="sent" data-i18n="status_sent">Sent</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="received" data-i18n="status_received">Received</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="received">Received</option>
+          <option value="cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="filter-supplier" onchange="filterOrders()">
           <option value="">All Suppliers</option>
@@ -390,11 +392,11 @@ function setLang(lang) {
         <div class="field">
           <label data-i18n="col_status">Status</label>
           <select id="o-status">
-            <option value="draft" data-i18n="status_draft">Draft</option>
+            <option value="draft">Draft</option>
             <option value="sent">Sent to Supplier</option>
-            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-            <option value="received" data-i18n="status_received">Received</option>
-            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="received">Received</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
         <div class="field">
@@ -529,6 +531,7 @@ async function init() {
   document.getElementById('user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
   await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses()]);
   await loadOrders();
+  applyTranslations();
 }
 
 async function loadOrders() {
@@ -883,7 +886,6 @@ function showToast(msg,type='') { const t=document.getElementById('toast'); t.te
 async function handleLogout() { await sb.auth.signOut(); window.location.href='/auth.html'; }
 
 init();
-applyTranslations();
 </script>
 </body>
 </html>
