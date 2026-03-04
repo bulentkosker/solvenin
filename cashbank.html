@@ -804,9 +804,21 @@ async function init() {
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
-  // Load currencies
-  const { data: curr } = await sb.from('currencies').select('*').eq('is_active', true).order('code');
-  currencies = curr || [];
+  // Load currencies (with fallback if table doesn't exist yet)
+  try {
+    const { data: curr, error: currErr } = await sb.from('currencies').select('*').eq('is_active', true).order('code');
+    currencies = curr || [];
+  } catch(e) { currencies = []; }
+  // Fallback: if empty, use common currencies
+  if (!currencies.length) {
+    currencies = [
+      {code:'TRY',name:'Turkish Lira',symbol:'₺'},{code:'USD',name:'US Dollar',symbol:'$'},
+      {code:'EUR',name:'Euro',symbol:'€'},{code:'GBP',name:'British Pound',symbol:'£'},
+      {code:'CHF',name:'Swiss Franc',symbol:'Fr'},{code:'JPY',name:'Japanese Yen',symbol:'¥'},
+      {code:'RUB',name:'Russian Ruble',symbol:'₽'},{code:'CNY',name:'Chinese Yuan',symbol:'¥'},
+      {code:'AED',name:'UAE Dirham',symbol:'د.إ'},{code:'SAR',name:'Saudi Riyal',symbol:'﷼'},
+    ];
+  }
 
   // Fill currency search lists
   buildCurrencyList('reg-currency-list', 'reg-currency', 'reg-currency-input');
@@ -1454,13 +1466,16 @@ async function handleLogout() {
 }
 
 // ===== setLang override =====
-const _origSetLangCB = typeof setLang !== 'undefined' ? setLang : null;
+// NOTE: i18n.js setLang is loaded in <head>, captured here
+const _origSetLangCB = typeof setLang === 'function' ? setLang : function(){};
 function setLang(lang) {
-  if (_origSetLangCB) _origSetLangCB(lang);
-  renderCashGrid();
-  renderBankTree();
-  updateStats();
-  updateAccountFilter();
+  _origSetLangCB(lang);
+  if (registers.length || banks.length) {
+    renderCashGrid();
+    renderBankTree();
+    updateStats();
+    updateAccountFilter();
+  }
 }
 
 
@@ -1514,8 +1529,24 @@ document.addEventListener('click', e => {
   }
 });
 
+// ===== LANG SWITCHER =====
+function toggleLangMenu() {
+  const m = document.getElementById('lang-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function selectLang(lang) {
+  setLang(lang);
+  document.getElementById('lang-menu').style.display = 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#lang-switcher-wrap')) {
+    const m = document.getElementById('lang-menu');
+    if (m) m.style.display = 'none';
+  }
+});
+
 // ===== START =====
-init();
+(async () => { try { await init(); } catch(e) { console.error("Init error:", e); document.getElementById("loading-screen").innerHTML = '<div style="color:red;padding:20px">Error: '+e.message+'</div>'; } })();
 </script>
 </body>
 </html>
