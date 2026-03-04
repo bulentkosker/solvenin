@@ -1063,10 +1063,9 @@ async function init() {
   document.querySelector('.welcome-text h1').innerHTML = `${greet}, <span id="greeting-name">${firstName}</span>! 👋`;
 
   // Hide loading
-  setTimeout(() => {
-    document.getElementById('loading-screen').style.opacity = '0';
-    setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 300);
-  }, 1200);
+  const ls = document.getElementById('loading-screen');
+  ls.style.opacity = '0';
+  setTimeout(() => ls.style.display = 'none', 200);
 
   initChart('monthly');
   applyTranslations();
