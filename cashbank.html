@@ -772,6 +772,161 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const WORLD_CURRENCIES = [
+  {code:"AED",name:"UAE Dirham",symbol:"د.إ"},
+  {code:"AFN",name:"Afghan Afghani",symbol:"؋"},
+  {code:"ALL",name:"Albanian Lek",symbol:"L"},
+  {code:"AMD",name:"Armenian Dram",symbol:"֏"},
+  {code:"ANG",name:"Antillean Guilder",symbol:"ƒ"},
+  {code:"AOA",name:"Angolan Kwanza",symbol:"Kz"},
+  {code:"ARS",name:"Argentine Peso",symbol:"$"},
+  {code:"AUD",name:"Australian Dollar",symbol:"A$"},
+  {code:"AWG",name:"Aruban Florin",symbol:"ƒ"},
+  {code:"AZN",name:"Azerbaijani Manat",symbol:"₼"},
+  {code:"BAM",name:"Convertible Mark",symbol:"KM"},
+  {code:"BBD",name:"Barbadian Dollar",symbol:"$"},
+  {code:"BDT",name:"Bangladeshi Taka",symbol:"৳"},
+  {code:"BGN",name:"Bulgarian Lev",symbol:"лв"},
+  {code:"BHD",name:"Bahraini Dinar",symbol:"BD"},
+  {code:"BIF",name:"Burundian Franc",symbol:"Fr"},
+  {code:"BMD",name:"Bermudan Dollar",symbol:"$"},
+  {code:"BND",name:"Brunei Dollar",symbol:"$"},
+  {code:"BOB",name:"Bolivian Boliviano",symbol:"Bs"},
+  {code:"BRL",name:"Brazilian Real",symbol:"R$"},
+  {code:"BSD",name:"Bahamian Dollar",symbol:"$"},
+  {code:"BTN",name:"Bhutanese Ngultrum",symbol:"Nu"},
+  {code:"BWP",name:"Botswanan Pula",symbol:"P"},
+  {code:"BYN",name:"Belarusian Ruble",symbol:"Br"},
+  {code:"BZD",name:"Belize Dollar",symbol:"$"},
+  {code:"CAD",name:"Canadian Dollar",symbol:"C$"},
+  {code:"CDF",name:"Congolese Franc",symbol:"Fr"},
+  {code:"CHF",name:"Swiss Franc",symbol:"Fr"},
+  {code:"CLP",name:"Chilean Peso",symbol:"$"},
+  {code:"CNY",name:"Chinese Yuan",symbol:"¥"},
+  {code:"COP",name:"Colombian Peso",symbol:"$"},
+  {code:"CRC",name:"Costa Rican Colon",symbol:"c"},
+  {code:"CUP",name:"Cuban Peso",symbol:"$"},
+  {code:"CVE",name:"Cape Verdean Escudo",symbol:"$"},
+  {code:"CZK",name:"Czech Koruna",symbol:"Kc"},
+  {code:"DJF",name:"Djiboutian Franc",symbol:"Fr"},
+  {code:"DKK",name:"Danish Krone",symbol:"kr"},
+  {code:"DOP",name:"Dominican Peso",symbol:"$"},
+  {code:"DZD",name:"Algerian Dinar",symbol:"DA"},
+  {code:"EGP",name:"Egyptian Pound",symbol:"E£"},
+  {code:"ERN",name:"Eritrean Nakfa",symbol:"Nfk"},
+  {code:"ETB",name:"Ethiopian Birr",symbol:"Br"},
+  {code:"EUR",name:"Euro",symbol:"€"},
+  {code:"FJD",name:"Fijian Dollar",symbol:"$"},
+  {code:"FKP",name:"Falkland Pound",symbol:"£"},
+  {code:"GBP",name:"British Pound",symbol:"£"},
+  {code:"GEL",name:"Georgian Lari",symbol:"₾"},
+  {code:"GHS",name:"Ghanaian Cedi",symbol:"₵"},
+  {code:"GIP",name:"Gibraltar Pound",symbol:"£"},
+  {code:"GMD",name:"Gambian Dalasi",symbol:"D"},
+  {code:"GNF",name:"Guinean Franc",symbol:"Fr"},
+  {code:"GTQ",name:"Guatemalan Quetzal",symbol:"Q"},
+  {code:"GYD",name:"Guyanaese Dollar",symbol:"$"},
+  {code:"HKD",name:"Hong Kong Dollar",symbol:"HK$"},
+  {code:"HNL",name:"Honduran Lempira",symbol:"L"},
+  {code:"HTG",name:"Haitian Gourde",symbol:"G"},
+  {code:"HUF",name:"Hungarian Forint",symbol:"Ft"},
+  {code:"IDR",name:"Indonesian Rupiah",symbol:"Rp"},
+  {code:"ILS",name:"Israeli Shekel",symbol:"₪"},
+  {code:"INR",name:"Indian Rupee",symbol:"₹"},
+  {code:"IQD",name:"Iraqi Dinar",symbol:"IQD"},
+  {code:"IRR",name:"Iranian Rial",symbol:"IRR"},
+  {code:"ISK",name:"Icelandic Krona",symbol:"kr"},
+  {code:"JMD",name:"Jamaican Dollar",symbol:"$"},
+  {code:"JOD",name:"Jordanian Dinar",symbol:"JD"},
+  {code:"JPY",name:"Japanese Yen",symbol:"¥"},
+  {code:"KES",name:"Kenyan Shilling",symbol:"KSh"},
+  {code:"KGS",name:"Kyrgystani Som",symbol:"c"},
+  {code:"KHR",name:"Cambodian Riel",symbol:"KHR"},
+  {code:"KMF",name:"Comorian Franc",symbol:"Fr"},
+  {code:"KPW",name:"North Korean Won",symbol:"₩"},
+  {code:"KRW",name:"South Korean Won",symbol:"₩"},
+  {code:"KWD",name:"Kuwaiti Dinar",symbol:"KD"},
+  {code:"KYD",name:"Cayman Dollar",symbol:"$"},
+  {code:"KZT",name:"Kazakhstani Tenge",symbol:"₸"},
+  {code:"LAK",name:"Laotian Kip",symbol:"LAK"},
+  {code:"LBP",name:"Lebanese Pound",symbol:"LL"},
+  {code:"LKR",name:"Sri Lankan Rupee",symbol:"Rs"},
+  {code:"LRD",name:"Liberian Dollar",symbol:"$"},
+  {code:"LSL",name:"Lesotho Loti",symbol:"L"},
+  {code:"LYD",name:"Libyan Dinar",symbol:"LD"},
+  {code:"MAD",name:"Moroccan Dirham",symbol:"MAD"},
+  {code:"MDL",name:"Moldovan Leu",symbol:"L"},
+  {code:"MGA",name:"Malagasy Ariary",symbol:"Ar"},
+  {code:"MKD",name:"Macedonian Denar",symbol:"MKD"},
+  {code:"MMK",name:"Myanmar Kyat",symbol:"K"},
+  {code:"MNT",name:"Mongolian Tugrik",symbol:"₮"},
+  {code:"MOP",name:"Macanese Pataca",symbol:"P"},
+  {code:"MRU",name:"Mauritanian Ouguiya",symbol:"UM"},
+  {code:"MUR",name:"Mauritian Rupee",symbol:"Rs"},
+  {code:"MVR",name:"Maldivian Rufiyaa",symbol:"Rf"},
+  {code:"MWK",name:"Malawian Kwacha",symbol:"MK"},
+  {code:"MXN",name:"Mexican Peso",symbol:"$"},
+  {code:"MYR",name:"Malaysian Ringgit",symbol:"RM"},
+  {code:"MZN",name:"Mozambican Metical",symbol:"MT"},
+  {code:"NAD",name:"Namibian Dollar",symbol:"$"},
+  {code:"NGN",name:"Nigerian Naira",symbol:"₦"},
+  {code:"NIO",name:"Nicaraguan Cordoba",symbol:"C$"},
+  {code:"NOK",name:"Norwegian Krone",symbol:"kr"},
+  {code:"NPR",name:"Nepalese Rupee",symbol:"Rs"},
+  {code:"NZD",name:"New Zealand Dollar",symbol:"NZ$"},
+  {code:"OMR",name:"Omani Rial",symbol:"OMR"},
+  {code:"PAB",name:"Panamanian Balboa",symbol:"B/."},
+  {code:"PEN",name:"Peruvian Sol",symbol:"S/."},
+  {code:"PGK",name:"Papua Kina",symbol:"K"},
+  {code:"PHP",name:"Philippine Peso",symbol:"₱"},
+  {code:"PKR",name:"Pakistani Rupee",symbol:"Rs"},
+  {code:"PLN",name:"Polish Zloty",symbol:"zl"},
+  {code:"PYG",name:"Paraguayan Guarani",symbol:"PYG"},
+  {code:"QAR",name:"Qatari Rial",symbol:"QR"},
+  {code:"RON",name:"Romanian Leu",symbol:"lei"},
+  {code:"RSD",name:"Serbian Dinar",symbol:"din"},
+  {code:"RUB",name:"Russian Ruble",symbol:"₽"},
+  {code:"RWF",name:"Rwandan Franc",symbol:"Fr"},
+  {code:"SAR",name:"Saudi Riyal",symbol:"SR"},
+  {code:"SBD",name:"Solomon Dollar",symbol:"$"},
+  {code:"SCR",name:"Seychellois Rupee",symbol:"Rs"},
+  {code:"SDG",name:"Sudanese Pound",symbol:"SDG"},
+  {code:"SEK",name:"Swedish Krona",symbol:"kr"},
+  {code:"SGD",name:"Singapore Dollar",symbol:"S$"},
+  {code:"SHP",name:"Saint Helena Pound",symbol:"£"},
+  {code:"SOS",name:"Somali Shilling",symbol:"Sh"},
+  {code:"SRD",name:"Surinamese Dollar",symbol:"$"},
+  {code:"STN",name:"Sao Tome Dobra",symbol:"Db"},
+  {code:"SYP",name:"Syrian Pound",symbol:"SP"},
+  {code:"SZL",name:"Swazi Lilangeni",symbol:"L"},
+  {code:"THB",name:"Thai Baht",symbol:"฿"},
+  {code:"TJS",name:"Tajikistani Somoni",symbol:"SM"},
+  {code:"TMT",name:"Turkmenistani Manat",symbol:"T"},
+  {code:"TND",name:"Tunisian Dinar",symbol:"TND"},
+  {code:"TOP",name:"Tongan Paanga",symbol:"T$"},
+  {code:"TRY",name:"Turkish Lira",symbol:"₺"},
+  {code:"TTD",name:"T&T Dollar",symbol:"$"},
+  {code:"TWD",name:"Taiwan Dollar",symbol:"NT$"},
+  {code:"TZS",name:"Tanzanian Shilling",symbol:"Sh"},
+  {code:"UAH",name:"Ukrainian Hryvnia",symbol:"₴"},
+  {code:"UGX",name:"Ugandan Shilling",symbol:"Sh"},
+  {code:"USD",name:"US Dollar",symbol:"$"},
+  {code:"UYU",name:"Uruguayan Peso",symbol:"$"},
+  {code:"UZS",name:"Uzbekistan Som",symbol:"UZS"},
+  {code:"VES",name:"Venezuelan Bolivar",symbol:"Bs"},
+  {code:"VND",name:"Vietnamese Dong",symbol:"₫"},
+  {code:"VUV",name:"Vanuatu Vatu",symbol:"Vt"},
+  {code:"WST",name:"Samoan Tala",symbol:"T"},
+  {code:"XAF",name:"CFA Franc BEAC",symbol:"Fr"},
+  {code:"XCD",name:"East Caribbean Dollar",symbol:"$"},
+  {code:"XOF",name:"CFA Franc BCEAO",symbol:"Fr"},
+  {code:"XPF",name:"CFP Franc",symbol:"Fr"},
+  {code:"YER",name:"Yemeni Rial",symbol:"YER"},
+  {code:"ZAR",name:"South African Rand",symbol:"R"},
+  {code:"ZMW",name:"Zambian Kwacha",symbol:"ZK"},
+  {code:"ZWL",name:"Zimbabwean Dollar",symbol:"$"},
+];
+
 const { createClient } = supabase;
 const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',
@@ -808,21 +963,9 @@ async function init() {
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
-  // Load currencies (with fallback if table doesn't exist yet)
-  try {
-    const { data: curr, error: currErr } = await sb.from('currencies').select('*').eq('is_active', true).order('code');
-    currencies = curr || [];
-  } catch(e) { currencies = []; }
-  // Fallback: if empty, use common currencies
-  if (!currencies.length) {
-    currencies = [
-      {code:'TRY',name:'Turkish Lira',symbol:'₺'},{code:'USD',name:'US Dollar',symbol:'$'},
-      {code:'EUR',name:'Euro',symbol:'€'},{code:'GBP',name:'British Pound',symbol:'£'},
-      {code:'CHF',name:'Swiss Franc',symbol:'Fr'},{code:'JPY',name:'Japanese Yen',symbol:'¥'},
-      {code:'RUB',name:'Russian Ruble',symbol:'₽'},{code:'CNY',name:'Chinese Yuan',symbol:'¥'},
-      {code:'AED',name:'UAE Dirham',symbol:'د.إ'},{code:'SAR',name:'Saudi Riyal',symbol:'﷼'},
-    ];
-  }
+  // Currencies are hardcoded - no DB query needed (fast load)
+  // DB sync happens lazily if needed
+  currencies = WORLD_CURRENCIES;
 
   // Currency lists built lazily when modals open (faster load)
 
@@ -842,9 +985,7 @@ async function init() {
   }, 400);
 
   // Apply saved language
-  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
-  if (typeof _origSetLangCB === 'function') _origSetLangCB(savedLang);
-  else applyTranslations();
+  applyTranslations();
 }
 
 // ===== DATA LOADING =====
@@ -1475,18 +1616,8 @@ async function handleLogout() {
   window.location.href = '/auth.html';
 }
 
-// ===== setLang override =====
-// NOTE: i18n.js setLang is loaded in <head>, captured here
-const _origSetLangCB = typeof setLang === 'function' ? setLang : function(){};
-function setLang(lang) {
-  _origSetLangCB(lang);
-  if (registers.length || banks.length) {
-    renderCashGrid();
-    renderBankTree();
-    updateStats();
-    updateAccountFilter();
-  }
-}
+// ===== No setLang override - i18n.js handles it =====
+// Dynamic re-render after lang change is triggered from selectLang below
 
 
 // ===== CURRENCY SEARCH =====
@@ -1550,8 +1681,13 @@ function toggleLangMenu() {
   m.style.display = m.style.display === 'none' ? 'block' : 'none';
 }
 function selectLang(lang) {
-  setLang(lang);
+  if (typeof setLang === 'function') setLang(lang); // i18n.js setLang
   document.getElementById('lang-menu').style.display = 'none';
+  // Re-render dynamic content with new language
+  renderCashGrid();
+  renderBankTree();
+  updateStats();
+  updateAccountFilter();
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('#lang-switcher-wrap')) {
