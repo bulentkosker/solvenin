@@ -670,9 +670,13 @@
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="label_currency">Currency *</label>
-          <select id="acc-currency">
-            <!-- filled by JS -->
-          </select>
+          <div style="position:relative">
+            <input type="text" id="acc-currency-input" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
+              oninput="filterCurrencyList('acc-currency-list', this.value)" onfocus="showCurrencyList('acc-currency-list')"
+              style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;font-family:var(--font-body)">
+            <input type="hidden" id="acc-currency">
+            <div id="acc-currency-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gray200);border-radius:10px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.1);margin-top:4px"></div>
+          </div>
         </div>
         <div class="form-group">
           <label data-i18n="label_opening_balance">Opening Balance</label>
@@ -1482,14 +1486,19 @@ function setLang(lang) {
 // ===== CURRENCY SEARCH =====
 function buildCurrencyList(listId, hiddenId, inputId) {
   const list = document.getElementById(listId);
-  const all = currencies.map(c => `<div class="curr-opt" data-code="${c.code}"
-    onclick="setCurrencyFromList('${hiddenId}','${inputId}','${listId}','${c.code}','${c.name}','${c.symbol.replace(/'/g,"\'")}')"
-    style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;transition:background .1s"
-    onmouseover="this.style.background='var(--gray50)'" onmouseout="this.style.background=''">
-    <span style="font-weight:700;color:var(--blue);min-width:40px">${c.code}</span>
-    <span style="color:var(--gray600)">${c.name}</span>
-    <span style="margin-left:auto;color:var(--gray400)">${c.symbol}</span>
-  </div>`).join('');
+  if (!list) return; // safety check
+  const all = currencies.map(c => {
+    const sym = (c.symbol||'').replace(/'/g,"\'").replace(/`/g,'');
+    const name = (c.name||'').replace(/'/g,"\'");
+    return `<div class="curr-opt" data-code="${c.code}"
+      onclick="setCurrencyFromList('${hiddenId}','${inputId}','${listId}','${c.code}','${name}','${sym}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='var(--gray50)'" onmouseout="this.style.background=''">
+      <span style="font-weight:700;color:var(--blue);min-width:44px">${c.code}</span>
+      <span style="color:var(--gray600);flex:1">${c.name}</span>
+      <span style="color:var(--gray400)">${c.symbol||''}</span>
+    </div>`;
+  }).join('');
   list.innerHTML = all;
 }
 
