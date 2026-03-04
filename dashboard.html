@@ -699,9 +699,9 @@ tr:hover td { background: var(--gray50); }
     <div class="sidebar-section">
     <div class="sidebar-section-label">Main</div>
     <a class="nav-item active" href="dashboard.html"><span class="nav-icon">⊞</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
-    <a class="nav-item " href="inventory.html"><span class="nav-icon">📦</span> <span data-i18n="nav_inventory">Inventory</span></a>
-    <a class="nav-item " href="sales.html"><span class="nav-icon">💰</span> <span data-i18n="nav_sales">Sales</span></a>
-    <a class="nav-item " href="purchasing.html"><span class="nav-icon">🛒</span> <span data-i18n="nav_purchasing">Purchasing</span></a>
+    <a class="nav-item" href="inventory.html"><span class="nav-icon">📦</span> <span data-i18n="nav_inventory">Inventory</span></a>
+    <a class="nav-item" href="sales.html"><span class="nav-icon">💰</span> <span data-i18n="nav_sales">Sales</span></a>
+    <a class="nav-item" href="purchasing.html"><span class="nav-icon">🛒</span> <span data-i18n="nav_purchasing">Purchasing</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">🏭</span> <span data-i18n="nav_production">Production</span></a>
   </div>
   <div class="sidebar-section">
@@ -716,8 +716,8 @@ tr:hover td { background: var(--gray50); }
     <div class="sidebar-section-label">System</div>
     <a class="nav-item" href="#"><span class="nav-icon">📊</span> <span data-i18n="nav_reports">Reports</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> <span data-i18n="nav_settings">Settings</span></a>
-    <a class="nav-item " href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
-  </div></div>
+    <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
+  </div>
 
   <div class="sidebar-footer">
     <div class="user-card" id="user-card">
@@ -1153,6 +1153,7 @@ async function handleLogout() {
 // ===== START =====
 document.getElementById('loading-screen').style.transition = 'opacity .3s';
 init();
+applyTranslations();
 </script>
 </body>
 </html>

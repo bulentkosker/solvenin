@@ -696,5 +696,9 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Auto-apply on load
-document.addEventListener('DOMContentLoaded', applyTranslations);
+// Auto-apply on load - immediately and on DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', applyTranslations);
+} else {
+  applyTranslations();
+}
