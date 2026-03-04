@@ -523,16 +523,24 @@ tr:hover .row-actions{opacity:1}
       <input type="hidden" id="pay-order-id">
       <div class="form-grid cols-1">
         <div class="field"><label>Amount *</label><input type="number" id="pay-amount" step="0.01"></div>
-        <div class="field"><label>Payment Method</label>
-          <select id="pay-method">
-            <option value="cash">Cash</option>
-            <option value="bank">Bank Transfer</option>
-            <option value="card">Credit Card</option>
-            <option value="other">Other</option>
+        <div class="field"><label data-i18n="label_pay_method">Payment Method</label>
+          <select id="pay-method" onchange="onPayMethodChange()">
+            <option value="cash">💵 Cash (Register)</option>
+            <option value="bank">🏦 Bank Transfer</option>
+            <option value="card">💳 Credit Card</option>
+            <option value="other">📌 Other</option>
           </select>
         </div>
-        <div class="field"><label>Reference</label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
-        <div class="field"><label>Notes</label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
+        <div class="field" id="pay-register-row" style="display:none">
+          <label data-i18n="label_cash_register">Cash Register *</label>
+          <select id="pay-register"><option value="">Select register...</option></select>
+        </div>
+        <div class="field" id="pay-account-row" style="display:none">
+          <label data-i18n="label_bank_account">Bank Account *</label>
+          <select id="pay-account"><option value="">Select account...</option></select>
+        </div>
+        <div class="field"><label data-i18n="col_ref">Reference</label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
+        <div class="field"><label data-i18n="label_notes">Notes</label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -586,6 +594,7 @@ async function init() {
   document.getElementById('user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
   await Promise.all([loadCustomers(), loadProducts()]);
   await Promise.all([loadOrders(), loadPayments()]);
+  await loadCashBankAccounts();
   applyTranslations();
 }
 
@@ -941,9 +950,51 @@ function openPaymentModal(orderId, remaining) {
 async function savePayment() {
   const orderId = document.getElementById('pay-order-id').value;
   const amount = parseFloat(document.getElementById('pay-amount').value);
-  if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
-  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method: document.getElementById('pay-method').value, reference: document.getElementById('pay-ref').value.trim()||null, notes: document.getElementById('pay-notes').value.trim()||null });
-  showToast('Payment recorded ✓', 'success');
+  const method = document.getElementById('pay-method').value;
+  const registerId = document.getElementById('pay-register').value;
+  const accountId = document.getElementById('pay-account').value;
+  const ref = document.getElementById('pay-ref').value.trim() || null;
+  const notes = document.getElementById('pay-notes').value.trim() || null;
+
+  if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
+  if (method === 'cash' && !registerId) { showToast(t('toast_select_register'), 'error'); return; }
+  if (method === 'bank' && !accountId) { showToast(t('toast_select_account'), 'error'); return; }
+
+  const order = orders.find(o => o.id === orderId);
+
+  // 1. Save payment record
+  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes });
+
+  // 2. Auto-create cash or bank transaction
+  if (method === 'cash' && registerId) {
+    const { data: dup } = await sb.from('cash_transactions').select('id').eq('source_type','invoice_sale').eq('source_id', orderId).eq('register_id', registerId);
+    if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
+    else {
+      const reg = cashRegisters.find(r => r.id === registerId);
+      await sb.from('cash_transactions').insert({
+        company_id: companyId, register_id: registerId, type: 'in', amount,
+        currency_code: reg?.currency_code || 'USD',
+        description: `${t('sale_payment')} – ${order?.order_number || ''}`,
+        category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        reference: ref, transaction_date: new Date().toISOString().split('T')[0]
+      });
+    }
+  } else if (method === 'bank' && accountId) {
+    const { data: dup } = await sb.from('bank_transactions').select('id').eq('source_type','invoice_sale').eq('source_id', orderId).eq('account_id', accountId);
+    if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
+    else {
+      const acc = bankAccounts.find(a => a.id === accountId);
+      await sb.from('bank_transactions').insert({
+        company_id: companyId, account_id: accountId, type: 'in', amount,
+        currency_code: acc?.currency_code || 'USD',
+        description: `${t('sale_payment')} – ${order?.order_number || ''}`,
+        category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        reference: ref, transaction_date: new Date().toISOString().split('T')[0]
+      });
+    }
+  }
+
+  showToast(t('toast_payment_recorded'), 'success');
   closeModal('payment-modal');
   await Promise.all([loadOrders(), loadPayments()]);
 }
@@ -1127,6 +1178,26 @@ async function downloadPDF() {
 
   doc.save(`${order.order_number}.pdf`);
   showToast('PDF downloaded ✓', 'success');
+}
+
+// ===== CASH & BANK INTEGRATION =====
+async function loadCashBankAccounts() {
+  const { data: regs } = await sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true).order('name');
+  cashRegisters = regs || [];
+  const { data: accs } = await sb.from('bank_accounts')
+    .select('id,account_name,currency_code,bank_id,banks(name)')
+    .eq('company_id', companyId).eq('is_active', true).order('account_name');
+  bankAccounts = accs || [];
+  const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
+  document.getElementById('pay-register').innerHTML = `<option value="">${t('select_register')}</option>` + regOpts;
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.banks?.name ? a.banks.name+' · ':'' }${a.account_name} (${a.currency_code})</option>`).join('');
+  document.getElementById('pay-account').innerHTML = `<option value="">${t('select_account')}</option>` + accOpts;
+}
+
+function onPayMethodChange() {
+  const m = document.getElementById('pay-method').value;
+  document.getElementById('pay-register-row').style.display = m === 'cash' ? '' : 'none';
+  document.getElementById('pay-account-row').style.display = m === 'bank' ? '' : 'none';
 }
 
 // ===== TABS =====

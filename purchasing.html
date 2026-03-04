@@ -499,9 +499,38 @@ function setLang(lang) {
         <label data-i18n="label_notes">Notes</label>
         <textarea id="receive-notes" placeholder="Optional receiving notes..."></textarea>
       </div>
+      <!-- PAYMENT SECTION -->
+      <div style="margin-top:20px;padding:14px 16px;background:var(--blue-light);border-radius:12px;border:1px solid rgba(59,130,246,0.2)">
+        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:12px">💳 Payment (Optional)</div>
+        <div class="form-group">
+          <label data-i18n="label_pay_method">Payment Method</label>
+          <select id="recv-pay-method" onchange="onRecvPayMethodChange()">
+            <option value="">No payment now</option>
+            <option value="cash">💵 Cash (Register)</option>
+            <option value="bank">🏦 Bank Transfer</option>
+            <option value="other">📌 Other</option>
+          </select>
+        </div>
+        <div class="form-group" id="recv-register-row" style="display:none">
+          <label data-i18n="label_cash_register">Cash Register *</label>
+          <select id="recv-pay-register"><option value="">Select register...</option></select>
+        </div>
+        <div class="form-group" id="recv-account-row" style="display:none">
+          <label data-i18n="label_bank_account">Bank Account *</label>
+          <select id="recv-pay-account"><option value="">Select account...</option></select>
+        </div>
+        <div class="form-group" id="recv-amount-row" style="display:none">
+          <label data-i18n="col_amount">Amount Paid</label>
+          <input type="number" id="recv-pay-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group" id="recv-ref-row" style="display:none">
+          <label data-i18n="col_ref">Reference</label>
+          <input type="text" id="recv-pay-ref" placeholder="Dekont no, açıklama...">
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('receive-modal')">Cancel</button>
+      <button class="btn btn-outline" onclick="closeModal('receive-modal')" data-i18n="btn_cancel">Cancel</button>
       <button class="btn btn-teal" onclick="saveReceiving()">✓ Confirm Receiving</button>
     </div>
   </div>
@@ -514,6 +543,8 @@ const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
 
 let companyId = null;
+let cashRegisters = [];
+let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
 let editingOrderId = null, editingSupplierId = null;
 let orderItems = [];
@@ -538,6 +569,7 @@ async function init() {
   document.getElementById('user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
   await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses()]);
   await loadOrders();
+  await loadCashBankAccounts();
   applyTranslations();
 }
 
@@ -628,6 +660,31 @@ function updateSupplierSelects() {
   const opts = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   document.getElementById('o-supplier').innerHTML = `<option value="">${t('select_supplier')}</option>` + opts;
   document.getElementById('filter-supplier').innerHTML = `<option value="">${t('all_suppliers')}</option>` + opts;
+}
+
+// ===== CASH & BANK INTEGRATION =====
+async function loadCashBankAccounts() {
+  const { data: regs } = await sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true).order('name');
+  cashRegisters = regs || [];
+  const { data: accs } = await sb.from('bank_accounts')
+    .select('id,account_name,currency_code,bank_id,banks(name)')
+    .eq('company_id', companyId).eq('is_active', true).order('account_name');
+  bankAccounts = accs || [];
+
+  const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
+  document.getElementById('recv-pay-register').innerHTML = `<option value="">${t('select_register')}</option>` + regOpts;
+
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.banks?.name ? a.banks.name+' · ':'' }${a.account_name} (${a.currency_code})</option>`).join('');
+  document.getElementById('recv-pay-account').innerHTML = `<option value="">${t('select_account')}</option>` + accOpts;
+}
+
+function onRecvPayMethodChange() {
+  const m = document.getElementById('recv-pay-method').value;
+  const show = m && m !== '';
+  document.getElementById('recv-register-row').style.display = m === 'cash' ? '' : 'none';
+  document.getElementById('recv-account-row').style.display = m === 'bank' ? '' : 'none';
+  document.getElementById('recv-amount-row').style.display = show ? '' : 'none';
+  document.getElementById('recv-ref-row').style.display = show ? '' : 'none';
 }
 
 // ===== FILTERS =====
@@ -812,6 +869,14 @@ async function openReceiveModal(orderId) {
     </div>
   `).join('');
   document.getElementById('receive-notes').value = '';
+  // Reset payment fields
+  document.getElementById('recv-pay-method').value = '';
+  document.getElementById('recv-register-row').style.display = 'none';
+  document.getElementById('recv-account-row').style.display = 'none';
+  document.getElementById('recv-amount-row').style.display = 'none';
+  document.getElementById('recv-ref-row').style.display = 'none';
+  document.getElementById('recv-pay-amount').value = '';
+  document.getElementById('recv-pay-ref').value = '';
   openModal('receive-modal');
 }
 
@@ -841,6 +906,50 @@ async function saveReceiving() {
 
   // Mark order as received
   await sb.from('purchase_orders').update({ status: 'received' }).eq('id', orderId);
+
+  // ── Auto payment transaction ──
+  const payMethod = document.getElementById('recv-pay-method').value;
+  const payAmount = parseFloat(document.getElementById('recv-pay-amount').value) || 0;
+  const payRef = document.getElementById('recv-pay-ref').value.trim() || null;
+  const poOrder = orders.find(o => o.id === orderId);
+
+  if (payMethod && payAmount > 0) {
+    if (payMethod === 'cash') {
+      const registerId = document.getElementById('recv-pay-register').value;
+      if (registerId) {
+        const { data: dup } = await sb.from('cash_transactions').select('id')
+          .eq('source_type','invoice_purchase').eq('source_id', orderId).eq('register_id', registerId);
+        if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
+        else {
+          const reg = cashRegisters.find(r => r.id === registerId);
+          await sb.from('cash_transactions').insert({
+            company_id: companyId, register_id: registerId, type: 'out', amount: payAmount,
+            currency_code: reg?.currency_code || 'USD',
+            description: `${t('purchase_payment')} – ${poOrder?.order_number || ''}`,
+            category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+            reference: payRef, transaction_date: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
+    } else if (payMethod === 'bank') {
+      const accountId = document.getElementById('recv-pay-account').value;
+      if (accountId) {
+        const { data: dup } = await sb.from('bank_transactions').select('id')
+          .eq('source_type','invoice_purchase').eq('source_id', orderId).eq('account_id', accountId);
+        if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
+        else {
+          const acc = bankAccounts.find(a => a.id === accountId);
+          await sb.from('bank_transactions').insert({
+            company_id: companyId, account_id: accountId, type: 'out', amount: payAmount,
+            currency_code: acc?.currency_code || 'USD',
+            description: `${t('purchase_payment')} – ${poOrder?.order_number || ''}`,
+            category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+            reference: payRef, transaction_date: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
+    }
+  }
 
   showToast(t('toast_stock_received'), 'success');
   closeModal('receive-modal');
