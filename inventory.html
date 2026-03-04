@@ -192,6 +192,39 @@ tr:hover .action-btns { opacity:1; }
 .fade-up-2 { animation-delay:.1s; }
 </style>
 <script src="i18n.js"></script>
+<script>
+// Re-render table when language changes
+const _origSetLang = setLang;
+function setLang(lang) {
+  _origSetLang(lang);
+  // Re-render dynamic content if render functions exist
+  if (typeof renderAll === 'function') renderAll();
+  if (typeof renderMovements === 'function') renderMovements();
+  // Refresh select option texts
+  refreshSelectOptions();
+}
+function refreshSelectOptions() {
+  const catSel = document.getElementById('filter-category');
+  if (catSel) {
+    const opts = [['','all_categories'],['Electronics','cat_electronics'],['Raw Material','cat_raw'],['Packaging','cat_packaging'],['Finished Goods','cat_finished'],['Office','cat_office']];
+    Array.from(catSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
+  }
+  const stSel = document.getElementById('filter-status');
+  if (stSel) {
+    const opts = [['','all_status'],['in_stock','status_in_stock'],['low','status_low'],['out','status_out']];
+    Array.from(stSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
+  }
+  const adjSel = document.getElementById('adj-type');
+  if (adjSel) {
+    const opts = [['in','adj_in'],['out','adj_out'],['adjust','adj_adjust'],['transfer','adj_transfer'],['return','adj_return']];
+    Array.from(adjSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
+  }
+  const srch = document.getElementById('table-search');
+  if (srch) srch.placeholder = t('search_products');
+  const gsrch = document.getElementById('global-search');
+  if (gsrch) gsrch.placeholder = t('search_products');
+}
+</script>
 </head>
 <body>
 
@@ -275,15 +308,15 @@ tr:hover .action-btns { opacity:1; }
     <!-- LOW STOCK ALERT -->
     <div class="alert-bar fade-up" id="low-stock-alert">
       <div class="alert-icon">⚠️</div>
-      <div class="alert-text"><strong>3 items</strong> are running low on stock and need restocking.</div>
-      <span class="alert-action" onclick="filterByStatus('low')">View Low Stock →</span>
+      <div class="alert-text"><strong id="alert-count">3</strong> <span data-i18n="low_stock_alert">items are running low on stock and need restocking.</span></div>
+      <span class="alert-action" onclick="filterByStatus('low')" data-i18n="view_low_stock">View Low Stock →</span>
     </div>
 
     <!-- STATS -->
     <div class="stats-row fade-up fade-up-1">
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Total Products</span>
+          <span class="stat-label" data-i18n="stat_total_products">Total Products</span>
           <div class="stat-icon blue">📦</div>
         </div>
         <div class="stat-value" id="stat-total">0</div>
@@ -291,7 +324,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Total Value</span>
+          <span class="stat-label" data-i18n="stat_total_value">Total Value</span>
           <div class="stat-icon green">💰</div>
         </div>
         <div class="stat-value" id="stat-value">$0</div>
@@ -299,7 +332,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Low Stock</span>
+          <span class="stat-label" data-i18n="stat_low_stock">Low Stock</span>
           <div class="stat-icon orange">⚠️</div>
         </div>
         <div class="stat-value" id="stat-low">0</div>
@@ -307,7 +340,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Out of Stock</span>
+          <span class="stat-label" data-i18n="stat_out_of_stock">Out of Stock</span>
           <div class="stat-icon red">🚫</div>
         </div>
         <div class="stat-value" id="stat-out">0</div>
@@ -317,10 +350,10 @@ tr:hover .action-btns { opacity:1; }
 
     <!-- TABS -->
     <div class="tabs-bar fade-up fade-up-1">
-      <button class="tab-btn active" onclick="switchTab('all', this)">All Items</button>
-      <button class="tab-btn" onclick="switchTab('low', this)">Low Stock</button>
-      <button class="tab-btn" onclick="switchTab('out', this)">Out of Stock</button>
-      <button class="tab-btn" onclick="switchTab('movements', this)">Movements</button>
+      <button class="tab-btn active" onclick="switchTab('all', this)" data-i18n="tab_all">All Items</button>
+      <button class="tab-btn" onclick="switchTab('low', this)" data-i18n="tab_low">Low Stock</button>
+      <button class="tab-btn" onclick="switchTab('out', this)" data-i18n="tab_out">Out of Stock</button>
+      <button class="tab-btn" onclick="switchTab('movements', this)" data-i18n="tab_movements">Movements</button>
     </div>
 
     <!-- TOOLBAR -->
@@ -328,26 +361,26 @@ tr:hover .action-btns { opacity:1; }
       <div class="toolbar-left">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" placeholder="Search products..." id="table-search" oninput="filterTable()">
+          <input type="text" placeholder="Search products..." data-i18n-placeholder="search_products" id="table-search" oninput="filterTable()">
         </div>
         <select class="filter-btn" id="filter-category" onchange="filterTable()">
-          <option value="">All Categories</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Raw Material">Raw Materials</option>
-          <option value="Packaging">Packaging</option>
-          <option value="Finished Goods">Finished Goods</option>
-          <option value="Office">Office Supplies</option>
+          <option value="" data-i18n="all_categories">All Categories</option>
+          <option value="Electronics" data-i18n="cat_electronics">Electronics</option>
+          <option value="Raw Material" data-i18n="cat_raw">Raw Materials</option>
+          <option value="Packaging" data-i18n="cat_packaging">Packaging</option>
+          <option value="Finished Goods" data-i18n="cat_finished">Finished Goods</option>
+          <option value="Office" data-i18n="cat_office">Office Supplies</option>
         </select>
         <select class="filter-btn" id="filter-status" onchange="filterTable()">
-          <option value="">All Status</option>
-          <option value="in_stock">In Stock</option>
-          <option value="low">Low Stock</option>
-          <option value="out">Out of Stock</option>
+          <option value="" data-i18n="all_status">All Status</option>
+          <option value="in_stock" data-i18n="status_in_stock">In Stock</option>
+          <option value="low" data-i18n="status_low">Low Stock</option>
+          <option value="out" data-i18n="status_out">Out of Stock</option>
         </select>
       </div>
-      <button class="btn-secondary" onclick="exportCSV()">⬇ Export</button>
-      <button class="btn-secondary" onclick="openAdjustModal()">📊 Adjust Stock</button>
-      <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+      <button class="btn-secondary" onclick="exportCSV()" data-i18n="btn_export">⬇ Export</button>
+      <button class="btn-secondary" onclick="openAdjustModal()" data-i18n="btn_adjust">📊 Adjust Stock</button>
+      <button class="btn-primary" onclick="openAddModal()" data-i18n="btn_add_product">+ Add Product</button>
     </div>
 
     <!-- INVENTORY TABLE -->
@@ -367,14 +400,14 @@ tr:hover .action-btns { opacity:1; }
           <thead>
             <tr>
               <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
-              <th onclick="sortTable('name')">Product ↕</th>
-              <th onclick="sortTable('category')">Category ↕</th>
-              <th onclick="sortTable('stock')">Stock ↕</th>
-              <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
-              <th onclick="sortTable('total_value')">Total Value ↕</th>
-              <th>Status</th>
-              <th>Location</th>
-              <th style="width:80px">Actions</th>
+              <th onclick="sortTable('name')" data-i18n="col_product">Product ↕</th>
+              <th onclick="sortTable('category')" data-i18n="col_category">Category ↕</th>
+              <th onclick="sortTable('stock')" data-i18n="col_stock">Stock ↕</th>
+              <th onclick="sortTable('unit_cost')" data-i18n="col_unit_cost">Unit Cost ↕</th>
+              <th onclick="sortTable('total_value')" data-i18n="col_total_value">Total Value ↕</th>
+              <th data-i18n="col_status">Status</th>
+              <th data-i18n="col_location">Location</th>
+              <th style="width:80px" data-i18n="col_actions">Actions</th>
             </tr>
           </thead>
           <tbody id="inventory-tbody"></tbody>
@@ -390,17 +423,17 @@ tr:hover .action-btns { opacity:1; }
     <div class="table-card fade-up fade-up-2" id="movements-card" style="display:none">
       <div class="table-header">
         <span class="table-title">Stock Movements</span>
-        <button class="btn-primary" onclick="openMovementModal()">+ Record Movement</button>
+        <button class="btn-primary" onclick="openMovementModal()" data-i18n="btn_record_movement">+ Record Movement</button>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Product</th>
-            <th>Type</th>
-            <th>Quantity</th>
-            <th>Reference</th>
-            <th>Note</th>
+            <th data-i18n="col_date">Date</th>
+            <th data-i18n="col_product">Product</th>
+            <th data-i18n="col_type">Type</th>
+            <th data-i18n="col_qty">Quantity</th>
+            <th data-i18n="col_ref">Reference</th>
+            <th data-i18n="col_note">Note</th>
           </tr>
         </thead>
         <tbody id="movements-tbody"></tbody>
@@ -414,18 +447,18 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="product-modal">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title" id="modal-title">Add Product</div>
+      <div class="modal-title" id="modal-title" id="modal-title" data-i18n="modal_add_product">Add Product</div>
       <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-section-title">Basic Information</div>
+      <div class="form-section-title" data-i18n="section_basic">Basic Information</div>
       <div class="form-row">
         <div class="form-group">
-          <label>Product Name *</label>
+          <label data-i18n="label_product_name">Product Name *</label>
           <input type="text" id="p-name" placeholder="e.g. Laptop Dell XPS 15">
         </div>
         <div class="form-group">
-          <label>SKU / Barcode</label>
+          <label data-i18n="label_sku">SKU / Barcode</label>
           <input type="text" id="p-sku" placeholder="e.g. DELL-XPS-001">
         </div>
       </div>
@@ -456,52 +489,52 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Description</label>
+          <label data-i18n="label_description">Description</label>
           <textarea id="p-desc" placeholder="Optional product description..."></textarea>
         </div>
       </div>
       <div class="form-divider"></div>
-      <div class="form-section-title">Stock & Pricing</div>
+      <div class="form-section-title" data-i18n="section_stock">Stock & Pricing</div>
       <div class="form-row three">
         <div class="form-group">
-          <label>Current Stock *</label>
+          <label data-i18n="label_current_stock">Current Stock *</label>
           <input type="number" id="p-stock" placeholder="0" min="0">
         </div>
         <div class="form-group">
-          <label>Min. Stock (Alert)</label>
+          <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
           <input type="number" id="p-min-stock" placeholder="10" min="0">
         </div>
         <div class="form-group">
-          <label>Max. Stock</label>
+          <label data-i18n="label_max_stock">Max. Stock</label>
           <input type="number" id="p-max-stock" placeholder="500" min="0">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Unit Cost ($) *</label>
+          <label data-i18n="label_unit_cost">Unit Cost ($) *</label>
           <input type="number" id="p-cost" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
-          <label>Selling Price ($)</label>
+          <label data-i18n="label_selling_price">Selling Price ($)</label>
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
       <div class="form-divider"></div>
-      <div class="form-section-title">Storage</div>
+      <div class="form-section-title" data-i18n="section_storage">Storage</div>
       <div class="form-row">
         <div class="form-group">
-          <label>Warehouse / Location</label>
+          <label data-i18n="label_location">Warehouse / Location</label>
           <input type="text" id="p-location" placeholder="e.g. Warehouse A, Shelf B3">
         </div>
         <div class="form-group">
-          <label>Supplier</label>
+          <label data-i18n="label_supplier">Supplier</label>
           <input type="text" id="p-supplier" placeholder="e.g. Dell Inc.">
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+      <button class="btn-secondary" onclick="closeModal('product-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveProduct()" data-i18n="btn_save_product">Save Product</button>
     </div>
   </div>
 </div>
@@ -510,7 +543,7 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="adjust-modal">
   <div class="modal" style="width:440px">
     <div class="modal-head">
-      <div class="modal-title">Adjust Stock</div>
+      <div class="modal-title" data-i18n="modal_adjust">Adjust Stock</div>
       <button class="modal-close" onclick="closeModal('adjust-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -522,36 +555,36 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Movement Type</label>
+          <label data-i18n="label_adj_type">Movement Type</label>
           <select id="adj-type">
-            <option value="in">Stock In (Received)</option>
-            <option value="out">Stock Out (Used/Sold)</option>
-            <option value="adjust">Manual Adjustment</option>
-            <option value="transfer">Transfer</option>
-            <option value="return">Return</option>
+            <option value="in" data-i18n="adj_in">Stock In (Received)</option>
+            <option value="out" data-i18n="adj_out">Stock Out (Used/Sold)</option>
+            <option value="adjust" data-i18n="adj_adjust">Manual Adjustment</option>
+            <option value="transfer" data-i18n="adj_transfer">Transfer</option>
+            <option value="return" data-i18n="adj_return">Return</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Quantity</label>
+          <label data-i18n="label_adj_qty">Quantity</label>
           <input type="number" id="adj-qty" placeholder="0" min="1">
         </div>
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Reference (PO / SO number)</label>
+          <label data-i18n="label_adj_ref">Reference (PO / SO number)</label>
           <input type="text" id="adj-ref" placeholder="e.g. PO-2025-001">
         </div>
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Note</label>
+          <label data-i18n="label_adj_note">Note</label>
           <textarea id="adj-note" placeholder="Optional note..." style="min-height:60px"></textarea>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('adjust-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveAdjustment()">Save Movement</button>
+      <button class="btn-secondary" onclick="closeModal('adjust-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveAdjustment()" data-i18n="btn_save_movement">Save Movement</button>
     </div>
   </div>
 </div>
@@ -560,15 +593,15 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="delete-modal">
   <div class="modal" style="width:400px">
     <div class="modal-head">
-      <div class="modal-title">Delete Product?</div>
+      <div class="modal-title" data-i18n="modal_delete_product">Delete Product?</div>
       <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
     </div>
     <div class="modal-body">
       <p style="color:var(--gray600);font-size:13px;line-height:1.6">Are you sure you want to delete <strong id="delete-product-name"></strong>? This action cannot be undone and all stock history will be lost.</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
-      <button class="btn-primary" style="background:var(--red)" onclick="confirmDelete()">Delete</button>
+      <button class="btn-secondary" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" style="background:var(--red)" onclick="confirmDelete()" data-i18n="btn_delete">Delete</button>
     </div>
   </div>
 </div>
@@ -655,7 +688,7 @@ function updateStats() {
   document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
   document.getElementById('stat-out').textContent = out;
-  document.getElementById('low-stock-alert').querySelector('strong').textContent = `${low + out} items`;
+  const alertCount = document.getElementById('alert-count'); if(alertCount) alertCount.textContent = `${low + out}`;
   document.getElementById('low-stock-alert').style.display = (low + out) > 0 ? 'flex' : 'none';
 }
 
@@ -703,11 +736,11 @@ function renderTable() {
   const tbody = document.getElementById('inventory-tbody');
   const start = (currentPage - 1) * perPage;
   const page = filteredProducts.slice(start, start + perPage);
-  document.getElementById('table-count').textContent = `${filteredProducts.length} items`;
-  document.getElementById('page-info').textContent = `Showing ${start + 1}–${Math.min(start + perPage, filteredProducts.length)} of ${filteredProducts.length}`;
+  document.getElementById('table-count').textContent = `${filteredProducts.length} ${t('items')}`;
+  document.getElementById('page-info').textContent = `${t('showing')} ${start + 1}–${Math.min(start + perPage, filteredProducts.length)} ${t('of')} ${filteredProducts.length}`;
 
   if (page.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>No products found</h3><p>Try adjusting your filters or add a new product.</p><button class="btn-primary" onclick="openAddModal()">+ Add Product</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('no_products_found')}</h3><p>${t('no_products_sub')}</p><button class="btn-primary" onclick="openAddModal()">${t('btn_add_product')}</button></div></td></tr>`;
     renderPagination();
     return;
   }
@@ -717,10 +750,10 @@ function renderTable() {
     const pct = p.max_stock ? Math.min(100, (p.stock / p.max_stock) * 100) : 50;
     const fillClass = status === 'out' ? 'critical' : status === 'low' ? 'low' : 'good';
     const badge = status === 'out'
-      ? '<span class="badge badge-red">Out of Stock</span>'
+      ? `<span class="badge badge-red">${t('status_out')}</span>`
       : status === 'low'
-      ? '<span class="badge badge-orange">⚠ Low Stock</span>'
-      : '<span class="badge badge-green">✓ In Stock</span>';
+      ? `<span class="badge badge-orange">⚠ ${t('status_low')}</span>`
+      : `<span class="badge badge-green">✓ ${t('status_in_stock')}</span>`;
     const totalVal = (p.stock * p.unit_cost).toLocaleString('en-US', {style:'currency', currency:'USD'});
     const catBadge = {Electronics:'badge-blue', 'Raw Material':'badge-gray', Packaging:'badge-purple', 'Finished Goods':'badge-green', Office:'badge-gray'}[p.category] || 'badge-gray';
     return `<tr>
@@ -732,7 +765,7 @@ function renderTable() {
           <div class="item-sku">${p.sku || '—'}</div>
         </div>
       </div></td>
-      <td><span class="badge ${catBadge}">${p.category || '—'}</span></td>
+      <td><span class="badge ${catBadge}">${getCatLabel(p.category) || '—'}</span></td>
       <td><div class="stock-bar-wrap">
         <div class="stock-bar"><div class="stock-fill ${fillClass}" style="width:${pct}%"></div></div>
         <span class="stock-num">${p.stock} ${p.unit}</span>
@@ -755,6 +788,16 @@ function renderTable() {
 function getCatIcon(cat) {
   const icons = { Electronics:'💻', 'Raw Material':'🔩', Packaging:'📦', 'Finished Goods':'✅', Office:'🖊️' };
   return icons[cat] || '📦';
+}
+function getCatLabel(cat) {
+  const map = {
+    Electronics: t('cat_electronics'),
+    'Raw Material': t('cat_raw'),
+    Packaging: t('cat_packaging'),
+    'Finished Goods': t('cat_finished'),
+    Office: t('cat_office')
+  };
+  return map[cat] || cat;
 }
 
 function renderPagination() {
@@ -788,7 +831,13 @@ function sortTable(key) {
 
 function renderMovements() {
   const tbody = document.getElementById('movements-tbody');
-  const typeLabel = { in:'<span class="badge badge-green">↓ Stock In</span>', out:'<span class="badge badge-red">↑ Stock Out</span>', adjust:'<span class="badge badge-blue">⚙ Adjust</span>', transfer:'<span class="badge badge-purple">→ Transfer</span>', return:'<span class="badge badge-orange">↩ Return</span>' };
+  const typeLabel = {
+    in: `<span class="badge badge-green">↓ ${t('adj_in_short')}</span>`,
+    out: `<span class="badge badge-red">↑ ${t('adj_out_short')}</span>`,
+    adjust: `<span class="badge badge-blue">⚙ ${t('adj_adjust_short')}</span>`,
+    transfer: `<span class="badge badge-purple">→ ${t('adj_transfer')}</span>`,
+    return: `<span class="badge badge-orange">↩ ${t('adj_return')}</span>`
+  };
   tbody.innerHTML = movements.map(m => `<tr>
     <td style="color:var(--gray500);font-size:12px">${m.date}</td>
     <td style="font-weight:600">${m.product}</td>
@@ -822,7 +871,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 function openAddModal() {
   editingId = null;
-  document.getElementById('modal-title').textContent = 'Add Product';
+  document.getElementById('modal-title').textContent = t('modal_add_product');
   ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location','p-supplier'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('p-category').value = '';
   document.getElementById('p-unit').value = 'pcs';
@@ -833,7 +882,7 @@ function openEditModal(id) {
   editingId = id;
   const p = products.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('modal-title').textContent = 'Edit Product';
+  document.getElementById('modal-title').textContent = t('modal_edit_product');
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
   document.getElementById('p-category').value = p.category || '';
@@ -851,7 +900,7 @@ function openEditModal(id) {
 
 function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
-  if (!name) { showToast('Product name is required', 'error'); return; }
+  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
   const stock = parseFloat(document.getElementById('p-stock').value) || 0;
   const cost = parseFloat(document.getElementById('p-cost').value) || 0;
   if (editingId) {
@@ -867,7 +916,7 @@ function saveProduct() {
       location: document.getElementById('p-location').value,
       supplier: document.getElementById('p-supplier').value,
     });
-    showToast('Product updated!', 'success');
+    showToast(t('toast_product_updated'), 'success');
   } else {
     const newId = Math.max(...products.map(p => p.id), 0) + 1;
     products.push({
@@ -881,7 +930,7 @@ function saveProduct() {
       location: document.getElementById('p-location').value,
       supplier: document.getElementById('p-supplier').value,
     });
-    showToast('Product added!', 'success');
+    showToast(t('toast_product_added'), 'success');
   }
   closeModal('product-modal');
   renderAll();
@@ -898,7 +947,7 @@ function saveAdjustment() {
   const pid = parseInt(document.getElementById('adj-product').value);
   const qty = parseFloat(document.getElementById('adj-qty').value);
   const type = document.getElementById('adj-type').value;
-  if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
+  if (!qty || qty <= 0) { showToast(t('toast_invalid_qty'), 'error'); return; }
   const p = products.find(x => x.id === pid);
   if (!p) return;
   const delta = (type === 'in' || type === 'return') ? qty : -qty;
@@ -912,7 +961,7 @@ function saveAdjustment() {
   });
   closeModal('adjust-modal');
   renderAll();
-  showToast(`Stock updated! ${p.name}: ${p.stock} ${p.unit}`, 'success');
+  showToast(`${t('toast_stock_updated')} ${p.name}: ${p.stock} ${p.unit}`, 'success');
 }
 
 function openDeleteModal(id) {
@@ -926,7 +975,7 @@ function confirmDelete() {
   products = products.filter(p => p.id !== deletingId);
   closeModal('delete-modal');
   renderAll();
-  showToast('Product deleted', 'success');
+  showToast(t('toast_product_deleted'), 'success');
 }
 
 function openMovementModal() { populateAdjustSelect(); openModal('adjust-modal'); }
@@ -983,7 +1032,7 @@ function exportCSV() {
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'inventory-' + new Date().toISOString().split('T')[0] + '.csv';
   a.click();
-  showToast('CSV exported!', 'success');
+  showToast(t('toast_csv_exported'), 'success');
 }
 
 // ===== LOGOUT =====

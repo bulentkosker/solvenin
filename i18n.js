@@ -102,6 +102,30 @@ const T = {
     btn_save:'Save', btn_close:'Close', btn_confirm:'Confirm',
     status_active:'Active', status_pending:'Pending', status_cancelled:'Cancelled',
     no_data:'No data found', loading:'Loading...',
+    no_products_found:'No products found',
+    no_products_sub:'Try adjusting your filters or add a new product.',
+    items:'items',
+    showing:'Showing',
+    of:'of',
+    adj_in_short:'Stock In',
+    adj_out_short:'Stock Out',
+    adj_adjust_short:'Adjust',
+    btn_edit:'Edit',
+    btn_record_movement:'+ Record Movement',
+    col_date:'Date',
+    col_type:'Type',
+    col_qty:'Quantity',
+    col_ref:'Reference',
+    col_note:'Note',
+    toast_product_updated:'Product updated!',
+    toast_product_added:'Product added!',
+    toast_name_required:'Product name is required',
+    toast_invalid_qty:'Enter a valid quantity',
+    toast_stock_updated:'Stock updated!',
+    toast_product_deleted:'Product deleted',
+    toast_csv_exported:'CSV exported!',
+    stat_low_stock_sub:'items need restocking',
+    stat_out_sub:'items unavailable',
     logout:'Logout',
   },
   tr: {
@@ -644,6 +668,29 @@ function applyTranslations() {
       }
     }
   });
+  // Refresh select option texts
+  const catSel = document.getElementById('filter-category');
+  if (catSel) {
+    const catMap = [
+      ['', t('all_categories')],
+      ['Electronics', t('cat_electronics')],
+      ['Raw Material', t('cat_raw')],
+      ['Packaging', t('cat_packaging')],
+      ['Finished Goods', t('cat_finished')],
+      ['Office', t('cat_office')],
+    ];
+    Array.from(catSel.options).forEach((opt,i) => { if(catMap[i]) opt.text = catMap[i][1]; });
+  }
+  const statSel = document.getElementById('filter-status');
+  if (statSel) {
+    const statMap = [['', t('all_status')], ['in_stock', t('status_in_stock')], ['low', t('status_low')], ['out', t('status_out')]];
+    Array.from(statSel.options).forEach((opt,i) => { if(statMap[i]) opt.text = statMap[i][1]; });
+  }
+  // Refresh search placeholder
+  const srch = document.getElementById('table-search');
+  if (srch) srch.placeholder = t('search_products');
+  const gsrch = document.getElementById('global-search');
+  if (gsrch) gsrch.placeholder = t('search_products');
   // RTL support
   document.body.dir = LANG_META[lang]?.dir || 'ltr';
   // Update lang switcher UI
@@ -696,9 +743,5 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Auto-apply on load - immediately and on DOMContentLoaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', applyTranslations);
-} else {
-  applyTranslations();
-}
+// Auto-apply on load
+document.addEventListener('DOMContentLoaded', applyTranslations);
