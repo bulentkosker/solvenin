@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solvenin – Cash & Bank</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="i18n.js"></script>
+  <style>
+    :root {
+      --blue:#3b82f6; --blue-dark:#2563eb; --blue-light:#eff6ff;
+      --green:#22c55e; --green-light:#f0fdf4;
+      --red:#ef4444; --red-light:#fef2f2;
+      --orange:#f97316; --orange-light:#fff7ed;
+      --purple:#8b5cf6; --purple-light:#f5f3ff;
+      --teal:#14b8a6; --teal-light:#f0fdfa;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray300:#cbd5e1; --gray400:#94a3b8; --gray500:#64748b;
+      --gray600:#475569; --gray700:#334155; --gray800:#1e293b;
+      --white:#ffffff;
+      --font-body:'Inter',system-ui,sans-serif;
+      --font-display:'Inter',system-ui,sans-serif;
+      --sidebar-w:220px;
+      --radius:14px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-body);background:var(--gray50);color:var(--gray800);display:flex;min-height:100vh}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:var(--sidebar-w);min-height:100vh;background:#1a2540;display:flex;flex-direction:column;padding:0;position:fixed;left:0;top:0;bottom:0;z-index:100}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .wordmark{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px}
+    .wordmark .dot{color:#3b82f6}
+    .underline{height:2px;background:linear-gradient(90deg,#3b82f6,transparent);margin-top:4px;border-radius:2px}
+    .sidebar-section{padding:12px 10px 4px}
+    .sidebar-section-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.8px;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;text-decoration:none;transition:all .15s;cursor:pointer}
+    .nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+    .nav-item.active{background:rgba(59,130,246,.25);color:#fff}
+    .nav-icon{width:20px;text-align:center;font-size:15px;flex-shrink:0}
+    .sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,.08)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    .user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+    .user-info{flex:1;min-width:0}
+    .user-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-plan{font-size:11px;color:rgba(255,255,255,.4)}
+
+    /* ── LAYOUT ── */
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{height:60px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
+    .topbar-title{font-size:16px;font-weight:700;color:var(--gray800);flex:1}
+    .topbar-actions{display:flex;align-items:center;gap:8px}
+    .topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s;position:relative}
+    .topbar-btn:hover{background:var(--gray50)}
+    .content{padding:24px;flex:1}
+
+    /* ── LOADING ── */
+    #loading-screen{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:opacity .3s}
+    .spinner{width:36px;height:36px;border:3px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── TABS ── */
+    .tab-bar{display:flex;gap:4px;background:var(--gray100);border-radius:12px;padding:4px;margin-bottom:24px;width:fit-content}
+    .tab-btn{padding:8px 18px;border-radius:9px;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--gray500);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .tab-btn.active{background:#fff;color:var(--gray800);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--gray200)}
+    .stat-label{font-size:12px;font-weight:600;color:var(--gray500);margin-bottom:6px}
+    .stat-val{font-size:22px;font-weight:800;color:var(--gray800)}
+    .stat-sub{font-size:11px;color:var(--gray400);margin-top:4px}
+    .stat-card.blue .stat-val{color:var(--blue)}
+    .stat-card.green .stat-val{color:var(--green)}
+    .stat-card.orange .stat-val{color:var(--orange)}
+    .stat-card.red .stat-val{color:var(--red)}
+
+    /* ── PAGE HEADER ── */
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+    .page-header h1{font-size:22px;font-weight:800;color:var(--gray800)}
+    .page-header p{font-size:13px;color:var(--gray500);margin-top:2px}
+    .header-actions{display:flex;gap:8px;flex-shrink:0}
+
+    /* ── CARDS ── */
+    .card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray200);margin-bottom:16px}
+    .card-header{padding:16px 20px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;color:var(--gray800)}
+    .card-body{padding:20px}
+
+    /* ── REGISTER/ACCOUNT CARDS GRID ── */
+    .accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:24px}
+    .account-card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray200);padding:20px;cursor:pointer;transition:all .2s;position:relative}
+    .account-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(59,130,246,.1);transform:translateY(-1px)}
+    .account-card.selected{border-color:var(--blue);background:var(--blue-light)}
+    .account-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .account-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .account-icon.cash{background:var(--green-light)}
+    .account-icon.bank{background:var(--blue-light)}
+    .account-name{font-size:14px;font-weight:700;color:var(--gray800);margin-bottom:2px}
+    .account-meta{font-size:11px;color:var(--gray500)}
+    .account-balance{font-size:20px;font-weight:800;margin-top:8px}
+    .account-balance.positive{color:var(--green)}
+    .account-balance.negative{color:var(--red)}
+    .account-currency{font-size:12px;color:var(--gray400);font-weight:400}
+    .add-account-card{border:2px dashed var(--gray200);background:transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--gray400);min-height:130px;transition:all .2s}
+    .add-account-card:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+    .add-account-card .plus{font-size:24px;font-weight:300}
+
+    /* ── TOOLBAR ── */
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .toolbar-left{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap}
+    .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--gray200);border-radius:10px;padding:0 12px;height:36px;min-width:200px}
+    .search-box input{border:none;outline:none;font-size:13px;color:var(--gray700);background:transparent;width:100%}
+    .filter-select{height:36px;border:1px solid var(--gray200);border-radius:10px;padding:0 10px;font-size:13px;color:var(--gray700);background:#fff;cursor:pointer;outline:none}
+
+    /* ── TABLE ── */
+    .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--gray200)}
+    table{width:100%;border-collapse:collapse;background:#fff}
+    thead{background:var(--gray50)}
+    th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gray200);white-space:nowrap}
+    td{padding:12px 14px;font-size:13px;color:var(--gray700);border-bottom:1px solid var(--gray100)}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--gray50)}
+    .empty-state{text-align:center;padding:48px 20px;color:var(--gray400)}
+    .empty-state-icon{font-size:40px;margin-bottom:12px}
+    .empty-state h3{font-size:15px;font-weight:600;color:var(--gray600);margin-bottom:4px}
+    .empty-state p{font-size:13px}
+
+    /* ── BADGES ── */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+    .badge-green{background:var(--green-light);color:#16a34a}
+    .badge-red{background:var(--red-light);color:#dc2626}
+    .badge-blue{background:var(--blue-light);color:#2563eb}
+    .badge-orange{background:var(--orange-light);color:#ea580c}
+    .badge-gray{background:var(--gray100);color:var(--gray600)}
+    .badge-purple{background:var(--purple-light);color:#7c3aed}
+    .badge-teal{background:var(--teal-light);color:#0f766e}
+
+    /* ── AMOUNT COLORS ── */
+    .amount-in{color:var(--green);font-weight:700}
+    .amount-out{color:var(--red);font-weight:700}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover{background:var(--blue-dark)}
+    .btn-outline{background:#fff;color:var(--gray700);border:1px solid var(--gray200)}
+    .btn-outline:hover{background:var(--gray50);border-color:var(--gray300)}
+    .btn-danger{background:var(--red-light);color:#dc2626;border:1px solid #fecaca}
+    .btn-danger:hover{background:#fecaca}
+    .btn-sm{padding:5px 10px;font-size:12px;border-radius:8px}
+    .btn-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:8px}
+    .row-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+    tr:hover .row-actions{opacity:1}
+
+    /* ── MODAL ── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between}
+    .modal-title{font-size:16px;font-weight:700;color:var(--gray800)}
+    .modal-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--gray100);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--gray500)}
+    .modal-close:hover{background:var(--gray200)}
+    .modal-body{padding:24px}
+    .modal-footer{padding:16px 24px;border-top:1px solid var(--gray100);display:flex;justify-content:flex-end;gap:8px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:6px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;color:var(--gray800);outline:none;transition:border .15s;background:#fff;font-family:var(--font-body)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .form-group textarea{resize:vertical;min-height:72px}
+
+    /* ── BANK TREE ── */
+    .bank-tree{margin-bottom:24px}
+    .bank-node{background:#fff;border:1px solid var(--gray200);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+    .bank-node-header{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;background:#fff;transition:background .15s}
+    .bank-node-header:hover{background:var(--gray50)}
+    .bank-node-body{border-top:1px solid var(--gray100);padding:12px}
+    .bank-logo{width:36px;height:36px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .bank-name{font-size:14px;font-weight:700;color:var(--gray800);flex:1}
+    .bank-count{font-size:12px;color:var(--gray400)}
+    .bank-chevron{color:var(--gray400);transition:transform .2s;font-size:12px}
+    .bank-node.open .bank-chevron{transform:rotate(180deg)}
+    .account-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:4px}
+    .account-row:hover{background:var(--gray50)}
+    .account-row.selected{background:var(--blue-light)}
+    .account-row-info{flex:1}
+    .account-row-name{font-size:13px;font-weight:600;color:var(--gray800)}
+    .account-row-iban{font-size:11px;color:var(--gray400);font-family:monospace}
+    .account-row-bal{font-size:13px;font-weight:700;text-align:right}
+
+    /* ── TOAST ── */
+    .toast{position:fixed;bottom:24px;right:24px;background:var(--gray800);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;display:flex;align-items:center;gap:10px}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success{background:#16a34a}
+    .toast.error{background:#dc2626}
+    .toast.warn{background:var(--orange)}
+
+    /* ── FADE ANIMATIONS ── */
+    .fade-up{opacity:0;transform:translateY(16px);animation:fadeUp .4s ease forwards}
+    @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+    .fade-up-1{animation-delay:.05s}
+    .fade-up-2{animation-delay:.1s}
+    .fade-up-3{animation-delay:.15s}
+
+    /* ── LANG SWITCHER ── */
+    #lang-switcher{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;border:1px solid var(--gray200);background:var(--white);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--gray600);transition:all .15s}
+    .lang-opt.active{background:rgba(255,255,255,.12)!important;color:#fff!important}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%)}
+      .main{margin-left:0}
+      .stats-row{grid-template-columns:1fr 1fr}
+      .accounts-grid{grid-template-columns:1fr}
+      .form-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--gray400)">Loading...</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">solvenin<span class="dot">.</span></div>
+    <div class="underline"></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">⊞</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
+    <a class="nav-item" href="inventory.html"><span class="nav-icon">📦</span> <span data-i18n="nav_inventory">Inventory</span></a>
+    <a class="nav-item" href="sales.html"><span class="nav-icon">💰</span> <span data-i18n="nav_sales">Sales</span></a>
+    <a class="nav-item" href="purchasing.html"><span class="nav-icon">🛒</span> <span data-i18n="nav_purchasing">Purchasing</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">🏭</span> <span data-i18n="nav_production">Production</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Management</div>
+    <a class="nav-item" href="#"><span class="nav-icon">👥</span> <span data-i18n="nav_hr">HR & Payroll</span></a>
+    <a class="nav-item active" href="cashbank.html"><span class="nav-icon">🏦</span> <span data-i18n="nav_cashbank">Cash & Bank</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">💳</span> <span data-i18n="nav_finance">Finance</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">🚚</span> <span data-i18n="nav_shipping">Shipping</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">📅</span> <span data-i18n="nav_projects">Projects</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">🔧</span> <span data-i18n="nav_maintenance">Maintenance</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item" href="#"><span class="nav-icon">📊</span> <span data-i18n="nav_reports">Reports</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> <span data-i18n="nav_settings">Settings</span></a>
+    <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card" id="user-card">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-plan" id="user-plan-label">Free Plan</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-title" data-i18n="nav_cashbank">Cash & Bank</div>
+    <div class="topbar-actions">
+      <div id="lang-switcher-wrap" style="position:relative">
+        <button id="lang-switcher" onclick="toggleLangMenu()" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;border:1px solid var(--gray200);background:var(--white);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--gray600)">
+          <span id="lang-code">EN</span>
+          <span id="lang-name" style="color:var(--gray400);font-weight:400">English</span>
+          <span style="font-size:9px;color:var(--gray400)">▾</span>
+        </button>
+        <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a2540;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+          <div class="lang-opt" data-lang="en" onclick="selectLang('en')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">EN &nbsp; English</div>
+          <div class="lang-opt" data-lang="tr" onclick="selectLang('tr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TR &nbsp; Türkçe</div>
+          <div class="lang-opt" data-lang="de" onclick="selectLang('de')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">DE &nbsp; Deutsch</div>
+          <div class="lang-opt" data-lang="fr" onclick="selectLang('fr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">FR &nbsp; Français</div>
+          <div class="lang-opt" data-lang="es" onclick="selectLang('es')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">ES &nbsp; Español</div>
+          <div class="lang-opt" data-lang="ar" onclick="selectLang('ar')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">AR &nbsp; العربية</div>
+          <div class="lang-opt" data-lang="zh" onclick="selectLang('zh')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">ZH &nbsp; 中文</div>
+          <div class="lang-opt" data-lang="ru" onclick="selectLang('ru')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">RU &nbsp; Русский</div>
+          <div class="lang-opt" data-lang="pt" onclick="selectLang('pt')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">PT &nbsp; Português</div>
+          <div class="lang-opt" data-lang="ja" onclick="selectLang('ja')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">JA &nbsp; 日本語</div>
+        </div>
+      </div>
+      <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header fade-up">
+      <div>
+        <h1 data-i18n="nav_cashbank">🏦 Cash & Bank</h1>
+        <p data-i18n="cashbank_sub">Manage cash registers, bank accounts and transactions</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row fade-up fade-up-1">
+      <div class="stat-card green">
+        <div class="stat-label" data-i18n="total_cash">Total Cash</div>
+        <div class="stat-val" id="stat-cash">—</div>
+        <div class="stat-sub" id="stat-cash-registers">— registers</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label" data-i18n="total_bank">Total Bank</div>
+        <div class="stat-val" id="stat-bank">—</div>
+        <div class="stat-sub" id="stat-bank-accounts">— accounts</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label" data-i18n="today_in">Today In</div>
+        <div class="stat-val" id="stat-today-in">—</div>
+        <div class="stat-sub" data-i18n="all_transactions">All transactions</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label" data-i18n="today_out">Today Out</div>
+        <div class="stat-val" id="stat-today-out">—</div>
+        <div class="stat-sub" data-i18n="all_transactions">All transactions</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar fade-up fade-up-2">
+      <button class="tab-btn active" onclick="setTab(this,'cash')" data-i18n="tab_cash">Cash Registers</button>
+      <button class="tab-btn" onclick="setTab(this,'bank')" data-i18n="tab_bank">Bank Accounts</button>
+      <button class="tab-btn" onclick="setTab(this,'transactions')" data-i18n="tab_transactions">All Transactions</button>
+    </div>
+
+    <!-- ════ CASH TAB ════ -->
+    <div id="tab-cash" class="fade-up fade-up-3">
+      <div class="page-header" style="margin-bottom:16px">
+        <div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openRegisterModal()">
+            <span>+</span> <span data-i18n="btn_add_register">Add Register</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="accounts-grid" id="cash-grid">
+        <!-- rendered by JS -->
+      </div>
+
+      <!-- Cash Transactions for selected register -->
+      <div id="cash-detail" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="cash-detail-title">Transactions</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="exportCashCSV()">⬇ Export</button>
+              <button class="btn btn-primary btn-sm" onclick="openCashTxModal()">
+                + <span data-i18n="btn_add_transaction">Add Transaction</span>
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="toolbar" style="padding:12px 16px">
+              <div class="toolbar-left">
+                <div class="search-box">
+                  <span>🔍</span>
+                  <input type="text" id="cash-search" placeholder="Search..." oninput="filterCashTx()">
+                </div>
+                <select class="filter-select" id="cash-type-filter" onchange="filterCashTx()">
+                  <option value="">All Types</option>
+                  <option value="in">In</option>
+                  <option value="out">Out</option>
+                </select>
+                <input type="date" class="filter-select" id="cash-date-from" onchange="filterCashTx()">
+                <input type="date" class="filter-select" id="cash-date-to" onchange="filterCashTx()">
+              </div>
+            </div>
+            <div class="table-wrap" style="border:none;border-radius:0">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="col_date">Date</th>
+                    <th data-i18n="col_description">Description</th>
+                    <th data-i18n="col_category">Category</th>
+                    <th data-i18n="col_ref">Reference</th>
+                    <th data-i18n="col_type">Type</th>
+                    <th data-i18n="col_amount">Amount</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cash-tx-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ BANK TAB ════ -->
+    <div id="tab-bank" style="display:none" class="fade-up fade-up-3">
+      <div class="page-header" style="margin-bottom:16px">
+        <div></div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="openBankModal()">
+            🏦 <span data-i18n="btn_add_bank">Add Bank</span>
+          </button>
+          <button class="btn btn-primary" onclick="openAccountModal()">
+            + <span data-i18n="btn_add_account">Add Account</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bank-tree" id="bank-tree">
+        <!-- rendered by JS -->
+      </div>
+
+      <!-- Bank Transactions for selected account -->
+      <div id="bank-detail" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="bank-detail-title">Transactions</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="exportBankCSV()">⬇ Export</button>
+              <button class="btn btn-primary btn-sm" onclick="openBankTxModal()">
+                + <span data-i18n="btn_add_transaction">Add Transaction</span>
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="toolbar" style="padding:12px 16px">
+              <div class="toolbar-left">
+                <div class="search-box">
+                  <span>🔍</span>
+                  <input type="text" id="bank-search" placeholder="Search..." oninput="filterBankTx()">
+                </div>
+                <select class="filter-select" id="bank-type-filter" onchange="filterBankTx()">
+                  <option value="">All Types</option>
+                  <option value="in">In</option>
+                  <option value="out">Out</option>
+                </select>
+                <input type="date" class="filter-select" id="bank-date-from" onchange="filterBankTx()">
+                <input type="date" class="filter-select" id="bank-date-to" onchange="filterBankTx()">
+              </div>
+            </div>
+            <div class="table-wrap" style="border:none;border-radius:0">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="col_date">Date</th>
+                    <th data-i18n="col_description">Description</th>
+                    <th data-i18n="col_category">Category</th>
+                    <th data-i18n="counterparty">Counterparty</th>
+                    <th data-i18n="col_ref">Reference</th>
+                    <th data-i18n="col_type">Type</th>
+                    <th data-i18n="col_amount">Amount</th>
+                    <th data-i18n="source">Source</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="bank-tx-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ ALL TRANSACTIONS TAB ════ -->
+    <div id="tab-transactions" style="display:none" class="fade-up fade-up-3">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" data-i18n="all_transactions_title">All Transactions</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="toolbar" style="padding:12px 16px">
+            <div class="toolbar-left">
+              <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="all-search" placeholder="Search..." oninput="filterAllTx()">
+              </div>
+              <select class="filter-select" id="all-account-filter" onchange="filterAllTx()">
+                <option value="">All Accounts</option>
+              </select>
+              <select class="filter-select" id="all-type-filter" onchange="filterAllTx()">
+                <option value="">All Types</option>
+                <option value="in">In</option>
+                <option value="out">Out</option>
+              </select>
+              <input type="date" class="filter-select" id="all-date-from" onchange="filterAllTx()">
+              <input type="date" class="filter-select" id="all-date-to" onchange="filterAllTx()">
+            </div>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="col_date">Date</th>
+                  <th data-i18n="account">Account</th>
+                  <th data-i18n="col_description">Description</th>
+                  <th data-i18n="col_category">Category</th>
+                  <th data-i18n="col_type">Type</th>
+                  <th data-i18n="col_amount">Amount</th>
+                  <th data-i18n="source">Source</th>
+                </tr>
+              </thead>
+              <tbody id="all-tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ════ MODALS ════ -->
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="register-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="register-modal-title">Add Cash Register</div>
+      <button class="modal-close" onclick="closeModal('register-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_register_name">Register Name *</label>
+        <input type="text" id="reg-name" placeholder="e.g. Main Register, Dollar Register">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="label_currency">Currency *</label>
+          <div style="position:relative">
+            <input type="text" id="reg-currency-input" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
+              oninput="filterCurrencyList('reg-currency-list', this.value)" onfocus="showCurrencyList('reg-currency-list')"
+              style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;font-family:var(--font-body)">
+            <input type="hidden" id="reg-currency">
+            <div id="reg-currency-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gray200);border-radius:10px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.1);margin-top:4px"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_opening_balance">Opening Balance</label>
+          <input type="number" id="reg-opening" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_description">Description</label>
+        <input type="text" id="reg-desc" placeholder="Optional description">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('register-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRegister()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CASH TRANSACTION MODAL -->
+<div class="modal-overlay" id="cash-tx-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="add_cash_transaction">Add Cash Transaction</div>
+      <button class="modal-close" onclick="closeModal('cash-tx-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="col_type">Type *</label>
+          <select id="ctx-type">
+            <option value="in">💚 Cash In</option>
+            <option value="out">🔴 Cash Out</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="col_amount">Amount *</label>
+          <input type="number" id="ctx-amount" placeholder="0.00" step="0.01" min="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="col_description">Description *</label>
+        <input type="text" id="ctx-desc" placeholder="Transaction description">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="col_category">Category</label>
+          <select id="ctx-category">
+            <option value="sale">💰 Sale</option>
+            <option value="purchase">🛒 Purchase</option>
+            <option value="expense">📋 Expense</option>
+            <option value="transfer">↔ Transfer</option>
+            <option value="salary">👤 Salary</option>
+            <option value="tax">🏛 Tax</option>
+            <option value="other">📌 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="col_date">Date *</label>
+          <input type="date" id="ctx-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="col_ref">Reference</label>
+        <input type="text" id="ctx-ref" placeholder="Invoice no, receipt no...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cash-tx-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCashTx()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BANK MODAL -->
+<div class="modal-overlay" id="bank-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="add_bank">Add Bank</div>
+      <button class="modal-close" onclick="closeModal('bank-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_bank_name">Bank Name *</label>
+        <input type="text" id="bank-name" placeholder="e.g. Ziraat Bank, HSBC">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_swift">SWIFT / BIC Code</label>
+        <input type="text" id="bank-swift" placeholder="e.g. TCZBTR2A">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('bank-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBank()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BANK ACCOUNT MODAL -->
+<div class="modal-overlay" id="account-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="account-modal-title" data-i18n="add_bank_account">Add Bank Account</div>
+      <button class="modal-close" onclick="closeModal('account-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_bank">Bank *</label>
+        <select id="acc-bank">
+          <!-- filled by JS -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_account_name">Account Name *</label>
+        <input type="text" id="acc-name" placeholder="e.g. Ziraat TL Current Account">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_iban">IBAN</label>
+        <input type="text" id="acc-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:monospace">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="label_currency">Currency *</label>
+          <select id="acc-currency">
+            <!-- filled by JS -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_opening_balance">Opening Balance</label>
+          <input type="number" id="acc-opening" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('account-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAccount()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BANK TRANSACTION MODAL -->
+<div class="modal-overlay" id="bank-tx-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="add_bank_transaction">Add Bank Transaction</div>
+      <button class="modal-close" onclick="closeModal('bank-tx-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="col_type">Type *</label>
+          <select id="btx-type">
+            <option value="in">💚 Money In</option>
+            <option value="out">🔴 Money Out</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="col_amount">Amount *</label>
+          <input type="number" id="btx-amount" placeholder="0.00" step="0.01" min="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="col_description">Description *</label>
+        <input type="text" id="btx-desc" placeholder="Transaction description">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="col_category">Category</label>
+          <select id="btx-category">
+            <option value="sale">💰 Sale Collection</option>
+            <option value="purchase">🛒 Supplier Payment</option>
+            <option value="expense">📋 Expense</option>
+            <option value="transfer">↔ Transfer</option>
+            <option value="salary">👤 Salary</option>
+            <option value="tax">🏛 Tax</option>
+            <option value="fee">🏦 Bank Fee</option>
+            <option value="other">📌 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="col_date">Date *</label>
+          <input type="date" id="btx-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="counterparty">Counterparty</label>
+        <input type="text" id="btx-counterparty" placeholder="Sender / Recipient name">
+      </div>
+      <div class="form-group">
+        <label data-i18n="col_ref">Reference</label>
+        <input type="text" id="btx-ref" placeholder="Dekont no, IBAN, description...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('bank-tx-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBankTx()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="confirm_delete">Confirm Delete</div>
+      <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray600);font-size:14px" id="delete-msg">Are you sure?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteAction()" data-i18n="btn_delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient(
+  'https://jaakjdzpdizjbzvbtcld.supabase.co',
+  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+);
+
+// ===== STATE =====
+let companyId = null;
+let currencies = [];
+let registers = [];       // cash_registers
+let cashTxAll = [];       // cash_transactions
+let banks = [];           // banks
+let accounts = [];        // bank_accounts
+let bankTxAll = [];       // bank_transactions
+let selectedRegisterId = null;
+let selectedAccountId = null;
+let deleteCallback = null;
+let editingRegisterId = null;
+let editingAccountId = null;
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return; }
+
+  const user = session.user;
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('user-name').textContent = name;
+
+  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
+  if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
+  companyId = profile.company_id;
+  document.getElementById('user-plan-label').textContent =
+    (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
+
+  // Load currencies
+  const { data: curr } = await sb.from('currencies').select('*').eq('is_active', true).order('code');
+  currencies = curr || [];
+
+  // Fill currency search lists
+  buildCurrencyList('reg-currency-list', 'reg-currency', 'reg-currency-input');
+  buildCurrencyList('acc-currency-list', 'acc-currency', 'acc-currency-input');
+  // Set default TRY
+  setCurrency('reg-currency', 'reg-currency-input', 'TRY');
+  setCurrency('acc-currency', 'acc-currency-input', 'TRY');
+
+  await Promise.all([loadRegisters(), loadBanks()]);
+  await Promise.all([loadCashTransactions(), loadBankTransactions()]);
+  updateStats();
+
+  // Set today's date on date inputs
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('ctx-date').value = today;
+  document.getElementById('btx-date').value = today;
+
+  // Hide loading
+  setTimeout(() => {
+    document.getElementById('loading-screen').style.opacity = '0';
+    setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 300);
+  }, 400);
+
+  applyTranslations();
+}
+
+// ===== DATA LOADING =====
+async function loadRegisters() {
+  const { data } = await sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at');
+  registers = data || [];
+  renderCashGrid();
+}
+
+async function loadBanks() {
+  const { data: banksData } = await sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  banks = banksData || [];
+  const { data: accsData } = await sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name');
+  accounts = accsData || [];
+  renderBankTree();
+  updateAccountFilter();
+  updateBankSelect();
+}
+
+async function loadCashTransactions() {
+  const { data } = await sb.from('cash_transactions').select('*').eq('company_id', companyId).order('transaction_date', { ascending: false }).limit(500);
+  cashTxAll = data || [];
+}
+
+async function loadBankTransactions() {
+  const { data } = await sb.from('bank_transactions').select('*').eq('company_id', companyId).order('transaction_date', { ascending: false }).limit(500);
+  bankTxAll = data || [];
+}
+
+// ===== STATS =====
+function updateStats() {
+  // Total cash (TRY only for simplicity - can be extended per currency)
+  const totalCash = registers.reduce((s, r) => s + parseFloat(r.current_balance || 0), 0);
+  const totalBank = accounts.reduce((s, a) => s + parseFloat(a.current_balance || 0), 0);
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayCashIn  = cashTxAll.filter(t => t.transaction_date === today && t.type === 'in').reduce((s,t) => s + parseFloat(t.amount), 0);
+  const todayCashOut = cashTxAll.filter(t => t.transaction_date === today && t.type === 'out').reduce((s,t) => s + parseFloat(t.amount), 0);
+  const todayBankIn  = bankTxAll.filter(t => t.transaction_date === today && t.type === 'in').reduce((s,t) => s + parseFloat(t.amount), 0);
+  const todayBankOut = bankTxAll.filter(t => t.transaction_date === today && t.type === 'out').reduce((s,t) => s + parseFloat(t.amount), 0);
+
+  document.getElementById('stat-cash').textContent = fmtAmt(totalCash);
+  document.getElementById('stat-bank').textContent = fmtAmt(totalBank);
+  document.getElementById('stat-cash-registers').textContent = `${registers.length} ${t('registers')}`;
+  document.getElementById('stat-bank-accounts').textContent = `${accounts.length} ${t('accounts_label')}`;
+  document.getElementById('stat-today-in').textContent = fmtAmt(todayCashIn + todayBankIn);
+  document.getElementById('stat-today-out').textContent = fmtAmt(todayCashOut + todayBankOut);
+}
+
+// ===== CASH GRID =====
+function renderCashGrid() {
+  const grid = document.getElementById('cash-grid');
+  const cards = registers.map(r => {
+    const bal = parseFloat(r.current_balance || 0);
+    const curr = currencies.find(c => c.code === r.currency_code);
+    const symbol = curr?.symbol || r.currency_code;
+    const isSelected = r.id === selectedRegisterId;
+    return `<div class="account-card ${isSelected ? 'selected' : ''}" onclick="selectRegister('${r.id}')">
+      <div class="account-card-header">
+        <div class="account-icon cash">💵</div>
+        <div class="row-actions">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editRegister('${r.id}')" title="Edit">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteRegister('${r.id}')" title="Delete">🗑️</button>
+        </div>
+      </div>
+      <div class="account-name">${r.name}</div>
+      <div class="account-meta">${r.currency_code}${r.description ? ' · ' + r.description : ''}</div>
+      <div class="account-balance ${bal >= 0 ? 'positive' : 'negative'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
+    </div>`;
+  }).join('');
+
+  const addCard = `<div class="account-card add-account-card" onclick="openRegisterModal()">
+    <div class="plus">+</div>
+    <div style="font-size:13px;font-weight:600" data-i18n="btn_add_register">Add Register</div>
+  </div>`;
+
+  grid.innerHTML = cards + addCard;
+}
+
+function selectRegister(id) {
+  selectedRegisterId = id;
+  renderCashGrid();
+  const reg = registers.find(r => r.id === id);
+  document.getElementById('cash-detail').style.display = 'block';
+  document.getElementById('cash-detail-title').textContent = reg?.name + ' – Transactions';
+  filterCashTx();
+}
+
+function filterCashTx() {
+  if (!selectedRegisterId) return;
+  const q = document.getElementById('cash-search').value.toLowerCase();
+  const type = document.getElementById('cash-type-filter').value;
+  const from = document.getElementById('cash-date-from').value;
+  const to   = document.getElementById('cash-date-to').value;
+
+  let txs = cashTxAll.filter(tx => tx.register_id === selectedRegisterId);
+  if (type) txs = txs.filter(tx => tx.type === type);
+  if (from) txs = txs.filter(tx => tx.transaction_date >= from);
+  if (to)   txs = txs.filter(tx => tx.transaction_date <= to);
+  if (q) txs = txs.filter(tx => tx.description?.toLowerCase().includes(q) || tx.reference?.toLowerCase().includes(q));
+
+  renderCashTxTable(txs);
+}
+
+function renderCashTxTable(txs) {
+  const tbody = document.getElementById('cash-tx-tbody');
+  if (!txs.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">💵</div><h3>${t('no_transactions')}</h3><p>${t('no_transactions_sub')}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = txs.map(tx => {
+    const catIcon = {sale:'💰',purchase:'🛒',expense:'📋',transfer:'↔',salary:'👤',tax:'🏛',other:'📌'}[tx.category] || '📌';
+    const src = tx.source_type ? `<span class="badge badge-gray" style="font-size:10px">${tx.source_type.replace('_',' ')}</span>` : '';
+    return `<tr>
+      <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
+      <td><strong>${tx.description}</strong>${src ? '<br>' + src : ''}</td>
+      <td>${catIcon} ${tx.category || '—'}</td>
+      <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
+      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCashTx('${tx.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== BANK TREE =====
+function renderBankTree() {
+  const tree = document.getElementById('bank-tree');
+  if (!banks.length) {
+    tree.innerHTML = `<div class="empty-state" style="padding:32px"><div class="empty-state-icon">🏦</div><h3>${t('no_banks')}</h3><p>${t('no_banks_sub')}</p></div>`;
+    return;
+  }
+
+  tree.innerHTML = banks.map(bank => {
+    const bankAccounts = accounts.filter(a => a.bank_id === bank.id);
+    const accRows = bankAccounts.map(a => {
+      const bal = parseFloat(a.current_balance || 0);
+      const curr = currencies.find(c => c.code === a.currency_code);
+      const symbol = curr?.symbol || a.currency_code;
+      const isSelected = a.id === selectedAccountId;
+      return `<div class="account-row ${isSelected ? 'selected' : ''}" onclick="selectAccount('${a.id}')">
+        <div class="account-row-info">
+          <div class="account-row-name">${a.account_name}</div>
+          <div class="account-row-iban">${a.iban || a.account_number || '—'}</div>
+        </div>
+        <span class="badge badge-gray" style="font-size:11px">${a.currency_code}</span>
+        <div class="account-row-bal ${bal >= 0 ? 'amount-in' : 'amount-out'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
+        <div class="row-actions" style="opacity:1;margin-left:4px">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editAccount('${a.id}')" title="Edit">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteAccount('${a.id}')" title="Delete">🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    const addAccBtn = `<div class="account-row" onclick="openAccountModal(${bank.id})" style="cursor:pointer;color:var(--blue)">
+      <div style="width:28px;text-align:center;font-size:16px">+</div>
+      <div style="font-size:13px;font-weight:600" data-i18n="btn_add_account">Add Account</div>
+    </div>`;
+
+    return `<div class="bank-node open" id="bank-node-${bank.id}">
+      <div class="bank-node-header" onclick="toggleBankNode(${bank.id})">
+        <div class="bank-logo">🏦</div>
+        <div class="bank-name">${bank.name}</div>
+        <div class="bank-count">${bankAccounts.length} ${t('accounts_label')}</div>
+        <div class="row-actions" style="opacity:1;margin-right:8px">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editBank(${bank.id})" title="Edit">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteBank(${bank.id})" title="Delete">🗑️</button>
+        </div>
+        <span class="bank-chevron">▼</span>
+      </div>
+      <div class="bank-node-body">${accRows}${addAccBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBankNode(bankId) {
+  const node = document.getElementById(`bank-node-${bankId}`);
+  const body = node.querySelector('.bank-node-body');
+  const isOpen = node.classList.contains('open');
+  node.classList.toggle('open', !isOpen);
+  body.style.display = isOpen ? 'none' : 'block';
+}
+
+function selectAccount(id) {
+  selectedAccountId = id;
+  renderBankTree();
+  const acc = accounts.find(a => a.id === id);
+  const bank = banks.find(b => b.id === acc?.bank_id);
+  document.getElementById('bank-detail').style.display = 'block';
+  document.getElementById('bank-detail-title').textContent = (bank?.name || '') + ' · ' + acc?.account_name + ' – Transactions';
+  filterBankTx();
+}
+
+function filterBankTx() {
+  if (!selectedAccountId) return;
+  const q = document.getElementById('bank-search').value.toLowerCase();
+  const type = document.getElementById('bank-type-filter').value;
+  const from = document.getElementById('bank-date-from').value;
+  const to   = document.getElementById('bank-date-to').value;
+
+  let txs = bankTxAll.filter(tx => tx.account_id === selectedAccountId);
+  if (type) txs = txs.filter(tx => tx.type === type);
+  if (from) txs = txs.filter(tx => tx.transaction_date >= from);
+  if (to)   txs = txs.filter(tx => tx.transaction_date <= to);
+  if (q) txs = txs.filter(tx => tx.description?.toLowerCase().includes(q) || tx.counterparty?.toLowerCase().includes(q) || tx.reference?.toLowerCase().includes(q));
+
+  renderBankTxTable(txs);
+}
+
+function renderBankTxTable(txs) {
+  const tbody = document.getElementById('bank-tx-tbody');
+  if (!txs.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🏦</div><h3>${t('no_transactions')}</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = txs.map(tx => {
+    const src = tx.source_type ? `<span class="badge badge-gray" style="font-size:10px">${tx.source_type.replace('_',' ')}</span>` : '<span style="color:var(--gray400);font-size:11px">—</span>';
+    return `<tr>
+      <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
+      <td><strong>${tx.description}</strong></td>
+      <td style="font-size:12px">${tx.category || '—'}</td>
+      <td style="font-size:12px;color:var(--gray600)">${tx.counterparty || '—'}</td>
+      <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
+      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
+      <td>${src}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteBankTx('${tx.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== ALL TRANSACTIONS TAB =====
+function updateAccountFilter() {
+  const sel = document.getElementById('all-account-filter');
+  const cashOpts = registers.map(r => `<option value="cash_${r.id}">${r.name} (Cash)</option>`).join('');
+  const bankOpts = accounts.map(a => {
+    const bank = banks.find(b => b.id === a.bank_id);
+    return `<option value="bank_${a.id}">${bank?.name || '?'} · ${a.account_name}</option>`;
+  }).join('');
+  sel.innerHTML = `<option value="">${t('all_accounts')}</option>` + cashOpts + bankOpts;
+}
+
+function filterAllTx() {
+  const q   = document.getElementById('all-search').value.toLowerCase();
+  const acc = document.getElementById('all-account-filter').value;
+  const type = document.getElementById('all-type-filter').value;
+  const from = document.getElementById('all-date-from').value;
+  const to   = document.getElementById('all-date-to').value;
+
+  let all = [
+    ...cashTxAll.map(tx => ({ ...tx, _kind: 'cash', _accId: tx.register_id })),
+    ...bankTxAll.map(tx => ({ ...tx, _kind: 'bank', _accId: tx.account_id })),
+  ].sort((a,b) => b.transaction_date.localeCompare(a.transaction_date));
+
+  if (acc) {
+    const [kind, id] = acc.split('_');
+    all = all.filter(tx => tx._kind === kind && tx._accId === id);
+  }
+  if (type) all = all.filter(tx => tx.type === type);
+  if (from) all = all.filter(tx => tx.transaction_date >= from);
+  if (to)   all = all.filter(tx => tx.transaction_date <= to);
+  if (q)    all = all.filter(tx => tx.description?.toLowerCase().includes(q));
+
+  const tbody = document.getElementById('all-tx-tbody');
+  if (!all.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📊</div><h3>${t('no_transactions')}</h3></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = all.map(tx => {
+    let accName = '—';
+    if (tx._kind === 'cash') {
+      const reg = registers.find(r => r.id === tx.register_id);
+      accName = `💵 ${reg?.name || '—'}`;
+    } else {
+      const acc2 = accounts.find(a => a.id === tx.account_id);
+      const bank = banks.find(b => b.id === acc2?.bank_id);
+      accName = `🏦 ${bank?.name ? bank.name + ' · ' : ''}${acc2?.account_name || '—'}`;
+    }
+    const src = tx.source_type ? `<span class="badge badge-gray" style="font-size:10px">${tx.source_type.replace('_',' ')}</span>` : '—';
+    return `<tr>
+      <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
+      <td style="font-size:12px">${accName}</td>
+      <td>${tx.description}</td>
+      <td style="font-size:12px">${tx.category || '—'}</td>
+      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
+      <td>${src}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== SAVE REGISTER =====
+function openRegisterModal(id = null) {
+  editingRegisterId = id;
+  const title = document.getElementById('register-modal-title');
+  if (id) {
+    const r = registers.find(x => x.id === id);
+    title.textContent = 'Edit Register';
+    document.getElementById('reg-name').value = r.name;
+    setCurrency('reg-currency','reg-currency-input', r.currency_code);
+    document.getElementById('reg-opening').value = r.opening_balance;
+    document.getElementById('reg-desc').value = r.description || '';
+  } else {
+    title.textContent = 'Add Cash Register';
+    document.getElementById('reg-name').value = '';
+    setCurrency('reg-currency','reg-currency-input','TRY');
+    document.getElementById('reg-opening').value = '';
+    document.getElementById('reg-desc').value = '';
+  }
+  openModal('register-modal');
+}
+
+function editRegister(id) { openRegisterModal(id); }
+
+async function saveRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const currency = document.getElementById('reg-currency').value || document.getElementById('reg-currency-input').value.split(' ')[0];
+  const opening = parseFloat(document.getElementById('reg-opening').value) || 0;
+  const desc = document.getElementById('reg-desc').value.trim();
+
+  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
+
+  const payload = { company_id: companyId, name, currency_code: currency, opening_balance: opening, current_balance: opening, description: desc };
+
+  if (editingRegisterId) {
+    const { error } = await sb.from('cash_registers').update({ name, currency_code: currency, description: desc }).eq('id', editingRegisterId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast(t('toast_register_saved'), 'success');
+  } else {
+    const { error } = await sb.from('cash_registers').insert(payload);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast(t('toast_register_saved'), 'success');
+  }
+  closeModal('register-modal');
+  await loadRegisters();
+  updateStats();
+}
+
+function deleteRegister(id) {
+  deleteCallback = async () => {
+    await sb.from('cash_registers').update({ is_active: false }).eq('id', id);
+    if (selectedRegisterId === id) { selectedRegisterId = null; document.getElementById('cash-detail').style.display = 'none'; }
+    await loadRegisters(); updateStats();
+    showToast(t('toast_deleted'), 'success');
+  };
+  document.getElementById('delete-msg').textContent = t('confirm_delete_msg');
+  openModal('delete-modal');
+}
+
+// ===== SAVE CASH TX =====
+function openCashTxModal() {
+  document.getElementById('ctx-type').value = 'in';
+  document.getElementById('ctx-amount').value = '';
+  document.getElementById('ctx-desc').value = '';
+  document.getElementById('ctx-ref').value = '';
+  openModal('cash-tx-modal');
+}
+
+async function saveCashTx() {
+  if (!selectedRegisterId) return;
+  const type = document.getElementById('ctx-type').value;
+  const amount = parseFloat(document.getElementById('ctx-amount').value);
+  const desc = document.getElementById('ctx-desc').value.trim();
+  const category = document.getElementById('ctx-category').value;
+  const date = document.getElementById('ctx-date').value;
+  const ref = document.getElementById('ctx-ref').value.trim();
+
+  if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
+  if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
+
+  const reg = registers.find(r => r.id === selectedRegisterId);
+  const { error } = await sb.from('cash_transactions').insert({
+    company_id: companyId, register_id: selectedRegisterId, type, amount, currency_code: reg.currency_code,
+    description: desc, category, reference: ref, transaction_date: date, source_type: 'manual'
+  });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_tx_saved'), 'success');
+  closeModal('cash-tx-modal');
+  await loadCashTransactions();
+  await loadRegisters(); // refresh balance
+  updateStats();
+  filterCashTx();
+}
+
+function deleteCashTx(id) {
+  deleteCallback = async () => {
+    await sb.from('cash_transactions').delete().eq('id', id);
+    await loadCashTransactions(); await loadRegisters(); updateStats(); filterCashTx();
+    showToast(t('toast_deleted'), 'success');
+  };
+  document.getElementById('delete-msg').textContent = t('confirm_delete_msg');
+  openModal('delete-modal');
+}
+
+// ===== SAVE BANK =====
+function openBankModal(id = null) {
+  if (id) {
+    const b = banks.find(x => x.id === id);
+    document.getElementById('bank-name').value = b.name;
+    document.getElementById('bank-swift').value = b.swift_code || '';
+  } else {
+    document.getElementById('bank-name').value = '';
+    document.getElementById('bank-swift').value = '';
+  }
+  openModal('bank-modal');
+  document._editBankId = id;
+}
+
+function editBank(id) { openBankModal(id); }
+
+async function saveBank() {
+  const name = document.getElementById('bank-name').value.trim();
+  const swift = document.getElementById('bank-swift').value.trim();
+  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
+
+  const id = document._editBankId;
+  if (id) {
+    await sb.from('banks').update({ name, swift_code: swift }).eq('id', id);
+  } else {
+    await sb.from('banks').insert({ company_id: companyId, name, swift_code: swift });
+  }
+  showToast(t('toast_bank_saved'), 'success');
+  closeModal('bank-modal');
+  await loadBanks(); updateAccountFilter(); updateStats();
+}
+
+function deleteBank(id) {
+  deleteCallback = async () => {
+    await sb.from('banks').update({ is_active: false }).eq('id', id);
+    await loadBanks(); updateAccountFilter(); updateStats();
+    showToast(t('toast_deleted'), 'success');
+  };
+  document.getElementById('delete-msg').textContent = t('confirm_delete_msg');
+  openModal('delete-modal');
+}
+
+// ===== SAVE BANK ACCOUNT =====
+function openAccountModal(preselectedBankId = null) {
+  editingAccountId = null;
+  document.getElementById('account-modal-title').textContent = 'Add Bank Account';
+  document.getElementById('acc-name').value = '';
+  document.getElementById('acc-iban').value = '';
+  setCurrency('acc-currency','acc-currency-input','TRY');
+  document.getElementById('acc-opening').value = '';
+  updateBankSelect(preselectedBankId);
+  openModal('account-modal');
+}
+
+function editAccount(id) {
+  editingAccountId = id;
+  const a = accounts.find(x => x.id === id);
+  document.getElementById('account-modal-title').textContent = 'Edit Account';
+  document.getElementById('acc-bank').value = a.bank_id;
+  document.getElementById('acc-name').value = a.account_name;
+  document.getElementById('acc-iban').value = a.iban || '';
+  setCurrency('acc-currency','acc-currency-input', a.currency_code);
+  document.getElementById('acc-opening').value = a.opening_balance;
+  openModal('account-modal');
+}
+
+function updateBankSelect(preselected = null) {
+  const sel = document.getElementById('acc-bank');
+  sel.innerHTML = banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  if (preselected) sel.value = preselected;
+}
+
+async function saveAccount() {
+  const bankId = parseInt(document.getElementById('acc-bank').value);
+  const name = document.getElementById('acc-name').value.trim();
+  const iban = document.getElementById('acc-iban').value.trim().replace(/\s/g, '');
+  const currency = document.getElementById('acc-currency').value || document.getElementById('acc-currency-input').value.split(' ')[0];
+  const opening = parseFloat(document.getElementById('acc-opening').value) || 0;
+
+  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
+  if (!bankId) { showToast(t('toast_select_bank'), 'error'); return; }
+
+  // IBAN duplicate check
+  if (iban && !editingAccountId) {
+    const existing = accounts.find(a => a.iban === iban);
+    if (existing) { showToast(t('toast_iban_exists'), 'error'); return; }
+  }
+
+  if (editingAccountId) {
+    await sb.from('bank_accounts').update({ bank_id: bankId, account_name: name, iban: iban || null, currency_code: currency }).eq('id', editingAccountId);
+  } else {
+    await sb.from('bank_accounts').insert({ company_id: companyId, bank_id: bankId, account_name: name, iban: iban || null, account_number: null, currency_code: currency, opening_balance: opening, current_balance: opening });
+  }
+  showToast(t('toast_account_saved'), 'success');
+  closeModal('account-modal');
+  await loadBanks(); updateAccountFilter(); updateStats();
+}
+
+function deleteAccount(id) {
+  deleteCallback = async () => {
+    await sb.from('bank_accounts').update({ is_active: false }).eq('id', id);
+    if (selectedAccountId === id) { selectedAccountId = null; document.getElementById('bank-detail').style.display = 'none'; }
+    await loadBanks(); updateAccountFilter(); updateStats();
+    showToast(t('toast_deleted'), 'success');
+  };
+  document.getElementById('delete-msg').textContent = t('confirm_delete_msg');
+  openModal('delete-modal');
+}
+
+// ===== SAVE BANK TX =====
+function openBankTxModal() {
+  document.getElementById('btx-type').value = 'in';
+  document.getElementById('btx-amount').value = '';
+  document.getElementById('btx-desc').value = '';
+  document.getElementById('btx-counterparty').value = '';
+  document.getElementById('btx-ref').value = '';
+  openModal('bank-tx-modal');
+}
+
+async function saveBankTx() {
+  if (!selectedAccountId) return;
+  const type = document.getElementById('btx-type').value;
+  const amount = parseFloat(document.getElementById('btx-amount').value);
+  const desc = document.getElementById('btx-desc').value.trim();
+  const category = document.getElementById('btx-category').value;
+  const date = document.getElementById('btx-date').value;
+  const counterparty = document.getElementById('btx-counterparty').value.trim();
+  const ref = document.getElementById('btx-ref').value.trim();
+
+  if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
+  if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
+
+  const acc = accounts.find(a => a.id === selectedAccountId);
+  const { error } = await sb.from('bank_transactions').insert({
+    company_id: companyId, account_id: selectedAccountId, type, amount, currency_code: acc.currency_code,
+    description: desc, category, counterparty, reference: ref, transaction_date: date, source_type: 'manual'
+  });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_tx_saved'), 'success');
+  closeModal('bank-tx-modal');
+  await loadBankTransactions();
+  await loadBanks();
+  updateStats();
+  filterBankTx();
+}
+
+function deleteBankTx(id) {
+  deleteCallback = async () => {
+    await sb.from('bank_transactions').delete().eq('id', id);
+    await loadBankTransactions(); await loadBanks(); updateStats(); filterBankTx();
+    showToast(t('toast_deleted'), 'success');
+  };
+  document.getElementById('delete-msg').textContent = t('confirm_delete_msg');
+  openModal('delete-modal');
+}
+
+// ===== DELETE CONFIRM =====
+function confirmDeleteAction() {
+  if (deleteCallback) deleteCallback();
+  closeModal('delete-modal');
+  deleteCallback = null;
+}
+
+// ===== CSV EXPORT =====
+function exportCashCSV() {
+  const reg = registers.find(r => r.id === selectedRegisterId);
+  const txs = cashTxAll.filter(tx => tx.register_id === selectedRegisterId);
+  const rows = [['Date','Description','Category','Type','Amount','Reference']];
+  txs.forEach(tx => rows.push([tx.transaction_date, tx.description, tx.category, tx.type, tx.amount, tx.reference || '']));
+  downloadCSV(rows, `cash_${reg?.name || 'register'}.csv`);
+}
+
+function exportBankCSV() {
+  const acc = accounts.find(a => a.id === selectedAccountId);
+  const txs = bankTxAll.filter(tx => tx.account_id === selectedAccountId);
+  const rows = [['Date','Description','Category','Counterparty','Type','Amount','Reference']];
+  txs.forEach(tx => rows.push([tx.transaction_date, tx.description, tx.category, tx.counterparty || '', tx.type, tx.amount, tx.reference || '']));
+  downloadCSV(rows, `bank_${acc?.account_name || 'account'}.csv`);
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = filename;
+  a.click();
+}
+
+// ===== UI HELPERS =====
+function setTab(btn, tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['cash','bank','transactions'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'transactions') filterAllTx();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+function fmtNum(n) {
+  return parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtAmt(n) { return '$' + fmtNum(n); }
+
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = '/auth.html';
+}
+
+// ===== setLang override =====
+const _origSetLangCB = typeof setLang !== 'undefined' ? setLang : null;
+function setLang(lang) {
+  if (_origSetLangCB) _origSetLangCB(lang);
+  renderCashGrid();
+  renderBankTree();
+  updateStats();
+  updateAccountFilter();
+}
+
+
+// ===== CURRENCY SEARCH =====
+function buildCurrencyList(listId, hiddenId, inputId) {
+  const list = document.getElementById(listId);
+  const all = currencies.map(c => `<div class="curr-opt" data-code="${c.code}"
+    onclick="setCurrencyFromList('${hiddenId}','${inputId}','${listId}','${c.code}','${c.name}','${c.symbol.replace(/'/g,"\'")}')"
+    style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;transition:background .1s"
+    onmouseover="this.style.background='var(--gray50)'" onmouseout="this.style.background=''">
+    <span style="font-weight:700;color:var(--blue);min-width:40px">${c.code}</span>
+    <span style="color:var(--gray600)">${c.name}</span>
+    <span style="margin-left:auto;color:var(--gray400)">${c.symbol}</span>
+  </div>`).join('');
+  list.innerHTML = all;
+}
+
+function filterCurrencyList(listId, query) {
+  const list = document.getElementById(listId);
+  const q = query.toLowerCase();
+  list.style.display = 'block';
+  Array.from(list.children).forEach(el => {
+    const code = el.dataset.code.toLowerCase();
+    const text = el.textContent.toLowerCase();
+    el.style.display = (code.includes(q) || text.includes(q)) ? '' : 'none';
+  });
+}
+
+function showCurrencyList(listId) {
+  document.getElementById(listId).style.display = 'block';
+}
+
+function setCurrencyFromList(hiddenId, inputId, listId, code, name, symbol) {
+  document.getElementById(hiddenId).value = code;
+  document.getElementById(inputId).value = `${code} — ${name} (${symbol})`;
+  document.getElementById(listId).style.display = 'none';
+}
+
+function setCurrency(hiddenId, inputId, code) {
+  const curr = currencies.find(c => c.code === code);
+  if (curr) {
+    document.getElementById(hiddenId).value = code;
+    document.getElementById(inputId).value = `${curr.code} — ${curr.name} (${curr.symbol})`;
+  }
+}
+
+// Close currency dropdowns on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id$="-currency-input"]') && !e.target.closest('[id$="-currency-list"]')) {
+    document.querySelectorAll('[id$="-currency-list"]').forEach(el => el.style.display = 'none');
+  }
+});
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
