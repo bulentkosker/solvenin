@@ -201,36 +201,43 @@ tr:hover .row-actions{opacity:1}
 <body>
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="wordmark">solvenin<span class="dot">.</span></div>
     <div class="underline"></div>
   </div>
+
   <div class="sidebar-section">
-    <div class="sidebar-section-label">Main</div>
+    <div class="sidebar-section-label" data-i18n="section_main">Main</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon">⊞</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
     <a class="nav-item" href="inventory.html"><span class="nav-icon">📦</span> <span data-i18n="nav_inventory">Inventory</span></a>
     <a class="nav-item active" href="sales.html"><span class="nav-icon">💰</span> <span data-i18n="nav_sales">Sales</span></a>
     <a class="nav-item" href="purchasing.html"><span class="nav-icon">🛒</span> <span data-i18n="nav_purchasing">Purchasing</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">🏭</span> <span data-i18n="nav_production">Production</span></a>
   </div>
+
   <div class="sidebar-section">
-    <div class="sidebar-section-label">Management</div>
+    <div class="sidebar-section-label" data-i18n="section_finance">Finance</div>
+    <a class="nav-item" href="cashbank.html"><span class="nav-icon">🏦</span> <span data-i18n="nav_cashbank">Cashbank</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">📒</span> <span data-i18n="nav_accounting">Accounting</span></a>
+    <a class="nav-item" href="#"><span class="nav-icon">📊</span> <span data-i18n="nav_reports">Reports</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label" data-i18n="section_management">Management</div>
     <a class="nav-item" href="#"><span class="nav-icon">👥</span> <span data-i18n="nav_hr">HR & Payroll</span></a>
-    <a class="nav-item" href="#"><span class="nav-icon">💳</span> <span data-i18n="nav_finance">Finance</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">🚚</span> <span data-i18n="nav_shipping">Shipping</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">📅</span> <span data-i18n="nav_projects">Projects</span></a>
     <a class="nav-item" href="#"><span class="nav-icon">🔧</span> <span data-i18n="nav_maintenance">Maintenance</span></a>
   </div>
+
   <div class="sidebar-section">
-    <div class="sidebar-section-label">System</div>
-    <a class="nav-item" href="#"><span class="nav-icon">📊</span> <span data-i18n="nav_reports">Reports</span></a>
+    <div class="sidebar-section-label" data-i18n="section_system">System</div>
     <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> <span data-i18n="nav_settings">Settings</span></a>
     <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
   </div>
-
   <div class="sidebar-footer">
-    <div class="user-card">
+    <div class="user-card" id="user-card">
       <div class="user-avatar" id="user-avatar">?</div>
       <div class="user-info">
         <div class="user-name" id="user-name">Loading...</div>

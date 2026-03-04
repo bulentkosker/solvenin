@@ -272,6 +272,11 @@ const T = {
     toast_portal_coming_soon:'Customer portal coming soon. Contact support@solvenin.com for billing changes.',
     toast_invoice_coming_soon:'Invoice download coming soon. Contact support@solvenin.com.',
     toast_cancelled:'Cancellation requested. Your plan remains active until end of billing period.',
+    section_main:'Main',
+    section_finance:'Finance',
+    section_management:'Management',
+    section_system:'System',
+    nav_accounting:'Accounting',
     logout:'Logout',
   },
   tr: {
