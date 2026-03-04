@@ -969,8 +969,9 @@ async function init() {
 
   // Currency lists built lazily when modals open (faster load)
 
+  // Load registers+banks in parallel (fast)
   await Promise.all([loadRegisters(), loadBanks()]);
-  await Promise.all([loadCashTransactions(), loadBankTransactions()]);
+  // Transactions loaded lazily when user clicks an account
   updateStats();
 
   // Set today's date on date inputs
@@ -1026,6 +1027,7 @@ function updateStats() {
   const todayCashOut = cashTxAll.filter(t => t.transaction_date === today && t.type === 'out').reduce((s,t) => s + parseFloat(t.amount), 0);
   const todayBankIn  = bankTxAll.filter(t => t.transaction_date === today && t.type === 'in').reduce((s,t) => s + parseFloat(t.amount), 0);
   const todayBankOut = bankTxAll.filter(t => t.transaction_date === today && t.type === 'out').reduce((s,t) => s + parseFloat(t.amount), 0);
+  // Note: today stats show 0 until user opens a register/account (lazy load)
 
   document.getElementById('stat-cash').textContent = fmtAmt(totalCash);
   document.getElementById('stat-bank').textContent = fmtAmt(totalBank);
@@ -1065,12 +1067,16 @@ function renderCashGrid() {
   grid.innerHTML = cards + addCard;
 }
 
-function selectRegister(id) {
+async function selectRegister(id) {
   selectedRegisterId = id;
   renderCashGrid();
   const reg = registers.find(r => r.id === id);
   document.getElementById('cash-detail').style.display = 'block';
   document.getElementById('cash-detail-title').textContent = reg?.name + ' – Transactions';
+  // Load transactions for this register only (lazy)
+  const { data } = await sb.from('cash_transactions')
+    .select('*').eq('register_id', id).order('transaction_date', { ascending: false }).limit(200);
+  cashTxAll = [...cashTxAll.filter(t => t.register_id !== id), ...(data || [])];
   filterCashTx();
 }
 
@@ -1171,13 +1177,17 @@ function toggleBankNode(bankId) {
   body.style.display = isOpen ? 'none' : 'block';
 }
 
-function selectAccount(id) {
+async function selectAccount(id) {
   selectedAccountId = id;
   renderBankTree();
   const acc = accounts.find(a => a.id === id);
   const bank = banks.find(b => b.id === acc?.bank_id);
   document.getElementById('bank-detail').style.display = 'block';
   document.getElementById('bank-detail-title').textContent = (bank?.name || '') + ' · ' + acc?.account_name + ' – Transactions';
+  // Load transactions for this account only (lazy)
+  const { data } = await sb.from('bank_transactions')
+    .select('*').eq('account_id', id).order('transaction_date', { ascending: false }).limit(200);
+  bankTxAll = [...bankTxAll.filter(t => t.account_id !== id), ...(data || [])];
   filterBankTx();
 }
 
@@ -1230,6 +1240,17 @@ function updateAccountFilter() {
     return `<option value="bank_${a.id}">${bank?.name || '?'} · ${a.account_name}</option>`;
   }).join('');
   sel.innerHTML = `<option value="">${t('all_accounts')}</option>` + cashOpts + bankOpts;
+}
+
+async function loadAllTransactionsIfNeeded() {
+  if (cashTxAll.length === 0 && bankTxAll.length === 0) {
+    const [ct, bt] = await Promise.all([
+      sb.from('cash_transactions').select('*').eq('company_id', companyId).order('transaction_date', {ascending:false}).limit(300),
+      sb.from('bank_transactions').select('*').eq('company_id', companyId).order('transaction_date', {ascending:false}).limit(300),
+    ]);
+    cashTxAll = ct.data || [];
+    bankTxAll = bt.data || [];
+  }
 }
 
 function filterAllTx() {
@@ -1582,13 +1603,16 @@ function downloadCSV(rows, filename) {
 }
 
 // ===== UI HELPERS =====
-function setTab(btn, tab) {
+async function setTab(btn, tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   ['cash','bank','transactions'].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'transactions') filterAllTx();
+  if (tab === 'transactions') {
+    await loadAllTransactionsIfNeeded();
+    filterAllTx();
+  }
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
