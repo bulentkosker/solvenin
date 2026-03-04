@@ -824,12 +824,7 @@ async function init() {
     ];
   }
 
-  // Fill currency search lists
-  buildCurrencyList('reg-currency-list', 'reg-currency', 'reg-currency-input');
-  buildCurrencyList('acc-currency-list', 'acc-currency', 'acc-currency-input');
-  // Set default TRY
-  setCurrency('reg-currency', 'reg-currency-input', 'TRY');
-  setCurrency('acc-currency', 'acc-currency-input', 'TRY');
+  // Currency lists built lazily when modals open (faster load)
 
   await Promise.all([loadRegisters(), loadBanks()]);
   await Promise.all([loadCashTransactions(), loadBankTransactions()]);
@@ -846,7 +841,10 @@ async function init() {
     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 300);
   }, 400);
 
-  applyTranslations();
+  // Apply saved language
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof _origSetLangCB === 'function') _origSetLangCB(savedLang);
+  else applyTranslations();
 }
 
 // ===== DATA LOADING =====
@@ -1146,6 +1144,10 @@ function filterAllTx() {
 // ===== SAVE REGISTER =====
 function openRegisterModal(id = null) {
   editingRegisterId = id;
+  // Build currency list lazily
+  if (!document.getElementById('reg-currency-list').children.length) {
+    buildCurrencyList('reg-currency-list', 'reg-currency', 'reg-currency-input');
+  }
   const title = document.getElementById('register-modal-title');
   if (id) {
     const r = registers.find(x => x.id === id);
@@ -1291,6 +1293,10 @@ function deleteBank(id) {
 // ===== SAVE BANK ACCOUNT =====
 function openAccountModal(preselectedBankId = null) {
   editingAccountId = null;
+  // Build currency list lazily
+  if (!document.getElementById('acc-currency-list').children.length) {
+    buildCurrencyList('acc-currency-list', 'acc-currency', 'acc-currency-input');
+  }
   document.getElementById('account-modal-title').textContent = 'Add Bank Account';
   document.getElementById('acc-name').value = '';
   document.getElementById('acc-iban').value = '';
