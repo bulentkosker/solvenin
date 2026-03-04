@@ -189,6 +189,7 @@ const T = {
     toast_invalid_amount:'Enter a valid amount',
     toast_payment_recorded:'Payment recorded ✓',
     toast_pdf_downloaded:'PDF downloaded ✓',
+    across_all_categories:'across all categories',
     logout:'Logout',
   },
   tr: {
