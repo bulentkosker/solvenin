@@ -957,21 +957,31 @@ async function init() {
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('user-name').textContent = name;
 
-  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
+  // Fire all initial queries in parallel
+  const [profileRes, registersRes, banksRes, accountsRes] = await Promise.all([
+    sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single(),
+    sb.from('cash_registers').select('*').eq('is_active', true).order('created_at'),
+    sb.from('banks').select('*').eq('is_active', true).order('name'),
+    sb.from('bank_accounts').select('*').eq('is_active', true).order('account_name'),
+  ]);
+
+  const profile = profileRes.data;
   if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
   companyId = profile.company_id;
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
-  // Currencies are hardcoded - no DB query needed (fast load)
-  // DB sync happens lazily if needed
+  // Filter by companyId after fetch (since we fired before knowing it)
+  registers = (registersRes.data || []).filter(r => r.company_id === companyId);
+  banks     = (banksRes.data || []).filter(b => b.company_id === companyId);
+  accounts  = (accountsRes.data || []).filter(a => a.company_id === companyId);
+
   currencies = WORLD_CURRENCIES;
 
-  // Currency lists built lazily when modals open (faster load)
-
-  // Load registers+banks in parallel (fast)
-  await Promise.all([loadRegisters(), loadBanks()]);
-  // Transactions loaded lazily when user clicks an account
+  renderCashGrid();
+  renderBankTree();
+  updateAccountFilter();
+  updateBankSelect();
   updateStats();
 
   // Set today's date on date inputs
@@ -979,11 +989,10 @@ async function init() {
   document.getElementById('ctx-date').value = today;
   document.getElementById('btx-date').value = today;
 
-  // Hide loading
-  setTimeout(() => {
-    document.getElementById('loading-screen').style.opacity = '0';
-    setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 300);
-  }, 400);
+  // Hide loading immediately
+  const ls = document.getElementById('loading-screen');
+  ls.style.opacity = '0';
+  setTimeout(() => ls.style.display = 'none', 200);
 
   // Apply saved language
   applyTranslations();
