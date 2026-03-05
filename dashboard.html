@@ -1368,11 +1368,28 @@ document.addEventListener('click', function(e) {
 // ===== TICKER =====
 const TALL = {
   forex:[
-    {id:'USD',lbl:'US Dollar'},{id:'EUR',lbl:'Euro'},{id:'GBP',lbl:'Pound'},{id:'JPY',lbl:'Yen'},
-    {id:'TRY',lbl:'Turkish Lira'},{id:'RUB',lbl:'Ruble'},{id:'CNY',lbl:'Yuan'},
-    {id:'KZT',lbl:'Tenge'},{id:'CHF',lbl:'Swiss Franc'},{id:'CAD',lbl:'Canadian $'},
-    {id:'AUD',lbl:'Australian $'},{id:'INR',lbl:'Rupee'},{id:'SAR',lbl:'Saudi Riyal'},
-    {id:'AED',lbl:'Dirham'},{id:'BRL',lbl:'Real'},{id:'MXN',lbl:'Peso'},
+    {id:'USD',lbl:'US Dollar'},{id:'EUR',lbl:'Euro'},{id:'GBP',lbl:'Pound'},
+    {id:'JPY',lbl:'Japanese Yen'},{id:'CHF',lbl:'Swiss Franc'},{id:'CAD',lbl:'Canadian Dollar'},
+    {id:'AUD',lbl:'Australian Dollar'},{id:'NZD',lbl:'New Zealand Dollar'},
+    {id:'TRY',lbl:'Turkish Lira'},{id:'RUB',lbl:'Russian Ruble'},{id:'CNY',lbl:'Chinese Yuan'},
+    {id:'HKD',lbl:'Hong Kong Dollar'},{id:'SGD',lbl:'Singapore Dollar'},{id:'KRW',lbl:'Korean Won'},
+    {id:'INR',lbl:'Indian Rupee'},{id:'PKR',lbl:'Pakistani Rupee'},{id:'BDT',lbl:'Bangladeshi Taka'},
+    {id:'THB',lbl:'Thai Baht'},{id:'IDR',lbl:'Indonesian Rupiah'},{id:'MYR',lbl:'Malaysian Ringgit'},
+    {id:'PHP',lbl:'Philippine Peso'},{id:'VND',lbl:'Vietnamese Dong'},
+    {id:'SAR',lbl:'Saudi Riyal'},{id:'AED',lbl:'UAE Dirham'},{id:'QAR',lbl:'Qatari Riyal'},
+    {id:'KWD',lbl:'Kuwaiti Dinar'},{id:'BHD',lbl:'Bahraini Dinar'},{id:'OMR',lbl:'Omani Rial'},
+    {id:'JOD',lbl:'Jordanian Dinar'},{id:'ILS',lbl:'Israeli Shekel'},{id:'EGP',lbl:'Egyptian Pound'},
+    {id:'MAD',lbl:'Moroccan Dirham'},{id:'TND',lbl:'Tunisian Dinar'},{id:'ZAR',lbl:'South African Rand'},
+    {id:'NGN',lbl:'Nigerian Naira'},{id:'KES',lbl:'Kenyan Shilling'},
+    {id:'KZT',lbl:'Kazakhstani Tenge'},{id:'UZS',lbl:'Uzbek Sum'},{id:'AZN',lbl:'Azerbaijani Manat'},
+    {id:'GEL',lbl:'Georgian Lari'},{id:'AMD',lbl:'Armenian Dram'},{id:'KGS',lbl:'Kyrgyz Som'},
+    {id:'UAH',lbl:'Ukrainian Hryvnia'},{id:'BYN',lbl:'Belarusian Ruble'},
+    {id:'PLN',lbl:'Polish Zloty'},{id:'CZK',lbl:'Czech Koruna'},{id:'HUF',lbl:'Hungarian Forint'},
+    {id:'RON',lbl:'Romanian Leu'},{id:'BGN',lbl:'Bulgarian Lev'},{id:'HRK',lbl:'Croatian Kuna'},
+    {id:'RSD',lbl:'Serbian Dinar'},{id:'NOK',lbl:'Norwegian Krone'},{id:'SEK',lbl:'Swedish Krona'},
+    {id:'DKK',lbl:'Danish Krone'},{id:'ISK',lbl:'Icelandic Krona'},
+    {id:'BRL',lbl:'Brazilian Real'},{id:'ARS',lbl:'Argentine Peso'},{id:'CLP',lbl:'Chilean Peso'},
+    {id:'COP',lbl:'Colombian Peso'},{id:'PEN',lbl:'Peruvian Sol'},{id:'MXN',lbl:'Mexican Peso'},
   ],
   crypto:[
     {id:'btc',lbl:'Bitcoin',sym:'BTC'},{id:'eth',lbl:'Ethereum',sym:'ETH'},
@@ -1403,9 +1420,32 @@ function openTickerSettings(){
   const base = tBaseCur();
 
   // Build base currency selector
-  const allCurs = ['USD','EUR','GBP','JPY','TRY','RUB','CNY','KZT','CHF','CAD','AUD','INR','SAR','AED','BRL','MXN'];
+  const allCurs = [
+    'USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD',
+    'TRY','RUB','CNY','HKD','SGD','KRW','INR','PKR',
+    'BDT','THB','IDR','MYR','PHP','VND','TWD',
+    'SAR','AED','QAR','KWD','BHD','OMR','JOD','ILS','EGP','MAD','TND','ZAR','NGN','KES','GHS',
+    'KZT','UZS','AZN','GEL','AMD','TJS','KGS','MNT','UAH','BYN','MDL','ALL','BAM','RSD','HRK','MKD','BGN','RON','HUF','PLN','CZK','SKK','NOK','SEK','DKK','ISK',
+    'BRL','ARS','CLP','COP','PEN','MXN','CRC','GTQ','HNL','BOB','PYG','UYU',
+    'DZD','LYD','SDG','SYP','IQD','IRR','LBP','YER',
+    'MZN','AOA','XOF','XAF'
+  ];
+  const curNames = {
+    USD:'US Dollar',EUR:'Euro',GBP:'Pound',JPY:'Yen',CHF:'Swiss Franc',CAD:'Canadian $',
+    AUD:'Australian $',NZD:'NZ Dollar',TRY:'Turkish Lira',RUB:'Ruble',CNY:'Yuan',
+    HKD:'HK Dollar',SGD:'Singapore $',KRW:'Won',INR:'Rupee',PKR:'Pakistani Rupee',
+    BDT:'Taka',THB:'Baht',IDR:'Rupiah',MYR:'Ringgit',PHP:'Peso',VND:'Dong',
+    SAR:'Saudi Riyal',AED:'Dirham',QAR:'Qatari Riyal',KWD:'Kuwaiti Dinar',
+    BHD:'Bahraini Dinar',OMR:'Omani Rial',JOD:'Jordanian Dinar',ILS:'Shekel',
+    EGP:'Egyptian Pound',MAD:'Moroccan Dirham',TND:'Tunisian Dinar',ZAR:'Rand',
+    NGN:'Naira',KES:'Shilling',KZT:'Tenge',UZS:'Sum',AZN:'Manat',GEL:'Lari',
+    AMD:'Dram',KGS:'Som',UAH:'Hryvnia',BYN:'Belarusian Ruble',PLN:'Zloty',
+    CZK:'Koruna',HUF:'Forint',RON:'Leu',BGN:'Lev',HRK:'Kuna',RSD:'Dinar',
+    NOK:'Krone',SEK:'Krona',DKK:'Krone',ISK:'Krona',BRL:'Real',
+    ARS:'Argentine Peso',CLP:'Chilean Peso',COP:'Colombian Peso',PEN:'Sol',MXN:'Mexican Peso',
+  };
   document.getElementById('t-base-select').innerHTML = allCurs.map(c =>
-    `<option value="${c}" ${c===base?'selected':''}>${c}</option>`
+    `<option value="${c}" ${c===base?'selected':''}>${c} — ${curNames[c]||c}</option>`
   ).join('');
 
   ['forex','crypto','commodity'].forEach(g=>{
