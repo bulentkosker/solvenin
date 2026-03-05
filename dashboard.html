@@ -687,11 +687,11 @@ tr:hover td { background: var(--gray50); }
 .ticker-wrap:hover .ticker-track{animation-play-state:paused}
 .ticker-track{display:flex;animation:ticker-scroll 60s linear infinite;white-space:nowrap;flex-shrink:0}
 @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 18px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);border-right:1px solid rgba(255,255,255,0.08)}
-.ticker-item .t-sym{color:rgba(255,255,255,0.4);font-weight:400;font-size:11px}
-.ticker-item .t-val{color:#fff}
-.ticker-item .t-up{color:#34d399;font-size:10px}
-.ticker-item .t-dn{color:#f87171;font-size:10px}
+.ticker-item{display:inline-flex;align-items:center;gap:5px;padding:0 16px;font-size:12px;border-right:1px solid rgba(255,255,255,0.1)}
+.ticker-item .t-sym{color:rgba(255,255,255,0.55);font-weight:500;font-size:11px}
+.ticker-item .t-val{color:#fff;font-weight:700;font-size:13px}
+.ticker-item .t-up{color:#4ade80;font-size:10px;font-weight:600}
+.ticker-item .t-dn{color:#fb7185;font-size:10px;font-weight:600}
 .ticker-gear{position:absolute;right:0;top:0;bottom:0;width:36px;background:var(--navy);border-left:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.5);font-size:14px;z-index:2;transition:color .2s}
 .ticker-gear:hover{color:#fff}
 .ticker-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999}
@@ -1434,37 +1434,46 @@ async function loadTicker(){
   let rates = {};
 
   try{
-    // Fetch rates with base currency
-    const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+    // Always fetch from USD base for consistent math
+    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
     const d = await r.json();
-    rates = d.rates || {};
+    const usdRates = d.rates || {};
+    rates = usdRates;
 
-    // Forex items
+    // Convert: show "1 [foreign] = X [base]"
+    // usdRates[X] = how many X per 1 USD
+    // 1 foreign = usdRates[base] / usdRates[foreign]
+    const baseRate = usdRates[base] || 1;
+
     TALL.forex.forEach(fx=>{
       if(!prefs.includes(fx.id)) return;
-      if(fx.id === base) return; // skip same as base
-      const v = rates[fx.id];
-      if(!v) return;
-      const dp = TBIG.includes(fx.id) ? 2 : 4;
-      items.push({lbl: fx.id, sub: '1 '+base, val: v.toFixed(dp), ch:null});
+      if(fx.id === base) return;
+      const foreignRate = usdRates[fx.id];
+      if(!foreignRate) return;
+      const val = baseRate / foreignRate; // how many base per 1 foreign
+      const isBig = TBIG.includes(base);
+      const dp = val >= 100 ? 0 : val >= 10 ? 1 : val >= 1 ? 2 : 4;
+      items.push({lbl: '1 '+fx.id, sub: base, val: val.toFixed(dp), ch:null});
     });
 
-    // Auto local currency based on UI language
+    // Auto local currency
     const langCurMap={tr:'TRY',ru:'RUB',de:'EUR',fr:'EUR',ja:'JPY',zh:'CNY',ar:'SAR',kk:'KZT'};
     const lang = localStorage.getItem('solvenin_lang') || 'en';
     const lc = langCurMap[lang];
-    if(lc && lc !== base && rates[lc] && !prefs.includes(lc)){
-      items.push({lbl:lc, sub:'1 '+base, val:rates[lc].toFixed(TBIG.includes(lc)?2:4), ch:null, local:true});
+    if(lc && lc !== base && usdRates[lc] && !prefs.includes(lc)){
+      const val = baseRate / usdRates[lc];
+      const dp = val >= 100 ? 0 : val >= 10 ? 1 : val >= 1 ? 2 : 4;
+      items.push({lbl:'1 '+lc, sub:base, val:val.toFixed(dp), ch:null, local:true});
     }
 
-    // Gold/Silver (XAU/XAG relative to base)
-    if(prefs.includes('gold') && rates.XAU){
-      const usdPerOz = 1/rates.XAU * (rates['USD']||1);
-      items.push({lbl:'Gold', sub:'per oz', val:'$'+(usdPerOz).toFixed(2), ch:null, icon:'🥇'});
+    // Gold/Silver in base currency
+    if(prefs.includes('gold') && usdRates.XAU){
+      const priceInBase = (1/usdRates.XAU) * baseRate;
+      items.push({lbl:'Gold', sub:'per oz · '+base, val:priceInBase.toFixed(2), ch:null, icon:'🥇'});
     }
-    if(prefs.includes('silver') && rates.XAG){
-      const usdPerOz = 1/rates.XAG * (rates['USD']||1);
-      items.push({lbl:'Silver', sub:'per oz', val:'$'+(usdPerOz).toFixed(2), ch:null, icon:'🥈'});
+    if(prefs.includes('silver') && usdRates.XAG){
+      const priceInBase = (1/usdRates.XAG) * baseRate;
+      items.push({lbl:'Silver', sub:'per oz · '+base, val:priceInBase.toFixed(2), ch:null, icon:'🥈'});
     }
   }catch(e){ console.warn('Forex fetch failed',e); }
 
@@ -1498,11 +1507,12 @@ function renderTicker(items){
   const html = items.map(i=>{
     const chHtml = i.ch!=null
       ? `<span class="${parseFloat(i.ch)>=0?'t-up':'t-dn'}">${parseFloat(i.ch)>=0?'▲':'▼'}${Math.abs(i.ch)}%</span>` : '';
-    return `<div class="ticker-item">${i.icon?i.icon+' ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${i.val}</span><span style="color:rgba(255,255,255,0.3);font-size:10px">${i.sub||''}</span>${chHtml}</div>`;
+    const subHtml = i.sub ? `<span style="color:rgba(255,255,255,0.35);font-size:10px;margin-left:1px">${i.sub}</span>` : '';
+    return `<div class="ticker-item">${i.icon?'<span style="font-size:13px">'+i.icon+'</span> ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${i.val}</span>${subHtml}${chHtml}</div>`;
   }).join('');
   const track = document.getElementById('ticker-track');
   track.innerHTML = html + html;
-  track.style.animationDuration = Math.max(30, items.length*7)+'s';
+  track.style.animationDuration = Math.max(35, items.length*8)+'s';
 }
 </script>
 </body>
