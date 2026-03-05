@@ -703,6 +703,20 @@ tr:hover td { background: var(--gray50); }
 .t-check:last-child{border-bottom:none}
 .t-check input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
 .t-check label{font-size:13px;cursor:pointer;flex:1;color:var(--gray800)}
+
+/* STAT SETTINGS */
+.stat-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999}
+.stat-modal.open{display:flex}
+.stat-modal-box{background:#fff;border-radius:16px;padding:24px;width:380px;max-height:80vh;overflow-y:auto}
+.stat-modal-box h3{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--navy)}
+.stat-modal-box p{font-size:12px;color:var(--gray400);margin-bottom:16px}
+.stat-opt{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.stat-opt:last-child{border-bottom:none}
+.stat-opt input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+.stat-opt-icon{font-size:18px;width:24px;text-align:center}
+.stat-opt-info{flex:1}
+.stat-opt-label{font-size:13px;font-weight:600;color:var(--gray800)}
+.stat-opt-desc{font-size:11px;color:var(--gray400)}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -806,6 +820,18 @@ tr:hover td { background: var(--gray50); }
     <div class="ticker-track" id="ticker-track"><span style="color:rgba(255,255,255,0.3);padding:0 16px;font-size:12px">Loading rates...</span></div>
     <div class="ticker-gear" onclick="openTickerSettings()" title="Customize">⚙</div>
   </div>
+
+  <!-- STAT SETTINGS MODAL -->
+  <div class="stat-modal" id="stat-modal">
+    <div class="stat-modal-box">
+      <h3>📊 <span data-i18n="dash_customize_cards">Customize Cards</span></h3>
+      <p data-i18n="dash_customize_desc">Select up to 4 cards to display</p>
+      <div id="stat-options-list"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveStatSettings()">Save</button>
+      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('stat-modal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+
   <!-- TICKER MODAL -->
   <div class="ticker-modal" id="ticker-modal">
     <div class="ticker-box">
@@ -843,32 +869,11 @@ tr:hover td { background: var(--gray50); }
     </div>
 
     <!-- STATS -->
-    <div class="stats-grid fade-up fade-up-1">
-      <div class="stat-card blue">
-        <div class="stat-header">
-          <span class="stat-label" data-i18n="dash_total_revenue">Total Revenue</span>
-          <div class="stat-icon blue">💰</div>
-        </div>
-        <div class="stat-value" id="dash-revenue">—</div>
-        <div class="stat-change" id="dash-revenue-sub" style="font-size:12px">—</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-header">
-          <span class="stat-label" data-i18n="dash_active_orders">Active Orders</span>
-          <div class="stat-icon green">📋</div>
-        </div>
-        <div class="stat-value" id="dash-orders">—</div>
-        <div class="stat-change" id="dash-orders-sub" style="font-size:12px;color:var(--gray400)">—</div>
-      </div>
-      <div class="stat-card orange">
-        <div class="stat-header">
-          <span class="stat-label" data-i18n="dash_cash_balance">Cash & Bank</span>
-          <div class="stat-icon orange">🏦</div>
-        </div>
-        <div class="stat-value" id="dash-cash">—</div>
-        <div class="stat-change" id="dash-cash-sub" style="font-size:12px;color:var(--gray400)">—</div>
-      </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div></div>
+      <button onclick="openStatSettings()" style="background:none;border:1px solid var(--gray200);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--gray500);cursor:pointer;display:flex;align-items:center;gap:5px">⚙ <span data-i18n="dash_customize">Customize</span></button>
     </div>
+    <div class="stats-grid fade-up fade-up-1" id="stats-grid"></div>
 
     <!-- CHART + NOTIFICATIONS -->
     <div class="main-grid fade-up fade-up-2">
@@ -1113,53 +1118,148 @@ async function init() {
   else applyTranslations();
 }
 
-async function loadDashboardStats() {
-  try {
+// ===== STAT CARDS =====
+const STAT_ALL = [
+  {id:'revenue',   icon:'💰', color:'blue',   i18n:'dash_total_revenue',    desc:'All-time sales total'},
+  {id:'orders',    icon:'📋', color:'green',  i18n:'dash_active_orders',    desc:'Non-cancelled orders'},
+  {id:'cash',      icon:'🏦', color:'orange', i18n:'dash_cash_balance',     desc:'Cash registers + bank accounts'},
+  {id:'pending',   icon:'⏳', color:'purple', i18n:'dash_pending_payments', desc:'Invoiced but not collected'},
+  {id:'customers', icon:'👥', color:'blue',   i18n:'dash_total_customers',  desc:'Total customers'},
+  {id:'purchases', icon:'🛒', color:'purple', i18n:'dash_total_purchases',  desc:'All-time purchase total'},
+  {id:'month_rev', icon:'📈', color:'green',  i18n:'dash_this_month_rev',   desc:'Revenue this month'},
+  {id:'low_stock', icon:'📦', color:'orange', i18n:'dash_low_stock',        desc:'Products below min stock'},
+];
+const STAT_DEFAULTS = ['revenue','orders','cash','pending'];
+
+function sPrefs(){
+  try{ const s=localStorage.getItem('solvenin_stats'); return s?JSON.parse(s):STAT_DEFAULTS; }
+  catch{ return STAT_DEFAULTS; }
+}
+
+function openStatSettings(){
+  const prefs = sPrefs();
+  document.getElementById('stat-options-list').innerHTML = STAT_ALL.map(s => `
+    <div class="stat-opt">
+      <input type="checkbox" class="stat-checkbox" id="sc_${s.id}" value="${s.id}" ${prefs.includes(s.id)?'checked':''}>
+      <span class="stat-opt-icon">${s.icon}</span>
+      <div class="stat-opt-info">
+        <div class="stat-opt-label">${t(s.i18n)}</div>
+        <div class="stat-opt-desc">${s.desc}</div>
+      </div>
+    </div>`).join('');
+  // Enforce max 4 on change
+  document.querySelectorAll('.stat-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const checked = document.querySelectorAll('.stat-checkbox:checked');
+      if(checked.length > 4) { cb.checked = false; }
+    });
+  });
+  document.getElementById('stat-modal').classList.add('open');
+}
+
+function saveStatSettings(){
+  const prefs = [];
+  document.querySelectorAll('.stat-checkbox:checked').forEach(cb => prefs.push(cb.value));
+  if(prefs.length === 0) return;
+  localStorage.setItem('solvenin_stats', JSON.stringify(prefs.slice(0,4)));
+  document.getElementById('stat-modal').classList.remove('open');
+  renderStatCards(window._statData || {});
+}
+document.getElementById('stat-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+
+function renderStatCards(data){
+  const prefs = sPrefs();
+  const grid = document.getElementById('stats-grid');
+  grid.innerHTML = prefs.slice(0,4).map(id => {
+    const def = STAT_ALL.find(s => s.id === id);
+    if(!def) return '';
+    const val = data[id]?.val ?? '—';
+    const sub = data[id]?.sub ?? '';
+    const subColor = data[id]?.color || 'var(--gray400)';
+    return `<div class="stat-card ${def.color}">
+      <div class="stat-header">
+        <span class="stat-label">${t(def.i18n)}</span>
+        <div class="stat-icon ${def.color}">${def.icon}</div>
+      </div>
+      <div class="stat-value">${val}</div>
+      <div class="stat-change" style="font-size:12px;color:${subColor}">${sub}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadDashboardStats(){
+  try{
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
     const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const [ordersRes, registersRes, accountsRes] = await Promise.all([
+
+    const [ordersRes, registersRes, accountsRes, paymentsRes, customersRes, purchasesRes, productsRes] = await Promise.all([
       sb.from('sales_orders').select('id,total,status,created_at').eq('company_id', companyId),
       sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
+      sb.from('payments').select('id,amount,order_id').eq('company_id', companyId),
+      sb.from('customers').select('id').eq('company_id', companyId),
+      sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId),
+      sb.from('products').select('id,quantity,min_stock').eq('company_id', companyId),
     ]);
-    const orders = ordersRes.data || [];
+
+    const orders    = ordersRes.data || [];
     const registers = registersRes.data || [];
-    const bankAccounts = accountsRes.data || [];
-    // Revenue
-    const totalRevenue = orders.reduce((s,o) => s + parseFloat(o.total||0), 0);
-    const thisMonthRev = orders.filter(o => o.created_at >= thisMonthStart).reduce((s,o) => s + parseFloat(o.total||0), 0);
-    const lastMonthRev = orders.filter(o => o.created_at >= lastMonthStart && o.created_at < lastMonthEnd).reduce((s,o) => s + parseFloat(o.total||0), 0);
-    document.getElementById('dash-revenue').textContent = fmtMoney(totalRevenue);
-    if (lastMonthRev > 0) {
-      const diff = ((thisMonthRev - lastMonthRev) / lastMonthRev * 100).toFixed(1);
-      const el = document.getElementById('dash-revenue-sub');
-      el.textContent = (diff >= 0 ? '↑ ' : '↓ ') + Math.abs(diff) + '% ' + t('dash_vs_last_month');
-      el.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
-    } else {
-      document.getElementById('dash-revenue-sub').textContent = t('dash_this_month') + ': ' + fmtMoney(thisMonthRev);
-    }
-    // Active Orders
-    const active = orders.filter(o => o.status !== 'cancelled');
-    document.getElementById('dash-orders').textContent = active.length;
-    document.getElementById('dash-orders-sub').textContent = fmtMoney(active.reduce((s,o) => s + parseFloat(o.total||0), 0)) + ' ' + t('dash_pending');
-    // Cash & Bank
-    const totalCash = registers.reduce((s,r) => s + parseFloat(r.current_balance||0), 0);
-    const totalBank = bankAccounts.reduce((s,a) => s + parseFloat(a.current_balance||0), 0);
-    document.getElementById('dash-cash').textContent = fmtMoney(totalCash + totalBank);
-    document.getElementById('dash-cash-sub').textContent = t('tab_cash') + ': ' + fmtMoney(totalCash) + '  ·  ' + t('tab_bank') + ': ' + fmtMoney(totalBank);
-    // Chart - last 6 months
+    const bankAccts = accountsRes.data || [];
+    const payments  = paymentsRes.data || [];
+    const customers = customersRes.data || [];
+    const purchases = purchasesRes.data || [];
+    const products  = productsRes.data || [];
+
+    // Calculations
+    const totalRevenue  = orders.reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const thisMonthRev  = orders.filter(o => o.created_at >= thisMonthStart).reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const lastMonthRev  = orders.filter(o => o.created_at >= lastMonthStart && o.created_at < lastMonthEnd).reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const revDiff       = lastMonthRev > 0 ? ((thisMonthRev-lastMonthRev)/lastMonthRev*100).toFixed(1) : null;
+
+    const activeOrders  = orders.filter(o => o.status !== 'cancelled');
+    const totalCash     = registers.reduce((s,r) => s + parseFloat(r.current_balance||0), 0);
+    const totalBank     = bankAccts.reduce((s,a) => s + parseFloat(a.current_balance||0), 0);
+
+    const totalInvoiced = activeOrders.reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const totalCollected= payments.reduce((s,p) => s + parseFloat(p.amount||0), 0);
+    const pendingAmt    = Math.max(0, totalInvoiced - totalCollected);
+    const pendingCount  = activeOrders.filter(o => {
+      const paid = payments.filter(p => p.order_id===o.id).reduce((s,p)=>s+parseFloat(p.amount||0),0);
+      return paid < parseFloat(o.total||0);
+    }).length;
+
+    const totalPurch    = purchases.reduce((s,p) => s + parseFloat(p.total||0), 0);
+    const thisMoPurch   = purchases.filter(p => p.created_at >= thisMonthStart).reduce((s,p) => s + parseFloat(p.total||0), 0);
+    const lowStock      = products.filter(p => parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0)).length;
+
+    const data = {
+      revenue:   {val: fmtMoney(totalRevenue),  sub: revDiff!=null ? (revDiff>=0?'↑ ':'↓ ')+Math.abs(revDiff)+'% '+t('dash_vs_last_month') : t('dash_this_month')+': '+fmtMoney(thisMonthRev), color: revDiff>=0?'var(--green)':'var(--red)'},
+      orders:    {val: activeOrders.length,      sub: fmtMoney(activeOrders.reduce((s,o)=>s+parseFloat(o.total||0),0))+' '+t('dash_pending')},
+      cash:      {val: fmtMoney(totalCash+totalBank), sub: t('tab_cash')+': '+fmtMoney(totalCash)+'  ·  '+t('tab_bank')+': '+fmtMoney(totalBank)},
+      pending:   {val: fmtMoney(pendingAmt),     sub: pendingCount+' '+t('dash_active_orders')},
+      customers: {val: customers.length,         sub: t('dash_total_customers')},
+      purchases: {val: fmtMoney(totalPurch),     sub: t('dash_this_month')+': '+fmtMoney(thisMoPurch)},
+      month_rev: {val: fmtMoney(thisMonthRev),   sub: t('dash_vs_last_month')+': '+fmtMoney(lastMonthRev)},
+      low_stock: {val: lowStock,                 sub: lowStock > 0 ? t('dash_need_reorder') : '✓ OK', color: lowStock > 0 ? 'var(--orange)' : 'var(--green)'},
+    };
+
+    window._statData = data;
+    renderStatCards(data);
+
+    // Chart data - last 6 months
     const months = [], labels = [];
-    for (let i = 5; i >= 0; i--) {
+    for(let i=5;i>=0;i--){
       const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
       const s = d.toISOString();
       const e = new Date(now.getFullYear(), now.getMonth()-i+1, 1).toISOString();
-      months.push(orders.filter(o => o.created_at >= s && o.created_at < e).reduce((s,o) => s + parseFloat(o.total||0), 0));
-      labels.push(d.toLocaleDateString('default', {month:'short'}));
+      months.push(orders.filter(o=>o.created_at>=s&&o.created_at<e).reduce((s,o)=>s+parseFloat(o.total||0),0));
+      labels.push(d.toLocaleDateString('default',{month:'short'}));
     }
     window._chartData = {months, monthLabels: labels};
-  } catch(e) { console.error('Dashboard stats error:', e); }
+
+  } catch(e){ console.error('Dashboard stats error:', e); }
 }
 
 function fmtMoney(n) {
