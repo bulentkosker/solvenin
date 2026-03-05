@@ -984,15 +984,8 @@ async function init() {
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('user-name').textContent = name;
 
-  // Fire all initial queries in parallel
-  const [profileRes, registersRes, banksRes, accountsRes] = await Promise.all([
-    sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single(),
-    sb.from('cash_registers').select('*').eq('is_active', true).order('created_at'),
-    sb.from('banks').select('*').eq('is_active', true).order('name'),
-    sb.from('bank_accounts').select('*').eq('is_active', true).order('account_name'),
-  ]);
-
-  const profile = profileRes.data;
+  // First get profile to resolve companyId
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single();
   const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
   if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
   companyId = resolvedCompanyId;
@@ -1000,10 +993,15 @@ async function init() {
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
-  // Filter by companyId after fetch (since we fired before knowing it)
-  registers = (registersRes.data || []).filter(r => r.company_id === companyId);
-  banks     = (banksRes.data || []).filter(b => b.company_id === companyId);
-  accounts  = (accountsRes.data || []).filter(a => a.company_id === companyId);
+  // Now fire data queries with correct companyId
+  const [registersRes, banksRes, accountsRes] = await Promise.all([
+    sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at'),
+    sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
+  ]);
+  registers = registersRes.data || [];
+  banks     = banksRes.data || [];
+  accounts  = accountsRes.data || [];
 
   currencies = WORLD_CURRENCIES;
 

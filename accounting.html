@@ -648,13 +648,15 @@ async function init() {
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('user-name').textContent = name;
 
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('id, company_id, active_company_id, role').eq('id', user.id).single();
   const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
   if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
   companyId = resolvedCompanyId;
   await loadCompanies();
+  const { data: _comp } = await sb.from('companies').select('plan,name').eq('id', companyId).single();
+  const _plan = _comp?.plan || 'free';
   document.getElementById('user-plan-label').textContent =
-    (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
+    (_plan).charAt(0).toUpperCase() + (_plan).slice(1) + ' Plan';
 
   // Apply language FIRST so renderCOA uses correct t() values
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';

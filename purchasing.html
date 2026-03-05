@@ -641,7 +641,7 @@ async function init() {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('user-name').textContent = name;
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('id, company_id, active_company_id, role').eq('id', user.id).single();
   if (!profile?.company_id) return;
   companyId = profile.company_id;
   document.getElementById('user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';

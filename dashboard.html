@@ -1171,9 +1171,13 @@ async function init() {
   document.getElementById('user-avatar').textContent = firstName[0].toUpperCase();
 
   // Plan
-  const { data: profile } = await sb.from('profiles').select('*, active_company_id, companies(plan,name)').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('id, company_id, active_company_id, role').eq('id', user.id).single();
   companyId = profile?.active_company_id || profile?.company_id || null;
-  const plan = profile?.companies?.plan || 'free';
+  let plan = 'free';
+  if (companyId) {
+    const { data: comp } = await sb.from('companies').select('plan,name').eq('id', companyId).single();
+    plan = comp?.plan || 'free';
+  }
   document.getElementById('user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
 
