@@ -1159,5 +1159,18 @@ async function handleLogout() {
 document.getElementById('loading-screen').style.transition = 'opacity .3s';
 init();
 </script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T) return;
+    const tr = window.T[lang] || window.T['en'];
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+    });
+  }, 300);
+});
+</script>
 </body>
 </html>
