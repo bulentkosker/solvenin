@@ -1,9 +1,4 @@
-<
-// ===== LANG SWITCHER =====
-function selectLang(lang) {
-  if (typeof setLang === 'function') setLang(lang);
-  document.getElementById('lang-menu').style.display = 'none';
-}!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -600,7 +595,6 @@ async function init() {
   await Promise.all([loadCustomers(), loadProducts()]);
   await Promise.all([loadOrders(), loadPayments()]);
   await loadCashBankAccounts();
-  // Apply saved language
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
@@ -1223,6 +1217,35 @@ function showToast(msg, type='') { const t=document.getElementById('toast'); t.t
 async function handleLogout() { await sb.auth.signOut(); window.location.href='/auth.html'; }
 
 init();
+</script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T) return;
+    const tr = window.T[lang] || window.T['en'];
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+    });
+  }, 300);
+});
+// ===== LANG SWITCHER =====
+function toggleLangMenu() {
+  const m = document.getElementById('lang-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function selectLang(lang) {
+  if (typeof setLang === 'function') setLang(lang);
+  const m = document.getElementById('lang-menu');
+  if (m) m.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#lang-switcher-wrap')) {
+    const m = document.getElementById('lang-menu');
+    if (m) m.style.display = 'none';
+  }
+});
 </script>
 <script>
 window.addEventListener('load', function() {
