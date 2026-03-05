@@ -661,8 +661,18 @@ async function init() {
   await Promise.all([loadAccounts(), loadTaxRates()]);
   updateStats();
   setDefaultDates();
-  // Re-apply translations after render to catch data-i18n elements
-  applyTranslations();
+  // Force translate all data-i18n elements directly
+  (function forceTranslate() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T || !window.T[lang]) { setTimeout(forceTranslate, 100); return; }
+    const tr = window.T[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+      else if (window.T['en'] && window.T['en'][key]) {} // keep English
+    });
+    console.log('[i18n] forceTranslate done, lang=', lang, 'elements=', document.querySelectorAll('[data-i18n]').length);
+  })();
 
   const ls = document.getElementById('loading-screen');
   ls.style.opacity = '0';
