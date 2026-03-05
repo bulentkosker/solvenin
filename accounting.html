@@ -711,11 +711,11 @@ function updateStats() {
 
 // ===== CHART OF ACCOUNTS =====
 const TYPE_META = {
-  asset:     { icon:'🏦', label:'Assets',      color:'var(--blue)',   bg:'var(--blue-light)' },
-  liability: { icon:'💳', label:'Liabilities', color:'var(--red)',    bg:'var(--red-light)' },
-  equity:    { icon:'🏛', label:'Equity',       color:'var(--purple)', bg:'var(--purple-light)' },
-  revenue:   { icon:'💰', label:'Revenue',      color:'var(--green)',  bg:'var(--green-light)' },
-  expense:   { icon:'📋', label:'Expenses',     color:'var(--orange)', bg:'var(--orange-light)' },
+  asset:     { icon:'🏦', get label(){ return t('type_asset'); },     color:'var(--blue)',   bg:'var(--blue-light)' },
+  liability: { icon:'💳', get label(){ return t('type_liability'); }, color:'var(--red)',    bg:'var(--red-light)' },
+  equity:    { icon:'🏛', get label(){ return t('type_equity'); },    color:'var(--purple)', bg:'var(--purple-light)' },
+  revenue:   { icon:'💰', get label(){ return t('type_revenue'); },   color:'var(--green)',  bg:'var(--green-light)' },
+  expense:   { icon:'📋', get label(){ return t('type_expense'); },   color:'var(--orange)', bg:'var(--orange-light)' },
 };
 
 function renderCOA() {
@@ -1290,7 +1290,15 @@ function toggleLangMenu() {
 function selectLang(lang) {
   if (typeof setLang === 'function') setLang(lang);
   document.getElementById('lang-menu').style.display = 'none';
-  renderCOA(); renderTaxTable();
+  renderCOA();
+  renderTaxTable();
+  renderJournal();
+  updateStats();
+  // Re-render active tab content
+  const activePL = document.getElementById('tab-pl');
+  const activeBS = document.getElementById('tab-bs');
+  if (activePL && activePL.style.display !== 'none') renderPL();
+  if (activeBS && activeBS.style.display !== 'none') renderBS();
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('#lang-switcher-wrap')) {
