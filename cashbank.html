@@ -290,6 +290,19 @@
     <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
   </div>
   <div class="sidebar-footer">
+        <!-- Company Switcher -->
+    <div class="company-switcher" id="company-switcher" onclick="toggleCompanyMenu()">
+      <div style="font-size:18px;flex-shrink:0">🏢</div>
+      <div class="company-info">
+        <div class="company-name" id="company-name">Loading...</div>
+        <div class="company-plan" id="company-plan">—</div>
+      </div>
+      <div class="company-chevron">⌄</div>
+    </div>
+    <div class="company-menu" id="company-menu" style="display:none">
+      <div class="company-menu-list" id="company-menu-list"></div>
+      <div class="company-menu-footer" id="company-menu-footer"></div>
+    </div>
     <div class="user-card" id="user-card">
       <div class="user-avatar" id="user-avatar">?</div>
       <div class="user-info">
@@ -985,13 +998,16 @@ async function init() {
   document.getElementById('user-name').textContent = name;
 
   // First get profile to resolve companyId
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
   const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
   if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
   companyId = resolvedCompanyId;
+  // Fetch company plan separately
+  const { data: compData } = await sb.from('companies').select('plan,name').eq('id', companyId).single();
+  const plan = compData?.plan || 'free';
+  const planEl = document.getElementById('user-plan-label');
+  if (planEl) planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   await loadCompanies();
-  document.getElementById('user-plan-label').textContent =
-    (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
   // Now fire data queries with correct companyId
   const [registersRes, banksRes, accountsRes] = await Promise.all([
