@@ -660,7 +660,10 @@ async function init() {
   const ls = document.getElementById('loading-screen');
   ls.style.opacity = '0';
   setTimeout(() => ls.style.display = 'none', 200);
-  applyTranslations();
+  // Apply saved language
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else applyTranslations();
 }
 
 // ===== LOAD DATA =====
