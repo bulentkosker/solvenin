@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+<
+// ===== LANG SWITCHER =====
+function selectLang(lang) {
+  if (typeof setLang === 'function') setLang(lang);
+  document.getElementById('lang-menu').style.display = 'none';
+}!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -595,7 +600,10 @@ async function init() {
   await Promise.all([loadCustomers(), loadProducts()]);
   await Promise.all([loadOrders(), loadPayments()]);
   await loadCashBankAccounts();
-  applyTranslations();
+  // Apply saved language
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else applyTranslations();
 }
 
 // ===== LOAD =====

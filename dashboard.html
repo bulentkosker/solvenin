@@ -1068,7 +1068,10 @@ async function init() {
   setTimeout(() => ls.style.display = 'none', 200);
 
   initChart('monthly');
-  applyTranslations();
+  // Apply saved language
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else applyTranslations();
 }
 
 // ===== CHART =====
