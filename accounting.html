@@ -1330,5 +1330,22 @@ document.addEventListener('click', e => {
   }
 })();
 </script>
+<script>
+// Emergency translation fix - runs after all scripts loaded
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    console.log('[emergency] lang=', lang, 'T exists=', !!window.T);
+    if (!window.T) { console.error('[emergency] T not found!'); return; }
+    const tr = window.T[lang] || window.T['en'];
+    let count = 0;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) { el.textContent = tr[key]; count++; }
+    });
+    console.log('[emergency] translated', count, 'elements');
+  }, 500);
+});
+</script>
 </body>
 </html>
