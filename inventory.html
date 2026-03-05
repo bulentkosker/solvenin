@@ -589,6 +589,8 @@ const sb = createClient(
 );
 
 // ===== STATE =====
+let companyId = null, currentUser = null;
+let warehouses = [];
 let products = [];
 let movements = [];
 let filteredProducts = [];
@@ -600,30 +602,6 @@ let currentTab = 'all';
 let editingId = null;
 let deletingId = null;
 
-// ===== SAMPLE DATA =====
-const sampleProducts = [
-  { id:1, name:'Laptop Dell XPS 15', sku:'DELL-XPS-001', category:'Electronics', unit:'pcs', stock:24, min_stock:5, max_stock:50, unit_cost:1299.99, price:1599.99, location:'Warehouse A', supplier:'Dell Inc.', desc:'15-inch laptop' },
-  { id:2, name:'USB-C Hub 7-Port', sku:'HUB-7C-002', category:'Electronics', unit:'pcs', stock:3, min_stock:10, max_stock:100, unit_cost:29.99, price:49.99, location:'Shelf B2', supplier:'Anker', desc:'' },
-  { id:3, name:'Cardboard Box 40x30', sku:'BOX-4030-003', category:'Packaging', unit:'pcs', stock:0, min_stock:50, max_stock:500, unit_cost:0.85, price:1.20, location:'Warehouse B', supplier:'PackCo', desc:'Standard shipping box' },
-  { id:4, name:'Steel Sheet 2mm', sku:'STL-2MM-004', category:'Raw Material', unit:'m²', stock:120, min_stock:20, max_stock:200, unit_cost:8.50, price:0, location:'Warehouse C', supplier:'MetalWorks', desc:'' },
-  { id:5, name:'Office Chair Ergonomic', sku:'CHAIR-ERG-005', category:'Office', unit:'pcs', stock:8, min_stock:2, max_stock:20, unit_cost:249.00, price:399.00, location:'Showroom', supplier:'OfficeMax', desc:'Adjustable lumbar support' },
-  { id:6, name:'Printer Paper A4', sku:'PAPER-A4-006', category:'Office', unit:'pack', stock:45, min_stock:10, max_stock:100, unit_cost:4.99, price:7.99, location:'Office Storage', supplier:'Staples', desc:'500 sheets per pack' },
-  { id:7, name:'Aluminium Profile 6m', sku:'ALU-6M-007', category:'Raw Material', unit:'m', stock:2, min_stock:10, max_stock:100, unit_cost:12.00, price:0, location:'Warehouse C', supplier:'AlumCo', desc:'' },
-  { id:8, name:'Finished Product A', sku:'FIN-A-008', category:'Finished Goods', unit:'pcs', stock:67, min_stock:10, max_stock:200, unit_cost:45.00, price:89.99, location:'Warehouse A', supplier:'', desc:'' },
-  { id:9, name:'Bubble Wrap Roll 50m', sku:'WRAP-50M-009', category:'Packaging', unit:'pcs', stock:12, min_stock:5, max_stock:30, unit_cost:15.00, price:22.00, location:'Warehouse B', supplier:'PackCo', desc:'' },
-  { id:10, name:'Wireless Mouse', sku:'MOUSE-WL-010', category:'Electronics', unit:'pcs', stock:0, min_stock:5, max_stock:40, unit_cost:24.99, price:39.99, location:'Shelf B2', supplier:'Logitech', desc:'' },
-  { id:11, name:'Monitor 27" 4K', sku:'MON-27-011', category:'Electronics', unit:'pcs', stock:15, min_stock:3, max_stock:30, unit_cost:399.00, price:549.00, location:'Shelf A1', supplier:'LG', desc:'' },
-  { id:12, name:'Copper Wire 1.5mm', sku:'COP-1.5-012', category:'Raw Material', unit:'m', stock:350, min_stock:50, max_stock:500, unit_cost:0.45, price:0, location:'Warehouse C', supplier:'ElecSupply', desc:'' },
-];
-
-const sampleMovements = [
-  { id:1, date:'2025-12-28', product:'Laptop Dell XPS 15', type:'in', qty:10, ref:'PO-2025-047', note:'Received from supplier' },
-  { id:2, date:'2025-12-27', product:'USB-C Hub 7-Port', type:'out', qty:7, ref:'SO-2025-103', note:'Sold to customer' },
-  { id:3, date:'2025-12-26', product:'Cardboard Box 40x30', type:'out', qty:120, ref:'SO-2025-101', note:'Shipped with orders' },
-  { id:4, date:'2025-12-25', product:'Steel Sheet 2mm', type:'in', qty:50, ref:'PO-2025-046', note:'' },
-  { id:5, date:'2025-12-24', product:'Wireless Mouse', type:'out', qty:5, ref:'SO-2025-099', note:'Last batch sold' },
-];
-
 // ===== INIT =====
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -633,19 +611,25 @@ async function init() {
     if (!s2) { window.location.href = 'auth.html'; return; }
   }
   const user = (await sb.auth.getSession()).data.session?.user;
-  if (user) {
-    const name = user.user_metadata?.full_name || user.email.split('@')[0];
-    document.getElementById('user-name').textContent = name;
-    document.getElementById('user-avatar').textContent = name[0].toUpperCase();
-  
-  }
+  if (!user) return;
 
-  products = [...sampleProducts];
-  movements = [...sampleMovements];
+  const name = user.user_metadata?.full_name || user.email.split('@')[0];
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+
+  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan,name)').eq('id', user.id).single();
+  companyId = profile?.company_id || null;
+  currentUser = user;
+
+  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
+
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200); }
 }
 
 // ===== RENDER =====
@@ -859,41 +843,88 @@ function openEditModal(id) {
   openModal('product-modal');
 }
 
-function saveProduct() {
+
+// ===== LOAD FROM SUPABASE =====
+async function loadProducts() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('products')
+    .select('id,name,sku,category,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id')
+    .eq('company_id', companyId)
+    .eq('active', true)
+    .order('name');
+  if (error) { console.error('loadProducts:', error); return; }
+  // Map DB columns to UI fields
+  products = (data || []).map(p => ({
+    id: p.id,
+    name: p.name,
+    sku: p.sku || '',
+    category: p.category || '',
+    unit: p.unit || 'pcs',
+    stock: parseFloat(p.quantity || 0),
+    min_stock: parseFloat(p.min_stock || 0),
+    max_stock: parseFloat(p.max_stock || 0),
+    unit_cost: parseFloat(p.cost_price || 0),
+    price: parseFloat(p.sale_price || 0),
+    location: p.location || '',
+    supplier: '',
+    desc: p.description || '',
+  }));
+}
+
+async function loadMovements() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('stock_movements')
+    .select('id,created_at,product_id,type,quantity,reference,notes,products(name)')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) { console.error('loadMovements:', error); return; }
+  movements = (data || []).map(m => ({
+    id: m.id,
+    date: m.created_at?.split('T')[0],
+    product: m.products?.name || '',
+    product_id: m.product_id,
+    type: m.type,
+    qty: parseFloat(m.quantity || 0),
+    ref: m.reference || '',
+    note: m.notes || '',
+  }));
+}
+
+async function loadWarehouses() {
+  if (!companyId) return;
+  const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).eq('is_active', true);
+  warehouses = data || [];
+}
+async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
-  if (!name) { showToast('Product name is required', 'error'); return; }
-  const stock = parseFloat(document.getElementById('p-stock').value) || 0;
-  const cost = parseFloat(document.getElementById('p-cost').value) || 0;
+  if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
+  const payload = {
+    name,
+    sku: document.getElementById('p-sku').value.trim() || null,
+    category: document.getElementById('p-category').value || null,
+    unit: document.getElementById('p-unit').value || 'pcs',
+    description: document.getElementById('p-desc').value.trim() || null,
+    quantity: parseFloat(document.getElementById('p-stock').value) || 0,
+    min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
+    max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
+    cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
+    sale_price: parseFloat(document.getElementById('p-price').value) || 0,
+    location: document.getElementById('p-location').value.trim() || null,
+    company_id: companyId,
+    active: true,
+  };
+  let error;
   if (editingId) {
-    const p = products.find(x => x.id === editingId);
-    Object.assign(p, {
-      name, sku: document.getElementById('p-sku').value,
-      category: document.getElementById('p-category').value,
-      unit: document.getElementById('p-unit').value,
-      desc: document.getElementById('p-desc').value,
-      stock, min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
-      max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
-      unit_cost: cost, price: parseFloat(document.getElementById('p-price').value) || 0,
-      location: document.getElementById('p-location').value,
-      supplier: document.getElementById('p-supplier').value,
-    });
-    showToast('Product updated!', 'success');
+    ({ error } = await sb.from('products').update(payload).eq('id', editingId));
+    if (!error) showToast(t('toast_saved') || 'Product updated ✓', 'success');
   } else {
-    const newId = Math.max(...products.map(p => p.id), 0) + 1;
-    products.push({
-      id: newId, name, sku: document.getElementById('p-sku').value,
-      category: document.getElementById('p-category').value,
-      unit: document.getElementById('p-unit').value,
-      desc: document.getElementById('p-desc').value,
-      stock, min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
-      max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
-      unit_cost: cost, price: parseFloat(document.getElementById('p-price').value) || 0,
-      location: document.getElementById('p-location').value,
-      supplier: document.getElementById('p-supplier').value,
-    });
-    showToast('Product added!', 'success');
+    ({ error } = await sb.from('products').insert(payload));
+    if (!error) showToast(t('toast_saved') || 'Product added ✓', 'success');
   }
+  if (error) { showToast(error.message, 'error'); return; }
   closeModal('product-modal');
+  await loadProducts();
   renderAll();
 }
 
@@ -904,25 +935,38 @@ function openAdjustForProduct(id) {
   openModal('adjust-modal');
 }
 
-function saveAdjustment() {
-  const pid = parseInt(document.getElementById('adj-product').value);
+async function saveAdjustment() {
+  const pid = document.getElementById('adj-product').value;
   const qty = parseFloat(document.getElementById('adj-qty').value);
   const type = document.getElementById('adj-type').value;
   if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
-  const p = products.find(x => x.id === pid);
+  const p = products.find(x => x.id == pid);
   if (!p) return;
+
   const delta = (type === 'in' || type === 'return') ? qty : -qty;
-  p.stock = Math.max(0, p.stock + delta);
-  movements.unshift({
-    id: movements.length + 1,
-    date: new Date().toISOString().split('T')[0],
-    product: p.name, type, qty,
-    ref: document.getElementById('adj-ref').value,
-    note: document.getElementById('adj-note').value
+  const newQty = Math.max(0, p.stock + delta);
+  const whId = warehouses[0]?.id || null;
+
+  // Update stock quantity
+  const { error: stockErr } = await sb.from('products').update({ quantity: newQty }).eq('id', pid);
+  if (stockErr) { showToast(stockErr.message, 'error'); return; }
+
+  // Log movement
+  await sb.from('stock_movements').insert({
+    company_id: companyId,
+    product_id: pid,
+    warehouse_id: whId,
+    type,
+    quantity: qty,
+    reference: document.getElementById('adj-ref').value || null,
+    notes: document.getElementById('adj-note').value || null,
+    created_by: currentUser?.id || null,
   });
+
   closeModal('adjust-modal');
+  await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
-  showToast(`Stock updated! ${p.name}: ${p.stock} ${p.unit}`, 'success');
+  showToast(`${p.name}: ${newQty} ${p.unit}`, 'success');
 }
 
 function openDeleteModal(id) {
@@ -932,11 +976,13 @@ function openDeleteModal(id) {
   openModal('delete-modal');
 }
 
-function confirmDelete() {
-  products = products.filter(p => p.id !== deletingId);
+async function confirmDelete() {
+  const { error } = await sb.from('products').update({ active: false }).eq('id', deletingId);
+  if (error) { showToast(error.message, 'error'); return; }
   closeModal('delete-modal');
+  await loadProducts();
   renderAll();
-  showToast('Product deleted', 'success');
+  showToast(t('toast_deleted') || 'Product deleted', 'success');
 }
 
 function openMovementModal() { populateAdjustSelect(); openModal('adjust-modal'); }
