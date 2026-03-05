@@ -804,32 +804,24 @@ tr:hover td { background: var(--gray50); }
           <span class="stat-label" data-i18n="dash_total_revenue">Total Revenue</span>
           <div class="stat-icon blue">💰</div>
         </div>
-        <div class="stat-value">$24,580</div>
-        <div class="stat-change up">↑ 12.5% <span class="change-label" data-i18n="dash_vs_last_month">vs last month</span></div>
+        <div class="stat-value" id="dash-revenue">—</div>
+        <div class="stat-change" id="dash-revenue-sub" style="font-size:12px">—</div>
       </div>
       <div class="stat-card green">
         <div class="stat-header">
           <span class="stat-label" data-i18n="dash_active_orders">Active Orders</span>
           <div class="stat-icon green">📋</div>
         </div>
-        <div class="stat-value">143</div>
-        <div class="stat-change up">↑ 8.2% <span class="change-label">vs last month</span></div>
+        <div class="stat-value" id="dash-orders">—</div>
+        <div class="stat-change" id="dash-orders-sub" style="font-size:12px;color:var(--gray400)">—</div>
       </div>
       <div class="stat-card orange">
         <div class="stat-header">
-          <span class="stat-label" data-i18n="dash_low_stock">Low Stock Items</span>
-          <div class="stat-icon orange">📦</div>
+          <span class="stat-label" data-i18n="dash_cash_balance">Cash & Bank</span>
+          <div class="stat-icon orange">🏦</div>
         </div>
-        <div class="stat-value">7</div>
-        <div class="stat-change down">↑ 3 items <span class="change-label" data-i18n="dash_need_reorder">need reorder</span></div>
-      </div>
-      <div class="stat-card purple">
-        <div class="stat-header">
-          <span class="stat-label" data-i18n="dash_active_employees">Active Employees</span>
-          <div class="stat-icon purple">👥</div>
-        </div>
-        <div class="stat-value">28</div>
-        <div class="stat-change up">↑ 2 <span class="change-label" data-i18n="dash_new_this_month">new this month</span></div>
+        <div class="stat-value" id="dash-cash">—</div>
+        <div class="stat-change" id="dash-cash-sub" style="font-size:12px;color:var(--gray400)">—</div>
       </div>
     </div>
 
@@ -1068,11 +1060,68 @@ async function init() {
   ls.style.opacity = '0';
   setTimeout(() => ls.style.display = 'none', 200);
 
+  await loadDashboardStats();
   initChart();
   // Apply saved language
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+}
+
+async function loadDashboardStats() {
+  try {
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+    const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const [ordersRes, registersRes, accountsRes] = await Promise.all([
+      sb.from('sales_orders').select('id,total,status,created_at').eq('company_id', companyId),
+      sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
+      sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
+    ]);
+    const orders = ordersRes.data || [];
+    const registers = registersRes.data || [];
+    const bankAccounts = accountsRes.data || [];
+    // Revenue
+    const totalRevenue = orders.reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const thisMonthRev = orders.filter(o => o.created_at >= thisMonthStart).reduce((s,o) => s + parseFloat(o.total||0), 0);
+    const lastMonthRev = orders.filter(o => o.created_at >= lastMonthStart && o.created_at < lastMonthEnd).reduce((s,o) => s + parseFloat(o.total||0), 0);
+    document.getElementById('dash-revenue').textContent = fmtMoney(totalRevenue);
+    if (lastMonthRev > 0) {
+      const diff = ((thisMonthRev - lastMonthRev) / lastMonthRev * 100).toFixed(1);
+      const el = document.getElementById('dash-revenue-sub');
+      el.textContent = (diff >= 0 ? '↑ ' : '↓ ') + Math.abs(diff) + '% ' + t('dash_vs_last_month');
+      el.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      document.getElementById('dash-revenue-sub').textContent = t('dash_this_month') + ': ' + fmtMoney(thisMonthRev);
+    }
+    // Active Orders
+    const active = orders.filter(o => o.status !== 'cancelled');
+    document.getElementById('dash-orders').textContent = active.length;
+    document.getElementById('dash-orders-sub').textContent = fmtMoney(active.reduce((s,o) => s + parseFloat(o.total||0), 0)) + ' ' + t('dash_pending');
+    // Cash & Bank
+    const totalCash = registers.reduce((s,r) => s + parseFloat(r.current_balance||0), 0);
+    const totalBank = bankAccounts.reduce((s,a) => s + parseFloat(a.current_balance||0), 0);
+    document.getElementById('dash-cash').textContent = fmtMoney(totalCash + totalBank);
+    document.getElementById('dash-cash-sub').textContent = t('tab_cash') + ': ' + fmtMoney(totalCash) + '  ·  ' + t('tab_bank') + ': ' + fmtMoney(totalBank);
+    // Chart - last 6 months
+    const months = [], labels = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const s = d.toISOString();
+      const e = new Date(now.getFullYear(), now.getMonth()-i+1, 1).toISOString();
+      months.push(orders.filter(o => o.created_at >= s && o.created_at < e).reduce((s,o) => s + parseFloat(o.total||0), 0));
+      labels.push(d.toLocaleDateString('default', {month:'short'}));
+    }
+    window._chartData = {months, monthLabels: labels};
+  } catch(e) { console.error('Dashboard stats error:', e); }
+}
+
+function fmtMoney(n) {
+  n = parseFloat(n) || 0;
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  return '$' + n.toLocaleString('en', {maximumFractionDigits:0});
 }
 
 // ===== CHART =====
