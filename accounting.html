@@ -667,7 +667,7 @@ async function init() {
     setLang(savedLang);
     // Re-render dynamic content with translated strings
     renderCOA();
-    renderJournal();
+    filterJournal();
     updateStats();
   } else {
     applyTranslations();
