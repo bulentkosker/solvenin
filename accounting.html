@@ -653,25 +653,20 @@ async function init() {
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
+  // Apply language FIRST so renderCOA uses correct t() values
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else applyTranslations();
+
   await Promise.all([loadAccounts(), loadTaxRates()]);
   updateStats();
   setDefaultDates();
+  // Re-apply translations after render to catch data-i18n elements
+  applyTranslations();
 
   const ls = document.getElementById('loading-screen');
   ls.style.opacity = '0';
   setTimeout(() => ls.style.display = 'none', 200);
-  // Apply saved language
-  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
-  console.log('[i18n] savedLang=', savedLang, 'setLang available=', typeof setLang);
-  if (typeof setLang === 'function') {
-    setLang(savedLang);
-    // Re-render dynamic content with translated strings
-    renderCOA();
-    filterJournal();
-    updateStats();
-  } else {
-    applyTranslations();
-  }
 }
 
 // ===== LOAD DATA =====
@@ -754,7 +749,7 @@ function renderCOA() {
       <div class="coa-group-header" onclick="toggleGroup(this)">
         <div class="coa-group-icon" style="background:${meta.bg}">${meta.icon}</div>
         <div class="coa-group-name" style="color:${meta.color}">${meta.label}</div>
-        <span class="badge badge-gray" style="font-size:11px">${typeAccounts.length} accounts</span>
+        <span class="badge badge-gray" style="font-size:11px">${typeAccounts.length} ${t("accounts_label")}</span>
         <div class="coa-group-total" style="color:${meta.color}">${fmtAmt(Math.abs(total))}</div>
         <span style="color:var(--gray400);font-size:12px;margin-left:8px">▼</span>
       </div>
