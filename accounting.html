@@ -662,8 +662,16 @@ async function init() {
   setTimeout(() => ls.style.display = 'none', 200);
   // Apply saved language
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
-  if (typeof setLang === 'function') setLang(savedLang);
-  else applyTranslations();
+  console.log('[i18n] savedLang=', savedLang, 'setLang available=', typeof setLang);
+  if (typeof setLang === 'function') {
+    setLang(savedLang);
+    // Re-render dynamic content with translated strings
+    renderCOA();
+    renderJournal();
+    updateStats();
+  } else {
+    applyTranslations();
+  }
 }
 
 // ===== LOAD DATA =====
