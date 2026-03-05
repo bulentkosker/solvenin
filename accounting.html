@@ -1387,8 +1387,10 @@ async function loadCompanies() {
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
     if (active) {
-      document.getElementById('company-name').textContent = active.company_name;
-      document.getElementById('company-plan').textContent = (active.plan||'free').toUpperCase();
+      const cnEl = document.getElementById('company-name');
+      const cpEl = document.getElementById('company-plan');
+      if (cnEl) cnEl.textContent = active.company_name;
+      if (cpEl) cpEl.textContent = (active.plan||'free').toUpperCase();
       if (!companyId) companyId = active.company_id;
     }
     renderCompanyMenu();
