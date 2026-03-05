@@ -189,6 +189,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: calc(100vw - var(--sidebar-w));
 }
 
 /* ===== TOPBAR ===== */
@@ -681,9 +683,9 @@ tr:hover td { background: var(--gray50); }
 }
 
 /* ===== TICKER BAND ===== */
-.ticker-wrap{background:var(--navy);border-bottom:1px solid rgba(255,255,255,0.08);overflow:hidden;height:36px;display:flex;align-items:center;position:relative;user-select:none}
+.ticker-wrap{background:var(--navy);border-bottom:1px solid rgba(255,255,255,0.08);overflow:hidden;height:36px;display:flex;align-items:center;position:relative;user-select:none;max-width:100%;width:100%}
 .ticker-wrap:hover .ticker-track{animation-play-state:paused}
-.ticker-track{display:flex;animation:ticker-scroll 60s linear infinite;white-space:nowrap}
+.ticker-track{display:flex;animation:ticker-scroll 60s linear infinite;white-space:nowrap;flex-shrink:0}
 @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 18px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);border-right:1px solid rgba(255,255,255,0.08)}
 .ticker-item .t-sym{color:rgba(255,255,255,0.4);font-weight:400;font-size:11px}
@@ -1255,10 +1257,11 @@ document.addEventListener('click', function(e) {
 // ===== TICKER =====
 const TALL = {
   forex:[
-    {id:'EUR',lbl:'EUR/USD'},{id:'GBP',lbl:'GBP/USD'},{id:'JPY',lbl:'JPY/USD'},
-    {id:'TRY',lbl:'TRY/USD'},{id:'RUB',lbl:'RUB/USD'},{id:'CNY',lbl:'CNY/USD'},
-    {id:'KZT',lbl:'KZT/USD'},{id:'CHF',lbl:'CHF/USD'},{id:'CAD',lbl:'CAD/USD'},
-    {id:'AUD',lbl:'AUD/USD'},{id:'INR',lbl:'INR/USD'},{id:'SAR',lbl:'SAR/USD'},
+    {id:'EUR',lbl:'Euro'},{id:'GBP',lbl:'Pound'},{id:'JPY',lbl:'Yen'},
+    {id:'TRY',lbl:'Turkish Lira'},{id:'RUB',lbl:'Ruble'},{id:'CNY',lbl:'Yuan'},
+    {id:'KZT',lbl:'Tenge'},{id:'CHF',lbl:'Swiss Franc'},{id:'CAD',lbl:'Canadian $'},
+    {id:'AUD',lbl:'Australian $'},{id:'INR',lbl:'Rupee'},{id:'SAR',lbl:'Saudi Riyal'},
+    {id:'AED',lbl:'Dirham'},{id:'BRL',lbl:'Real'},{id:'MXN',lbl:'Peso'},
   ],
   crypto:[
     {id:'btc',lbl:'Bitcoin',sym:'BTC'},{id:'eth',lbl:'Ethereum',sym:'ETH'},
@@ -1269,85 +1272,121 @@ const TALL = {
   ]
 };
 const TDEFAULTS = ['EUR','GBP','JPY','RUB','CNY','btc','eth','gold','silver','oil'];
-const TBIG = ['JPY','KZT','RUB','INR','TRY'];
+const TBIG = ['JPY','KZT','RUB','INR','TRY','SAR','AED','BRL','MXN'];
 
-function tPrefs(){try{const s=localStorage.getItem('solvenin_ticker');return s?JSON.parse(s):TDEFAULTS;}catch{return TDEFAULTS;}}
+function tPrefs(){
+  try{ const s=localStorage.getItem('solvenin_ticker'); return s?JSON.parse(s):TDEFAULTS; }
+  catch{ return TDEFAULTS; }
+}
+function tBaseCur(){
+  return localStorage.getItem('solvenin_ticker_base') || 'USD';
+}
 
 function openTickerSettings(){
-  const p=tPrefs();
+  const p = tPrefs();
+  const base = tBaseCur();
+
+  // Build base currency selector
+  const allCurs = ['USD','EUR','GBP','JPY','TRY','RUB','CNY','KZT','CHF','CAD','AUD','INR','SAR','AED','BRL','MXN'];
+  document.getElementById('t-base-select').innerHTML = allCurs.map(c =>
+    `<option value="${c}" ${c===base?'selected':''}>${c}</option>`
+  ).join('');
+
   ['forex','crypto','commodity'].forEach(g=>{
-    document.getElementById('t-'+g).innerHTML=TALL[g].map(i=>
-      `<div class="t-check"><input type="checkbox" id="tc_${i.id}" value="${i.id}" ${p.includes(i.id)?'checked':''}><label for="tc_${i.id}">${i.lbl}</label></div>`
+    document.getElementById('t-'+g).innerHTML = TALL[g].map(i=>
+      `<div class="t-check"><input type="checkbox" id="tc_${i.id}" value="${i.id}" ${p.includes(i.id)?'checked':''}><label for="tc_${i.id}">${i.lbl} <span style="color:var(--gray400);font-size:11px">(${i.sym||i.id.toUpperCase()})</span></label></div>`
     ).join('');
   });
   document.getElementById('ticker-modal').classList.add('open');
 }
+
 function saveTickerSettings(){
-  const prefs=[];
-  document.querySelectorAll('#ticker-modal input:checked').forEach(cb=>prefs.push(cb.value));
-  localStorage.setItem('solvenin_ticker',JSON.stringify(prefs));
+  const prefs = [];
+  document.querySelectorAll('#ticker-modal input[type=checkbox]:checked').forEach(cb=>prefs.push(cb.value));
+  const base = document.getElementById('t-base-select').value;
+  localStorage.setItem('solvenin_ticker', JSON.stringify(prefs));
+  localStorage.setItem('solvenin_ticker_base', base);
   document.getElementById('ticker-modal').classList.remove('open');
   loadTicker();
 }
 document.getElementById('ticker-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 
 async function loadTicker(){
-  const prefs=tPrefs();
-  const items=[];
+  const prefs = tPrefs();
+  const base = tBaseCur();
+  const items = [];
+  let rates = {};
+
   try{
-    const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    const d=await r.json();
-    const rates=d.rates||{};
-    // Forex
+    // Fetch rates with base currency
+    const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+    const d = await r.json();
+    rates = d.rates || {};
+
+    // Forex items
     TALL.forex.forEach(fx=>{
-      if(!prefs.includes(fx.id)||!rates[fx.id])return;
-      const v=rates[fx.id];
-      const dp=TBIG.includes(fx.id)?2:4;
-      items.push({lbl:fx.lbl, val:v.toFixed(dp), ch:null});
+      if(!prefs.includes(fx.id)) return;
+      if(fx.id === base) return; // skip same as base
+      const v = rates[fx.id];
+      if(!v) return;
+      const dp = TBIG.includes(fx.id) ? 2 : 4;
+      items.push({lbl: fx.id, sub: '1 '+base, val: v.toFixed(dp), ch:null});
     });
-    // Auto local currency
+
+    // Auto local currency based on UI language
     const langCurMap={tr:'TRY',ru:'RUB',de:'EUR',fr:'EUR',ja:'JPY',zh:'CNY',ar:'SAR',kk:'KZT'};
-    const lang=localStorage.getItem('solvenin_lang')||'en';
-    const lc=langCurMap[lang];
-    if(lc&&rates[lc]&&!prefs.includes(lc)){
-      items.push({lbl:lc+'/USD',val:rates[lc].toFixed(TBIG.includes(lc)?2:4),ch:null,local:true});
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    const lc = langCurMap[lang];
+    if(lc && lc !== base && rates[lc] && !prefs.includes(lc)){
+      items.push({lbl:lc, sub:'1 '+base, val:rates[lc].toFixed(TBIG.includes(lc)?2:4), ch:null, local:true});
     }
-    // Gold/Silver from XAU/XAG
-    if(prefs.includes('gold')&&rates.XAU) items.push({lbl:'Gold',val:'$'+(1/rates.XAU).toFixed(2),ch:null,icon:'🥇'});
-    if(prefs.includes('silver')&&rates.XAG) items.push({lbl:'Silver',val:'$'+(1/rates.XAG).toFixed(2),ch:null,icon:'🥈'});
-  }catch(e){console.warn('Forex/rates failed',e);}
+
+    // Gold/Silver (XAU/XAG relative to base)
+    if(prefs.includes('gold') && rates.XAU){
+      const usdPerOz = 1/rates.XAU * (rates['USD']||1);
+      items.push({lbl:'Gold', sub:'per oz', val:'$'+(usdPerOz).toFixed(2), ch:null, icon:'🥇'});
+    }
+    if(prefs.includes('silver') && rates.XAG){
+      const usdPerOz = 1/rates.XAG * (rates['USD']||1);
+      items.push({lbl:'Silver', sub:'per oz', val:'$'+(usdPerOz).toFixed(2), ch:null, icon:'🥈'});
+    }
+  }catch(e){ console.warn('Forex fetch failed',e); }
+
+  // Crypto (always USD)
   try{
-    const wantCrypto=TALL.crypto.filter(c=>prefs.includes(c.id));
+    const wantCrypto = TALL.crypto.filter(c=>prefs.includes(c.id));
     if(wantCrypto.length){
       const cgMap={btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'};
-      const ids=wantCrypto.map(c=>cgMap[c.id]).join(',');
-      const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-      const d=await r.json();
+      const ids = wantCrypto.map(c=>cgMap[c.id]).join(',');
+      const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+      const d = await r.json();
       wantCrypto.forEach(c=>{
-        const cd=d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
-        if(!cd)return;
-        const p=cd.usd>=1000?'$'+cd.usd.toLocaleString('en',{maximumFractionDigits:0}):'$'+cd.usd.toFixed(2);
-        const ch=cd.usd_24h_change?.toFixed(2);
-        items.push({lbl:c.sym,val:p,ch,icon:'🪙'});
+        const cd = d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
+        if(!cd) return;
+        const p = cd.usd>=1000 ? '$'+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : '$'+cd.usd.toFixed(2);
+        items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
       });
     }
-  }catch(e){console.warn('Crypto failed',e);}
-  // Brent oil fallback
-  if(prefs.includes('oil')) items.push({lbl:'Brent',val:'~$82',ch:null,icon:'🛢️'});
+  }catch(e){ console.warn('Crypto fetch failed',e); }
+
+  // Brent (USD, static fallback)
+  if(prefs.includes('oil')){
+    items.push({lbl:'Brent', sub:'USD/bbl', val:'~$82', ch:null, icon:'🛢️'});
+  }
 
   renderTicker(items);
 }
 
 function renderTicker(items){
-  if(!items.length)return;
-  const html=items.map(i=>{
-    const chHtml=i.ch!=null
-      ?`<span class="${parseFloat(i.ch)>=0?'t-up':'t-dn'}">${parseFloat(i.ch)>=0?'▲':'▼'}${Math.abs(i.ch)}%</span>`:'';
-    return `<div class="ticker-item">${i.icon?i.icon+' ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${i.val}</span>${chHtml}</div>`;
+  if(!items.length) return;
+  const html = items.map(i=>{
+    const chHtml = i.ch!=null
+      ? `<span class="${parseFloat(i.ch)>=0?'t-up':'t-dn'}">${parseFloat(i.ch)>=0?'▲':'▼'}${Math.abs(i.ch)}%</span>` : '';
+    return `<div class="ticker-item">${i.icon?i.icon+' ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${i.val}</span><span style="color:rgba(255,255,255,0.3);font-size:10px">${i.sub||''}</span>${chHtml}</div>`;
   }).join('');
-  const track=document.getElementById('ticker-track');
-  track.innerHTML=html+html; // duplicate for seamless loop
-  track.style.animationDuration=Math.max(30,items.length*7)+'s';
+  const track = document.getElementById('ticker-track');
+  track.innerHTML = html + html;
+  track.style.animationDuration = Math.max(30, items.length*7)+'s';
 }
 </script>
 </body>
