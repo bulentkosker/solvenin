@@ -694,8 +694,8 @@ async function init() {
   document.getElementById('user-name').textContent = name;
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
 
-  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan,name)').eq('id', user.id).single();
-  companyId = profile?.company_id || null;
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan,name)').eq('id', user.id).single();
+  companyId = profile?.active_company_id || profile?.company_id || null;
   currentUser = user;
 
   await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);

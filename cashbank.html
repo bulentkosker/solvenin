@@ -986,15 +986,17 @@ async function init() {
 
   // Fire all initial queries in parallel
   const [profileRes, registersRes, banksRes, accountsRes] = await Promise.all([
-    sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single(),
+    sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single(),
     sb.from('cash_registers').select('*').eq('is_active', true).order('created_at'),
     sb.from('banks').select('*').eq('is_active', true).order('name'),
     sb.from('bank_accounts').select('*').eq('is_active', true).order('account_name'),
   ]);
 
   const profile = profileRes.data;
-  if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
-  companyId = profile.company_id;
+  const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
+  if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
+  companyId = resolvedCompanyId;
+  await loadCompanies();
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 

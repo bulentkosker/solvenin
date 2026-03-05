@@ -648,9 +648,11 @@ async function init() {
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('user-name').textContent = name;
 
-  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
-  if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
-  companyId = profile.company_id;
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan)').eq('id', user.id).single();
+  const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
+  if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
+  companyId = resolvedCompanyId;
+  await loadCompanies();
   document.getElementById('user-plan-label').textContent =
     (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
 
