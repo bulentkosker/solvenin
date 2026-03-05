@@ -1069,6 +1069,8 @@ const sb = createClient(
   'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
 );
 
+let companyId = null;
+
 // ===== INIT =====
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -1089,7 +1091,8 @@ async function init() {
   document.getElementById('user-avatar').textContent = firstName[0].toUpperCase();
 
   // Plan
-  const { data: profile } = await sb.from('profiles').select('*, companies(plan)').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('*, companies(plan,name)').eq('id', user.id).single();
+  companyId = profile?.company_id || null;
   const plan = profile?.companies?.plan || 'free';
   document.getElementById('user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
@@ -1111,6 +1114,7 @@ async function init() {
   setTimeout(() => ls.style.display = 'none', 200);
 
   await loadDashboardStats();
+  loadTicker();
   initChart();
   // Apply saved language
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -1163,7 +1167,11 @@ function saveStatSettings(){
   if(prefs.length === 0) return;
   localStorage.setItem('solvenin_stats', JSON.stringify(prefs.slice(0,4)));
   document.getElementById('stat-modal').classList.remove('open');
-  renderStatCards(window._statData || {});
+  if (window._statData) {
+    renderStatCards(window._statData);
+  } else {
+    loadDashboardStats();
+  }
 }
 document.getElementById('stat-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
 
@@ -1379,7 +1387,12 @@ function tPrefs(){
   catch{ return TDEFAULTS; }
 }
 function tBaseCur(){
-  return localStorage.getItem('solvenin_ticker_base') || 'USD';
+  const saved = localStorage.getItem('solvenin_ticker_base');
+  if (saved) return saved;
+  // Auto-detect from browser language
+  const langCurMap = {tr:'TRY',ru:'RUB',de:'EUR',fr:'EUR',ja:'JPY',zh:'CNY',ar:'SAR',kk:'KZT',ko:'KRW',pt:'BRL',es:'MXN',pl:'PLN'};
+  const lang = localStorage.getItem('solvenin_lang') || navigator.language?.split('-')[0] || 'en';
+  return langCurMap[lang] || 'USD';
 }
 
 function openTickerSettings(){
