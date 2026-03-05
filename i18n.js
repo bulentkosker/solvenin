@@ -465,6 +465,9 @@ const T = window.T = {
     good_morning:'Good morning',
     good_afternoon:'Good afternoon',
     good_evening:'Good evening',
+    dash_cash_balance:'Cash & Bank',
+    dash_pending:'pending',
+    dash_this_month:'This month',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -747,6 +750,9 @@ const T = window.T = {
     good_morning:'Günaydın',
     good_afternoon:'İyi öğlenler',
     good_evening:'İyi akşamlar',
+    dash_cash_balance:'Kasa & Banka',
+    dash_pending:'bekliyor',
+    dash_this_month:'Bu ay',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -855,6 +861,9 @@ const T = window.T = {
     good_morning:'Guten Morgen',
     good_afternoon:'Guten Tag',
     good_evening:'Guten Abend',
+    dash_cash_balance:'Kasse & Bank',
+    dash_pending:'ausstehend',
+    dash_this_month:'Diesen Monat',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -964,6 +973,9 @@ const T = window.T = {
     good_morning:'Bonjour',
     good_afternoon:'Bon après-midi',
     good_evening:'Bonsoir',
+    dash_cash_balance:'Caisse & Banque',
+    dash_pending:'en attente',
+    dash_this_month:'Ce mois',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -1072,6 +1084,9 @@ const T = window.T = {
     good_morning:'Buenos días',
     good_afternoon:'Buenas tardes',
     good_evening:'Buenas noches',
+    dash_cash_balance:'Caja & Banco',
+    dash_pending:'pendiente',
+    dash_this_month:'Este mes',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -1146,6 +1161,9 @@ const T = window.T = {
     good_morning:'صباح الخير',
     good_afternoon:'مساء الخير',
     good_evening:'مساء الخير',
+    dash_cash_balance:'الصندوق والبنك',
+    dash_pending:'معلق',
+    dash_this_month:'هذا الشهر',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -1219,6 +1237,9 @@ const T = window.T = {
     good_morning:'早上好',
     good_afternoon:'下午好',
     good_evening:'晚上好',
+    dash_cash_balance:'现金与银行',
+    dash_pending:'待处理',
+    dash_this_month:'本月',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -1293,6 +1314,9 @@ const T = window.T = {
     good_morning:'Доброе утро',
     good_afternoon:'Добрый день',
     good_evening:'Добрый вечер',
+    dash_cash_balance:'Касса и банк',
+    dash_pending:'ожидает',
+    dash_this_month:'Этот месяц',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -1367,6 +1391,9 @@ const T = window.T = {
     good_morning:'Bom dia',
     good_afternoon:'Boa tarde',
     good_evening:'Boa noite',
+    dash_cash_balance:'Caixa & Banco',
+    dash_pending:'pendente',
+    dash_this_month:'Este mês',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -1440,6 +1467,9 @@ const T = window.T = {
     good_morning:'おはようございます',
     good_afternoon:'こんにちは',
     good_evening:'こんばんは',
+    dash_cash_balance:'現金・銀行',
+    dash_pending:'保留中',
+    dash_this_month:'今月',
   },
 };
 

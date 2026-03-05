@@ -1068,7 +1068,7 @@ async function init() {
   ls.style.opacity = '0';
   setTimeout(() => ls.style.display = 'none', 200);
 
-  initChart('monthly');
+  initChart();
   // Apply saved language
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -1077,75 +1077,42 @@ async function init() {
 
 // ===== CHART =====
 let chart = null;
-const chartData = {
-  weekly: {
-    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-    data: [1200, 1900, 1400, 2100, 1800, 2400, 1600]
-  },
-  monthly: {
-    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    data: [8400,9200,10100,9800,11200,10600,12400,11800,13200,12100,14500,13800]
-  },
-  yearly: {
-    labels: ['2020','2021','2022','2023','2024','2025'],
-    data: [82000,94000,108000,125000,148000,172000]
-  }
-};
-
-function initChart(period) {
-  const ctx = document.getElementById('revenueChart').getContext('2d');
-  if (chart) chart.destroy();
-  const d = chartData[period];
-
-  chart = new Chart(ctx, {
+function initChart() {
+  const ctx = document.getElementById('revenueChart');
+  if (!ctx) return;
+  const cd = window._chartData;
+  if (!cd) return;
+  if (window._chart) window._chart.destroy();
+  window._chart = new Chart(ctx.getContext('2d'), {
     type: 'line',
     data: {
-      labels: d.labels,
+      labels: cd.monthLabels,
       datasets: [{
-        label: 'Revenue',
-        data: d.data,
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37,99,235,0.06)',
-        borderWidth: 2.5,
-        fill: true,
+        label: t('dash_total_revenue'),
+        data: cd.months,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.08)',
+        borderWidth: 2,
         tension: 0.4,
-        pointBackgroundColor: '#2563eb',
-        pointRadius: 3,
-        pointHoverRadius: 6
+        fill: true,
+        pointBackgroundColor: '#3b82f6',
+        pointRadius: 4,
       }]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#0f2650',
-          titleColor: '#fff',
-          bodyColor: 'rgba(255,255,255,0.7)',
-          padding: 12,
-          cornerRadius: 10,
-          callbacks: {
-            label: ctx => ' $' + ctx.raw.toLocaleString()
-          }
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11, family: 'DM Sans' }, color: '#94a3b8' }
-        },
-        y: {
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: {
-            font: { size: 11, family: 'DM Sans' },
-            color: '#94a3b8',
-            callback: v => '$' + (v/1000).toFixed(0) + 'k'
-          }
-        }
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' },
+             ticks: { callback: v => '$' + (v>=1000 ? (v/1000).toFixed(0)+'K' : v) }},
+        x: { grid: { display: false }}
       }
     }
   });
 }
+
+// Remove old period buttons handler if any
+function setPeriod(btn, period) { /* no-op, using real data */ }
 
 function setPeriod(btn, period) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
