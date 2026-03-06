@@ -367,15 +367,15 @@ tr:hover .action-btns { opacity:1; }
     <div class="stats-row fade-up fade-up-1">
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Total Products</span>
+          <span class="stat-label" data-i18n="inv_total_products">Total Products</span>
           <div class="stat-icon blue">📦</div>
         </div>
         <div class="stat-value" id="stat-total">0</div>
-        <div class="stat-change">across all categories</div>
+        <div class="stat-change" data-i18n="inv_all_categories">across all categories</div>
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Total Value</span>
+          <span class="stat-label" data-i18n="inv_total_value">Total Value</span>
           <div class="stat-icon green">💰</div>
         </div>
         <div class="stat-value" id="stat-value">$0</div>
@@ -383,28 +383,28 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Low Stock</span>
+          <span class="stat-label" data-i18n="inv_low_stock">Low Stock</span>
           <div class="stat-icon orange">⚠️</div>
         </div>
         <div class="stat-value" id="stat-low">0</div>
-        <div class="stat-change warn">items need restocking</div>
+        <div class="stat-change warn" data-i18n="inv_need_restock">items need restocking</div>
       </div>
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-label">Out of Stock</span>
+          <span class="stat-label" data-i18n="inv_out_of_stock">Out of Stock</span>
           <div class="stat-icon red">🚫</div>
         </div>
         <div class="stat-value" id="stat-out">0</div>
-        <div class="stat-change down">items unavailable</div>
+        <div class="stat-change down" data-i18n="inv_unavailable">items unavailable</div>
       </div>
     </div>
 
     <!-- TABS -->
     <div class="tabs-bar fade-up fade-up-1">
-      <button class="tab-btn active" onclick="switchTab('all', this)">All Items</button>
+      <button class="tab-btn active" onclick="switchTab('all', this)" data-i18n="inv_all_items">All Items</button>
       <button class="tab-btn" onclick="switchTab('low', this)">Low Stock</button>
       <button class="tab-btn" onclick="switchTab('out', this)">Out of Stock</button>
-      <button class="tab-btn" onclick="switchTab('movements', this)">Movements</button>
+      <button class="tab-btn" onclick="switchTab('movements', this)" data-i18n="inv_movements">Movements</button>
     </div>
 
     <!-- TOOLBAR -->
@@ -429,9 +429,9 @@ tr:hover .action-btns { opacity:1; }
           <option value="out">Out of Stock</option>
         </select>
       </div>
-      <button class="btn-secondary" onclick="exportCSV()">⬇ Export</button>
-      <button class="btn-secondary" onclick="openAdjustModal()">📊 Adjust Stock</button>
-      <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+      <button class="btn-secondary" onclick="exportCSV()" data-i18n="inv_export">⬇ Export</button>
+      <button class="btn-secondary" onclick="openAdjustModal()" data-i18n="inv_adjust_stock">📊 Adjust Stock</button>
+      <button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button>
     </div>
 
     <!-- INVENTORY TABLE -->
@@ -442,8 +442,8 @@ tr:hover .action-btns { opacity:1; }
           <span class="table-count" id="table-count">0 items</span>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn-secondary" style="padding:6px 12px;font-size:12px" onclick="toggleView('grid')" id="btn-grid">⊞ Grid</button>
-          <button class="btn-secondary" style="padding:6px 12px;font-size:12px;border-color:var(--blue);color:var(--blue)" onclick="toggleView('list')" id="btn-list">≡ List</button>
+          <button class="btn-secondary" style="padding:6px 12px;font-size:12px" onclick="toggleView('grid')" id="btn-grid" data-i18n="inv_grid">⊞ Grid</button>
+          <button class="btn-secondary" style="padding:6px 12px;font-size:12px;border-color:var(--blue);color:var(--blue)" onclick="toggleView('list')" id="btn-list" data-i18n="inv_list">≡ List</button>
         </div>
       </div>
       <div id="table-container">
@@ -778,7 +778,7 @@ function renderTable() {
   document.getElementById('page-info').textContent = `Showing ${start + 1}–${Math.min(start + perPage, filteredProducts.length)} of ${filteredProducts.length}`;
 
   if (page.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>No products found</h3><p>Try adjusting your filters or add a new product.</p><button class="btn-primary" onclick="openAddModal()">+ Add Product</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('inv_no_products')||'No products found'}</h3><p>${t('inv_no_products_sub')||'Try adjusting your filters or add a new product.'}</p><button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button></div></td></tr>`;
     renderPagination();
     return;
   }
