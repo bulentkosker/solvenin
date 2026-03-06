@@ -255,45 +255,6 @@ tr:hover .action-btns { opacity:1; }
   border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;
 }
 .new-company-box input:focus { outline: none; border-color: #3b82f6; }
-
-/* NEW CATEGORY MODAL */
-.new-category-modal {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  display: none; align-items: center; justify-content: center; z-index: 101;
-  backdrop-filter: blur(4px);
-}
-.new-category-modal.open { display: flex; }
-.new-category-box {
-  background: #fff; border-radius: 16px; padding: 28px; width: 360px;
-  box-shadow: var(--shadow-lg);
-}
-.new-category-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #0a0f1e; }
-.new-category-box p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-.new-category-box input {
-  width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
-  border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;
-  font-family: var(--font-body);
-}
-.new-category-box input:focus { outline: none; border-color: var(--blue); }
-.new-category-box-buttons {
-  display: flex; gap: 10px; justify-content: flex-end;
-}
-.new-category-box-buttons button {
-  padding: 9px 18px; border-radius: 8px; border: none;
-  font-family: var(--font-body); font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all .15s;
-}
-.new-category-box-buttons .btn-cancel {
-  background: var(--gray100); color: var(--gray600);
-}
-.new-category-box-buttons .btn-cancel:hover { background: var(--gray200); }
-.new-category-box-buttons .btn-save {
-  background: var(--blue); color: #fff;
-}
-.new-category-box-buttons .btn-save:hover { background: #1a56db; }
-.new-category-err {
-  color: var(--red); font-size: 12px; margin-bottom: 12px; display: none;
-}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -455,6 +416,11 @@ tr:hover .action-btns { opacity:1; }
         </div>
         <select class="filter-btn" id="filter-category" onchange="filterTable()">
           <option value="">All Categories</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Raw Material">Raw Materials</option>
+          <option value="Packaging">Packaging</option>
+          <option value="Finished Goods">Finished Goods</option>
+          <option value="Office">Office Supplies</option>
         </select>
         <select class="filter-btn" id="filter-status" onchange="filterTable()">
           <option value="">All Status</option>
@@ -550,31 +516,25 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label>Category</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <select id="p-category" style="flex:1">
-              <option value="">Select category</option>
-            </select>
-            <button type="button" onclick="openNewCategoryModal()" style="padding:10px 12px;border:1.5px solid var(--gray200);border-radius:10px;background:var(--white);cursor:pointer;font-weight:600;color:var(--blue);transition:all .15s;font-size:13px" title="Add new category">+</button>
-          </div>
+          <select id="p-category">
+            <option value="">Select category</option>
+            <option>Electronics</option>
+            <option>Raw Material</option>
+            <option>Packaging</option>
+            <option>Finished Goods</option>
+            <option>Office</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Unit</label>
           <select id="p-unit">
             <option>pcs</option>
             <option>kg</option>
-            <option>g</option>
-            <option>ton</option>
             <option>lt</option>
-            <option>ml</option>
             <option>m</option>
-            <option>cm</option>
             <option>m²</option>
-            <option>cm²</option>
             <option>box</option>
             <option>pack</option>
-            <option>bottle</option>
-            <option>carton</option>
-            <option>roll</option>
           </select>
         </div>
       </div>
@@ -626,20 +586,6 @@ tr:hover .action-btns { opacity:1; }
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
       <button class="btn-primary" onclick="saveProduct()">Save Product</button>
-    </div>
-  </div>
-</div>
-
-<!-- NEW CATEGORY MODAL -->
-<div class="new-category-modal" id="new-category-modal">
-  <div class="new-category-box">
-    <h3>Create New Category</h3>
-    <p>Add a new product category to your inventory.</p>
-    <div class="new-category-err" id="new-category-err"></div>
-    <input type="text" id="new-category-name" placeholder="Enter category name..." onkeypress="if(event.key==='Enter') saveNewCategory()">
-    <div class="new-category-box-buttons">
-      <button class="btn-cancel" onclick="closeNewCategoryModal()">Cancel</button>
-      <button class="btn-save" onclick="saveNewCategory()">Create</button>
     </div>
   </div>
 </div>
@@ -724,7 +670,6 @@ let companyId = null, currentUser = null;
 let warehouses = [];
 let products = [];
 let movements = [];
-let categories = [];
 let filteredProducts = [];
 let currentPage = 1;
 const perPage = 10;
@@ -753,7 +698,7 @@ async function init() {
   companyId = profile?.active_company_id || profile?.company_id || null;
   currentUser = user;
 
-  await Promise.all([loadProducts(), loadMovements(), loadWarehouses(), loadCategories()]);
+  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -764,34 +709,582 @@ async function init() {
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200); }
 }
 
-// ===== CATEGORIES =====
-async function loadCategories() {
+// ===== RENDER =====
+function renderAll() {
+  updateStats();
+  applyFilters();
+  renderMovements();
+  populateAdjustSelect();
+}
+
+function updateStats() {
+  const total = products.length;
+  const totalValue = products.reduce((s, p) => s + p.stock * p.unit_cost, 0);
+  const low = products.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
+  const out = products.filter(p => p.stock === 0).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+  document.getElementById('stat-low').textContent = low;
+  document.getElementById('stat-out').textContent = out;
+  document.getElementById('low-stock-alert').querySelector('strong').textContent = `${low + out} items`;
+  document.getElementById('low-stock-alert').style.display = (low + out) > 0 ? 'flex' : 'none';
+}
+
+function getStockStatus(p) {
+  if (p.stock === 0) return 'out';
+  if (p.stock <= p.min_stock) return 'low';
+  return 'in_stock';
+}
+
+function applyFilters() {
+  const search = (document.getElementById('table-search')?.value || document.getElementById('global-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('filter-category')?.value || '';
+  const statusFilter = document.getElementById('filter-status')?.value || '';
+
+  filteredProducts = products.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
+    const matchCat = !cat || p.category === cat;
+    const status = getStockStatus(p);
+    const matchStatus = !statusFilter || status === statusFilter;
+    const matchTab = currentTab === 'all' || (currentTab === 'low' && status === 'low') || (currentTab === 'out' && status === 'out');
+    return matchSearch && matchCat && matchStatus && matchTab;
+  });
+
+  // Sort
+  filteredProducts.sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (sortKey === 'total_value') { va = a.stock * a.unit_cost; vb = b.stock * b.unit_cost; }
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function filterTable() { applyFilters(); }
+
+function filterByStatus(status) {
+  document.getElementById('filter-status').value = status;
+  applyFilters();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('inventory-tbody');
+  const start = (currentPage - 1) * perPage;
+  const page = filteredProducts.slice(start, start + perPage);
+  document.getElementById('table-count').textContent = `${filteredProducts.length} items`;
+  document.getElementById('page-info').textContent = `Showing ${start + 1}–${Math.min(start + perPage, filteredProducts.length)} of ${filteredProducts.length}`;
+
+  if (page.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('inv_no_products')||'No products found'}</h3><p>${t('inv_no_products_sub')||'Try adjusting your filters or add a new product.'}</p><button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button></div></td></tr>`;
+    renderPagination();
+    return;
+  }
+
+  tbody.innerHTML = page.map(p => {
+    const status = getStockStatus(p);
+    const pct = p.max_stock ? Math.min(100, (p.stock / p.max_stock) * 100) : 50;
+    const fillClass = status === 'out' ? 'critical' : status === 'low' ? 'low' : 'good';
+    const badge = status === 'out'
+      ? '<span class="badge badge-red">Out of Stock</span>'
+      : status === 'low'
+      ? '<span class="badge badge-orange">⚠ Low Stock</span>'
+      : '<span class="badge badge-green">✓ In Stock</span>';
+    const totalVal = (p.stock * p.unit_cost).toLocaleString('en-US', {style:'currency', currency:'USD'});
+    const catBadge = {Electronics:'badge-blue', 'Raw Material':'badge-gray', Packaging:'badge-purple', 'Finished Goods':'badge-green', Office:'badge-gray'}[p.category] || 'badge-gray';
+    return `<tr>
+      <td><input type="checkbox" class="row-check" data-id="${p.id}"></td>
+      <td><div class="td-name">
+        <div class="item-icon">${getCatIcon(p.category)}</div>
+        <div>
+          <div>${p.name}</div>
+          <div class="item-sku">${p.sku || '—'}</div>
+        </div>
+      </div></td>
+      <td><span class="badge ${catBadge}">${p.category || '—'}</span></td>
+      <td><div class="stock-bar-wrap">
+        <div class="stock-bar"><div class="stock-fill ${fillClass}" style="width:${pct}%"></div></div>
+        <span class="stock-num">${p.stock} ${p.unit}</span>
+      </div></td>
+      <td>${p.unit_cost ? '$' + p.unit_cost.toFixed(2) : '—'}</td>
+      <td style="font-weight:600;color:var(--gray800)">${totalVal}</td>
+      <td>${badge}</td>
+      <td style="color:var(--gray500);font-size:12px">${p.location || '—'}</td>
+      <td><div class="action-btns">
+        <button class="action-btn" onclick="openEditModal(${p.id})" title="Edit">✏️</button>
+        <button class="action-btn" onclick="openAdjustForProduct(${p.id})" title="Adjust Stock">📊</button>
+        <button class="action-btn danger" onclick="openDeleteModal(${p.id})" title="Delete">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function getCatIcon(cat) {
+  const icons = { Electronics:'💻', 'Raw Material':'🔩', Packaging:'📦', 'Finished Goods':'✅', Office:'🖊️' };
+  return icons[cat] || '📦';
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+  const container = document.getElementById('page-btns');
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 2) {
+      html += `<button class="page-btn" disabled>…</button>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  container.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderTable();
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  applyFilters();
+}
+
+function renderMovements() {
+  const tbody = document.getElementById('movements-tbody');
+  const typeLabel = { in:'<span class="badge badge-green">↓ Stock In</span>', out:'<span class="badge badge-red">↑ Stock Out</span>', adjust:'<span class="badge badge-blue">⚙ Adjust</span>', transfer:'<span class="badge badge-purple">→ Transfer</span>', return:'<span class="badge badge-orange">↩ Return</span>' };
+  tbody.innerHTML = movements.map(m => `<tr>
+    <td style="color:var(--gray500);font-size:12px">${m.date}</td>
+    <td style="font-weight:600">${m.product}</td>
+    <td>${typeLabel[m.type] || m.type}</td>
+    <td style="font-weight:700;color:${m.type==='in'||m.type==='return'?'var(--green)':'var(--red)'}">
+      ${m.type==='in'||m.type==='return'?'+':'-'}${m.qty}
+    </td>
+    <td style="color:var(--gray500);font-size:12px">${m.ref || '—'}</td>
+    <td style="color:var(--gray500);font-size:12px">${m.note || '—'}</td>
+  </tr>`).join('');
+}
+
+function populateAdjustSelect() {
+  const sel = document.getElementById('adj-product');
+  sel.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${p.stock} ${p.unit})</option>`).join('');
+}
+
+// ===== TABS =====
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inventory-table-card').style.display = tab === 'movements' ? 'none' : 'block';
+  document.getElementById('movements-card').style.display = tab === 'movements' ? 'block' : 'none';
+  if (tab !== 'movements') applyFilters();
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add Product';
+  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location','p-supplier'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-category').value = '';
+  document.getElementById('p-unit').value = 'pcs';
+  openModal('product-modal');
+}
+
+function openEditModal(id) {
+  editingId = id;
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('modal-title').textContent = 'Edit Product';
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-sku').value = p.sku || '';
+  document.getElementById('p-category').value = p.category || '';
+  document.getElementById('p-unit').value = p.unit || 'pcs';
+  document.getElementById('p-desc').value = p.desc || '';
+  document.getElementById('p-stock').value = p.stock;
+  document.getElementById('p-min-stock').value = p.min_stock || '';
+  document.getElementById('p-max-stock').value = p.max_stock || '';
+  document.getElementById('p-cost').value = p.unit_cost || '';
+  document.getElementById('p-price').value = p.price || '';
+  document.getElementById('p-location').value = p.location || '';
+  document.getElementById('p-supplier').value = p.supplier || '';
+  openModal('product-modal');
+}
+
+
+// ===== LOAD FROM SUPABASE =====
+async function loadProducts() {
   if (!companyId) return;
-  const { data, error } = await sb.from('categories')
-    .select('id, name')
+  const { data, error } = await sb.from('products')
+    .select('id,name,sku,category,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id')
     .eq('company_id', companyId)
     .eq('active', true)
     .order('name');
-  
-  if (error) { console.error('loadCategories:', error); return; }
-  categories = data || [];
-  populateCategorySelect();
-  populateFilterCategories();
+  if (error) { console.error('loadProducts:', error); return; }
+  // Map DB columns to UI fields
+  products = (data || []).map(p => ({
+    id: p.id,
+    name: p.name,
+    sku: p.sku || '',
+    category: p.category || '',
+    unit: p.unit || 'pcs',
+    stock: parseFloat(p.quantity || 0),
+    min_stock: parseFloat(p.min_stock || 0),
+    max_stock: parseFloat(p.max_stock || 0),
+    unit_cost: parseFloat(p.cost_price || 0),
+    price: parseFloat(p.sale_price || 0),
+    location: p.location || '',
+    supplier: '',
+    desc: p.description || '',
+  }));
 }
 
-function populateCategorySelect() {
-  const select = document.getElementById('p-category');
-  select.innerHTML = `<option value="">Select category</option>
-    ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}`;
+async function loadMovements() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('stock_movements')
+    .select('id,created_at,product_id,type,quantity,reference,notes,products(name)')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) { console.error('loadMovements:', error); return; }
+  movements = (data || []).map(m => ({
+    id: m.id,
+    date: m.created_at?.split('T')[0],
+    product: m.products?.name || '',
+    product_id: m.product_id,
+    type: m.type,
+    qty: parseFloat(m.quantity || 0),
+    ref: m.reference || '',
+    note: m.notes || '',
+  }));
 }
 
-function populateFilterCategories() {
-  const sel = document.getElementById('filter-category');
-  sel.innerHTML = `<option value="">All Categories</option>` + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+async function loadWarehouses() {
+  if (!companyId) return;
+  const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).eq('is_active', true);
+  warehouses = data || [];
+}
+async function saveProduct() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
+  const payload = {
+    name,
+    sku: document.getElementById('p-sku').value.trim() || null,
+    category: document.getElementById('p-category').value || null,
+    unit: document.getElementById('p-unit').value || 'pcs',
+    description: document.getElementById('p-desc').value.trim() || null,
+    quantity: parseFloat(document.getElementById('p-stock').value) || 0,
+    min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
+    max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
+    cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
+    sale_price: parseFloat(document.getElementById('p-price').value) || 0,
+    location: document.getElementById('p-location').value.trim() || null,
+    company_id: companyId,
+    active: true,
+  };
+  let error;
+  if (editingId) {
+    ({ error } = await sb.from('products').update(payload).eq('id', editingId));
+    if (!error) showToast(t('toast_saved') || 'Product updated ✓', 'success');
+  } else {
+    ({ error } = await sb.from('products').insert(payload));
+    if (!error) showToast(t('toast_saved') || 'Product added ✓', 'success');
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal('product-modal');
+  await loadProducts();
+  renderAll();
 }
 
-function openNewCategoryModal() {
-  document.getElementById('new-category-err').style.display = 'none';
-  document.getElementById('new-category-name').value = '';
-  document.getElementById('new-category-modal').classList.add('open');
-  setTimeout(() => document.getElementById('new-category-name').focus(), 100);
+function openAdjustModal() { populateAdjustSelect(); openModal('adjust-modal'); }
+function openAdjustForProduct(id) {
+  populateAdjustSelect();
+  document.getElementById('adj-product').value = id;
+  openModal('adjust-modal');
+}
+
+async function saveAdjustment() {
+  const pid = document.getElementById('adj-product').value;
+  const qty = parseFloat(document.getElementById('adj-qty').value);
+  const type = document.getElementById('adj-type').value;
+  if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
+  const p = products.find(x => x.id == pid);
+  if (!p) return;
+
+  const delta = (type === 'in' || type === 'return') ? qty : -qty;
+  const newQty = Math.max(0, p.stock + delta);
+  const whId = warehouses[0]?.id || null;
+
+  // Update stock quantity
+  const { error: stockErr } = await sb.from('products').update({ quantity: newQty }).eq('id', pid);
+  if (stockErr) { showToast(stockErr.message, 'error'); return; }
+
+  // Log movement
+  await sb.from('stock_movements').insert({
+    company_id: companyId,
+    product_id: pid,
+    warehouse_id: whId,
+    type,
+    quantity: qty,
+    reference: document.getElementById('adj-ref').value || null,
+    notes: document.getElementById('adj-note').value || null,
+    created_by: currentUser?.id || null,
+  });
+
+  closeModal('adjust-modal');
+  await Promise.all([loadProducts(), loadMovements()]);
+  renderAll();
+  showToast(`${p.name}: ${newQty} ${p.unit}`, 'success');
+}
+
+function openDeleteModal(id) {
+  deletingId = id;
+  const p = products.find(x => x.id === id);
+  document.getElementById('delete-product-name').textContent = p?.name || '';
+  openModal('delete-modal');
+}
+
+async function confirmDelete() {
+  const { error } = await sb.from('products').update({ active: false }).eq('id', deletingId);
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal('delete-modal');
+  await loadProducts();
+  renderAll();
+  showToast(t('toast_deleted') || 'Product deleted', 'success');
+}
+
+function openMovementModal() { populateAdjustSelect(); openModal('adjust-modal'); }
+
+// ===== VIEW TOGGLE =====
+function toggleView(view) {
+  document.getElementById('btn-grid').style.borderColor = view === 'grid' ? 'var(--blue)' : '';
+  document.getElementById('btn-grid').style.color = view === 'grid' ? 'var(--blue)' : '';
+  document.getElementById('btn-list').style.borderColor = view === 'list' ? 'var(--blue)' : '';
+  document.getElementById('btn-list').style.color = view === 'list' ? 'var(--blue)' : '';
+  // Grid view
+  if (view === 'grid') {
+    const container = document.getElementById('table-container');
+    const start = (currentPage - 1) * perPage;
+    const page = filteredProducts.slice(start, start + perPage);
+    container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:20px">${page.map(p => {
+      const status = getStockStatus(p);
+      const badge = status === 'out' ? 'badge-red' : status === 'low' ? 'badge-orange' : 'badge-green';
+      const label = status === 'out' ? 'Out' : status === 'low' ? 'Low' : 'OK';
+      return `<div style="border:1px solid var(--gray200);border-radius:14px;padding:16px;background:var(--white);transition:all .2s;cursor:pointer" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+        <div style="font-size:28px;margin-bottom:10px">${getCatIcon(p.category)}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--gray800);margin-bottom:4px">${p.name}</div>
+        <div style="font-size:11px;color:var(--gray400);margin-bottom:10px">${p.sku || '—'}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:var(--font-display);font-size:20px;font-weight:800">${p.stock} <span style="font-size:12px;font-weight:400;color:var(--gray400)">${p.unit}</span></span>
+          <span class="badge ${badge}">${label}</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray400);margin-top:8px">$${p.unit_cost.toFixed(2)}/unit</div>
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <button class="action-btn" onclick="openEditModal(${p.id})" style="flex:1;width:auto;padding:6px;opacity:1">✏️</button>
+          <button class="action-btn" onclick="openAdjustForProduct(${p.id})" style="flex:1;width:auto;padding:6px;opacity:1">📊</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    renderTable();
+  }
+}
+
+// ===== SELECT ALL =====
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+}
+
+// ===== EXPORT =====
+function exportCSV() {
+  const header = ['Name','SKU','Category','Stock','Unit','Unit Cost','Total Value','Status','Location'];
+  const rows = filteredProducts.map(p => [
+    p.name, p.sku, p.category, p.stock, p.unit, p.unit_cost,
+    (p.stock * p.unit_cost).toFixed(2), getStockStatus(p), p.location
+  ]);
+  const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'inventory-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  showToast('CSV exported!', 'success');
+}
+
+// ===== LOGOUT =====
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+
+// ===== TOAST =====
+function showToast(msg, type = 'info') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const colors = { success:'#10b981', info:'#2563eb', error:'#ef4444' };
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = colors[type] || colors.info;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ===== CLOSE MODALS ON OUTSIDE CLICK =====
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+init();
+</script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T) return;
+    const tr = window.T[lang] || window.T['en'];
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+    });
+  }, 300);
+});
+// ===== LANG SWITCHER =====
+function toggleLangMenu() {
+  const m = document.getElementById('lang-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function selectLang(lang) {
+  if (typeof setLang === 'function') setLang(lang);
+  const m = document.getElementById('lang-menu');
+  if (m) m.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#lang-switcher-wrap')) {
+    const m = document.getElementById('lang-menu');
+    if (m) m.style.display = 'none';
+  }
+});
+</script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T) return;
+    const tr = window.T[lang] || window.T['en'];
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+    });
+  }, 300);
+});
+
+// ===== COMPANY SWITCHER =====
+let _myCompanies = [];
+
+async function loadCompanies() {
+  try {
+    const { data, error } = await sb.rpc('get_my_companies');
+    if (error) throw error;
+    _myCompanies = data || [];
+    const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
+    if (active) {
+      document.getElementById('company-name').textContent = active.company_name;
+      document.getElementById('company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
+      if (!companyId) companyId = active.company_id;
+    }
+    renderCompanyMenu();
+  } catch(e) { console.error('loadCompanies:', e); }
+}
+
+function renderCompanyMenu() {
+  const list = document.getElementById('company-menu-list');
+  const footer = document.getElementById('company-menu-footer');
+  if (!list) return;
+
+  list.innerHTML = _myCompanies.map(c => `
+    <div class="company-menu-item ${c.is_active ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
+         onclick="switchToCompany('${c.company_id}', '${c.company_name}')">
+      <div class="c-dot"></div>
+      <div class="c-label">${c.company_name}</div>
+      <div class="c-role">${c.role}</div>
+    </div>`).join('');
+
+  // Show "Add company" only for pro+ owners
+  const active = _myCompanies.find(c => c.is_active);
+  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
+  footer.innerHTML = canAdd
+    ? `<button onclick="openNewCompanyModal()">+ Add Company</button>`
+    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
+}
+
+function toggleCompanyMenu() {
+  const m = document.getElementById('company-menu');
+  if (!m) return;
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+async function switchToCompany(companyId_, name) {
+  if (_myCompanies.find(c => c.company_id === companyId_ && c.is_active)) {
+    toggleCompanyMenu(); return;
+  }
+  try {
+    await sb.rpc('switch_company', { target_company_id: companyId_ });
+    document.getElementById('company-name').textContent = name;
+    document.getElementById('company-menu').style.display = 'none';
+    companyId = companyId_;
+    // Reload page data
+    window.location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+function openNewCompanyModal() {
+  document.getElementById('company-menu').style.display = 'none';
+  document.getElementById('new-company-name').value = '';
+  document.getElementById('new-company-err').style.display = 'none';
+  document.getElementById('new-company-modal').classList.add('open');
+}
+
+async function createNewCompany() {
+  const name = document.getElementById('new-company-name').value.trim();
+  const errEl = document.getElementById('new-company-err');
+  if (!name) { errEl.textContent = 'Company name is required'; errEl.style.display = 'block'; return; }
+  try {
+    const user = (await sb.auth.getSession()).data.session?.user;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g,'-') + '-' + Date.now();
+    const { data: comp, error } = await sb.from('companies').insert({
+      name, slug, plan: 'pro', owner_id: user.id, status: 'active'
+    }).select().single();
+    if (error) throw error;
+    // Add as owner in company_users
+    await sb.from('company_users').insert({
+      company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
+    });
+    // Switch to new company
+    await sb.rpc('switch_company', { target_company_id: comp.id });
+    document.getElementById('new-company-modal').classList.remove('open');
+    window.location.reload();
+  } catch(e) {
+    document.getElementById('new-company-err').textContent = e.message;
+    document.getElementById('new-company-err').style.display = 'block';
+  }
+}
+
+// Close company menu on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
+    const m = document.getElementById('company-menu');
+    if (m) m.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
