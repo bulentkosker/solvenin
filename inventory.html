@@ -776,6 +776,7 @@ async function loadCategories() {
   if (error) { console.error('loadCategories:', error); return; }
   categories = data || [];
   populateCategorySelect();
+  populateFilterCategories();
 }
 
 function populateCategorySelect() {
@@ -784,21 +785,13 @@ function populateCategorySelect() {
     ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}`;
 }
 
+function populateFilterCategories() {
+  const sel = document.getElementById('filter-category');
+  sel.innerHTML = `<option value="">All Categories</option>` + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
 function openNewCategoryModal() {
   document.getElementById('new-category-err').style.display = 'none';
   document.getElementById('new-category-name').value = '';
   document.getElementById('new-category-modal').classList.add('open');
   setTimeout(() => document.getElementById('new-category-name').focus(), 100);
-}
-
-function closeNewCategoryModal() {
-  document.getElementById('new-category-modal').classList.remove('open');
-}
-
-async function saveNewCategory() {
-  const name = document.getElementById('new-category-name').value.trim();
-  const errEl = document.getElementById('new-category-err');
-  
-  if (!name) {
-    errEl.textContent = 'Category name is required';
-    errEl.style.display
