@@ -699,8 +699,10 @@ async function init() {
   document.getElementById('user-name').textContent = name;
   document.getElementById('user-avatar').textContent = name[0].toUpperCase();
 
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan,name)').eq('id', user.id).single();
+  const { data: profile, error: profileErr } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
+  console.log('profile:', profile, profileErr);
   companyId = profile?.active_company_id || profile?.company_id || null;
+  console.log('companyId set to:', companyId);
   currentUser = user;
 
   await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
