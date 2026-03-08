@@ -149,30 +149,6 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
 @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .fade-up { animation:fadeUp .4s ease both; }
-
-/* NAV GROUPS */
-.sidebar-nav { padding: 8px 0; flex: 1; overflow-y: auto; }
-.nav-group { margin: 2px 8px; border-radius: 10px; overflow: hidden; }
-.nav-group-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 12px; cursor: pointer; border-radius: 10px;
-  color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 1px;
-  transition: all .15s; user-select: none;
-}
-.nav-group-header:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
-.nav-group.open .nav-group-header { color: rgba(255,255,255,0.7); }
-.nav-group-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-.nav-group-arrow { font-size: 16px; transition: transform .2s; color: rgba(255,255,255,0.25); }
-.nav-group.open .nav-group-arrow { transform: rotate(90deg); }
-.nav-group-items { display: none; padding: 2px 0 6px; }
-.nav-group.open .nav-group-items { display: block; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin: 1px 0; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
-.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
-.nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
-.nav-item.active .nav-icon { color: #60a5fa; }
-.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
-
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -184,66 +160,32 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
     <div class="wordmark">solvenin<span class="dot">.</span></div>
     <div class="underline"></div>
   </div>
-  <div class="sidebar-nav">
-    <div class="nav-group " id="group-main">
-      <div class="nav-group-header" onclick="toggleGroup('main')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="nav-icon">⊞</span>
-          <span class="nav-group-label">Main</span>
-        </div>
-        <span class="nav-group-arrow">›</span>
-      </div>
-      <div class="nav-group-items">
-        <a class="nav-item " href="dashboard.html"><span class="nav-icon">📊</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
-        <a class="nav-item " href="inventory.html"><span class="nav-icon">📦</span> <span data-i18n="nav_inventory">Inventory</span></a>
-        <a class="nav-item " href="sales.html"><span class="nav-icon">💰</span> <span data-i18n="nav_sales">Sales</span></a>
-        <a class="nav-item " href="purchasing.html"><span class="nav-icon">🛒</span> <span data-i18n="nav_purchasing">Purchasing</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">🏭</span> <span data-i18n="nav_production">Production</span></a>
-      </div>
-    </div>
-    <div class="nav-group " id="group-finance">
-      <div class="nav-group-header" onclick="toggleGroup('finance')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="nav-icon">💳</span>
-          <span class="nav-group-label">Finance</span>
-        </div>
-        <span class="nav-group-arrow">›</span>
-      </div>
-      <div class="nav-group-items">
-        <a class="nav-item " href="cashbank.html"><span class="nav-icon">🏦</span> <span data-i18n="nav_cashbank">Cashbank</span></a>
-        <a class="nav-item " href="accounting.html"><span class="nav-icon">📒</span> <span data-i18n="nav_accounting">Accounting</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> <span data-i18n="nav_reports">Reports</span></a>
-      </div>
-    </div>
-    <div class="nav-group " id="group-mgmt">
-      <div class="nav-group-header" onclick="toggleGroup('mgmt')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="nav-icon">👥</span>
-          <span class="nav-group-label">Management</span>
-        </div>
-        <span class="nav-group-arrow">›</span>
-      </div>
-      <div class="nav-group-items">
-        <a class="nav-item " href="#"><span class="nav-icon">👥</span> <span data-i18n="nav_hr">HR & Payroll</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">🚚</span> <span data-i18n="nav_shipping">Shipping</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">📅</span> <span data-i18n="nav_projects">Projects</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">🔧</span> <span data-i18n="nav_maintenance">Maintenance</span></a>
-      </div>
-    </div>
-    <div class="nav-group open" id="group-system">
-      <div class="nav-group-header" onclick="toggleGroup('system')">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="nav-icon">⚙️</span>
-          <span class="nav-group-label">System</span>
-        </div>
-        <span class="nav-group-arrow">›</span>
-      </div>
-      <div class="nav-group-items">
-        <a class="nav-item active" href="warehouses.html"><span class="nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></a>
-        <a class="nav-item " href="#"><span class="nav-icon">⚙️</span> <span data-i18n="nav_settings">Settings</span></a>
-        <a class="nav-item " href="subscription.html"><span class="nav-icon">💎</span> <span data-i18n="nav_subscription">Subscription</span></a>
-      </div>
-    </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
+    <a class="nav-item" href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
+    <a class="nav-item" href="sales.html"><span class="nav-icon">💰</span> Sales</a>
+    <a class="nav-item" href="purchasing.html"><span class="nav-icon">🛒</span> Purchasing</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🏭</span> Production</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Finance</div>
+    <a class="nav-item" href="cashbank.html"><span class="nav-icon">🏦</span> Cashbank</a>
+    <a class="nav-item" href="accounting.html"><span class="nav-icon">📒</span> Accounting</a>
+    <a class="nav-item" href="#"><span class="nav-icon">📊</span> Reports</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Management</div>
+    <a class="nav-item" href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🚚</span> Shipping</a>
+    <a class="nav-item" href="#"><span class="nav-icon">📅</span> Projects</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🔧</span> Maintenance</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item active" href="warehouses.html"><span class="nav-icon">🏗️</span> Warehouses</a>
+    <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+    <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> Subscription</a>
   </div>
   <div class="sidebar-footer">
     <div class="company-switcher">
