@@ -932,7 +932,7 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id,categories(id,name,parent_id)')
+    .select('id,name,sku,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,active,company_id,categories(id,name,parent_id)')
     .eq('company_id', companyId)
     .eq('active', true)
     .order('name');
@@ -951,7 +951,7 @@ async function loadProducts() {
     price: parseFloat(p.sale_price || 0),
     location: p.location || '',
     supplier: '',
-    desc: p.description || '',
+    desc: p.notes || '',
   }));
 }
 
@@ -1163,7 +1163,7 @@ async function saveProduct() {
     sku: document.getElementById('p-sku').value.trim() || null,
     category_id: document.getElementById('p-category-id').value || null,
     unit: document.getElementById('p-unit').value || 'pcs',
-    description: document.getElementById('p-desc').value.trim() || null,
+    notes: document.getElementById('p-desc').value.trim() || null,
     quantity: parseFloat(document.getElementById('p-stock').value) || 0,
     min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
     max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
