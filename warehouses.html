@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warehouses — Solvenin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a0f1e; --navy2: #0f2650; --blue: #2563eb; --blue-light: #eff6ff;
+  --sky: #60a5fa; --white: #ffffff; --bg: #f5f7fb; --gray50: #f8fafc;
+  --gray100: #f1f5f9; --gray200: #e2e8f0; --gray300: #cbd5e1; --gray400: #94a3b8;
+  --gray500: #64748b; --gray600: #475569; --gray800: #1e293b;
+  --green: #10b981; --green-light: #ecfdf5; --red: #ef4444; --red-light: #fef2f2;
+  --orange: #f59e0b; --orange-light: #fffbeb; --purple: #8b5cf6; --purple-light: #f5f3ff;
+  --sidebar-w: 240px; --topbar-h: 64px;
+  --font-display: 'Outfit', sans-serif; --font-body: 'DM Sans', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:14px; }
+body { font-family:var(--font-body); background:var(--bg); color:var(--gray800); min-height:100vh; display:flex; }
+
+/* SIDEBAR */
+.sidebar { width:var(--sidebar-w); background:var(--navy); min-height:100vh; position:fixed; top:0; left:0; display:flex; flex-direction:column; z-index:50; }
+.sidebar-logo { padding:20px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.sidebar-logo .wordmark { font-family:var(--font-display); font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+.sidebar-logo .dot { color:var(--blue); }
+.sidebar-logo .underline { height:2px; width:70%; margin-top:4px; background:linear-gradient(90deg,var(--blue),var(--sky),transparent); border-radius:99px; }
+.sidebar-section { padding:16px 12px 8px; }
+.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.2); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin-bottom:2px; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+.nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
+.nav-item.active .nav-icon { color:var(--sky); }
+.nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+.sidebar-footer { margin-top:auto; padding:12px; border-top:1px solid rgba(255,255,255,0.06); }
+.user-card { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; cursor:pointer; transition:all .15s; }
+.user-card:hover { background:rgba(255,255,255,0.06); }
+.user-avatar { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--blue),var(--navy2)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:14px; flex-shrink:0; }
+.user-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.85); }
+.user-plan { font-size:10px; color:rgba(255,255,255,0.35); margin-top:1px; }
+
+/* COMPANY SWITCHER */
+.company-switcher { display:flex; align-items:center; gap:10px; padding:10px 14px; margin:0 8px 4px; border-radius:10px; cursor:pointer; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); transition:background .15s; }
+.company-switcher:hover { background:rgba(255,255,255,0.1); }
+.company-icon { font-size:18px; flex-shrink:0; }
+.company-info { flex:1; min-width:0; }
+.company-name { font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.company-plan { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:.5px; }
+.company-chevron { color:rgba(255,255,255,0.4); font-size:16px; }
+
+/* MAIN */
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { height:var(--topbar-h); background:var(--white); border-bottom:1px solid var(--gray200); display:flex; align-items:center; padding:0 28px; gap:16px; position:sticky; top:0; z-index:40; box-shadow:var(--shadow-sm); }
+.topbar-title { font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--gray800); }
+.topbar-actions { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.topbar-btn { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; transition:all .15s; color:var(--gray500); }
+.topbar-btn:hover { background:var(--gray100); }
+.content { padding:28px; flex:1; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+.stat-card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:20px; box-shadow:var(--shadow-sm); }
+.stat-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.stat-label { font-size:12px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.stat-icon.blue { background:var(--blue-light); }
+.stat-icon.green { background:var(--green-light); }
+.stat-icon.orange { background:var(--orange-light); }
+.stat-value { font-family:var(--font-display); font-size:28px; font-weight:800; color:var(--gray800); margin-bottom:4px; }
+.stat-change { font-size:12px; color:var(--gray400); }
+
+/* TOOLBAR */
+.toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.btn-primary { display:flex; align-items:center; gap:6px; padding:9px 18px; border-radius:10px; border:none; background:var(--blue); color:#fff; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-primary:hover { background:#1a56db; transform:translateY(-1px); box-shadow:0 4px 12px rgba(37,99,235,0.3); }
+.btn-secondary { display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:10px; border:1px solid var(--gray200); background:var(--white); color:var(--gray600); font-family:var(--font-body); font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+.btn-secondary:hover { border-color:var(--gray300); background:var(--gray50); }
+
+/* WAREHOUSE CARDS GRID */
+.wh-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; }
+.wh-card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:24px; box-shadow:var(--shadow-sm); transition:all .2s; position:relative; }
+.wh-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.wh-card.inactive { opacity:0.55; }
+.wh-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+.wh-icon-wrap { width:48px; height:48px; border-radius:14px; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.wh-card-actions { display:flex; gap:6px; }
+.action-btn { width:30px; height:30px; border-radius:8px; border:1px solid var(--gray200); background:var(--white); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:all .15s; }
+.action-btn:hover { border-color:var(--blue); background:var(--blue-light); }
+.action-btn.danger:hover { border-color:var(--red); background:var(--red-light); }
+.wh-name { font-family:var(--font-display); font-size:16px; font-weight:800; color:var(--gray800); margin-bottom:4px; }
+.wh-location { font-size:12px; color:var(--gray400); display:flex; align-items:center; gap:4px; margin-bottom:16px; min-height:18px; }
+.wh-divider { height:1px; background:var(--gray100); margin-bottom:16px; }
+.wh-stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.wh-stat { display:flex; flex-direction:column; gap:2px; }
+.wh-stat-label { font-size:11px; color:var(--gray400); font-weight:500; }
+.wh-stat-value { font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--gray800); }
+.wh-status { position:absolute; top:16px; right:16px; }
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+.badge-green { background:var(--green-light); color:var(--green); }
+.badge-gray { background:var(--gray100); color:var(--gray500); }
+
+/* ADD CARD */
+.wh-add-card { background:var(--white); border-radius:16px; border:2px dashed var(--gray200); padding:24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; cursor:pointer; transition:all .2s; min-height:200px; }
+.wh-add-card:hover { border-color:var(--blue); background:var(--blue-light); }
+.wh-add-icon { width:48px; height:48px; border-radius:14px; background:var(--gray100); display:flex; align-items:center; justify-content:center; font-size:24px; transition:all .2s; }
+.wh-add-card:hover .wh-add-icon { background:var(--blue); }
+.wh-add-label { font-size:13px; font-weight:600; color:var(--gray400); transition:color .2s; }
+.wh-add-card:hover .wh-add-label { color:var(--blue); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:80px 20px; color:var(--gray400); }
+.empty-state-icon { font-size:56px; margin-bottom:16px; }
+.empty-state h3 { font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--gray600); margin-bottom:8px; }
+.empty-state p { font-size:13px; margin-bottom:24px; }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; backdrop-filter:blur(4px); }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:#fff; border-radius:20px; width:480px; max-width:95vw; max-height:90vh; overflow-y:auto; transform:translateY(20px); transition:transform .2s; box-shadow:var(--shadow-lg); }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:24px 28px 20px; border-bottom:1px solid var(--gray100); }
+.modal-title { font-family:var(--font-display); font-size:18px; font-weight:800; }
+.modal-close { width:32px; height:32px; border-radius:8px; border:1px solid var(--gray200); background:var(--white); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; color:var(--gray400); }
+.modal-close:hover { background:var(--gray100); }
+.modal-body { padding:24px 28px; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; padding:16px 28px 24px; border-top:1px solid var(--gray100); }
+
+/* FORM */
+.form-group { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.form-group label { font-size:12px; font-weight:600; color:var(--gray500); text-transform:uppercase; letter-spacing:0.5px; }
+.form-group input, .form-group textarea, .form-group select { padding:10px 14px; border:1.5px solid var(--gray200); border-radius:10px; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; transition:border-color .15s; background:var(--white); width:100%; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:var(--blue); }
+.form-group textarea { resize:vertical; min-height:80px; }
+.toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1.5px solid var(--gray200); border-radius:10px; }
+.toggle-label { font-size:13px; color:var(--gray700); font-weight:500; }
+.toggle { position:relative; width:40px; height:22px; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; cursor:pointer; inset:0; background:var(--gray300); border-radius:99px; transition:.2s; }
+.toggle-slider:before { position:absolute; content:''; height:16px; width:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; }
+.toggle input:checked + .toggle-slider { background:var(--green); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; right:24px; padding:14px 20px; border-radius:12px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.2); z-index:9999; animation:slideUp .3s ease; }
+@keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation:fadeUp .4s ease both; }
+</style>
+<script src="i18n.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">solvenin<span class="dot">.</span></div>
+    <div class="underline"></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
+    <a class="nav-item" href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
+    <a class="nav-item" href="sales.html"><span class="nav-icon">💰</span> Sales</a>
+    <a class="nav-item" href="purchasing.html"><span class="nav-icon">🛒</span> Purchasing</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🏭</span> Production</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Finance</div>
+    <a class="nav-item" href="cashbank.html"><span class="nav-icon">🏦</span> Cashbank</a>
+    <a class="nav-item" href="accounting.html"><span class="nav-icon">📒</span> Accounting</a>
+    <a class="nav-item" href="#"><span class="nav-icon">📊</span> Reports</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Management</div>
+    <a class="nav-item" href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🚚</span> Shipping</a>
+    <a class="nav-item" href="#"><span class="nav-icon">📅</span> Projects</a>
+    <a class="nav-item" href="#"><span class="nav-icon">🔧</span> Maintenance</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item active" href="warehouses.html"><span class="nav-icon">🏗️</span> Warehouses</a>
+    <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+    <a class="nav-item" href="subscription.html"><span class="nav-icon">💎</span> Subscription</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="company-switcher">
+      <div class="company-icon">🏢</div>
+      <div class="company-info">
+        <div class="company-name" id="company-name">Loading...</div>
+        <div class="company-plan" id="company-plan">—</div>
+      </div>
+      <div class="company-chevron">⌄</div>
+    </div>
+    <div class="user-card">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-plan">Free Plan</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">Warehouses</div>
+    <div class="topbar-actions">
+      <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-row fade-up">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Total Warehouses</span>
+          <div class="stat-icon blue">🏗️</div>
+        </div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-change">defined locations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Active</span>
+          <div class="stat-icon green">✅</div>
+        </div>
+        <div class="stat-value" id="stat-active">0</div>
+        <div class="stat-change">currently in use</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Total Stock Value</span>
+          <div class="stat-icon orange">💰</div>
+        </div>
+        <div class="stat-value" id="stat-value">$0</div>
+        <div class="stat-change">across all warehouses</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar fade-up">
+      <button class="btn-primary" onclick="openAddModal()">+ Add Warehouse</button>
+    </div>
+
+    <!-- WAREHOUSE GRID -->
+    <div class="wh-grid fade-up" id="wh-grid"></div>
+
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="wh-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Add Warehouse</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Warehouse Name *</label>
+        <input type="text" id="wh-name" placeholder="e.g. Main Warehouse, Branch A">
+      </div>
+      <div class="form-group">
+        <label>Location / Address</label>
+        <textarea id="wh-location" placeholder="e.g. Istanbul, Kadikoy - Warehouse District No:5"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <div class="toggle-wrap">
+          <span class="toggle-label">Active</span>
+          <label class="toggle">
+            <input type="checkbox" id="wh-active" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveWarehouse()">Save Warehouse</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-head">
+      <div class="modal-title">Delete Warehouse?</div>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray600);font-size:13px;line-height:1.6">
+        Are you sure you want to delete <strong id="delete-wh-name"></strong>?
+        This cannot be undone. Warehouses with existing stock movements cannot be deleted.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-primary" style="background:var(--red)" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = supabase;
+const sb = createClient(
+  'https://jaakjdzpdizjbzvbtcld.supabase.co',
+  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+);
+
+let companyId = null;
+let warehouses = [];
+let editingId = null;
+let deletingId = null;
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    await new Promise(r => setTimeout(r, 800));
+    const { data: { session: s2 } } = await sb.auth.getSession();
+    if (!s2) { window.location.href = 'auth.html'; return; }
+  }
+  const user = (await sb.auth.getSession()).data.session?.user;
+  if (!user) return;
+
+  const name = user.user_metadata?.full_name || user.email.split('@')[0];
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
+  companyId = profile?.active_company_id || profile?.company_id || null;
+
+  if (companyId) {
+    const { data: company } = await sb.from('companies').select('name, plan').eq('id', companyId).single();
+    if (company) {
+      document.getElementById('company-name').textContent = company.name;
+      document.getElementById('company-plan').textContent = company.plan?.toUpperCase() || 'FREE';
+    }
+  }
+
+  await loadWarehouses();
+}
+
+// ===== LOAD =====
+async function loadWarehouses() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('warehouses')
+    .select('id, name, location, is_active, created_at')
+    .eq('company_id', companyId)
+    .order('name');
+  if (error) { console.error(error); return; }
+  warehouses = data || [];
+  await loadStockStats();
+  renderStats();
+  renderGrid();
+}
+
+// Stock value per warehouse from stock_levels
+let stockStats = {};
+async function loadStockStats() {
+  if (!companyId || warehouses.length === 0) return;
+  const { data } = await sb.from('stock_levels')
+    .select('warehouse_id, quantity, products(cost_price)')
+    .eq('company_id', companyId);
+  stockStats = {};
+  (data || []).forEach(row => {
+    const wid = row.warehouse_id;
+    if (!stockStats[wid]) stockStats[wid] = { productCount: 0, totalValue: 0 };
+    if (row.quantity > 0) {
+      stockStats[wid].productCount++;
+      stockStats[wid].totalValue += (row.quantity * (row.products?.cost_price || 0));
+    }
+  });
+}
+
+// ===== RENDER =====
+function renderStats() {
+  const total = warehouses.length;
+  const active = warehouses.filter(w => w.is_active).length;
+  const totalValue = Object.values(stockStats).reduce((s, w) => s + w.totalValue, 0);
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function renderGrid() {
+  const grid = document.getElementById('wh-grid');
+
+  if (warehouses.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-state-icon">🏗️</div>
+      <h3>No warehouses yet</h3>
+      <p>Add your first warehouse to start tracking stock locations.</p>
+      <button class="btn-primary" onclick="openAddModal()">+ Add Warehouse</button>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = warehouses.map(w => {
+    const stats = stockStats[w.id] || { productCount: 0, totalValue: 0 };
+    const statusBadge = w.is_active
+      ? '<span class="badge badge-green">● Active</span>'
+      : '<span class="badge badge-gray">○ Inactive</span>';
+    return `
+    <div class="wh-card ${w.is_active ? '' : 'inactive'}">
+      <div class="wh-card-header">
+        <div class="wh-icon-wrap">🏗️</div>
+        <div class="wh-card-actions">
+          <button class="action-btn" onclick="openEditModal('${w.id}')" title="Edit">✏️</button>
+          <button class="action-btn danger" onclick="openDeleteModal('${w.id}')" title="Delete">🗑️</button>
+        </div>
+      </div>
+      <div class="wh-name">${w.name}</div>
+      <div class="wh-location">${w.location ? '📍 ' + w.location : '<span style="color:var(--gray300)">No location set</span>'}</div>
+      <div style="margin-bottom:12px">${statusBadge}</div>
+      <div class="wh-divider"></div>
+      <div class="wh-stats">
+        <div class="wh-stat">
+          <div class="wh-stat-label">Products</div>
+          <div class="wh-stat-value">${stats.productCount}</div>
+        </div>
+        <div class="wh-stat">
+          <div class="wh-stat-label">Stock Value</div>
+          <div class="wh-stat-value">$${stats.totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== MODAL =====
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add Warehouse';
+  document.getElementById('wh-name').value = '';
+  document.getElementById('wh-location').value = '';
+  document.getElementById('wh-active').checked = true;
+  document.getElementById('wh-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const w = warehouses.find(x => x.id === id);
+  if (!w) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Warehouse';
+  document.getElementById('wh-name').value = w.name;
+  document.getElementById('wh-location').value = w.location || '';
+  document.getElementById('wh-active').checked = w.is_active;
+  document.getElementById('wh-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('wh-modal').classList.remove('open');
+}
+
+async function saveWarehouse() {
+  const name = document.getElementById('wh-name').value.trim();
+  if (!name) { showToast('Warehouse name is required', 'error'); return; }
+
+  const payload = {
+    name,
+    location: document.getElementById('wh-location').value.trim() || null,
+    is_active: document.getElementById('wh-active').checked,
+    company_id: companyId,
+  };
+
+  let error;
+  if (editingId) {
+    ({ error } = await sb.from('warehouses').update(payload).eq('id', editingId));
+  } else {
+    ({ error } = await sb.from('warehouses').insert(payload));
+  }
+
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(editingId ? 'Warehouse updated ✓' : 'Warehouse added ✓', 'success');
+  closeModal();
+  await loadWarehouses();
+}
+
+function openDeleteModal(id) {
+  const w = warehouses.find(x => x.id === id);
+  if (!w) return;
+  deletingId = id;
+  document.getElementById('delete-wh-name').textContent = w.name;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+}
+
+async function confirmDelete() {
+  const { error } = await sb.from('warehouses').delete().eq('id', deletingId);
+  if (error) {
+    showToast(error.message.includes('foreign key') ? 'Cannot delete: warehouse has stock movements' : error.message, 'error');
+    closeDeleteModal();
+    return;
+  }
+  showToast('Warehouse deleted', 'success');
+  closeDeleteModal();
+  await loadWarehouses();
+}
+
+// ===== LOGOUT =====
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+
+// ===== TOAST =====
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--blue)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+init();
+</script>
+</body>
+</html>
