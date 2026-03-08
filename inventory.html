@@ -164,6 +164,21 @@ tr:hover .action-btns { opacity:1; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue); }
 .form-group textarea { resize:vertical; min-height:80px; }
 .form-divider { height:1px; background:var(--gray100); margin:20px 0; }
+
+/* CATEGORY SELECTOR */
+.cat-selector { display:flex; flex-direction:column; gap:6px; }
+.cat-row { display:flex; align-items:center; gap:6px; }
+.cat-row select { flex:1; padding:10px 14px; border:1.5px solid var(--gray200); border-radius:10px; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; transition:border-color .15s; background:var(--white); }
+.cat-row select:focus { border-color:var(--blue); }
+.cat-row select:disabled { background:var(--gray50); color:var(--gray400); }
+.cat-add-btn { width:34px; height:34px; border-radius:8px; border:1.5px solid var(--gray200); background:var(--white); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; color:var(--blue); }
+.cat-add-btn:hover { background:var(--blue-light); border-color:var(--blue); }
+.cat-inline-form { display:none; background:var(--gray50); border:1.5px solid var(--blue); border-radius:10px; padding:10px 12px; gap:8px; align-items:center; margin-top:2px; }
+.cat-inline-form.open { display:flex; }
+.cat-inline-form input { flex:1; padding:7px 10px; border:1px solid var(--gray200); border-radius:7px; font-size:13px; font-family:var(--font-body); outline:none; background:#fff; }
+.cat-inline-form input:focus { border-color:var(--blue); }
+.cat-inline-save { padding:7px 12px; border-radius:7px; border:none; background:var(--blue); color:#fff; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.cat-inline-cancel { padding:7px 10px; border-radius:7px; border:1px solid var(--gray200); background:#fff; font-size:12px; cursor:pointer; }
 .form-section-title { font-size:12px; font-weight:700; color:var(--gray400); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
 
 /* LOW STOCK ALERT */
@@ -416,11 +431,6 @@ tr:hover .action-btns { opacity:1; }
         </div>
         <select class="filter-btn" id="filter-category" onchange="filterTable()">
           <option value="">All Categories</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Raw Material">Raw Materials</option>
-          <option value="Packaging">Packaging</option>
-          <option value="Finished Goods">Finished Goods</option>
-          <option value="Office">Office Supplies</option>
         </select>
         <select class="filter-btn" id="filter-status" onchange="filterTable()">
           <option value="">All Status</option>
@@ -516,14 +526,22 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label>Category</label>
-          <select id="p-category">
-            <option value="">Select category</option>
-            <option>Electronics</option>
-            <option>Raw Material</option>
-            <option>Packaging</option>
-            <option>Finished Goods</option>
-            <option>Office</option>
-          </select>
+          <div class="cat-selector" id="cat-selector">
+            <!-- Level 0: root categories -->
+            <div class="cat-row" id="cat-row-0">
+              <select id="cat-sel-0" onchange="onCatChange(0)">
+                <option value="">— Select category —</option>
+              </select>
+              <button class="cat-add-btn" title="Add category here" onclick="openCatInline(0)">＋</button>
+            </div>
+            <div class="cat-inline-form" id="cat-inline-0">
+              <input type="text" id="cat-input-0" placeholder="New category name...">
+              <button class="cat-inline-save" onclick="saveCatInline(0)">Save</button>
+              <button class="cat-inline-cancel" onclick="closeCatInline(0)">✕</button>
+            </div>
+            <!-- deeper levels rendered dynamically -->
+          </div>
+          <input type="hidden" id="p-category-id">
         </div>
         <div class="form-group">
           <label>Unit</label>
@@ -669,6 +687,7 @@ const sb = createClient(
 let companyId = null, currentUser = null;
 let warehouses = [];
 let products = [];
+let categories = [];
 let movements = [];
 let filteredProducts = [];
 let currentPage = 1;
@@ -698,7 +717,7 @@ async function init() {
   companyId = profile?.active_company_id || profile?.company_id || null;
   currentUser = user;
 
-  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
+  await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -743,7 +762,7 @@ function applyFilters() {
 
   filteredProducts = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
-    const matchCat = !cat || p.category === cat;
+    const matchCat = !cat || p.category_id === cat;
     const status = getStockStatus(p);
     const matchStatus = !statusFilter || status === statusFilter;
     const matchTab = currentTab === 'all' || (currentTab === 'low' && status === 'low') || (currentTab === 'out' && status === 'out');
@@ -894,9 +913,10 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = 'Add Product';
-  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location','p-supplier'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('p-category').value = '';
+  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location','p-supplier'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('p-category-id').value = '';
   document.getElementById('p-unit').value = 'pcs';
+  resetCatSelector(null);
   openModal('product-modal');
 }
 
@@ -907,7 +927,7 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = 'Edit Product';
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
-  document.getElementById('p-category').value = p.category || '';
+  document.getElementById('p-category-id').value = p.category_id || '';
   document.getElementById('p-unit').value = p.unit || 'pcs';
   document.getElementById('p-desc').value = p.desc || '';
   document.getElementById('p-stock').value = p.stock;
@@ -916,7 +936,8 @@ function openEditModal(id) {
   document.getElementById('p-cost').value = p.unit_cost || '';
   document.getElementById('p-price').value = p.price || '';
   document.getElementById('p-location').value = p.location || '';
-  document.getElementById('p-supplier').value = p.supplier || '';
+  const sup = document.getElementById('p-supplier'); if(sup) sup.value = p.supplier || '';
+  resetCatSelector(p.category_id);
   openModal('product-modal');
 }
 
@@ -925,17 +946,17 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,category,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id')
+    .select('id,name,sku,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id,categories(id,name,parent_id)')
     .eq('company_id', companyId)
     .eq('active', true)
     .order('name');
   if (error) { console.error('loadProducts:', error); return; }
-  // Map DB columns to UI fields
   products = (data || []).map(p => ({
     id: p.id,
     name: p.name,
     sku: p.sku || '',
-    category: p.category || '',
+    category_id: p.category_id || null,
+    category: p.categories?.name || '',
     unit: p.unit || 'pcs',
     stock: parseFloat(p.quantity || 0),
     min_stock: parseFloat(p.min_stock || 0),
@@ -973,13 +994,194 @@ async function loadWarehouses() {
   const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).eq('is_active', true);
   warehouses = data || [];
 }
+
+// ===== CATEGORIES =====
+async function loadCategories() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('categories').select('id,name,parent_id').order('name');
+  if (error) { console.error('loadCategories:', error); return; }
+  categories = data || [];
+  populateCategoryFilter();
+  buildCatSelectorLevel(0, null);
+}
+
+function getChildren(parentId) {
+  return categories.filter(c => c.parent_id === (parentId || null));
+}
+
+function populateCategoryFilter() {
+  const sel = document.getElementById('filter-category');
+  if (!sel) return;
+  const roots = getChildren(null);
+  let html = '<option value="">All Categories</option>';
+  function addOpts(cats, depth) {
+    cats.forEach(c => {
+      html += `<option value="${c.id}">${'　'.repeat(depth)}${c.name}</option>`;
+      addOpts(getChildren(c.id), depth + 1);
+    });
+  }
+  addOpts(roots, 0);
+  sel.innerHTML = html;
+}
+
+// Build / refresh a single level row in the cat selector
+function buildCatSelectorLevel(level, parentId) {
+  const container = document.getElementById('cat-selector');
+  // Remove all rows/inline-forms from this level onwards
+  container.querySelectorAll(`[data-cat-level]`).forEach(el => {
+    if (parseInt(el.dataset.catLevel) >= level) el.remove();
+  });
+
+  const children = getChildren(parentId);
+  if (level > 0 && children.length === 0 && parentId) {
+    // Still render an empty row so user can add sub
+    const row = _makeCatRow(level, parentId, []);
+    container.appendChild(row.rowEl);
+    container.appendChild(row.inlineEl);
+    return;
+  }
+
+  const row = _makeCatRow(level, parentId, children);
+  container.appendChild(row.rowEl);
+  container.appendChild(row.inlineEl);
+}
+
+function _makeCatRow(level, parentId, children) {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'cat-row';
+  rowEl.dataset.catLevel = level;
+
+  const sel = document.createElement('select');
+  sel.id = `cat-sel-${level}`;
+  sel.dataset.catLevel = level;
+  sel.dataset.parentId = parentId || '';
+  sel.innerHTML = `<option value="">${level === 0 ? '— Select category —' : '— Select sub-category —'}</option>` +
+    children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  sel.addEventListener('change', () => onCatChange(level));
+
+  const btn = document.createElement('button');
+  btn.className = 'cat-add-btn';
+  btn.title = 'Add category here';
+  btn.textContent = '＋';
+  btn.type = 'button';
+  btn.dataset.catLevel = level;
+  btn.addEventListener('click', () => openCatInline(level));
+
+  rowEl.appendChild(sel);
+  rowEl.appendChild(btn);
+
+  const inlineEl = document.createElement('div');
+  inlineEl.className = 'cat-inline-form';
+  inlineEl.id = `cat-inline-${level}`;
+  inlineEl.dataset.catLevel = level;
+  inlineEl.dataset.parentId = parentId || '';
+  inlineEl.innerHTML = `
+    <input type="text" id="cat-input-${level}" placeholder="New category name...">
+    <button class="cat-inline-save" type="button" onclick="saveCatInline(${level})">Save</button>
+    <button class="cat-inline-cancel" type="button" onclick="closeCatInline(${level})">✕</button>`;
+
+  return { rowEl, inlineEl };
+}
+
+function onCatChange(level) {
+  const sel = document.getElementById(`cat-sel-${level}`);
+  const selectedId = sel?.value || null;
+  document.getElementById('p-category-id').value = selectedId || '';
+
+  // Remove deeper levels
+  const container = document.getElementById('cat-selector');
+  container.querySelectorAll('[data-cat-level]').forEach(el => {
+    if (parseInt(el.dataset.catLevel) > level) el.remove();
+  });
+
+  if (selectedId) {
+    // Render next level
+    buildCatSelectorLevel(level + 1, selectedId);
+  }
+}
+
+function openCatInline(level) {
+  const el = document.getElementById(`cat-inline-${level}`);
+  if (!el) return;
+  el.classList.add('open');
+  document.getElementById(`cat-input-${level}`)?.focus();
+}
+
+function closeCatInline(level) {
+  const el = document.getElementById(`cat-inline-${level}`);
+  if (el) { el.classList.remove('open'); }
+  const inp = document.getElementById(`cat-input-${level}`);
+  if (inp) inp.value = '';
+}
+
+async function saveCatInline(level) {
+  const inp = document.getElementById(`cat-input-${level}`);
+  const name = inp?.value.trim();
+  if (!name) { inp?.focus(); return; }
+
+  const inlineEl = document.getElementById(`cat-inline-${level}`);
+  const parentId = inlineEl?.dataset.parentId || null;
+
+  const { data, error } = await sb.from('categories').insert({
+    name,
+    parent_id: parentId || null,
+  }).select().single();
+
+  if (error) { showToast(error.message, 'error'); return; }
+
+  categories.push(data);
+  closeCatInline(level);
+  populateCategoryFilter();
+
+  // Refresh this level's select and auto-select the new item
+  const parentIdForLevel = inlineEl?.dataset.parentId || null;
+  const container = document.getElementById('cat-selector');
+  // Remove from this level onwards and rebuild
+  container.querySelectorAll('[data-cat-level]').forEach(el => {
+    if (parseInt(el.dataset.catLevel) >= level) el.remove();
+  });
+  buildCatSelectorLevel(level, parentIdForLevel || null);
+  // Select the new item
+  await new Promise(r => setTimeout(r, 50));
+  const sel = document.getElementById(`cat-sel-${level}`);
+  if (sel) { sel.value = data.id; onCatChange(level); }
+  showToast(`Category "${name}" added`, 'success');
+}
+
+// Rebuild cat selector and pre-select a given category_id
+function resetCatSelector(categoryId) {
+  const container = document.getElementById('cat-selector');
+  container.querySelectorAll('[data-cat-level]').forEach(el => el.remove());
+  buildCatSelectorLevel(0, null);
+  document.getElementById('p-category-id').value = categoryId || '';
+
+  if (!categoryId) return;
+
+  // Build ancestor chain to pre-select
+  const chain = [];
+  let current = categories.find(c => c.id === categoryId);
+  while (current) {
+    chain.unshift(current);
+    current = current.parent_id ? categories.find(c => c.id === current.parent_id) : null;
+  }
+  chain.forEach((cat, i) => {
+    const sel = document.getElementById(`cat-sel-${i}`);
+    if (sel) {
+      sel.value = cat.id;
+      if (i < chain.length - 1) {
+        // Build next level without triggering full onCatChange cleanup
+        buildCatSelectorLevel(i + 1, cat.id);
+      }
+    }
+  });
+}
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
-    category: document.getElementById('p-category').value || null,
+    category_id: document.getElementById('p-category-id').value || null,
     unit: document.getElementById('p-unit').value || 'pcs',
     description: document.getElementById('p-desc').value.trim() || null,
     quantity: parseFloat(document.getElementById('p-stock').value) || 0,
