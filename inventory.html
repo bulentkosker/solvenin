@@ -677,9 +677,9 @@ tr:hover .action-btns { opacity:1; }
 
 <!-- STOCK ADJUSTMENT MODAL -->
 <div class="modal-overlay" id="adjust-modal">
-  <div class="modal" style="width:440px">
+  <div class="modal" style="width:480px">
     <div class="modal-head">
-      <div class="modal-title">Adjust Stock</div>
+      <div class="modal-title">Stock Movement</div>
       <button class="modal-close" onclick="closeModal('adjust-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -692,17 +692,43 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label>Movement Type</label>
-          <select id="adj-type">
+          <select id="adj-type" onchange="onAdjTypeChange()">
             <option value="in">Stock In (Received)</option>
             <option value="out">Stock Out (Used/Sold)</option>
-            <option value="adjust">Manual Adjustment</option>
-            <option value="transfer">Transfer</option>
             <option value="return">Return</option>
+            <option value="adjust">Manual Adjustment</option>
+            <option value="transfer">Transfer (Between Warehouses)</option>
           </select>
         </div>
         <div class="form-group">
           <label>Quantity</label>
-          <input type="number" id="adj-qty" placeholder="0" min="1">
+          <input type="number" id="adj-qty" placeholder="0" min="0.01" step="0.01">
+        </div>
+      </div>
+      <!-- Normal warehouse (in/out/return/adjust) -->
+      <div class="form-row full" id="adj-warehouse-row">
+        <div class="form-group">
+          <label>Warehouse</label>
+          <select id="adj-warehouse">
+            <option value="">— Select warehouse —</option>
+          </select>
+        </div>
+      </div>
+      <!-- Transfer: from/to warehouse -->
+      <div id="adj-transfer-rows" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>From Warehouse</label>
+            <select id="adj-from-warehouse">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>To Warehouse</label>
+            <select id="adj-to-warehouse">
+              <option value="">— Select —</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-row full">
@@ -1270,45 +1296,85 @@ async function saveProduct() {
   renderAll();
 }
 
-function openAdjustModal() { populateAdjustSelect(); openModal('adjust-modal'); }
-function openAdjustForProduct(id) {
+function openAdjustModal() {
   populateAdjustSelect();
-  document.getElementById('adj-product').value = id;
+  populateWarehouseSelects();
+  document.getElementById('adj-type').value = 'in';
+  document.getElementById('adj-qty').value = '';
+  document.getElementById('adj-ref').value = '';
+  document.getElementById('adj-note').value = '';
+  onAdjTypeChange();
   openModal('adjust-modal');
+}
+
+function onAdjTypeChange() {
+  const type = document.getElementById('adj-type').value;
+  const isTransfer = type === 'transfer';
+  document.getElementById('adj-warehouse-row').style.display = isTransfer ? 'none' : '';
+  document.getElementById('adj-transfer-rows').style.display = isTransfer ? '' : 'none';
+}
+
+async function populateWarehouseSelects() {
+  if (!companyId) return;
+  const { data } = await sb.from('warehouses')
+    .select('id,name')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .order('name');
+  const whs = data || [];
+  const opts = '<option value="">— Select warehouse —</option>' +
+    whs.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+  ['adj-warehouse','adj-from-warehouse','adj-to-warehouse'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
 }
 
 async function saveAdjustment() {
   const pid = document.getElementById('adj-product').value;
   const qty = parseFloat(document.getElementById('adj-qty').value);
   const type = document.getElementById('adj-type').value;
+  if (!pid) { showToast('Select a product', 'error'); return; }
   if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
-  const p = products.find(x => x.id == pid);
-  if (!p) return;
 
-  const delta = (type === 'in' || type === 'return') ? qty : -qty;
-  const newQty = Math.max(0, p.stock + delta);
-  const whId = warehouses[0]?.id || null;
+  const isTransfer = type === 'transfer';
+  const whId = isTransfer ? null : (document.getElementById('adj-warehouse').value || null);
+  const fromWhId = isTransfer ? (document.getElementById('adj-from-warehouse').value || null) : null;
+  const toWhId = isTransfer ? (document.getElementById('adj-to-warehouse').value || null) : null;
 
-  // Update stock quantity
-  const { error: stockErr } = await sb.from('products').update({ quantity: newQty }).eq('id', pid);
-  if (stockErr) { showToast(stockErr.message, 'error'); return; }
+  if (!isTransfer && !whId) { showToast('Select a warehouse', 'error'); return; }
+  if (isTransfer && (!fromWhId || !toWhId)) { showToast('Select both warehouses', 'error'); return; }
+  if (isTransfer && fromWhId === toWhId) { showToast('From and To warehouses must be different', 'error'); return; }
 
-  // Log movement
-  await sb.from('stock_movements').insert({
+  // Insert movement — trigger handles stock_levels automatically
+  const { error: movErr } = await sb.from('stock_movements').insert({
     company_id: companyId,
     product_id: pid,
-    warehouse_id: whId,
+    warehouse_id: isTransfer ? null : whId,
+    from_warehouse_id: fromWhId,
+    to_warehouse_id: toWhId,
     type,
     quantity: qty,
     reference: document.getElementById('adj-ref').value || null,
     notes: document.getElementById('adj-note').value || null,
     created_by: currentUser?.id || null,
   });
+  if (movErr) { showToast(movErr.message, 'error'); return; }
+
+  // Also update products.quantity for quick display
+  const p = products.find(x => x.id === pid);
+  if (p) {
+    const delta = (type === 'in' || type === 'return') ? qty : (type === 'out' ? -qty : 0);
+    if (delta !== 0) {
+      const newQty = Math.max(0, p.stock + delta);
+      await sb.from('products').update({ quantity: newQty }).eq('id', pid);
+    }
+  }
 
   closeModal('adjust-modal');
   await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
-  showToast(`${p.name}: ${newQty} ${p.unit}`, 'success');
+  showToast('Movement saved ✓', 'success');
 }
 
 function openDeleteModal(id) {
@@ -1327,7 +1393,21 @@ async function confirmDelete() {
   showToast(t('toast_deleted') || 'Product deleted', 'success');
 }
 
-function openMovementModal() { populateAdjustSelect(); openModal('adjust-modal'); }
+function openMovementModal() {
+  populateAdjustSelect();
+  populateWarehouseSelects();
+  document.getElementById('adj-type').value = 'in';
+  document.getElementById('adj-qty').value = '';
+  document.getElementById('adj-ref').value = '';
+  document.getElementById('adj-note').value = '';
+  onAdjTypeChange();
+  openModal('adjust-modal');
+}
+
+function openAdjustForProduct(id) {
+  openMovementModal();
+  setTimeout(() => { document.getElementById('adj-product').value = id; }, 50);
+}
 
 // ===== VIEW TOGGLE =====
 function toggleView(view) {
