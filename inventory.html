@@ -1277,6 +1277,23 @@ function toggleView(view) {
       </div>`;
     }).join('')}</div>`;
   } else {
+    const container = document.getElementById('table-container');
+    if (!document.getElementById('inventory-tbody')) {
+      container.innerHTML = `<table id="inventory-table">
+        <thead><tr>
+          <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+          <th onclick="sortTable('name')">Product ↕</th>
+          <th onclick="sortTable('category')">Category ↕</th>
+          <th onclick="sortTable('stock')">Stock ↕</th>
+          <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
+          <th onclick="sortTable('total_value')">Total Value ↕</th>
+          <th>Status</th>
+          <th>Location</th>
+          <th style="width:80px">Actions</th>
+        </tr></thead>
+        <tbody id="inventory-tbody"></tbody>
+      </table>`;
+    }
     renderTable();
   }
 }
