@@ -526,21 +526,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label>Category</label>
-          <div class="cat-selector" id="cat-selector">
-            <!-- Level 0: root categories -->
-            <div class="cat-row" id="cat-row-0">
-              <select id="cat-sel-0" onchange="onCatChange(0)">
-                <option value="">— Select category —</option>
-              </select>
-              <button class="cat-add-btn" title="Add category here" onclick="openCatInline(0)">＋</button>
-            </div>
-            <div class="cat-inline-form" id="cat-inline-0">
-              <input type="text" id="cat-input-0" placeholder="New category name...">
-              <button class="cat-inline-save" onclick="saveCatInline(0)">Save</button>
-              <button class="cat-inline-cancel" onclick="closeCatInline(0)">✕</button>
-            </div>
-            <!-- deeper levels rendered dynamically -->
-          </div>
+          <div class="cat-selector" id="cat-selector"></div>
           <input type="hidden" id="p-category-id">
         </div>
         <div class="form-group">
@@ -997,22 +983,20 @@ async function loadWarehouses() {
 
 // ===== CATEGORIES =====
 async function loadCategories() {
-  if (!companyId) return;
   const { data, error } = await sb.from('categories').select('id,name,parent_id').order('name');
   if (error) { console.error('loadCategories:', error); return; }
   categories = data || [];
   populateCategoryFilter();
-  buildCatSelectorLevel(0, null);
+  renderCatSelector(null, 0, null);
 }
 
 function getChildren(parentId) {
-  return categories.filter(c => c.parent_id === (parentId || null));
+  return categories.filter(c => (c.parent_id || null) === (parentId || null));
 }
 
 function populateCategoryFilter() {
   const sel = document.getElementById('filter-category');
   if (!sel) return;
-  const roots = getChildren(null);
   let html = '<option value="">All Categories</option>';
   function addOpts(cats, depth) {
     cats.forEach(c => {
@@ -1020,161 +1004,157 @@ function populateCategoryFilter() {
       addOpts(getChildren(c.id), depth + 1);
     });
   }
-  addOpts(roots, 0);
+  addOpts(getChildren(null), 0);
   sel.innerHTML = html;
 }
 
-// Build / refresh a single level row in the cat selector
-function buildCatSelectorLevel(level, parentId) {
+// Render one level of selects inside #cat-selector
+// parentId: parent of this level's items | level: depth | selectedId: pre-selected value
+function renderCatSelector(parentId, level, selectedId) {
   const container = document.getElementById('cat-selector');
-  // Remove all rows/inline-forms from this level onwards
-  container.querySelectorAll(`[data-cat-level]`).forEach(el => {
-    if (parseInt(el.dataset.catLevel) >= level) el.remove();
+  // Remove all elements from this level onwards
+  container.querySelectorAll(`[data-level]`).forEach(el => {
+    if (parseInt(el.dataset.level) >= level) el.remove();
   });
 
   const children = getChildren(parentId);
-  if (level > 0 && children.length === 0 && parentId) {
-    // Still render an empty row so user can add sub
-    const row = _makeCatRow(level, parentId, []);
-    container.appendChild(row.rowEl);
-    container.appendChild(row.inlineEl);
-    return;
+
+  // Build row wrapper
+  const wrap = document.createElement('div');
+  wrap.dataset.level = level;
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+
+  // Optional label
+  if (level > 0) {
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;padding-left:2px;margin-top:4px;';
+    lbl.textContent = level === 1 ? 'Sub-category' : 'Sub-sub-category';
+    wrap.appendChild(lbl);
   }
 
-  const row = _makeCatRow(level, parentId, children);
-  container.appendChild(row.rowEl);
-  container.appendChild(row.inlineEl);
-}
-
-function _makeCatRow(level, parentId, children) {
-  const rowEl = document.createElement('div');
-  rowEl.className = 'cat-row';
-  rowEl.dataset.catLevel = level;
+  // Row: select + add button
+  const row = document.createElement('div');
+  row.className = 'cat-row';
 
   const sel = document.createElement('select');
-  sel.id = `cat-sel-${level}`;
-  sel.dataset.catLevel = level;
+  sel.dataset.level = level;
   sel.dataset.parentId = parentId || '';
   sel.innerHTML = `<option value="">${level === 0 ? '— Select category —' : '— Select sub-category —'}</option>` +
     children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  sel.addEventListener('change', () => onCatChange(level));
-
-  const btn = document.createElement('button');
-  btn.className = 'cat-add-btn';
-  btn.title = 'Add category here';
-  btn.textContent = '＋';
-  btn.type = 'button';
-  btn.dataset.catLevel = level;
-  btn.addEventListener('click', () => openCatInline(level));
-
-  rowEl.appendChild(sel);
-  rowEl.appendChild(btn);
-
-  const inlineEl = document.createElement('div');
-  inlineEl.className = 'cat-inline-form';
-  inlineEl.id = `cat-inline-${level}`;
-  inlineEl.dataset.catLevel = level;
-  inlineEl.dataset.parentId = parentId || '';
-  inlineEl.innerHTML = `
-    <input type="text" id="cat-input-${level}" placeholder="New category name...">
-    <button class="cat-inline-save" type="button" onclick="saveCatInline(${level})">Save</button>
-    <button class="cat-inline-cancel" type="button" onclick="closeCatInline(${level})">✕</button>`;
-
-  return { rowEl, inlineEl };
-}
-
-function onCatChange(level) {
-  const sel = document.getElementById(`cat-sel-${level}`);
-  const selectedId = sel?.value || null;
-  document.getElementById('p-category-id').value = selectedId || '';
-
-  // Remove deeper levels
-  const container = document.getElementById('cat-selector');
-  container.querySelectorAll('[data-cat-level]').forEach(el => {
-    if (parseInt(el.dataset.catLevel) > level) el.remove();
+  if (selectedId) sel.value = selectedId;
+  sel.addEventListener('change', () => {
+    document.getElementById('p-category-id').value = sel.value || '';
+    // Remove deeper levels
+    container.querySelectorAll(`[data-level]`).forEach(el => {
+      if (parseInt(el.dataset.level) > level) el.remove();
+    });
+    if (sel.value) renderCatSelector(sel.value, level + 1, null);
   });
 
-  if (selectedId) {
-    // Render next level
-    buildCatSelectorLevel(level + 1, selectedId);
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'cat-add-btn';
+  addBtn.title = level === 0 ? 'Add root category' : 'Add sub-category here';
+  addBtn.textContent = '＋';
+  addBtn.addEventListener('click', () => {
+    // Toggle inline form
+    const existing = wrap.querySelector('.cat-inline-form');
+    if (existing) { existing.remove(); return; }
+    const form = buildInlineForm(parentId, level);
+    wrap.appendChild(form);
+    form.querySelector('input').focus();
+  });
+
+  row.appendChild(sel);
+  row.appendChild(addBtn);
+  wrap.appendChild(row);
+  container.appendChild(wrap);
+}
+
+function buildInlineForm(parentId, level) {
+  const form = document.createElement('div');
+  form.className = 'cat-inline-form open';
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = 'Category name...';
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') form.remove(); });
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'cat-inline-save';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', save);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'cat-inline-cancel';
+  cancelBtn.textContent = '✕';
+  cancelBtn.addEventListener('click', () => form.remove());
+
+  form.appendChild(inp);
+  form.appendChild(saveBtn);
+  form.appendChild(cancelBtn);
+
+  async function save() {
+    const name = inp.value.trim();
+    if (!name) { inp.focus(); return; }
+    saveBtn.textContent = '...';
+    saveBtn.disabled = true;
+
+    const { data, error } = await sb.from('categories').insert({
+      name,
+      parent_id: parentId || null,
+    }).select().single();
+
+    if (error) { showToast(error.message, 'error'); saveBtn.textContent = 'Save'; saveBtn.disabled = false; return; }
+
+    categories.push(data);
+    populateCategoryFilter();
+    form.remove();
+
+    // Refresh this level and auto-select new item
+    const sel = document.querySelector(`select[data-level="${level}"]`);
+    const currentParent = sel ? (sel.dataset.parentId || null) : (parentId || null);
+    renderCatSelector(currentParent || null, level, data.id);
+
+    // Trigger next level render
+    document.getElementById('p-category-id').value = data.id;
+    renderCatSelector(data.id, level + 1, null);
+
+    showToast(`"${name}" added`, 'success');
   }
+
+  return form;
 }
 
-function openCatInline(level) {
-  const el = document.getElementById(`cat-inline-${level}`);
-  if (!el) return;
-  el.classList.add('open');
-  document.getElementById(`cat-input-${level}`)?.focus();
-}
-
-function closeCatInline(level) {
-  const el = document.getElementById(`cat-inline-${level}`);
-  if (el) { el.classList.remove('open'); }
-  const inp = document.getElementById(`cat-input-${level}`);
-  if (inp) inp.value = '';
-}
-
-async function saveCatInline(level) {
-  const inp = document.getElementById(`cat-input-${level}`);
-  const name = inp?.value.trim();
-  if (!name) { inp?.focus(); return; }
-
-  const inlineEl = document.getElementById(`cat-inline-${level}`);
-  const parentId = inlineEl?.dataset.parentId || null;
-
-  const { data, error } = await sb.from('categories').insert({
-    name,
-    parent_id: parentId || null,
-  }).select().single();
-
-  if (error) { showToast(error.message, 'error'); return; }
-
-  categories.push(data);
-  closeCatInline(level);
-  populateCategoryFilter();
-
-  // Refresh this level's select and auto-select the new item
-  const parentIdForLevel = inlineEl?.dataset.parentId || null;
-  const container = document.getElementById('cat-selector');
-  // Remove from this level onwards and rebuild
-  container.querySelectorAll('[data-cat-level]').forEach(el => {
-    if (parseInt(el.dataset.catLevel) >= level) el.remove();
-  });
-  buildCatSelectorLevel(level, parentIdForLevel || null);
-  // Select the new item
-  await new Promise(r => setTimeout(r, 50));
-  const sel = document.getElementById(`cat-sel-${level}`);
-  if (sel) { sel.value = data.id; onCatChange(level); }
-  showToast(`Category "${name}" added`, 'success');
-}
-
-// Rebuild cat selector and pre-select a given category_id
 function resetCatSelector(categoryId) {
-  const container = document.getElementById('cat-selector');
-  container.querySelectorAll('[data-cat-level]').forEach(el => el.remove());
-  buildCatSelectorLevel(0, null);
+  renderCatSelector(null, 0, null);
   document.getElementById('p-category-id').value = categoryId || '';
-
   if (!categoryId) return;
 
-  // Build ancestor chain to pre-select
+  // Build ancestor chain
   const chain = [];
-  let current = categories.find(c => c.id === categoryId);
-  while (current) {
-    chain.unshift(current);
-    current = current.parent_id ? categories.find(c => c.id === current.parent_id) : null;
+  let cur = categories.find(c => c.id === categoryId);
+  while (cur) {
+    chain.unshift(cur);
+    cur = cur.parent_id ? categories.find(c => c.id === cur.parent_id) : null;
   }
+
+  // Pre-select each level
   chain.forEach((cat, i) => {
-    const sel = document.getElementById(`cat-sel-${i}`);
+    const sel = document.querySelector(`select[data-level="${i}"]`);
     if (sel) {
       sel.value = cat.id;
+      // Render next level if not last
       if (i < chain.length - 1) {
-        // Build next level without triggering full onCatChange cleanup
-        buildCatSelectorLevel(i + 1, cat.id);
+        renderCatSelector(cat.id, i + 1, chain[i + 1]?.id || null);
       }
     }
   });
 }
+
+
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
