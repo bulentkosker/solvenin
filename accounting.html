@@ -196,27 +196,18 @@
     /* LANG SWITCHER */
     #lang-switcher{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;border:1px solid var(--gray200);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray600)}
   
-/* NAV GROUPS */
-.sidebar-nav { padding: 8px 0; flex: 1; overflow-y: auto; }
-.nav-group { margin: 2px 8px; border-radius: 10px; overflow: hidden; }
-.nav-group-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 12px; cursor: pointer; border-radius: 10px;
-  color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 1px;
-  transition: all .15s; user-select: none;
-}
-.nav-group-header:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
-.nav-group.open .nav-group-header { color: rgba(255,255,255,0.7); }
-.nav-group-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-.nav-group-arrow { font-size: 16px; transition: transform .2s; color: rgba(255,255,255,0.25); }
-.nav-group.open .nav-group-arrow { transform: rotate(90deg); }
-.nav-group-items { display: none; padding: 2px 0 6px; }
-.nav-group.open .nav-group-items { display: block; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin: 1px 0; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
+
+.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+
+
+/* SIDEBAR SECTIONS */
+.sidebar-sections { flex:1; overflow-y:auto; padding:8px 0; }
+.sidebar-section { padding:12px 12px 4px; }
+.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.2); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin-bottom:2px; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
 .nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
 .nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
-.nav-item.active .nav-icon { color: #60a5fa; }
+.nav-item.active .nav-icon { color:#60a5fa; }
 .nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
 
 </style>
@@ -236,82 +227,35 @@
     </div>
     <div class="nav-group-items">
         <a class="nav-item " href="inventory.html"><span class="nav-icon">🗂️</span> Stok Kartları</a>
-        <a class="nav-item " href="stock-movements.html"><span class="nav-icon">🔄</span> Stok Hareketleri</a>
-        <a class="nav-item " href="warehouses.html"><span class="nav-icon">🏗️</span> Depo Yönetimi</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🚚</span> Sevkiyat</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> Raporlar</a>
+
+  <div class="sidebar-sections">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Main</div>
+    <a class="nav-item  " href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
+    <a class="nav-item  " href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
+    <a class="nav-item  " href="sales.html"><span class="nav-icon">💰</span> Sales</a>
+    <a class="nav-item  " href="purchasing.html"><span class="nav-icon">🛒</span> Purchasing</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🏭</span> Production</a>
     </div>
-  </div>
-  <div class="nav-group " id="group-cari">
-    <div class="nav-group-header" onclick="toggleGroup('cari')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">👤</span><span class="nav-group-label">Cari İşlemler</span></div>
-      <span class="nav-group-arrow">›</span>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Finance</div>
+    <a class="nav-item  " href="cashbank.html"><span class="nav-icon">🏦</span> Cashbank</a>
+    <a class="nav-item active " href="accounting.html"><span class="nav-icon">📒</span> Accounting</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">📊</span> Reports</a>
     </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="#"><span class="nav-icon">🪪</span> Cari Hesap Kartları</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📋</span> Cari Hareketler</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> Raporlar</a>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Management</div>
+    <a class="nav-item  " href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🚚</span> Shipping</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">📅</span> Projects</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🔧</span> Maintenance</a>
     </div>
-  </div>
-  <div class="nav-group open" id="group-finans">
-    <div class="nav-group-header" onclick="toggleGroup('finans')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">💳</span><span class="nav-group-label">Finans Yönetimi</span></div>
-      <span class="nav-group-arrow">›</span>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+    <a class="nav-item  " href="warehouses.html"><span class="nav-icon">🏗️</span> Warehouses</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">⚙️</span> Settings</a>
+    <a class="nav-item  " href="subscription.html"><span class="nav-icon">💎</span> Subscription</a>
     </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="cashbank.html"><span class="nav-icon">🏦</span> Kasa & Banka</a>
-        <a class="nav-item active" href="accounting.html"><span class="nav-icon">📒</span> Muhasebe</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> Raporlar</a>
-    </div>
-  </div>
-  <div class="nav-group " id="group-satis">
-    <div class="nav-group-header" onclick="toggleGroup('satis')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">💰</span><span class="nav-group-label">Satış</span></div>
-      <span class="nav-group-arrow">›</span>
-    </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="sales.html"><span class="nav-icon">🧾</span> Satış Faturaları</a>
-        <a class="nav-item " href="purchasing.html"><span class="nav-icon">🛒</span> Satın Alma</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> Raporlar</a>
-    </div>
-  </div>
-  <div class="nav-group " id="group-uretim">
-    <div class="nav-group-header" onclick="toggleGroup('uretim')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">🏭</span><span class="nav-group-label">Üretim</span></div>
-      <span class="nav-group-arrow">›</span>
-    </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="#"><span class="nav-icon">📐</span> Reçeteler / BOM</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📋</span> Üretim Emirleri</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🔄</span> Üretim Takibi</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🗑️</span> Fire & Hurda</a>
-        <a class="nav-item " href="#"><span class="nav-icon">📊</span> Maliyet & Raporlar</a>
-    </div>
-  </div>
-  <div class="nav-group " id="group-ik">
-    <div class="nav-group-header" onclick="toggleGroup('ik')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">👥</span><span class="nav-group-label">İK</span></div>
-      <span class="nav-group-arrow">›</span>
-    </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="#"><span class="nav-icon">👤</span> Personel Kartları</a>
-        <a class="nav-item " href="#"><span class="nav-icon">⏰</span> Vardiya & Mesai</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🌴</span> İzin Yönetimi</a>
-        <a class="nav-item " href="#"><span class="nav-icon">💵</span> Bordro</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🧾</span> Masraf & Avans</a>
-    </div>
-  </div>
-  <div class="nav-group " id="group-sistem">
-    <div class="nav-group-header" onclick="toggleGroup('sistem')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">⚙️</span><span class="nav-group-label">Sistem</span></div>
-      <span class="nav-group-arrow">›</span>
-    </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="subscription.html"><span class="nav-icon">💎</span> Abonelik</a>
-        <a class="nav-item " href="#"><span class="nav-icon">⚙️</span> Ayarlar</a>
-        <a class="nav-item " href="#"><span class="nav-icon">🔧</span> Bakım</a>
-    </div>
-  </div>
   </div>
 
   <div class="sidebar-footer">
@@ -1276,14 +1220,37 @@ function printReport(which) {
 .new-company-box p{font-size:13px;color:#64748b;margin-bottom:20px}
 .new-company-box input{width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box}
 </style></head><body>${el.innerHTML}
-<script>
-function toggleGroup(id) {
-  document.querySelectorAll('.nav-group').forEach(g => {
-    if (g.id === 'group-' + id) g.classList.toggle('open');
-  });
-}
-</script>
 
+
+<script>
+// ===== ENTER → TAB =====
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const tag = e.target.tagName;
+  if (tag === 'TEXTAREA') return;
+  if (tag === 'BUTTON') return;
+  // If inside a modal
+  const modal = e.target.closest('.modal-overlay, .modal, [id$="-modal"]');
+  if (!modal) return;
+  e.preventDefault();
+  // Find all focusable elements in modal
+  const focusable = Array.from(modal.querySelectorAll(
+    'input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+  )).filter(el => el.offsetParent !== null);
+  const idx = focusable.indexOf(e.target);
+  if (idx === -1) return;
+  const next = focusable[idx + 1];
+  if (next) {
+    // If next is a submit/save button, click it
+    if (next.tagName === 'BUTTON' && (next.textContent.includes('Save') || next.textContent.includes('Confirm') || next.textContent.includes('Kaydet'))) {
+      next.click();
+    } else {
+      next.focus();
+      if (next.tagName === 'INPUT') next.select();
+    }
+  }
+});
+</script>
 </body></html>`);
   win.print();
 }
