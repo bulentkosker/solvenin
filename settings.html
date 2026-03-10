@@ -578,7 +578,7 @@ tr:hover .action-btns { opacity:1; }
     <input type="text" id="new-company-name" placeholder="Company name">
     <div style="display:flex;gap:8px">
       <button class="btn-primary" style="flex:1" onclick="createNewCompany()">Create</button>
-      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('new-company-modal').classList.remove('open')">Cancel</button>
+      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('sb-new-company-modal').classList.remove('open')">Cancel</button>
     </div>
   </div>
 </div>
@@ -642,8 +642,8 @@ async function init() {
   currentUser = user;
 
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
-  document.getElementById('user-name').textContent = name;
-  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('sb-user-name').textContent = name;
+  document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
 
   const { data: profile } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
   companyId = profile?.active_company_id || profile?.company_id || null;
@@ -1156,8 +1156,8 @@ async function loadCompanies() {
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
     if (active) {
-      document.getElementById('company-name').textContent = active.company_name;
-      document.getElementById('company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
+      document.getElementById('sb-company-name').textContent = active.company_name;
+      document.getElementById('sb-company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
       if (!companyId) companyId = active.company_id;
     }
     renderCompanyMenu();
@@ -1165,8 +1165,8 @@ async function loadCompanies() {
 }
 
 function renderCompanyMenu() {
-  const list = document.getElementById('company-menu-list');
-  const footer = document.getElementById('company-menu-footer');
+  const list = document.getElementById('sb-company-menu-list');
+  const footer = document.getElementById('sb-company-menu-footer');
   if (!list) return;
 
   list.innerHTML = _myCompanies.map(c => `
@@ -1181,31 +1181,23 @@ function renderCompanyMenu() {
   const active = _myCompanies.find(c => c.is_active);
   const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
   footer.innerHTML = canAdd
-    ? `<button onclick="openNewCompanyModal()">+ Add Company</button>`
+    ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
 }
 
 
-function openNewCompanyModal() {
-  document.getElementById('company-menu').style.display = 'none';
-  document.getElementById('new-company-name').value = '';
+function sidebarOpenNewCompany() {
+  document.getElementById('sb-company-menu').style.display = 'none';
+  document.getElementById('sb-new-company-name').value = '';
   document.getElementById('new-company-err').style.display = 'none';
-  document.getElementById('new-company-modal').classList.add('open');
+  document.getElementById('sb-new-company-modal').classList.add('open');
 }
 
-async ).select().single();
-    if (error) throw error;
-    await sb.from('company_users').insert({
-      company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
-    });
-    await sb.rpc('switch_company', { target_company_id: comp.id });
-    window.location.reload();
-  } catch(e) { alert(e.message); }
-}
+
 
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
-    const m = document.getElementById('company-menu');
+    const m = document.getElementById('sb-company-menu');
     if (m) m.style.display = 'none';
   }
 });

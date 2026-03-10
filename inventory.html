@@ -596,8 +596,8 @@ async function init() {
   if (!user) return;
 
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
-  document.getElementById('user-name').textContent = name;
-  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('sb-user-name').textContent = name;
+  document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
 
   const { data: profile, error: profileErr } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
   console.log('profile:', profile, profileErr);
@@ -1362,8 +1362,8 @@ async function loadCompanies() {
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
     if (active) {
-      document.getElementById('company-name').textContent = active.company_name;
-      document.getElementById('company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
+      document.getElementById('sb-company-name').textContent = active.company_name;
+      document.getElementById('sb-company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
       if (!companyId) companyId = active.company_id;
     }
     renderCompanyMenu();
@@ -1371,8 +1371,8 @@ async function loadCompanies() {
 }
 
 function renderCompanyMenu() {
-  const list = document.getElementById('company-menu-list');
-  const footer = document.getElementById('company-menu-footer');
+  const list = document.getElementById('sb-company-menu-list');
+  const footer = document.getElementById('sb-company-menu-footer');
   if (!list) return;
 
   list.innerHTML = _myCompanies.map(c => `
@@ -1393,32 +1393,13 @@ function renderCompanyMenu() {
 
 
 function openNewCompanyModal() {
-  document.getElementById('company-menu').style.display = 'none';
-  document.getElementById('new-company-name').value = '';
-  document.getElementById('new-company-err').style.display = 'none';
-  document.getElementById('new-company-modal').classList.add('open');
-}
-
-async ).select().single();
-    if (error) throw error;
-    // Add as owner in company_users
-    await sb.from('company_users').insert({
-      company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
-    });
-    // Switch to new company
-    await sb.rpc('switch_company', { target_company_id: comp.id });
-    document.getElementById('new-company-modal').classList.remove('open');
-    window.location.reload();
-  } catch(e) {
-    document.getElementById('new-company-err').textContent = e.message;
-    document.getElementById('new-company-err').style.display = 'block';
-  }
+  sidebarOpenNewCompany();
 }
 
 // Close company menu on outside click
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
-    const m = document.getElementById('company-menu');
+    const m = document.getElementById('sb-company-menu');
     if (m) m.style.display = 'none';
   }
 });

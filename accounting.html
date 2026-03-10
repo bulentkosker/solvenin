@@ -222,8 +222,8 @@ async function loadCompanies() {
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
     if (active) {
-      const cnEl = document.getElementById('company-name');
-      const cpEl = document.getElementById('company-plan');
+      const cnEl = document.getElementById('sb-company-name');
+      const cpEl = document.getElementById('sb-company-plan');
       if (cnEl) cnEl.textContent = active.company_name;
       if (cpEl) cpEl.textContent = (active.plan||'free').toUpperCase();
       if (!companyId) companyId = active.company_id;
@@ -232,8 +232,8 @@ async function loadCompanies() {
   } catch(e) { console.error('loadCompanies:', e); }
 }
 function renderCompanyMenu() {
-  const list = document.getElementById('company-menu-list');
-  const footer = document.getElementById('company-menu-footer');
+  const list = document.getElementById('sb-company-menu-list');
+  const footer = document.getElementById('sb-company-menu-footer');
   if (!list) return;
   list.innerHTML = _myCompanies.map(c => `
     <div class="company-menu-item ${c.is_active?'active':''} ${c.status==='suspended'?'suspended':''}"
@@ -245,21 +245,21 @@ function renderCompanyMenu() {
   const active = _myCompanies.find(c => c.is_active);
   const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
   footer.innerHTML = canAdd
-    ? `<button onclick="openNewCompanyModal()">+ Add Company</button>`
+    ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
 }
 
-function openNewCompanyModal() {
-  document.getElementById('company-menu').style.display='none';
-  document.getElementById('new-company-name').value='';
+function sidebarOpenNewCompany() {
+  document.getElementById('sb-company-menu').style.display='none';
+  document.getElementById('sb-new-company-name').value='';
   document.getElementById('new-company-err').style.display='none';
-  document.getElementById('new-company-modal').classList.add('open');
+  document.getElementById('sb-new-company-modal').classList.add('open');
 }
 async  catch(e){errEl.textContent=e.message;errEl.style.display='block';}
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('#company-switcher')&&!e.target.closest('#company-menu')){
-    const m=document.getElementById('company-menu');if(m)m.style.display='none';
+    const m=document.getElementById('sb-company-menu');if(m)m.style.display='none';
   }
 });
 </script>
