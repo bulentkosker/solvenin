@@ -173,26 +173,25 @@ tr:hover .row-actions{opacity:1}
 </style>
 <script src="i18n.js"></script>
 <script>
-const _origSetLangPurch = typeof setLang !== 'undefined' ? setLang : null;
-function setLang(lang) {
-  if (_origSetLangPurch) _origSetLangPurch(lang);
-  // Refresh status filter options via JS (avoids data-i18n duplication)
+// Extra i18n updates for purchasing page - listen for language changes
+function _purchasingRefreshLang() {
+  const lang = localStorage.getItem('solvenin_lang') || 'en';
+  // Refresh status filter options
   const stSel = document.getElementById('filter-status');
   if (stSel) {
     const opts = [['','all_status'],['draft','status_draft'],['sent','status_sent'],['confirmed','status_confirmed'],['received','status_received'],['cancelled','status_cancelled']];
     Array.from(stSel.options).forEach((o,i) => { if(opts[i]) o.text = t(opts[i][1]); });
   }
-  // Refresh placeholders
   const srch = document.getElementById('order-search');
   if (srch) srch.placeholder = t('search_orders');
   const ssrch = document.getElementById('supplier-search');
   if (ssrch) ssrch.placeholder = t('search_suppliers');
-  // Re-render tables to update status badges
   if (typeof filterOrders === 'function') filterOrders();
   if (typeof filterSuppliers === 'function') filterSuppliers();
   if (typeof updateStats === 'function') updateStats();
   if (typeof updateSupplierSelects === 'function') updateSupplierSelects();
 }
+document.addEventListener('langChanged', _purchasingRefreshLang);
 </script>
     <style>
     /* Critical sidebar CSS - prevents layout flash */

@@ -398,22 +398,38 @@
 
   /* ── INIT ────────────────────────────────────────────────── */
   function init() {
-    mount();
-    // Wait for Supabase to be ready
+    // mount() already called synchronously - just load data
     const wait = setInterval(() => {
       if (window._supabase || window.supabase) {
         clearInterval(wait);
         loadSidebarData();
       }
     }, 100);
-    // Give up after 5s
     setTimeout(() => clearInterval(wait), 5000);
   }
 
+  // Mount sidebar HTML immediately (synchronous) so sb-* IDs exist for page scripts
+  mount();
+  
+  // Load data after DOM + Supabase ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() {
+      const wait = setInterval(() => {
+        if (window._supabase || window.supabase) {
+          clearInterval(wait);
+          loadSidebarData();
+        }
+      }, 100);
+      setTimeout(() => clearInterval(wait), 5000);
+    });
   } else {
-    init();
+    const wait = setInterval(() => {
+      if (window._supabase || window.supabase) {
+        clearInterval(wait);
+        loadSidebarData();
+      }
+    }, 100);
+    setTimeout(() => clearInterval(wait), 5000);
   }
 
 })();

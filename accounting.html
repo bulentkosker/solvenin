@@ -626,7 +626,8 @@ async function init() {
   companyId = active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
   const plan = active.plan || 'free';
-  document.getElementById('user-plan-label').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
+  const _planEl = document.getElementById('user-plan-label') || document.getElementById('sb-user-plan');
+  if (_planEl) _planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
 
   // Apply language FIRST so renderCOA uses correct t() values
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
