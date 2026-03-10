@@ -509,21 +509,25 @@ tr:hover .action-btns { opacity:1; }
           <input type="text" id="p-name" placeholder="e.g. Laptop Dell XPS 15">
         </div>
         <div class="form-group">
-          <label>SKU / Barcode</label>
+          <label>SKU Code</label>
           <input type="text" id="p-sku" placeholder="e.g. DELL-XPS-001">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Category</label>
-          <select id="p-category">
-            <option value="">Select category</option>
-            <option>Electronics</option>
-            <option>Raw Material</option>
-            <option>Packaging</option>
-            <option>Finished Goods</option>
-            <option>Office</option>
+          <select id="p-cat-1" onchange="onCatChange(1)">
+            <option value="">— Select category —</option>
           </select>
+          <select id="p-cat-2" onchange="onCatChange(2)" style="margin-top:6px;display:none">
+            <option value="">— Select sub-category —</option>
+          </select>
+          <select id="p-cat-3" onchange="onCatChange(3)" style="margin-top:6px;display:none">
+            <option value="">— Select sub-sub-category —</option>
+          </select>
+          <div style="margin-top:6px;font-size:11px;color:#64748b" id="p-cat-add-wrap">
+            <span style="cursor:pointer;color:#3b82f6" onclick="openAddCategoryModal()">+ Add new category</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Unit</label>
@@ -540,8 +544,14 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Description</label>
-          <textarea id="p-desc" placeholder="Optional product description..."></textarea>
+          <label>Barcode</label>
+          <input type="text" id="p-barcode" placeholder="e.g. 8691234567890">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="p-desc" placeholder="Optional notes..."></textarea>
         </div>
       </div>
       <div class="form-divider"></div>
@@ -698,7 +708,7 @@ async function init() {
   companyId = profile?.active_company_id || profile?.company_id || null;
   currentUser = user;
 
-  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
+  await Promise.all([loadProducts(), loadMovements(), loadWarehouses(), loadCategories()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -743,7 +753,7 @@ function applyFilters() {
 
   filteredProducts = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
-    const matchCat = !cat || p.category === cat;
+    const matchCat = !cat || allCategoryDescendants(cat).includes(p.category_id);
     const status = getStockStatus(p);
     const matchStatus = !statusFilter || status === statusFilter;
     const matchTab = currentTab === 'all' || (currentTab === 'low' && status === 'low') || (currentTab === 'out' && status === 'out');
@@ -894,20 +904,22 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = 'Add Product';
-  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location','p-supplier'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('p-category').value = '';
+  ['p-name','p-sku','p-barcode','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
   document.getElementById('p-unit').value = 'pcs';
+  resetCategoryDropdowns();
   openModal('product-modal');
 }
 
-function openEditModal(id) {
+async function openEditModal(id) {
   editingId = id;
   const p = products.find(x => x.id === id);
   if (!p) return;
   document.getElementById('modal-title').textContent = 'Edit Product';
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
-  document.getElementById('p-category').value = p.category || '';
+  // category set via preselectCategory below
   document.getElementById('p-unit').value = p.unit || 'pcs';
   document.getElementById('p-desc').value = p.desc || '';
   document.getElementById('p-stock').value = p.stock;
@@ -925,17 +937,18 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,category,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,description,active,company_id')
+    .select('id,name,sku,barcode,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,active,company_id,categories(id,name,parent_id)')
     .eq('company_id', companyId)
     .eq('active', true)
     .order('name');
   if (error) { console.error('loadProducts:', error); return; }
-  // Map DB columns to UI fields
   products = (data || []).map(p => ({
     id: p.id,
     name: p.name,
     sku: p.sku || '',
-    category: p.category || '',
+    barcode: p.barcode || '',
+    category_id: p.category_id || '',
+    category: p.categories?.name || '',
     unit: p.unit || 'pcs',
     stock: parseFloat(p.quantity || 0),
     min_stock: parseFloat(p.min_stock || 0),
@@ -943,8 +956,7 @@ async function loadProducts() {
     unit_cost: parseFloat(p.cost_price || 0),
     price: parseFloat(p.sale_price || 0),
     location: p.location || '',
-    supplier: '',
-    desc: p.description || '',
+    desc: p.notes || '',
   }));
 }
 
@@ -976,12 +988,16 @@ async function loadWarehouses() {
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
+  const catId = document.getElementById('p-cat-3').value ||
+               document.getElementById('p-cat-2').value ||
+               document.getElementById('p-cat-1').value || null;
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
-    category: document.getElementById('p-category').value || null,
+    barcode: document.getElementById('p-barcode').value.trim() || null,
+    category_id: catId || null,
     unit: document.getElementById('p-unit').value || 'pcs',
-    description: document.getElementById('p-desc').value.trim() || null,
+    notes: document.getElementById('p-desc').value.trim() || null,
     quantity: parseFloat(document.getElementById('p-stock').value) || 0,
     min_stock: parseFloat(document.getElementById('p-min-stock').value) || 0,
     max_stock: parseFloat(document.getElementById('p-max-stock').value) || 0,
@@ -1285,6 +1301,195 @@ document.addEventListener('click', function(e) {
     if (m) m.style.display = 'none';
   }
 });
+
+// ===== CATEGORY SYSTEM =====
+let allCategories = []; // flat list from DB
+
+async function loadCategories() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('categories')
+    .select('id, name, parent_id')
+    .eq('company_id', companyId)
+    .order('name');
+  if (error) { console.error('loadCategories:', error); return; }
+  allCategories = data || [];
+  populateCategoryFilter();
+  populateCatDropdown(1, null); // Level 1 = root categories
+}
+
+// Get children of a parent (null = root)
+function getCatChildren(parentId) {
+  return allCategories.filter(c => c.parent_id === parentId);
+}
+
+// Get all descendant IDs of a category (for filter)
+function allCategoryDescendants(catId) {
+  const result = [];
+  const queue = [catId];
+  while (queue.length) {
+    const cur = queue.shift();
+    result.push(cur);
+    getCatChildren(cur).forEach(c => queue.push(c.id));
+  }
+  return result;
+}
+
+// Get ancestors chain of a category [root, ..., leaf]
+function getCatAncestors(catId) {
+  const chain = [];
+  let cur = allCategories.find(c => c.id === catId);
+  while (cur) {
+    chain.unshift(cur);
+    cur = cur.parent_id ? allCategories.find(c => c.id === cur.parent_id) : null;
+  }
+  return chain;
+}
+
+// Populate a level dropdown
+function populateCatDropdown(level, parentId) {
+  const sel = document.getElementById(`p-cat-${level}`);
+  if (!sel) return;
+  const children = getCatChildren(parentId);
+  sel.innerHTML = `<option value="">— ${level===1?'Select category':level===2?'Select sub-category':'Select sub-sub-category'} —</option>`;
+  children.forEach(c => {
+    const hasChildren = getCatChildren(c.id).length > 0;
+    sel.innerHTML += `<option value="${c.id}">${c.name}${hasChildren?' ›':''}</option>`;
+  });
+  sel.style.display = children.length > 0 ? 'block' : 'none';
+}
+
+// Handle cascade when a level changes
+function onCatChange(level) {
+  const sel = document.getElementById(`p-cat-${level}`);
+  const val = sel?.value || null;
+
+  // Hide all lower levels
+  for (let l = level + 1; l <= 3; l++) {
+    const s = document.getElementById(`p-cat-${l}`);
+    if (s) { s.value = ''; s.style.display = 'none'; }
+  }
+
+  // Populate next level if selection made and level < 3
+  if (val && level < 3) {
+    const children = getCatChildren(val);
+    if (children.length > 0) {
+      populateCatDropdown(level + 1, val);
+      document.getElementById(`p-cat-${level + 1}`).style.display = 'block';
+    }
+  }
+}
+
+// Reset all category dropdowns
+function resetCategoryDropdowns() {
+  populateCatDropdown(1, null);
+  for (let l = 2; l <= 3; l++) {
+    const s = document.getElementById(`p-cat-${l}`);
+    if (s) { s.value = ''; s.style.display = 'none'; }
+  }
+}
+
+// Pre-select category when editing
+async function preselectCategory(categoryId) {
+  const ancestors = getCatAncestors(categoryId);
+  if (!ancestors.length) return;
+
+  // Level 1: root
+  populateCatDropdown(1, null);
+  const sel1 = document.getElementById('p-cat-1');
+  if (sel1 && ancestors[0]) {
+    sel1.value = ancestors[0].id;
+    sel1.style.display = 'block';
+  }
+
+  // Level 2: if exists
+  if (ancestors[1]) {
+    populateCatDropdown(2, ancestors[0].id);
+    const sel2 = document.getElementById('p-cat-2');
+    if (sel2) { sel2.value = ancestors[1].id; sel2.style.display = 'block'; }
+  }
+
+  // Level 3: if exists
+  if (ancestors[2]) {
+    populateCatDropdown(3, ancestors[1].id);
+    const sel3 = document.getElementById('p-cat-3');
+    if (sel3) { sel3.value = ancestors[2].id; sel3.style.display = 'block'; }
+  }
+}
+
+// Populate filter dropdown with hierarchical display
+function populateCategoryFilter() {
+  const sel = document.getElementById('filter-category');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">All Categories</option>';
+
+  function addLevel(parentId, depth) {
+    getCatChildren(parentId).forEach(c => {
+      const prefix = '　'.repeat(depth);
+      sel.innerHTML += `<option value="${c.id}">${prefix}${c.name}</option>`;
+      addLevel(c.id, depth + 1);
+    });
+  }
+  addLevel(null, 0);
+}
+
+// ===== ADD CATEGORY MODAL =====
+function openAddCategoryModal() {
+  // Get current selected parent
+  const parentId = document.getElementById('p-cat-3').value ||
+                   document.getElementById('p-cat-2').value ||
+                   document.getElementById('p-cat-1').value || null;
+  
+  // Check depth limit (max 3 levels)
+  if (parentId) {
+    const ancestors = getCatAncestors(parentId);
+    if (ancestors.length >= 3) {
+      showToast('Maximum 3 levels allowed', 'warning'); return;
+    }
+  }
+
+  document.getElementById('new-cat-parent-id').value = parentId || '';
+  const parentName = parentId ? allCategories.find(c=>c.id===parentId)?.name : null;
+  document.getElementById('new-cat-parent-label').textContent = parentName ? `Under: ${parentName}` : 'Root category';
+  document.getElementById('new-cat-name').value = '';
+  document.getElementById('add-cat-modal').style.display = 'flex';
+}
+
+async function saveNewCategory() {
+  const name = document.getElementById('new-cat-name').value.trim().toUpperCase();
+  if (!name) { showToast('Category name required', 'error'); return; }
+  const parentId = document.getElementById('new-cat-parent-id').value || null;
+
+  const { data, error } = await sb.from('categories').insert({
+    name, parent_id: parentId, company_id: companyId
+  }).select().single();
+
+  if (error) { showToast(error.message, 'error'); return; }
+
+  allCategories.push(data);
+  document.getElementById('add-cat-modal').style.display = 'none';
+  showToast(`${name} added ✓`, 'success');
+
+  // Reload dropdowns and select new category
+  resetCategoryDropdowns();
+  await preselectCategory(data.id);
+  populateCategoryFilter();
+}
 </script>
+
+  <!-- Add Category Modal -->
+  <div id="add-cat-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:4px;color:#0a0f1e">Add Category</h3>
+      <div id="new-cat-parent-label" style="font-size:12px;color:#64748b;margin-bottom:16px"></div>
+      <input type="hidden" id="new-cat-parent-id">
+      <input type="text" id="new-cat-name" placeholder="Category name" 
+        style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;text-transform:uppercase"
+        onkeydown="if(event.key==='Enter') saveNewCategory()">
+      <div style="display:flex;gap:8px">
+        <button onclick="saveNewCategory()" style="flex:1;padding:10px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Save</button>
+        <button onclick="document.getElementById('add-cat-modal').style.display='none'" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-weight:600;cursor:pointer">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
