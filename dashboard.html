@@ -1059,11 +1059,18 @@ async function init() {
   document.getElementById('sb-user-name').textContent = name;
   document.getElementById('sb-user-avatar').textContent = firstName[0].toUpperCase();
 
-  // Plan
-  const { data: profile } = await sb.from('profiles').select('*, companies(plan,name)').eq('id', user.id).single();
-  companyId = profile?.company_id || localStorage.getItem('currentCompanyId') || null;
-  if (companyId) localStorage.setItem('currentCompanyId', companyId);
-  const plan = profile?.companies?.plan || 'free';
+  // Company & Plan
+  let plan = 'free';
+  const savedId = localStorage.getItem('currentCompanyId');
+  const { data: companies } = await sb.rpc('get_my_companies');
+  if (companies && companies.length > 0) {
+    const active = savedId ? companies.find(c => c.company_id === savedId) || companies.find(c => c.is_active) || companies[0] : companies.find(c => c.is_active) || companies[0];
+    companyId = active.company_id;
+    localStorage.setItem('currentCompanyId', companyId);
+    plan = active.plan || 'free';
+    document.getElementById('sb-company-name').textContent = active.company_name || '';
+    document.getElementById('sb-company-plan').textContent = plan.toUpperCase();
+  }
   document.getElementById('sb-user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
 

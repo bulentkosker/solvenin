@@ -604,10 +604,13 @@ async function init() {
   document.getElementById('sb-user-name').textContent = name;
   document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
 
-  const { data: profile, error: profileErr } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
-  console.log('profile:', profile, profileErr);
-  companyId = profile?.active_company_id || profile?.company_id || null;
-  console.log('companyId set to:', companyId);
+    const _savedId = localStorage.getItem('currentCompanyId');
+  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
+  const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
+  companyId = _active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+console.log('companyId set to:', companyId);
   currentUser = user;
 
   await loadCategories();

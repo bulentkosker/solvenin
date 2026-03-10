@@ -551,12 +551,13 @@ async function init() {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
   document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('sb-user-name').textContent = name;
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id, companies(plan,name)').eq('id', user.id).single();
-  if (!profile?.company_id) return;
-  companyId = profile.company_id;
-  companyName = profile.companies?.name || 'My Company';
-  document.getElementById('sb-user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
-  await Promise.all([loadCustomers(), loadProducts()]);
+    const _savedId = localStorage.getItem('currentCompanyId');
+  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
+  const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
+  companyId = _active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+await Promise.all([loadCustomers(), loadProducts()]);
   await Promise.all([loadOrders(), loadPayments()]);
   await loadCashBankAccounts();
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';

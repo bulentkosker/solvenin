@@ -928,14 +928,14 @@ async function init() {
   document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('sb-user-name').textContent = name;
 
-  // First get profile to resolve companyId
-  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
-  const resolvedCompanyId = profile?.active_company_id || profile?.company_id;
-  if (!resolvedCompanyId) { showToast('Company not found. Please log in again.', 'error'); return; }
-  companyId = resolvedCompanyId;
-  // Fetch company plan separately
-  const { data: compData } = await sb.from('companies').select('plan,name').eq('id', companyId).single();
-  const plan = compData?.plan || 'free';
+  // Get active company from company_users
+  const _savedId = localStorage.getItem('currentCompanyId');
+  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  if (!_myCompanies || _myCompanies.length === 0) { showToast('Company not found', 'error'); return; }
+  const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
+  companyId = _active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+  const plan = _active.plan || 'free';
   const planEl = document.getElementById('user-plan-label');
   if (planEl) planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   await loadCompanies();

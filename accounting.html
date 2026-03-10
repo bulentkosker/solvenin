@@ -619,11 +619,14 @@ async function init() {
   document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('sb-user-name').textContent = name;
 
-  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
-  if (!profile?.company_id) { showToast('Company not found', 'error'); return; }
-  companyId = profile.company_id;
-  document.getElementById('user-plan-label').textContent =
-    (profile.companies?.plan || 'free').charAt(0).toUpperCase() + (profile.companies?.plan || 'free').slice(1) + ' Plan';
+  const savedId = localStorage.getItem('currentCompanyId');
+  const { data: myCompanies } = await sb.rpc('get_my_companies');
+  if (!myCompanies || myCompanies.length === 0) { showToast('Company not found', 'error'); return; }
+  const active = savedId ? myCompanies.find(c => c.company_id === savedId) || myCompanies.find(c => c.is_active) || myCompanies[0] : myCompanies.find(c => c.is_active) || myCompanies[0];
+  companyId = active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+  const plan = active.plan || 'free';
+  document.getElementById('user-plan-label').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
 
   // Apply language FIRST so renderCOA uses correct t() values
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
