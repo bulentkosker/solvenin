@@ -350,7 +350,7 @@ tr:hover .action-btns { opacity:1; }
 <script src="i18n.js"></script>
 </head>
 <body>
-<aside  id="sidebar">
+<aside class="sidebar" id="sidebar">
   <a class="sidebar-logo" href="dashboard.html" style="text-decoration:none;display:block">
     <div class="wordmark">solvenin<span class="dot">.</span></div>
     <div class="underline"></div>
@@ -426,11 +426,11 @@ tr:hover .action-btns { opacity:1; }
 
       <!-- Left Nav -->
       <div class="settings-nav">
-        <button class="settings-nav-item active" onclick="switchSection('company')"><span class="settings-nav-icon">🏢</span> Company</button>
-        <button class="settings-nav-item" onclick="switchSection('currency')"><span class="settings-nav-icon">💱</span> Currency</button>
-        <button class="settings-nav-item" onclick="switchSection('categories')"><span class="settings-nav-icon">🏷️</span> Categories</button>
-        <button class="settings-nav-item" onclick="switchSection('warehouses')"><span class="settings-nav-icon">🏗️</span> Warehouses</button>
-        <button class="settings-nav-item" onclick="switchSection('taxes')"><span class="settings-nav-icon">📋</span> Tax Rates</button>
+        <button class="settings-nav-item active" onclick="switchSection('company', this)"><span class="settings-nav-icon">🏢</span> Company</button>
+        <button class="settings-nav-item" onclick="switchSection('currency', this)"><span class="settings-nav-icon">💱</span> Currency</button>
+        <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> Categories</button>
+        <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> Warehouses</button>
+        <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> Tax Rates</button>
       </div>
 
       <!-- Content -->
@@ -753,11 +753,11 @@ function showToast(msg, type='success') {
 function openModal(id) { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
-function switchSection(name) {
+function switchSection(name, el) {
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
-  event.currentTarget.classList.add('active');
+  if(el) el.classList.add('active');
 }
 
 // ===== INIT =====
@@ -823,7 +823,9 @@ async function saveCompanyInfo() {
     website: document.getElementById('co-website').value.trim() || null,
     address: document.getElementById('co-address').value.trim() || null,
   };
+  console.log('saving company:', companyId, payload);
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
+  console.log('save error:', error);
   if (error) { showToast(error.message, 'error'); return; }
   showToast('Company info saved ✓', 'success');
 }
