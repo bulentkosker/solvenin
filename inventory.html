@@ -23,27 +23,6 @@
 html { font-size:14px; }
 body { font-family:var(--font-body); background:var(--bg); color:var(--gray800); min-height:100vh; display:flex; }
 
-/* SIDEBAR */
-.sidebar { width:var(--sidebar-w); background:#0a1628; min-height:100vh; position:fixed; top:0; left:0; display:flex; flex-direction:column; z-index:50; }
-.sidebar-logo { padding:18px 20px 14px; border-bottom:1px solid rgba(255,255,255,0.1); }
-.sidebar-logo .wordmark { font-family:var(--font-display); font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
-.sidebar-logo .dot { color:#60a5fa; }
-.sidebar-logo .underline { height:2px; width:60%; margin-top:4px; background:linear-gradient(90deg,#60a5fa,#93c5fd,transparent); border-radius:99px; }
-.sidebar-section { padding:12px 10px 4px; }
-.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.55); padding:0 8px; margin-bottom:4px; }
-.nav-item { display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:8px; cursor:pointer; transition:all .15s; margin-bottom:1px; text-decoration:none; color:rgba(255,255,255,0.85); font-size:12.5px; font-weight:500; }
-.nav-item:hover { background:rgba(255,255,255,0.12); color:#fff; }
-.nav-item.active { background:rgba(96,165,250,0.18); color:#fff; font-weight:600; }
-.nav-item.active .nav-icon { color:#60a5fa; }
-.nav-icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
-.nav-badge { margin-left:auto; background:rgba(255,255,255,0.25); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; }
-.sidebar-footer { margin-top:auto; padding:10px; border-top:1px solid rgba(255,255,255,0.1); }
-.user-card { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; cursor:pointer; transition:all .15s; }
-.user-card:hover { background:rgba(255,255,255,0.1); }
-.user-avatar { width:32px; height:32px; border-radius:9px; background:rgba(96,165,250,0.3); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:13px; flex-shrink:0; }
-.user-name { font-size:12px; font-weight:600; color:#fff; }
-.user-plan { font-size:10px; color:rgba(255,255,255,0.5); margin-top:1px; }
-.user-menu-btn { margin-left:auto; color:rgba(255,255,255,0.3); font-size:18px; }
 
 /* MAIN */
 .main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
@@ -207,54 +186,7 @@ tr:hover .action-btns { opacity:1; }
 .fade-up-1 { animation-delay:.05s; }
 .fade-up-2 { animation-delay:.1s; }
 
-/* ===== COMPANY SWITCHER ===== */
-.company-switcher {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; margin: 0 0 4px;
-  border-radius: 8px; cursor: pointer;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
-  transition: background .15s;
-}
-.company-switcher:hover { background: rgba(96,165,250,0.15); }
-.company-icon { font-size: 16px; flex-shrink: 0; }
-.company-info { flex: 1; min-width: 0; }
-.company-name { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.company-plan { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: .5px; }
-.company-chevron { color: rgba(255,255,255,0.5); font-size: 14px; flex-shrink: 0; }
-.company-menu {
-  margin: 0 0 6px; border-radius: 10px;
-  background: rgba(255,255,255,0.95);
-  border: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  overflow: hidden;
-}
-.company-menu-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; cursor: pointer;
-  transition: background .15s; position: relative;
-}
-.company-menu-item:hover { background: #f8fafc; }
-.company-menu-item.active { background: #eff6ff; }
-.company-menu-item .c-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #cbd5e1; flex-shrink: 0;
-}
-.company-menu-item.active .c-dot { background: #60a5fa; }
-.company-menu-item .c-label { font-size: 12px; font-weight: 600; color: #334155; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.company-menu-item .c-role { font-size: 10px; color: #94a3b8; }
-.company-menu-item.suspended .c-label { color: #cbd5e1; text-decoration: line-through; }
-.company-menu-footer {
-  border-top: 1px solid #f1f5f9;
-  padding: 6px;
-}
-.company-menu-footer button {
-  width: 100%; padding: 7px; border-radius: 7px;
-  border: 1px dashed #cbd5e1;
-  background: none; color: #64748b;
-  font-size: 11px; cursor: pointer; transition: all .15s;
-}
-.company-menu-footer button:hover { background: #eff6ff; color: #60a5fa; border-color: #60a5fa; }
+
 /* New company modal */
 .new-company-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -273,76 +205,20 @@ tr:hover .action-btns { opacity:1; }
 .new-company-box input:focus { outline: none; border-color: #3b82f6; }
 
 
-.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+
 
 
 /* SIDEBAR SECTIONS */
-.sidebar-sections { flex:1; overflow-y:auto; padding:6px 0; }
+
 
 </style>
 <script src="i18n.js"></script>
+  <script src="sidebar.js"></script>
 </head>
 <body>
 
 <!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-  <a class="sidebar-logo" href="dashboard.html" style="text-decoration:none;display:block">
-    <div class="wordmark">solvenin<span class="dot">.</span></div>
-    <div class="underline"></div>
-  </a>
-
-  <div class="sidebar-sections">
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Main</div>
-    <a class="nav-item  " href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
-    <a class="nav-item active " href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
-    <a class="nav-item  " href="sales.html"><span class="nav-icon">💰</span> Sales</a>
-    <a class="nav-item  " href="purchasing.html"><span class="nav-icon">🛒</span> Purchasing</a>
-    <a class="nav-item  " href="#"><span class="nav-icon">🏭</span> Production</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Finance</div>
-    <a class="nav-item  " href="cashbank.html"><span class="nav-icon">🏦</span> Cashbank</a>
-    <a class="nav-item  " href="accounting.html"><span class="nav-icon">📒</span> Accounting</a>
-    <a class="nav-item  " href="#"><span class="nav-icon">📊</span> Reports</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Management</div>
-    <a class="nav-item  " href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
-    <a class="nav-item  " href="#"><span class="nav-icon">🚚</span> Shipping</a>
-    <a class="nav-item  " href="#"><span class="nav-icon">📅</span> Projects</a>
-    <a class="nav-item  " href="#"><span class="nav-icon">🔧</span> Maintenance</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">System</div>
-    <a class="nav-item  " href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
-    <a class="nav-item  " href="subscription.html"><span class="nav-icon">💎</span> Subscription</a>
-    </div>
-  </div>
-
-  <div class="sidebar-footer">
-    <!-- Company Switcher -->
-    <div class="company-switcher" id="company-switcher" onclick="toggleCompanyMenu()">
-      <div class="company-icon">🏢</div>
-      <div class="company-info">
-        <div class="company-name" id="company-name">Loading...</div>
-        <div class="company-plan" id="company-plan">—</div>
-      </div>
-      <div class="company-chevron">⌄</div>
-    </div>
-    <div class="company-menu" id="company-menu" style="display:none">
-      <div class="company-menu-list" id="company-menu-list"></div>
-      <div class="company-menu-footer" id="company-menu-footer"></div>
-    </div>
-    <div class="user-card" id="user-card">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div class="user-info">
-        <div class="user-name" id="user-name">Loading...</div>
-        <div class="user-plan" id="user-plan">Free Plan</div>
-      </div>
-    </div>
-  </div>
-</aside>
+<aside class="sidebar" id="sidebar"></aside>
 
 <!-- MAIN -->
 <div class="main">
@@ -691,6 +567,7 @@ const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',
   'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
 );
+window._supabase = sb; // expose for sidebar.js
 
 // ===== STATE =====
 let companyId = null, currentUser = null;
@@ -1514,25 +1391,6 @@ function renderCompanyMenu() {
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
 }
 
-function toggleCompanyMenu() {
-  const m = document.getElementById('company-menu');
-  if (!m) return;
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
-}
-
-async function switchToCompany(companyId_, name) {
-  if (_myCompanies.find(c => c.company_id === companyId_ && c.is_active)) {
-    toggleCompanyMenu(); return;
-  }
-  try {
-    await sb.rpc('switch_company', { target_company_id: companyId_ });
-    document.getElementById('company-name').textContent = name;
-    document.getElementById('company-menu').style.display = 'none';
-    companyId = companyId_;
-    // Reload page data
-    window.location.reload();
-  } catch(e) { alert(e.message); }
-}
 
 function openNewCompanyModal() {
   document.getElementById('company-menu').style.display = 'none';
@@ -1541,16 +1399,7 @@ function openNewCompanyModal() {
   document.getElementById('new-company-modal').classList.add('open');
 }
 
-async function createNewCompany() {
-  const name = document.getElementById('new-company-name').value.trim();
-  const errEl = document.getElementById('new-company-err');
-  if (!name) { errEl.textContent = 'Company name is required'; errEl.style.display = 'block'; return; }
-  try {
-    const user = (await sb.auth.getSession()).data.session?.user;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g,'-') + '-' + Date.now();
-    const { data: comp, error } = await sb.from('companies').insert({
-      name, slug, plan: 'pro', owner_id: user.id, status: 'active'
-    }).select().single();
+async ).select().single();
     if (error) throw error;
     // Add as owner in company_users
     await sb.from('company_users').insert({
