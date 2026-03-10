@@ -9,7 +9,7 @@
   <script src="i18n.js"></script>
   <style>
     :root {
-      --blue:#3b82f6; --blue-dark:#2563eb; --blue-light:#eff6ff;
+      --blue:#3b82f6; --blue-dark:#3b82f6; --blue-light:#eff6ff;
       --green:#22c55e; --green-light:#f0fdf4;
       --red:#ef4444; --red-light:#fef2f2;
       --orange:#f97316; --orange-light:#fff7ed;
@@ -1700,24 +1700,6 @@ document.addEventListener('click', e => {
   }
 });
 
-// ===== START =====
-(async () => { try { await init(); } catch(e) { console.error("Init error:", e); document.getElementById("loading-screen").innerHTML = '<div style="color:red;padding:20px">Error: '+e.message+'</div>'; } })();
-</script>
-<script>
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    const lang = localStorage.getItem('solvenin_lang') || 'en';
-    if (!window.T) return;
-    const tr = window.T[lang] || window.T['en'];
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      const key = el.getAttribute('data-i18n');
-      if (tr[key]) el.textContent = tr[key];
-    });
-  }, 300);
-});
-
-// ===== COMPANY SWITCHER =====
-let _myCompanies = [];
 async function loadCompanies() {
   try {
     const { data, error } = await sb.rpc('get_my_companies');
@@ -1751,6 +1733,24 @@ function renderCompanyMenu() {
     ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
 }
+// ===== START =====
+(async () => { try { await init(); } catch(e) { console.error("Init error:", e); document.getElementById("loading-screen").innerHTML = '<div style="color:red;padding:20px">Error: '+e.message+'</div>'; } })();
+</script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    const lang = localStorage.getItem('solvenin_lang') || 'en';
+    if (!window.T) return;
+    const tr = window.T[lang] || window.T['en'];
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (tr[key]) el.textContent = tr[key];
+    });
+  }, 300);
+});
+
+// ===== COMPANY SWITCHER =====
+let _myCompanies = [];
 
 function sidebarOpenNewCompany() {
   document.getElementById('sb-company-menu').style.display='none';
@@ -1758,7 +1758,6 @@ function sidebarOpenNewCompany() {
   document.getElementById('new-company-err').style.display='none';
   document.getElementById('sb-new-company-modal').classList.add('open');
 }
-async  catch(e){errEl.textContent=e.message;errEl.style.display='block';}
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('#company-switcher')&&!e.target.closest('#company-menu')){

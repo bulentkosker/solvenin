@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --navy:#0a0f1e;--navy2:#0f2650;--blue:#2563eb;--blue-light:#eff6ff;
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#60a5fa;--blue-light:#eff6ff;
   --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
   --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
   --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
@@ -19,7 +19,7 @@
   --orange:#f59e0b;--orange-light:#fffbeb;
   --purple:#8b5cf6;--purple-light:#f5f3ff;
   --teal:#0d9488;--teal-light:#f0fdfa;
-  --sidebar-w:240px;
+  --sidebar-w:220px;
   --font-display:'Outfit',sans-serif;
   --font-body:'DM Sans',sans-serif;
   --shadow-sm:0 1px 3px rgba(0,0,0,0.06);
@@ -185,9 +185,8 @@ tr:hover .row-actions{opacity:1}
 </style>
 <script src="i18n.js"></script>
 <script>
-const _origSetLangPurch = typeof setLang !== 'undefined' ? setLang : null;
 function setLang(lang) {
-  if (_origSetLangPurch) _origSetLangPurch(lang);
+  if (typeof window.i18nSetLang === 'function') window.i18nSetLang(lang);
   // Refresh status filter options via JS (avoids data-i18n duplication)
   const stSel = document.getElementById('filter-status');
   if (stSel) {

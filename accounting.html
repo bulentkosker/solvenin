@@ -10,7 +10,7 @@
   <script src="i18n.js"></script>
   <style>
     :root {
-      --blue:#3b82f6;--blue-dark:#2563eb;--blue-light:#eff6ff;
+      --blue:#3b82f6;--blue-dark:#3b82f6;--blue-light:#eff6ff;
       --green:#22c55e;--green-light:#f0fdf4;
       --red:#ef4444;--red-light:#fef2f2;
       --orange:#f97316;--orange-light:#fff7ed;
@@ -255,7 +255,6 @@ function sidebarOpenNewCompany() {
   document.getElementById('new-company-err').style.display='none';
   document.getElementById('sb-new-company-modal').classList.add('open');
 }
-async  catch(e){errEl.textContent=e.message;errEl.style.display='block';}
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('#company-switcher')&&!e.target.closest('#company-menu')){
