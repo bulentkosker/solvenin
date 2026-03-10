@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --navy:#0a0f1e;--navy2:#0f2650;--blue:#60a5fa;--blue-light:#eff6ff;
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#2563eb;--blue-light:#eff6ff;
   --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
   --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
   --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
@@ -27,27 +27,30 @@
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:14px}
-body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flexoverflow-x:hidden}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
 
+.sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:50}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sidebar-logo .wordmark{font-family:var(--font-display);font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.sidebar-logo .dot{color:var(--blue)}
+.sidebar-logo .underline{height:2px;width:70%;margin-top:4px;background:linear-gradient(90deg,var(--blue),var(--sky),transparent);border-radius:99px}
+.sidebar-section{padding:16px 12px 8px}
+.sidebar-section-label{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.2);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;margin-bottom:2px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:13px;font-weight:500}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(37,99,235,0.2);color:#fff;font-weight:600}
+.nav-item.active .nav-icon{color:var(--sky)}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,0.06)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px}
+.user-avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--navy2));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info .user-name{font-size:13px;font-weight:600;color:#fff}
+.user-info .user-plan{font-size:10px;color:rgba(255,255,255,0.3);margin-top:1px}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.user-info 
-.user-info 
-
-.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;width:calc(100vw - var(--sidebar-w));box-sizing:border-box}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column  overflow-x: hidden;
+  width: calc(100vw - var(--sidebar-w));
+  box-sizing: border-box;
+}
 .topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
 .topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
 .topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
@@ -163,30 +166,16 @@ tr:hover .row-actions{opacity:1}
 .toast.error{background:var(--red)}
 
 @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
-
-
-/* New company modal */
-.new-company-modal {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  display: none; align-items: center; justify-content: center; z-index: 9999;
-}
-.new-company-modal.open { display: flex; }
-.new-company-box {
-  background: #fff; border-radius: 16px; padding: 28px; width: 360px;
-}
-.new-company-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #0a0f1e; }
-.new-company-box p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-.new-company-box input {
-  width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0;
-  border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;
-}
-.new-company-box input:focus { outline: none; border-color: #3b82f6; }
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0  overflow-x: hidden;
+  width: calc(100vw - var(--sidebar-w));
+  box-sizing: border-box;
+}}
 </style>
 <script src="i18n.js"></script>
 <script>
+const _origSetLangPurch = typeof setLang !== 'undefined' ? setLang : null;
 function setLang(lang) {
-  if (typeof window.i18nSetLang === 'function') window.i18nSetLang(lang);
+  if (_origSetLangPurch) _origSetLangPurch(lang);
   // Refresh status filter options via JS (avoids data-i18n duplication)
   const stSel = document.getElementById('filter-status');
   if (stSel) {
@@ -539,7 +528,7 @@ async function init() {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
   document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
   document.getElementById('sb-user-name').textContent = name;
-  const { data: profile } = await sb.from('profiles').select('id, company_id, active_company_id, role').eq('id', user.id).single();
+  const { data: profile } = await sb.from('profiles').select('company_id, companies(plan)').eq('id', user.id).single();
   if (!profile?.company_id) return;
   companyId = profile.company_id;
   document.getElementById('sb-user-plan').textContent = (profile.companies?.plan||'free').charAt(0).toUpperCase()+(profile.companies?.plan||'free').slice(1)+' Plan';
@@ -1007,63 +996,6 @@ function selectLang(lang) {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#lang-switcher-wrap')) {
     var m = document.getElementById('lang-menu');
-    if (m) m.style.display = 'none';
-  }
-});
-
-// ===== COMPANY SWITCHER =====
-let _myCompanies = [];
-
-async function loadCompanies() {
-  try {
-    const { data, error } = await sb.rpc('get_my_companies');
-    if (error) throw error;
-    _myCompanies = data || [];
-    const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
-    if (active) {
-      document.getElementById('sb-company-name').textContent = active.company_name;
-      document.getElementById('sb-company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
-      if (!companyId) companyId = active.company_id;
-    }
-    renderCompanyMenu();
-  } catch(e) { console.error('loadCompanies:', e); }
-}
-
-function renderCompanyMenu() {
-  const list = document.getElementById('sb-company-menu-list');
-  const footer = document.getElementById('sb-company-menu-footer');
-  if (!list) return;
-
-  list.innerHTML = _myCompanies.map(c => `
-    <div class="company-menu-item ${c.is_active ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
-         onclick="switchToCompany('${c.company_id}', '${c.company_name}')">
-      <div class="c-dot"></div>
-      <div class="c-label">${c.company_name}</div>
-      <div class="c-role">${c.role}</div>
-    </div>`).join('');
-
-  // Show "Add company" only for pro+ owners
-  const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
-  footer.innerHTML = canAdd
-    ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
-    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
-}
-
-
-function sidebarOpenNewCompany() {
-  document.getElementById('sb-company-menu').style.display = 'none';
-  document.getElementById('sb-new-company-name').value = '';
-  document.getElementById('new-company-err').style.display = 'none';
-  document.getElementById('sb-new-company-modal').classList.add('open');
-}
-
-
-
-// Close company menu on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
-    const m = document.getElementById('sb-company-menu');
     if (m) m.style.display = 'none';
   }
 });

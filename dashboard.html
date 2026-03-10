@@ -10,11 +10,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root {
-  --navy: #0a1628;
-  --navy2: #1e3a5f;
-  --blue: #60a5fa;
+  --navy: #0a0f1e;
+  --navy2: #0f2650;
+  --blue: #2563eb;
   --blue-light: #eff6ff;
-  --sky: #93c5fd;
+  --sky: #60a5fa;
   --white: #ffffff;
   --bg: #f5f7fb;
   --gray50: #f8fafc;
@@ -50,13 +50,12 @@ body {
   color: var(--gray800);
   min-height: 100vh;
   display: flex;
-  overflow-x: hidden;
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: var(--sidebar-w);
-  background: #0a1628;
+  background: var(--navy);
   min-height: 100vh;
   position: fixed;
   top: 0; left: 0;
@@ -66,28 +65,122 @@ body {
   transition: transform .3s;
 }
 
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-logo .wordmark {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.sidebar-logo .dot { color: var(--blue); }
+.sidebar-logo .underline {
+  height: 2px;
+  width: 70%;
+  margin-top: 4px;
+  background: linear-gradient(90deg, var(--blue), var(--sky), transparent);
+  border-radius: 99px;
+}
 
+.sidebar-section {
+  padding: 16px 12px 8px;
+}
+.sidebar-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
 
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 2px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.45);
+  font-size: 13px;
+  font-weight: 500;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+}
+.nav-item.active {
+  background: rgba(37,99,235,0.2);
+  color: #fff;
+  font-weight: 600;
+}
+.nav-item.active .nav-icon { color: var(--sky); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  min-width: 20px;
+  text-align: center;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.user-info 
-.user-info 
-
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.user-card:hover { background: rgba(255,255,255,0.07); }
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue), var(--navy2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.user-info .user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+.user-info .user-plan {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 1px;
+}
+.user-menu-btn {
+  margin-left: auto;
+  color: rgba(255,255,255,0.3);
+  font-size: 14px;
+  cursor: pointer;
+}
 
 /* ===== MAIN ===== */
 .main {
@@ -97,9 +190,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  width: calc(100vw - var(--sidebar-w));
   max-width: calc(100vw - var(--sidebar-w));
-  box-sizing: border-box;
 }
 
 /* ===== TOPBAR ===== */
@@ -586,7 +677,10 @@ tr:hover td { background: var(--gray50); }
 @media(max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; }
+  .main { margin-left: 0;   overflow-x: hidden;
+  width: calc(100vw - var(--sidebar-w));
+  box-sizing: border-box;
+}
   .bottom-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -626,24 +720,6 @@ tr:hover td { background: var(--gray50); }
 .stat-opt-info{flex:1}
 .stat-opt-label{font-size:13px;font-weight:600;color:var(--gray800)}
 .stat-opt-desc{font-size:11px;color:var(--gray400)}
-
-
-/* New company modal */
-.new-company-modal {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  display: none; align-items: center; justify-content: center; z-index: 9999;
-}
-.new-company-modal.open { display: flex; }
-.new-company-box {
-  background: #fff; border-radius: 16px; padding: 28px; width: 360px;
-}
-.new-company-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #0a0f1e; }
-.new-company-box p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-.new-company-box input {
-  width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0;
-  border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;
-}
-.new-company-box input:focus { outline: none; border-color: #3b82f6; }
 </style>
 <script src="i18n.js"></script>
   <script src="sidebar.js"></script>
@@ -741,7 +817,7 @@ tr:hover td { background: var(--gray50); }
     <div class="welcome-row fade-up">
       <div class="welcome-text">
         <h1>Good morning, <span id="greeting-name">there</span>! 👋</h1>
-        <p data-i18n="dash_sub">Here's what's happening with your business today.</p>
+        <p><p data-i18n="dash_sub">Here's what's happening with your business today.</p></p>
       </div>
       <div class="welcome-date" id="today-date">—</div>
     </div>
@@ -955,7 +1031,7 @@ const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',
   'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
 );
-window._supabase = sb; // expose for sidebar.js
+window._supabase = sb;
 
 let companyId = null;
 
@@ -979,13 +1055,9 @@ async function init() {
   document.getElementById('sb-user-avatar').textContent = firstName[0].toUpperCase();
 
   // Plan
-  const { data: profile } = await sb.from('profiles').select('id, company_id, active_company_id, role').eq('id', user.id).single();
-  companyId = profile?.active_company_id || profile?.company_id || null;
-  let plan = 'free';
-  if (companyId) {
-    const { data: comp } = await sb.from('companies').select('plan,name').eq('id', companyId).single();
-    plan = comp?.plan || 'free';
-  }
+  const { data: profile } = await sb.from('profiles').select('*, companies(plan,name)').eq('id', user.id).single();
+  companyId = profile?.company_id || null;
+  const plan = profile?.companies?.plan || 'free';
   document.getElementById('sb-user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
 
@@ -1443,63 +1515,6 @@ function renderTicker(items){
   track.innerHTML = html + html;
   track.style.animationDuration = Math.max(35, items.length*8)+'s';
 }
-
-// ===== COMPANY SWITCHER =====
-let _myCompanies = [];
-
-async function loadCompanies() {
-  try {
-    const { data, error } = await sb.rpc('get_my_companies');
-    if (error) throw error;
-    _myCompanies = data || [];
-    const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
-    if (active) {
-      document.getElementById('sb-company-name').textContent = active.company_name;
-      document.getElementById('sb-company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
-      if (!companyId) companyId = active.company_id;
-    }
-    renderCompanyMenu();
-  } catch(e) { console.error('loadCompanies:', e); }
-}
-
-function renderCompanyMenu() {
-  const list = document.getElementById('sb-company-menu-list');
-  const footer = document.getElementById('sb-company-menu-footer');
-  if (!list) return;
-
-  list.innerHTML = _myCompanies.map(c => `
-    <div class="company-menu-item ${c.is_active ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
-         onclick="switchToCompany('${c.company_id}', '${c.company_name}')">
-      <div class="c-dot"></div>
-      <div class="c-label">${c.company_name}</div>
-      <div class="c-role">${c.role}</div>
-    </div>`).join('');
-
-  // Show "Add company" only for pro+ owners
-  const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
-  footer.innerHTML = canAdd
-    ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
-    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
-}
-
-
-function sidebarOpenNewCompany() {
-  document.getElementById('sb-company-menu').style.display = 'none';
-  document.getElementById('sb-new-company-name').value = '';
-  document.getElementById('new-company-err').style.display = 'none';
-  document.getElementById('sb-new-company-modal').classList.add('open');
-}
-
-
-
-// Close company menu on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
-    const m = document.getElementById('sb-company-menu');
-    if (m) m.style.display = 'none';
-  }
-});
 </script>
 </body>
 </html>
