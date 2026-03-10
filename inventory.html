@@ -735,7 +735,8 @@ async function init() {
   console.log('companyId set to:', companyId);
   currentUser = user;
 
-  await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
+  await loadCategories();
+  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -963,7 +964,7 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,active,company_id,categories(id,name,parent_id)')
+    .select('id,name,sku,barcode,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,active,company_id')
     .eq('company_id', companyId)
     .eq('active', true)
     .order('name');
@@ -972,8 +973,9 @@ async function loadProducts() {
     id: p.id,
     name: p.name,
     sku: p.sku || '',
+    barcode: p.barcode || '',
     category_id: p.category_id || null,
-    category: p.categories?.name || '',
+    category: categories.find(c => c.id === p.category_id)?.name || '',
     unit: p.unit || 'pcs',
     stock: parseFloat(p.quantity || 0),
     min_stock: parseFloat(p.min_stock || 0),
@@ -1014,7 +1016,11 @@ async function loadWarehouses() {
 
 // ===== CATEGORIES =====
 async function loadCategories() {
-  const { data, error } = await sb.from('categories').select('id,name,parent_id').order('name');
+  if (!companyId) return;
+  const { data, error } = await sb.from('categories')
+    .select('id,name,parent_id')
+    .eq('company_id', companyId)
+    .order('name');
   if (error) { console.error('loadCategories:', error); return; }
   categories = data || [];
   populateCategoryFilter();
