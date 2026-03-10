@@ -28,7 +28,7 @@
     body{font-family:var(--font-body);background:var(--gray50);color:var(--gray800);display:flex;min-height:100vh}
 
     /* ── SIDEBAR ── */
-    .sidebar{width:var(--sidebar-w);min-height:100vh;background:#1a2540;display:flex;flex-direction:column;padding:0;position:fixed;left:0;top:0;bottom:0;z-index:100}
+    .sidebar{width:var(--sidebar-w);min-height:100vh;background:#0a1628;display:flex;flex-direction:column;padding:0;position:fixed;left:0;top:0;bottom:0;z-index:100}
     .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
     .wordmark{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px}
     .wordmark .dot{color:#3b82f6}
@@ -37,7 +37,7 @@
     .sidebar-section-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.8px;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
     .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;text-decoration:none;transition:all .15s;cursor:pointer}
     .nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
-    .nav-item.active{background:rgba(59,130,246,.25);color:#fff}
+    .nav-item.active{background:rgba(96,165,250,.18);color:#fff}
     .nav-icon{width:20px;text-align:center;font-size:15px;flex-shrink:0}
     .sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,.08)}
     .user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
@@ -355,7 +355,7 @@
           <span id="lang-name" style="color:var(--gray400);font-weight:400">English</span>
           <span style="font-size:9px;color:var(--gray400)">▾</span>
         </button>
-        <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a2540;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+        <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#0a1628;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
           <div class="lang-opt" data-lang="en" onclick="selectLang('en')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">EN &nbsp; English</div>
           <div class="lang-opt" data-lang="tr" onclick="selectLang('tr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TR &nbsp; Türkçe</div>
           <div class="lang-opt" data-lang="de" onclick="selectLang('de')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">DE &nbsp; Deutsch</div>
