@@ -1079,11 +1079,17 @@ function renderCatSelector(parentId, level, selectedId) {
     children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   if (selectedId) sel.value = selectedId;
   sel.addEventListener('change', () => {
-    document.getElementById('p-category-id').value = sel.value || '';
     // Remove deeper levels
     container.querySelectorAll(`[data-level]`).forEach(el => {
       if (parseInt(el.dataset.level) > level) el.remove();
     });
+    // Set category-id to deepest selected value
+    let finalVal = '';
+    for (let l = 2; l >= 0; l--) {
+      const s = container.querySelector(`select[data-level="${l}"]`);
+      if (s && s.value) { finalVal = s.value; break; }
+    }
+    document.getElementById('p-category-id').value = finalVal;
     if (sel.value && level < 2) renderCatSelector(sel.value, level + 1, null);
   });
 
