@@ -719,9 +719,11 @@ tr:hover .action-btns { opacity:1; }
 <div id="toast-container"></div>
 
 <script>
-const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphcWtqZHpwZGl6amJ6dmJ0Y2xkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMDM0NTIsImV4cCI6MjA1NjU3OTQ1Mn0.tkHI7GR6IfhFCqFIbGTvNjMkixG-A4jWTsiMvDnVAPs';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const { createClient } = supabase;
+const sb = createClient(
+  'https://jaakjdzpdizjbzvbtcld.supabase.co',
+  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+);
 
 let companyId = null;
 let currentUser = null;
