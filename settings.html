@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Solvenin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a0f1e; --navy2: #0f2650; --blue: #2563eb; --blue-light: #eff6ff;
+  --sky: #60a5fa; --white: #ffffff; --bg: #f5f7fb; --gray50: #f8fafc;
+  --gray100: #f1f5f9; --gray200: #e2e8f0; --gray300: #cbd5e1; --gray400: #94a3b8;
+  --gray500: #64748b; --gray600: #475569; --gray800: #1e293b;
+  --green: #10b981; --green-light: #ecfdf5; --red: #ef4444; --red-light: #fef2f2;
+  --orange: #f59e0b; --orange-light: #fffbeb; --purple: #8b5cf6; --purple-light: #f5f3ff;
+  --sidebar-w: 240px; --topbar-h: 64px;
+  --font-display: 'Outfit', sans-serif; --font-body: 'DM Sans', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:14px; }
+body { font-family:var(--font-body); background:var(--bg); color:var(--gray800); min-height:100vh; display:flex; }
+
+/* SIDEBAR */
+.sidebar { width:var(--sidebar-w); background:var(--navy); min-height:100vh; position:fixed; top:0; left:0; display:flex; flex-direction:column; z-index:50; }
+.sidebar-logo { padding:20px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.sidebar-logo .wordmark { font-family:var(--font-display); font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+.sidebar-logo .dot { color:var(--blue); }
+.sidebar-logo .underline { height:2px; width:70%; margin-top:4px; background:linear-gradient(90deg,var(--blue),var(--sky),transparent); border-radius:99px; }
+.sidebar-section { padding:16px 12px 8px; }
+.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.2); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin-bottom:2px; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+.nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
+.nav-item.active .nav-icon { color:var(--sky); }
+.nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+.nav-badge { margin-left:auto; background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; }
+.sidebar-footer { margin-top:auto; padding:12px; border-top:1px solid rgba(255,255,255,0.06); }
+.user-card { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; cursor:pointer; transition:all .15s; }
+.user-card:hover { background:rgba(255,255,255,0.06); }
+.user-avatar { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--blue),var(--navy2)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:14px; flex-shrink:0; }
+.user-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.85); }
+.user-plan { font-size:10px; color:rgba(255,255,255,0.35); margin-top:1px; }
+.user-menu-btn { margin-left:auto; color:rgba(255,255,255,0.25); font-size:18px; }
+
+/* MAIN */
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { height:var(--topbar-h); background:var(--white); border-bottom:1px solid var(--gray200); display:flex; align-items:center; padding:0 28px; gap:16px; position:sticky; top:0; z-index:40; box-shadow:var(--shadow-sm); }
+.topbar-title { font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--gray800); }
+.topbar-search { flex:1; max-width:360px; display:flex; align-items:center; gap:8px; background:var(--gray50); border:1px solid var(--gray200); border-radius:10px; padding:8px 14px; }
+.topbar-search input { border:none; background:none; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; width:100%; }
+.topbar-search input::placeholder { color:var(--gray400); }
+.topbar-actions { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.topbar-btn { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; transition:all .15s; color:var(--gray500); }
+.topbar-btn:hover { background:var(--gray100); }
+.content { padding:28px; flex:1; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:20px; box-shadow:var(--shadow-sm); }
+.stat-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.stat-label { font-size:12px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.stat-icon.blue { background:var(--blue-light); }
+.stat-icon.green { background:var(--green-light); }
+.stat-icon.orange { background:var(--orange-light); }
+.stat-icon.red { background:var(--red-light); }
+.stat-value { font-family:var(--font-display); font-size:28px; font-weight:800; color:var(--gray800); margin-bottom:4px; }
+.stat-change { font-size:12px; color:var(--gray400); display:flex; align-items:center; gap:4px; }
+.stat-change.up { color:var(--green); }
+.stat-change.down { color:var(--red); }
+.stat-change.warn { color:var(--orange); }
+
+/* TOOLBAR */
+.toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.toolbar-left { display:flex; align-items:center; gap:10px; flex:1; }
+.search-box { display:flex; align-items:center; gap:8px; background:var(--white); border:1px solid var(--gray200); border-radius:10px; padding:8px 14px; min-width:260px; }
+.search-box input { border:none; background:none; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; width:100%; }
+.search-box input::placeholder { color:var(--gray400); }
+.filter-btn { display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; border:1px solid var(--gray200); background:var(--white); font-family:var(--font-body); font-size:13px; color:var(--gray600); cursor:pointer; transition:all .15s; font-weight:500; }
+.filter-btn:hover { border-color:var(--blue); color:var(--blue); }
+.filter-btn.active { border-color:var(--blue); background:var(--blue-light); color:var(--blue); font-weight:600; }
+select.filter-btn { appearance:none; padding-right:28px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+.btn-primary { display:flex; align-items:center; gap:6px; padding:9px 18px; border-radius:10px; border:none; background:var(--blue); color:#fff; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-primary:hover { background:#1a56db; transform:translateY(-1px); box-shadow:0 4px 12px rgba(37,99,235,0.3); }
+.btn-secondary { display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:10px; border:1px solid var(--gray200); background:var(--white); color:var(--gray600); font-family:var(--font-body); font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+.btn-secondary:hover { border-color:var(--gray300); background:var(--gray50); }
+
+/* TABLE */
+.table-card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); box-shadow:var(--shadow-sm); overflow:hidden; }
+.table-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--gray100); }
+.table-title { font-family:var(--font-display); font-size:15px; font-weight:700; }
+.table-count { font-size:12px; color:var(--gray400); background:var(--gray100); padding:3px 10px; border-radius:99px; }
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; font-size:11px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; padding:10px 20px; border-bottom:1px solid var(--gray200); background:var(--gray50); white-space:nowrap; cursor:pointer; user-select:none; }
+th:hover { color:var(--blue); }
+th.sorted { color:var(--blue); }
+td { padding:14px 20px; font-size:13px; color:var(--gray600); border-bottom:1px solid var(--gray100); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--gray50); }
+.td-name { font-weight:600; color:var(--gray800); display:flex; align-items:center; gap:10px; }
+.item-icon { width:36px; height:36px; border-radius:10px; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.item-sku { font-size:11px; color:var(--gray400); font-weight:400; }
+
+/* BADGES */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+.badge-green { background:var(--green-light); color:var(--green); }
+.badge-orange { background:var(--orange-light); color:var(--orange); }
+.badge-red { background:var(--red-light); color:var(--red); }
+.badge-blue { background:var(--blue-light); color:var(--blue); }
+.badge-gray { background:var(--gray100); color:var(--gray500); }
+.badge-purple { background:var(--purple-light); color:var(--purple); }
+
+/* STOCK BAR */
+.stock-bar-wrap { display:flex; align-items:center; gap:10px; }
+.stock-bar { flex:1; height:5px; background:var(--gray200); border-radius:99px; overflow:hidden; min-width:60px; }
+.stock-fill { height:100%; border-radius:99px; transition:width .3s; }
+.stock-fill.good { background:var(--green); }
+.stock-fill.low { background:var(--orange); }
+.stock-fill.critical { background:var(--red); }
+.stock-num { font-size:12px; font-weight:600; color:var(--gray800); white-space:nowrap; }
+
+/* ACTION BTNS */
+.action-btns { display:flex; gap:6px; opacity:0; transition:opacity .15s; }
+tr:hover .action-btns { opacity:1; }
+.action-btn { width:28px; height:28px; border-radius:7px; border:1px solid var(--gray200); background:var(--white); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:all .15s; }
+.action-btn:hover { border-color:var(--blue); background:var(--blue-light); }
+.action-btn.danger:hover { border-color:var(--red); background:var(--red-light); }
+
+/* PAGINATION */
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--gray100); }
+.page-info { font-size:12px; color:var(--gray400); }
+.page-btns { display:flex; gap:4px; }
+.page-btn { width:32px; height:32px; border-radius:8px; border:1px solid var(--gray200); background:var(--white); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--gray600); transition:all .15s; }
+.page-btn:hover { border-color:var(--blue); color:var(--blue); }
+.page-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+.page-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; backdrop-filter:blur(4px); }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:#fff; border-radius:20px; padding:0; width:560px; max-width:95vw; max-height:90vh; overflow-y:auto; transform:translateY(20px); transition:transform .2s; box-shadow:var(--shadow-lg); }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:24px 28px 20px; border-bottom:1px solid var(--gray100); }
+.modal-title { font-family:var(--font-display); font-size:18px; font-weight:800; }
+.modal-close { width:32px; height:32px; border-radius:8px; border:1px solid var(--gray200); background:var(--white); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; color:var(--gray400); }
+.modal-close:hover { background:var(--gray100); }
+.modal-body { padding:24px 28px; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; padding:16px 28px 24px; border-top:1px solid var(--gray100); }
+
+/* FORM */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-row.full { grid-template-columns:1fr; }
+.form-row.three { grid-template-columns:1fr 1fr 1fr; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group label { font-size:12px; font-weight:600; color:var(--gray500); text-transform:uppercase; letter-spacing:0.5px; }
+.form-group input, .form-group select, .form-group textarea {
+  padding:10px 14px; border:1.5px solid var(--gray200); border-radius:10px;
+  font-family:var(--font-body); font-size:13px; color:var(--gray800);
+  outline:none; transition:border-color .15s; background:var(--white);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue); }
+.form-group textarea { resize:vertical; min-height:80px; }
+.form-divider { height:1px; background:var(--gray100); margin:20px 0; }
+
+/* CATEGORY SELECTOR */
+.cat-selector { display:flex; flex-direction:column; gap:6px; }
+.cat-row { display:flex; align-items:center; gap:6px; }
+.cat-row select { flex:1; padding:10px 14px; border:1.5px solid var(--gray200); border-radius:10px; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; transition:border-color .15s; background:var(--white); }
+.cat-row select:focus { border-color:var(--blue); }
+.cat-row select:disabled { background:var(--gray50); color:var(--gray400); }
+.cat-add-btn { width:34px; height:34px; border-radius:8px; border:1.5px solid var(--gray200); background:var(--white); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; color:var(--blue); }
+.cat-add-btn:hover { background:var(--blue-light); border-color:var(--blue); }
+.cat-inline-form { display:none; background:var(--gray50); border:1.5px solid var(--blue); border-radius:10px; padding:10px 12px; gap:8px; align-items:center; margin-top:2px; }
+.cat-inline-form.open { display:flex; }
+.cat-inline-form input { flex:1; padding:7px 10px; border:1px solid var(--gray200); border-radius:7px; font-size:13px; font-family:var(--font-body); outline:none; background:#fff; }
+.cat-inline-form input:focus { border-color:var(--blue); }
+.cat-inline-save { padding:7px 12px; border-radius:7px; border:none; background:var(--blue); color:#fff; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.cat-inline-cancel { padding:7px 10px; border-radius:7px; border:1px solid var(--gray200); background:#fff; font-size:12px; cursor:pointer; }
+.form-section-title { font-size:12px; font-weight:700; color:var(--gray400); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
+
+/* LOW STOCK ALERT */
+.alert-bar { display:flex; align-items:center; gap:12px; background:var(--orange-light); border:1px solid #fed7aa; border-radius:12px; padding:12px 16px; margin-bottom:20px; }
+.alert-icon { font-size:20px; flex-shrink:0; }
+.alert-text { flex:1; font-size:13px; color:#92400e; }
+.alert-text strong { font-weight:700; }
+.alert-action { font-size:12px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; }
+
+/* TABS */
+.tabs-bar { display:flex; gap:4px; background:var(--gray100); border-radius:12px; padding:4px; margin-bottom:20px; width:fit-content; }
+.tab-btn { padding:7px 16px; border-radius:9px; border:none; background:none; font-family:var(--font-body); font-size:13px; font-weight:500; color:var(--gray500); cursor:pointer; transition:all .15s; }
+.tab-btn.active { background:var(--white); color:var(--gray800); font-weight:600; box-shadow:var(--shadow-sm); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:60px 20px; color:var(--gray400); }
+.empty-state-icon { font-size:48px; margin-bottom:16px; }
+.empty-state h3 { font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--gray600); margin-bottom:8px; }
+.empty-state p { font-size:13px; margin-bottom:20px; }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; right:24px; padding:14px 20px; border-radius:12px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.2); z-index:9999; animation:slideUp .3s ease; max-width:360px; }
+@keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation:fadeUp .4s ease both; }
+.fade-up-1 { animation-delay:.05s; }
+.fade-up-2 { animation-delay:.1s; }
+
+/* ===== COMPANY SWITCHER ===== */
+.company-switcher {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; margin: 0 8px 4px;
+  border-radius: 10px; cursor: pointer;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background .15s;
+}
+.company-switcher:hover { background: rgba(255,255,255,0.1); }
+.company-icon { font-size: 18px; flex-shrink: 0; }
+.company-info { flex: 1; min-width: 0; }
+.company-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.company-plan { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .5px; }
+.company-chevron { color: rgba(255,255,255,0.4); font-size: 16px; flex-shrink: 0; }
+.company-menu {
+  margin: 0 8px 8px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+.company-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; cursor: pointer;
+  transition: background .15s; position: relative;
+}
+.company-menu-item:hover { background: rgba(255,255,255,0.08); }
+.company-menu-item.active { background: rgba(59,130,246,0.15); }
+.company-menu-item .c-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); flex-shrink: 0;
+}
+.company-menu-item.active .c-dot { background: #3b82f6; }
+.company-menu-item .c-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.company-menu-item .c-role { font-size: 10px; color: rgba(255,255,255,0.35); }
+.company-menu-item.suspended .c-label { color: rgba(255,255,255,0.3); text-decoration: line-through; }
+.company-menu-footer {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 8px;
+}
+.company-menu-footer button {
+  width: 100%; padding: 7px; border-radius: 7px;
+  border: 1px dashed rgba(255,255,255,0.2);
+  background: none; color: rgba(255,255,255,0.5);
+  font-size: 11px; cursor: pointer; transition: all .15s;
+}
+.company-menu-footer button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+/* New company modal */
+.new-company-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 9999;
+}
+.new-company-modal.open { display: flex; }
+.new-company-box {
+  background: #fff; border-radius: 16px; padding: 28px; width: 360px;
+}
+.new-company-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #0a0f1e; }
+.new-company-box p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+.new-company-box input {
+  width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0;
+  border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;
+}
+.new-company-box input:focus { outline: none; border-color: #3b82f6; }
+
+
+.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+
+
+/* SIDEBAR SECTIONS */
+.sidebar-sections { flex:1; overflow-y:auto; padding:8px 0; }
+.sidebar-section { padding:12px 12px 4px; }
+.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.2); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin-bottom:2px; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+.nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
+.nav-item.active .nav-icon { color:#60a5fa; }
+.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+
+</style>
+<style>
+/* SETTINGS SPECIFIC */
+.settings-layout { display:flex; gap:24px; align-items:flex-start; }
+.settings-nav { width:200px; flex-shrink:0; background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:8px; box-shadow:var(--shadow-sm); position:sticky; top:calc(var(--topbar-h) + 28px); }
+.settings-nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:var(--gray500); transition:all .15s; border:none; background:none; width:100%; text-align:left; }
+.settings-nav-item:hover { background:var(--gray50); color:var(--gray800); }
+.settings-nav-item.active { background:var(--blue-light); color:var(--blue); font-weight:600; }
+.settings-nav-icon { font-size:16px; width:22px; text-align:center; }
+.settings-content { flex:1; min-width:0; }
+.settings-section { display:none; }
+.settings-section.active { display:block; }
+.settings-card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); box-shadow:var(--shadow-sm); margin-bottom:20px; overflow:hidden; }
+.settings-card-head { padding:20px 24px 16px; border-bottom:1px solid var(--gray100); display:flex; align-items:center; justify-content:space-between; }
+.settings-card-title { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--gray800); }
+.settings-card-desc { font-size:12px; color:var(--gray400); margin-top:2px; }
+.settings-card-body { padding:24px; }
+
+/* CURRENCY CHIPS */
+.currency-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.currency-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:99px; border:1.5px solid var(--gray200); background:var(--white); font-size:12px; font-weight:600; color:var(--gray600); cursor:pointer; transition:all .15s; }
+.currency-chip.active { border-color:var(--blue); background:var(--blue-light); color:var(--blue); }
+.currency-chip .chip-remove { font-size:14px; color:var(--gray400); margin-left:2px; line-height:1; }
+.currency-chip.active .chip-remove { color:var(--blue); }
+.add-currency-row { display:flex; gap:8px; margin-top:12px; }
+.add-currency-row select { flex:1; padding:9px 14px; border:1.5px solid var(--gray200); border-radius:10px; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; background:var(--white); }
+.add-currency-row select:focus { border-color:var(--blue); }
+
+/* EXCHANGE RATES TABLE */
+.rates-table { width:100%; border-collapse:collapse; }
+.rates-table th { text-align:left; font-size:11px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:.5px; padding:8px 12px; border-bottom:1px solid var(--gray200); }
+.rates-table td { padding:10px 12px; font-size:13px; color:var(--gray700); border-bottom:1px solid var(--gray100); vertical-align:middle; }
+.rates-table tr:last-child td { border-bottom:none; }
+.rate-input { width:120px; padding:6px 10px; border:1.5px solid var(--gray200); border-radius:8px; font-family:var(--font-body); font-size:13px; color:var(--gray800); outline:none; transition:border-color .15s; }
+.rate-input:focus { border-color:var(--blue); }
+.rate-badge { font-size:11px; padding:2px 8px; border-radius:99px; font-weight:600; }
+.rate-badge.auto { background:var(--green-light); color:var(--green); }
+.rate-badge.manual { background:var(--orange-light); color:var(--orange); }
+.rate-date { font-size:11px; color:var(--gray400); }
+
+/* MANAGE LISTS (categories, warehouses) */
+.manage-list { display:flex; flex-direction:column; gap:0; }
+.manage-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--gray100); }
+.manage-item:last-child { border-bottom:none; }
+.manage-item-icon { width:32px; height:32px; border-radius:8px; background:var(--gray50); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.manage-item-info { flex:1; min-width:0; }
+.manage-item-name { font-size:13px; font-weight:600; color:var(--gray800); }
+.manage-item-meta { font-size:11px; color:var(--gray400); margin-top:1px; }
+.manage-item-actions { display:flex; gap:4px; }
+.manage-sub-items { padding-left:32px; }
+.manage-sub-item { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--gray100); }
+.manage-sub-item:last-child { border-bottom:none; }
+
+/* INLINE EDIT */
+.inline-edit { display:none; flex:1; align-items:center; gap:8px; }
+.inline-edit.open { display:flex; }
+.inline-edit input { flex:1; padding:6px 10px; border:1.5px solid var(--blue); border-radius:8px; font-size:13px; font-family:var(--font-body); outline:none; }
+
+/* TAX RATES */
+.tax-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--gray100); }
+.tax-row:last-child { border-bottom:none; }
+</style>
+<script src="i18n.js"></script>
+</head>
+<body>
+<aside  id="sidebar">
+  <a class="sidebar-logo" href="dashboard.html" style="text-decoration:none;display:block">
+    <div class="wordmark">solvenin<span class="dot">.</span></div>
+    <div class="underline"></div>
+  </a>
+
+  <div class="sidebar-sections">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Main</div>
+    <a class="nav-item  " href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
+    <a class="nav-item  " href="inventory.html"><span class="nav-icon">📦</span> Inventory</a>
+    <a class="nav-item  " href="sales.html"><span class="nav-icon">💰</span> Sales</a>
+    <a class="nav-item  " href="purchasing.html"><span class="nav-icon">🛒</span> Purchasing</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🏭</span> Production</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Finance</div>
+    <a class="nav-item  " href="cashbank.html"><span class="nav-icon">🏦</span> Cashbank</a>
+    <a class="nav-item  " href="accounting.html"><span class="nav-icon">📒</span> Accounting</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">📊</span> Reports</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Management</div>
+    <a class="nav-item  " href="#"><span class="nav-icon">👥</span> HR & Payroll</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🚚</span> Shipping</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">📅</span> Projects</a>
+    <a class="nav-item  " href="#"><span class="nav-icon">🔧</span> Maintenance</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+    <a class="nav-item  " href="warehouses.html"><span class="nav-icon">🏗️</span> Warehouses</a>
+    <a class="nav-item active " href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+    <a class="nav-item  " href="subscription.html"><span class="nav-icon">💎</span> Subscription</a>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <!-- Company Switcher -->
+    <div class="company-switcher" id="company-switcher" onclick="toggleCompanyMenu()">
+      <div class="company-icon">🏢</div>
+      <div class="company-info">
+        <div class="company-name" id="company-name">Loading...</div>
+        <div class="company-plan" id="company-plan">—</div>
+      </div>
+      <div class="company-chevron">⌄</div>
+    </div>
+    <div class="company-menu" id="company-menu" style="display:none">
+      <div class="company-menu-list" id="company-menu-list"></div>
+      <div class="company-menu-footer" id="company-menu-footer"></div>
+    </div>
+    <div class="user-card" id="user-card">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-plan" id="user-plan">Free Plan</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">⚙️ Settings</div>
+    <div class="topbar-actions">
+      <div class="topbar-btn" title="Notifications">🔔</div>
+      <div class="topbar-btn" title="Help">❓</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="settings-layout">
+
+      <!-- Left Nav -->
+      <div class="settings-nav">
+        <button class="settings-nav-item active" onclick="switchSection('company')"><span class="settings-nav-icon">🏢</span> Company</button>
+        <button class="settings-nav-item" onclick="switchSection('currency')"><span class="settings-nav-icon">💱</span> Currency</button>
+        <button class="settings-nav-item" onclick="switchSection('categories')"><span class="settings-nav-icon">🏷️</span> Categories</button>
+        <button class="settings-nav-item" onclick="switchSection('warehouses')"><span class="settings-nav-icon">🏗️</span> Warehouses</button>
+        <button class="settings-nav-item" onclick="switchSection('taxes')"><span class="settings-nav-icon">📋</span> Tax Rates</button>
+      </div>
+
+      <!-- Content -->
+      <div class="settings-content">
+
+        <!-- COMPANY -->
+        <div class="settings-section active" id="section-company">
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Company Information</div><div class="settings-card-desc">Basic details about your company</div></div>
+              <button class="btn-primary" onclick="saveCompanyInfo()">Save Changes</button>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row">
+                <div class="form-group"><label>Company Name</label><input type="text" id="co-name" placeholder="Acme Corp"></div>
+                <div class="form-group"><label>Tax / Registration Number</label><input type="text" id="co-taxno" placeholder="e.g. 123456789"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Email</label><input type="email" id="co-email" placeholder="info@company.com"></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="co-phone" placeholder="+7 000 000 0000"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Website</label><input type="text" id="co-website" placeholder="https://company.com"></div>
+              </div>
+              <div class="form-row full">
+                <div class="form-group"><label>Address</label><textarea id="co-address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CURRENCY -->
+        <div class="settings-section" id="section-currency">
+          <!-- Base Currency -->
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Base Currency</div><div class="settings-card-desc">All reports and balances are shown in this currency</div></div>
+              <button class="btn-primary" onclick="saveBaseCurrency()">Save</button>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group">
+                  <label>Base Currency</label>
+                  <select id="base-currency-select">
+                    <option value="USD">USD — US Dollar</option>
+<option value="EUR">EUR — Euro</option>
+<option value="GBP">GBP — British Pound</option>
+<option value="TRY">TRY — Turkish Lira</option>
+<option value="KZT">KZT — Kazakhstani Tenge</option>
+<option value="RUB">RUB — Russian Ruble</option>
+<option value="UAH">UAH — Ukrainian Hryvnia</option>
+<option value="KGS">KGS — Kyrgyz Som</option>
+<option value="UZS">UZS — Uzbekistani Som</option>
+<option value="AZN">AZN — Azerbaijani Manat</option>
+<option value="GEL">GEL — Georgian Lari</option>
+<option value="AMD">AMD — Armenian Dram</option>
+<option value="BYN">BYN — Belarusian Ruble</option>
+<option value="CNY">CNY — Chinese Yuan</option>
+<option value="JPY">JPY — Japanese Yen</option>
+<option value="KRW">KRW — South Korean Won</option>
+<option value="INR">INR — Indian Rupee</option>
+<option value="SAR">SAR — Saudi Riyal</option>
+<option value="AED">AED — UAE Dirham</option>
+<option value="CAD">CAD — Canadian Dollar</option>
+<option value="AUD">AUD — Australian Dollar</option>
+<option value="CHF">CHF — Swiss Franc</option>
+<option value="SEK">SEK — Swedish Krona</option>
+<option value="NOK">NOK — Norwegian Krone</option>
+<option value="DKK">DKK — Danish Krone</option>
+<option value="PLN">PLN — Polish Zloty</option>
+<option value="CZK">CZK — Czech Koruna</option>
+<option value="HUF">HUF — Hungarian Forint</option>
+<option value="RON">RON — Romanian Leu</option>
+<option value="BGN">BGN — Bulgarian Lev</option>
+<option value="HRK">HRK — Croatian Kuna</option>
+<option value="BRL">BRL — Brazilian Real</option>
+<option value="MXN">MXN — Mexican Peso</option>
+<option value="ARS">ARS — Argentine Peso</option>
+<option value="ZAR">ZAR — South African Rand</option>
+<option value="EGP">EGP — Egyptian Pound</option>
+<option value="NGN">NGN — Nigerian Naira</option>
+<option value="IDR">IDR — Indonesian Rupiah</option>
+<option value="MYR">MYR — Malaysian Ringgit</option>
+<option value="SGD">SGD — Singapore Dollar</option>
+<option value="THB">THB — Thai Baht</option>
+<option value="PHP">PHP — Philippine Peso</option>
+<option value="VND">VND — Vietnamese Dong</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Currencies -->
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Active Currencies</div><div class="settings-card-desc">Currencies you transact in. Rates are fetched daily.</div></div>
+            </div>
+            <div class="settings-card-body">
+              <div class="currency-chips" id="active-currency-chips"></div>
+              <div class="add-currency-row">
+                <select id="add-currency-select">
+                  <option value="">Add currency...</option>
+                  <option value="USD">USD — US Dollar</option>
+<option value="EUR">EUR — Euro</option>
+<option value="GBP">GBP — British Pound</option>
+<option value="TRY">TRY — Turkish Lira</option>
+<option value="KZT">KZT — Kazakhstani Tenge</option>
+<option value="RUB">RUB — Russian Ruble</option>
+<option value="UAH">UAH — Ukrainian Hryvnia</option>
+<option value="KGS">KGS — Kyrgyz Som</option>
+<option value="UZS">UZS — Uzbekistani Som</option>
+<option value="AZN">AZN — Azerbaijani Manat</option>
+<option value="GEL">GEL — Georgian Lari</option>
+<option value="AMD">AMD — Armenian Dram</option>
+<option value="BYN">BYN — Belarusian Ruble</option>
+<option value="CNY">CNY — Chinese Yuan</option>
+<option value="JPY">JPY — Japanese Yen</option>
+<option value="KRW">KRW — South Korean Won</option>
+<option value="INR">INR — Indian Rupee</option>
+<option value="SAR">SAR — Saudi Riyal</option>
+<option value="AED">AED — UAE Dirham</option>
+<option value="CAD">CAD — Canadian Dollar</option>
+<option value="AUD">AUD — Australian Dollar</option>
+<option value="CHF">CHF — Swiss Franc</option>
+<option value="SEK">SEK — Swedish Krona</option>
+<option value="NOK">NOK — Norwegian Krone</option>
+<option value="DKK">DKK — Danish Krone</option>
+<option value="PLN">PLN — Polish Zloty</option>
+<option value="CZK">CZK — Czech Koruna</option>
+<option value="HUF">HUF — Hungarian Forint</option>
+<option value="RON">RON — Romanian Leu</option>
+<option value="BGN">BGN — Bulgarian Lev</option>
+<option value="HRK">HRK — Croatian Kuna</option>
+<option value="BRL">BRL — Brazilian Real</option>
+<option value="MXN">MXN — Mexican Peso</option>
+<option value="ARS">ARS — Argentine Peso</option>
+<option value="ZAR">ZAR — South African Rand</option>
+<option value="EGP">EGP — Egyptian Pound</option>
+<option value="NGN">NGN — Nigerian Naira</option>
+<option value="IDR">IDR — Indonesian Rupiah</option>
+<option value="MYR">MYR — Malaysian Ringgit</option>
+<option value="SGD">SGD — Singapore Dollar</option>
+<option value="THB">THB — Thai Baht</option>
+<option value="PHP">PHP — Philippine Peso</option>
+<option value="VND">VND — Vietnamese Dong</option>
+                </select>
+                <button class="btn-primary" onclick="addActiveCurrency()">+ Add</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exchange Rates -->
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Exchange Rates</div><div class="settings-card-desc">Today's rates. Auto-fetched from API, override if needed.</div></div>
+              <button class="btn-secondary" onclick="fetchRatesFromAPI()" id="fetch-rates-btn">🔄 Fetch Today's Rates</button>
+            </div>
+            <div class="settings-card-body" style="padding:0">
+              <table class="rates-table">
+                <thead><tr><th>Currency</th><th>1 Unit =</th><th>Base</th><th>Date</th><th>Source</th><th></th></tr></thead>
+                <tbody id="rates-tbody"></tbody>
+              </table>
+              <div id="rates-empty" style="text-align:center;padding:32px;color:var(--gray400);font-size:13px;display:none">
+                No active currencies. Add currencies above.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="settings-section" id="section-categories">
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Categories</div><div class="settings-card-desc">Manage product categories (max 3 levels)</div></div>
+              <button class="btn-primary" onclick="openAddCatForm(null, 0)">+ Add Category</button>
+            </div>
+            <div class="settings-card-body" style="padding:0 24px">
+              <div id="categories-list" class="manage-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAREHOUSES -->
+        <div class="settings-section" id="section-warehouses">
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Warehouses</div><div class="settings-card-desc">Manage storage locations</div></div>
+              <button class="btn-primary" onclick="openWarehouseModal()">+ Add Warehouse</button>
+            </div>
+            <div class="settings-card-body" style="padding:0 24px">
+              <div id="warehouses-list" class="manage-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAXES -->
+        <div class="settings-section" id="section-taxes">
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title">Tax Rates</div><div class="settings-card-desc">Define tax rates for invoices</div></div>
+              <button class="btn-primary" onclick="openTaxModal()">+ Add Tax Rate</button>
+            </div>
+            <div class="settings-card-body" style="padding:0 24px">
+              <div id="taxes-list" class="manage-list"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /settings-content -->
+    </div><!-- /settings-layout -->
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Warehouse Modal -->
+<div class="modal-overlay" id="warehouse-modal">
+  <div class="modal" style="width:440px">
+    <div class="modal-head">
+      <div class="modal-title" id="wh-modal-title">Add Warehouse</div>
+      <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full"><div class="form-group"><label>Warehouse Name *</label><input type="text" id="wh-name" placeholder="e.g. Main Warehouse"></div></div>
+      <div class="form-row full"><div class="form-group"><label>Location / Address</label><input type="text" id="wh-location" placeholder="e.g. Building A, Floor 2"></div></div>
+      <div class="form-row full"><div class="form-group"><label>Notes</label><textarea id="wh-notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('warehouse-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveWarehouse()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tax Modal -->
+<div class="modal-overlay" id="tax-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-head">
+      <div class="modal-title" id="tax-modal-title">Add Tax Rate</div>
+      <button class="modal-close" onclick="closeModal('tax-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Name *</label><input type="text" id="tax-name" placeholder="e.g. VAT"></div>
+        <div class="form-group"><label>Rate (%) *</label><input type="number" id="tax-rate" placeholder="20" min="0" max="100" step="0.01"></div>
+      </div>
+      <div class="form-row full"><div class="form-group"><label>Description</label><input type="text" id="tax-desc" placeholder="Optional description"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('tax-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveTax()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="width:380px">
+    <div class="modal-head">
+      <div class="modal-title">Confirm Delete</div>
+      <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--gray600)" id="delete-msg">Are you sure?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn-primary" style="background:var(--red)" onclick="confirmDeleteAction()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Company Modal -->
+<div class="new-company-modal" id="new-company-modal">
+  <div class="new-company-box">
+    <h3>New Company</h3>
+    <p>Create a new company workspace.</p>
+    <input type="text" id="new-company-name" placeholder="Company name">
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" style="flex:1" onclick="createNewCompany()">Create</button>
+      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('new-company-modal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphcWtqZHpwZGl6amJ6dmJ0Y2xkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMDM0NTIsImV4cCI6MjA1NjU3OTQ1Mn0.tkHI7GR6IfhFCqFIbGTvNjMkixG-A4jWTsiMvDnVAPs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let companyId = null;
+let currentUser = null;
+let companyData = null;
+let allCategories = [];
+let allWarehouses = [];
+let allTaxes = [];
+let activeCurrencies = [];
+let baseCurrency = 'USD';
+let editingWhId = null;
+let editingTaxId = null;
+let deleteCallback = null;
+
+// ===== SUPABASE =====
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+script.onload = () => init();
+document.head.appendChild(script);
+
+// ===== UTILS =====
+function showToast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = type==='success'?'#10b981':type==='error'?'#ef4444':'#f59e0b';
+  t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+function switchSection(name) {
+  document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-'+name)?.classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    await new Promise(r => setTimeout(r, 800));
+    const { data: { session: s2 } } = await sb.auth.getSession();
+    if (!s2) { window.location.href = 'auth.html'; return; }
+  }
+  const user = (await sb.auth.getSession()).data.session?.user;
+  if (!user) return;
+  currentUser = user;
+
+  const name = user.user_metadata?.full_name || user.email.split('@')[0];
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+
+  const { data: profile } = await sb.from('profiles').select('company_id, active_company_id').eq('id', user.id).single();
+  companyId = profile?.active_company_id || profile?.company_id || null;
+
+  await loadCompanies();
+  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes()]);
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); }
+}
+
+// ===== COMPANY DATA =====
+async function loadCompanyData() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('companies')
+    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies')
+    .eq('id', companyId).single();
+  if (error) { console.error(error); return; }
+  companyData = data;
+  baseCurrency = data.base_currency || 'USD';
+  activeCurrencies = data.active_currencies || [baseCurrency];
+
+  // Populate company form
+  document.getElementById('co-name').value = data.name || '';
+  document.getElementById('co-taxno').value = data.tax_number || '';
+  document.getElementById('co-email').value = data.email || '';
+  document.getElementById('co-phone').value = data.phone || '';
+  document.getElementById('co-website').value = data.website || '';
+  document.getElementById('co-address').value = data.address || '';
+
+  // Set base currency
+  const bcs = document.getElementById('base-currency-select');
+  if (bcs) bcs.value = baseCurrency;
+
+  renderActiveCurrencies();
+  await loadExchangeRates();
+}
+
+async function saveCompanyInfo() {
+  if (!companyId) return;
+  const payload = {
+    name: document.getElementById('co-name').value.trim(),
+    tax_number: document.getElementById('co-taxno').value.trim() || null,
+    email: document.getElementById('co-email').value.trim() || null,
+    phone: document.getElementById('co-phone').value.trim() || null,
+    website: document.getElementById('co-website').value.trim() || null,
+    address: document.getElementById('co-address').value.trim() || null,
+  };
+  const { error } = await sb.from('companies').update(payload).eq('id', companyId);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Company info saved ✓', 'success');
+}
+
+// ===== BASE CURRENCY =====
+async function saveBaseCurrency() {
+  if (!companyId) return;
+  const val = document.getElementById('base-currency-select').value;
+  if (!val) return;
+  const { error } = await sb.from('companies').update({ base_currency: val }).eq('id', companyId);
+  if (error) { showToast(error.message, 'error'); return; }
+  baseCurrency = val;
+  // Add to active currencies if not present
+  if (!activeCurrencies.includes(val)) {
+    activeCurrencies = [val, ...activeCurrencies];
+    await saveActiveCurrencies();
+  }
+  showToast(`Base currency set to ${val} ✓`, 'success');
+}
+
+// ===== ACTIVE CURRENCIES =====
+function renderActiveCurrencies() {
+  const container = document.getElementById('active-currency-chips');
+  if (!container) return;
+  container.innerHTML = activeCurrencies.map(c => `
+    <div class="currency-chip active">
+      <span>${c}</span>
+      ${c !== baseCurrency ? `<span class="chip-remove" onclick="removeCurrency('${c}')" title="Remove">×</span>` : '<span style="font-size:10px;color:var(--blue)">★</span>'}
+    </div>
+  `).join('');
+}
+
+async function addActiveCurrency() {
+  const sel = document.getElementById('add-currency-select');
+  const val = sel.value;
+  if (!val) return;
+  if (activeCurrencies.includes(val)) { showToast('Already added', 'warning'); return; }
+  activeCurrencies = [...activeCurrencies, val];
+  await saveActiveCurrencies();
+  sel.value = '';
+  renderActiveCurrencies();
+  await loadExchangeRates();
+  showToast(`${val} added ✓`, 'success');
+}
+
+async function removeCurrency(code) {
+  if (code === baseCurrency) { showToast('Cannot remove base currency', 'error'); return; }
+  activeCurrencies = activeCurrencies.filter(c => c !== code);
+  await saveActiveCurrencies();
+  renderActiveCurrencies();
+  await loadExchangeRates();
+}
+
+async function saveActiveCurrencies() {
+  await sb.from('companies').update({ active_currencies: activeCurrencies }).eq('id', companyId);
+}
+
+// ===== EXCHANGE RATES =====
+async function loadExchangeRates() {
+  if (!companyId || !activeCurrencies.length) return;
+  const today = new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('exchange_rates')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('rate_date', today)
+    .in('currency', activeCurrencies);
+  renderRatesTable(data || []);
+}
+
+function renderRatesTable(rates) {
+  const tbody = document.getElementById('rates-tbody');
+  const empty = document.getElementById('rates-empty');
+  const foreignCurrencies = activeCurrencies.filter(c => c !== baseCurrency);
+
+  if (!foreignCurrencies.length) {
+    tbody.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  tbody.innerHTML = foreignCurrencies.map(currency => {
+    const r = rates.find(x => x.currency === currency);
+    const rate = r?.rate || '';
+    const isManual = r?.is_manual || false;
+    const date = r?.rate_date || '—';
+    return `<tr>
+      <td><strong>${currency}</strong></td>
+      <td>1 ${currency}</td>
+      <td>
+        <input class="rate-input" type="number" step="0.000001" min="0"
+          id="rate-${currency}" value="${rate}" placeholder="Enter rate">
+        <span style="margin-left:6px;font-size:12px;color:var(--gray400)">${baseCurrency}</span>
+      </td>
+      <td class="rate-date">${date}</td>
+      <td><span class="rate-badge ${isManual?'manual':'auto'}">${isManual?'Manual':'Auto'}</span></td>
+      <td>
+        <button class="btn-secondary" style="padding:5px 10px;font-size:11px" onclick="saveManualRate('${currency}')">Save</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveManualRate(currency) {
+  const val = parseFloat(document.getElementById(`rate-${currency}`).value);
+  if (!val || val <= 0) { showToast('Invalid rate', 'error'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const { error } = await sb.from('exchange_rates').upsert({
+    company_id: companyId,
+    currency,
+    rate: val,
+    rate_date: today,
+    is_manual: true,
+  }, { onConflict: 'company_id,currency,rate_date' });
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(`${currency} rate saved ✓`, 'success');
+  await loadExchangeRates();
+}
+
+async function fetchRatesFromAPI() {
+  const btn = document.getElementById('fetch-rates-btn');
+  btn.textContent = '⏳ Fetching...';
+  btn.disabled = true;
+
+  const foreignCurrencies = activeCurrencies.filter(c => c !== baseCurrency);
+  if (!foreignCurrencies.length) {
+    showToast('No currencies to fetch', 'warning');
+    btn.textContent = '🔄 Fetch Today\'s Rates';
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    // Use exchangerate-api.com free tier (no key needed for base conversions)
+    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
+    const json = await res.json();
+    const today = new Date().toISOString().slice(0,10);
+
+    const upserts = foreignCurrencies.map(c => ({
+      company_id: companyId,
+      currency: c,
+      rate: json.rates[c] ? (1 / json.rates[c]) * 1 : null, // 1 foreign = X base
+      // Actually: 1 foreign = baseCurrency amount
+      // rates[c] = how many c per 1 base, so 1 c = 1/rates[c] base
+      rate_date: today,
+      is_manual: false,
+    })).filter(x => x.rate !== null);
+
+    // Fix: rates[c] means "1 base = rates[c] foreign", so 1 foreign = 1/rates[c] base
+    const upserts2 = foreignCurrencies
+      .filter(c => json.rates[c])
+      .map(c => ({
+        company_id: companyId,
+        currency: c,
+        rate: parseFloat((1 / json.rates[c]).toFixed(6)),
+        rate_date: today,
+        is_manual: false,
+      }));
+
+    const { error } = await sb.from('exchange_rates').upsert(upserts2, { onConflict: 'company_id,currency,rate_date' });
+    if (error) throw error;
+
+    showToast(`Rates updated for ${upserts2.length} currencies ✓`, 'success');
+    await loadExchangeRates();
+  } catch(e) {
+    showToast('API error: ' + e.message, 'error');
+  } finally {
+    btn.textContent = '🔄 Fetch Today\'s Rates';
+    btn.disabled = false;
+  }
+}
+
+// ===== CATEGORIES =====
+async function loadCategories() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('categories')
+    .select('id,name,parent_id').eq('company_id', companyId).order('name');
+  if (error) { console.error(error); return; }
+  allCategories = data || [];
+  renderCategoriesList();
+}
+
+function getChildren(parentId) {
+  return allCategories.filter(c => (c.parent_id||null) === (parentId||null));
+}
+
+function renderCategoriesList() {
+  const container = document.getElementById('categories-list');
+  if (!container) return;
+  const roots = getChildren(null);
+
+  if (!roots.length) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No categories yet. Click "+ Add Category" to start.</div>';
+    return;
+  }
+
+  let html = '';
+  roots.forEach(root => {
+    const children = getChildren(root.id);
+    html += renderCatItem(root, 0, children.length);
+    children.forEach(child => {
+      const grandchildren = getChildren(child.id);
+      html += renderCatItem(child, 1, grandchildren.length);
+      grandchildren.forEach(grand => {
+        html += renderCatItem(grand, 2, 0);
+      });
+    });
+  });
+  container.innerHTML = html;
+}
+
+function renderCatItem(cat, depth, childCount) {
+  const indent = depth * 24;
+  const icon = depth===0?'📁':depth===1?'📂':'📄';
+  const meta = childCount ? `${childCount} sub-categor${childCount>1?'ies':'y'}` : '';
+  return `<div class="manage-item" style="padding-left:${indent}px">
+    <div class="manage-item-icon">${icon}</div>
+    <div class="manage-item-info">
+      <div class="manage-item-name" id="cat-name-${cat.id}">${cat.name}</div>
+      ${meta ? `<div class="manage-item-meta">${meta}</div>` : ''}
+    </div>
+    <div class="manage-item-actions">
+      ${depth < 2 ? `<button class="action-btn" title="Add sub-category" onclick="openAddCatForm('${cat.id}', ${depth+1})">＋</button>` : ''}
+      <button class="action-btn" title="Rename" onclick="openRenameCat('${cat.id}')">✏️</button>
+      <button class="action-btn danger" title="Delete" onclick="openDeleteCat('${cat.id}', '${cat.name}')">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function openAddCatForm(parentId, depth) {
+  // Inline add form at top of list
+  const container = document.getElementById('categories-list');
+  const existing = document.getElementById('inline-add-cat');
+  if (existing) existing.remove();
+
+  const parentName = parentId ? allCategories.find(c=>c.id===parentId)?.name : null;
+  const label = parentName ? `Sub-category under "${parentName}"` : 'New root category';
+
+  const div = document.createElement('div');
+  div.id = 'inline-add-cat';
+  div.style.cssText = `padding:12px 0;border-bottom:1px solid var(--gray100);padding-left:${depth*24}px`;
+  div.innerHTML = `
+    <div style="font-size:11px;color:var(--gray400);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${label}</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="new-cat-input" placeholder="Category name..." style="flex:1;padding:8px 12px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none">
+      <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')">Save</button>
+      <button class="btn-secondary" style="padding:8px 14px" onclick="document.getElementById('inline-add-cat')?.remove()">✕</button>
+    </div>
+  `;
+  container.prepend(div);
+  setTimeout(() => document.getElementById('new-cat-input')?.focus(), 50);
+  document.getElementById('new-cat-input').onkeydown = e => { if(e.key==='Enter') saveCatAdd(parentId||''); if(e.key==='Escape') div.remove(); };
+}
+
+async function saveCatAdd(parentId) {
+  const name = document.getElementById('new-cat-input')?.value.trim().toUpperCase();
+  if (!name) return;
+  const { data, error } = await sb.from('categories').insert({
+    name, parent_id: parentId||null, company_id: companyId
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  allCategories.push(data);
+  document.getElementById('inline-add-cat')?.remove();
+  renderCategoriesList();
+  showToast(`"${name}" added ✓`, 'success');
+}
+
+function openRenameCat(id) {
+  const cat = allCategories.find(c=>c.id===id);
+  if (!cat) return;
+  const newName = prompt('Rename category:', cat.name);
+  if (!newName || newName.trim() === cat.name) return;
+  renameCat(id, newName.trim().toUpperCase());
+}
+
+async function renameCat(id, name) {
+  const { error } = await sb.from('categories').update({name}).eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  allCategories = allCategories.map(c => c.id===id ? {...c, name} : c);
+  renderCategoriesList();
+  showToast('Renamed ✓', 'success');
+}
+
+function openDeleteCat(id, name) {
+  const children = allCategories.filter(c => c.parent_id === id);
+  if (children.length) {
+    showToast('Delete sub-categories first', 'error'); return;
+  }
+  document.getElementById('delete-msg').textContent = `Delete category "${name}"? This cannot be undone.`;
+  deleteCallback = async () => {
+    const { error } = await sb.from('categories').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    allCategories = allCategories.filter(c => c.id !== id);
+    closeModal('delete-modal');
+    renderCategoriesList();
+    showToast('Deleted ✓', 'success');
+  };
+  openModal('delete-modal');
+}
+
+function confirmDeleteAction() { if(deleteCallback) deleteCallback(); }
+
+// ===== WAREHOUSES =====
+async function loadWarehouses() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('warehouses')
+    .select('*').eq('company_id', companyId).order('name');
+  if (error) { console.error(error); return; }
+  allWarehouses = data || [];
+  renderWarehousesList();
+}
+
+function renderWarehousesList() {
+  const container = document.getElementById('warehouses-list');
+  if (!container) return;
+  if (!allWarehouses.length) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No warehouses yet.</div>';
+    return;
+  }
+  container.innerHTML = allWarehouses.map(w => `
+    <div class="manage-item">
+      <div class="manage-item-icon">🏗️</div>
+      <div class="manage-item-info">
+        <div class="manage-item-name">${w.name}</div>
+        ${w.location ? `<div class="manage-item-meta">${w.location}</div>` : ''}
+      </div>
+      <div class="manage-item-actions">
+        <button class="action-btn" onclick="openWarehouseModal('${w.id}')">✏️</button>
+        <button class="action-btn danger" onclick="openDeleteWarehouse('${w.id}','${w.name}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openWarehouseModal(id=null) {
+  editingWhId = id;
+  const w = id ? allWarehouses.find(x=>x.id===id) : null;
+  document.getElementById('wh-modal-title').textContent = id ? 'Edit Warehouse' : 'Add Warehouse';
+  document.getElementById('wh-name').value = w?.name || '';
+  document.getElementById('wh-location').value = w?.location || '';
+  document.getElementById('wh-notes').value = w?.notes || '';
+  openModal('warehouse-modal');
+}
+
+async function saveWarehouse() {
+  const name = document.getElementById('wh-name').value.trim();
+  if (!name) { showToast('Name required', 'error'); return; }
+  const payload = {
+    name,
+    location: document.getElementById('wh-location').value.trim() || null,
+    notes: document.getElementById('wh-notes').value.trim() || null,
+    company_id: companyId,
+  };
+  let error;
+  if (editingWhId) {
+    ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
+  } else {
+    ({ error } = await sb.from('warehouses').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal('warehouse-modal');
+  await loadWarehouses();
+  showToast('Saved ✓', 'success');
+}
+
+function openDeleteWarehouse(id, name) {
+  document.getElementById('delete-msg').textContent = `Delete warehouse "${name}"?`;
+  deleteCallback = async () => {
+    const { error } = await sb.from('warehouses').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    closeModal('delete-modal');
+    await loadWarehouses();
+    showToast('Deleted ✓', 'success');
+  };
+  openModal('delete-modal');
+}
+
+// ===== TAXES =====
+async function loadTaxes() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('tax_rates')
+    .select('*').eq('company_id', companyId).order('name');
+  if (error) { console.error(error); return; }
+  allTaxes = data || [];
+  renderTaxesList();
+}
+
+function renderTaxesList() {
+  const container = document.getElementById('taxes-list');
+  if (!container) return;
+  if (!allTaxes.length) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No tax rates yet.</div>';
+    return;
+  }
+  container.innerHTML = allTaxes.map(t => `
+    <div class="manage-item">
+      <div class="manage-item-icon">📋</div>
+      <div class="manage-item-info">
+        <div class="manage-item-name">${t.name} <span style="color:var(--blue);font-weight:700">${t.rate}%</span></div>
+        ${t.description ? `<div class="manage-item-meta">${t.description}</div>` : ''}
+      </div>
+      <div class="manage-item-actions">
+        <button class="action-btn" onclick="openTaxModal('${t.id}')">✏️</button>
+        <button class="action-btn danger" onclick="openDeleteTax('${t.id}','${t.name}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openTaxModal(id=null) {
+  editingTaxId = id;
+  const t = id ? allTaxes.find(x=>x.id===id) : null;
+  document.getElementById('tax-modal-title').textContent = id ? 'Edit Tax Rate' : 'Add Tax Rate';
+  document.getElementById('tax-name').value = t?.name || '';
+  document.getElementById('tax-rate').value = t?.rate || '';
+  document.getElementById('tax-desc').value = t?.description || '';
+  openModal('tax-modal');
+}
+
+async function saveTax() {
+  const name = document.getElementById('tax-name').value.trim();
+  const rate = parseFloat(document.getElementById('tax-rate').value);
+  if (!name || isNaN(rate)) { showToast('Name and rate required', 'error'); return; }
+  const payload = {
+    name, rate,
+    description: document.getElementById('tax-desc').value.trim() || null,
+    company_id: companyId,
+  };
+  let error;
+  if (editingTaxId) {
+    ({ error } = await sb.from('tax_rates').update(payload).eq('id', editingTaxId));
+  } else {
+    ({ error } = await sb.from('tax_rates').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal('tax-modal');
+  await loadTaxes();
+  showToast('Saved ✓', 'success');
+}
+
+function openDeleteTax(id, name) {
+  document.getElementById('delete-msg').textContent = `Delete tax rate "${name}"?`;
+  deleteCallback = async () => {
+    const { error } = await sb.from('tax_rates').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    closeModal('delete-modal');
+    await loadTaxes();
+    showToast('Deleted ✓', 'success');
+  };
+  openModal('delete-modal');
+}
+
+// ===== COMPANY SWITCHER =====
+// ===== COMPANY SWITCHER =====
+let _myCompanies = [];
+
+async function loadCompanies() {
+  try {
+    const { data, error } = await sb.rpc('get_my_companies');
+    if (error) throw error;
+    _myCompanies = data || [];
+    const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
+    if (active) {
+      document.getElementById('company-name').textContent = active.company_name;
+      document.getElementById('company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
+      if (!companyId) companyId = active.company_id;
+    }
+    renderCompanyMenu();
+  } catch(e) { console.error('loadCompanies:', e); }
+}
+
+function renderCompanyMenu() {
+  const list = document.getElementById('company-menu-list');
+  const footer = document.getElementById('company-menu-footer');
+  if (!list) return;
+
+  list.innerHTML = _myCompanies.map(c => `
+    <div class="company-menu-item ${c.is_active ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
+         onclick="switchToCompany('${c.company_id}', '${c.company_name}')">
+      <div class="c-dot"></div>
+      <div class="c-label">${c.company_name}</div>
+      <div class="c-role">${c.role}</div>
+    </div>`).join('');
+
+  // Show "Add company" only for pro+ owners
+  const active = _myCompanies.find(c => c.is_active);
+  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
+  footer.innerHTML = canAdd
+    ? `<button onclick="openNewCompanyModal()">+ Add Company</button>`
+    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
+}
+
+function toggleCompanyMenu() {
+  const m = document.getElementById('company-menu');
+  if (!m) return;
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+async function switchToCompany(companyId_, name) {
+  if (_myCompanies.find(c => c.company_id === companyId_ && c.is_active)) {
+    toggleCompanyMenu(); return;
+  }
+  try {
+    await sb.rpc('switch_company', { target_company_id: companyId_ });
+    document.getElementById('company-name').textContent = name;
+    document.getElementById('company-menu').style.display = 'none';
+    companyId = companyId_;
+    // Reload page data
+    window.location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+function openNewCompanyModal() {
+  document.getElementById('company-menu').style.display = 'none';
+  document.getElementById('new-company-name').value = '';
+  document.getElementById('new-company-err').style.display = 'none';
+  document.getElementById('new-company-modal').classList.add('open');
+}
+
+async function createNewCompany() {
+  const name = document.getElementById('new-company-name').value.trim();
+  const errEl = document.getElementById('new-company-err');
+  if (!name) { errEl.textContent = 'Company name is required'; errEl.style.display = 'block'; return; }
+  try {
+    const user = (await sb.auth.getSession()).data.session?.user;
+    
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
+    const m = document.getElementById('company-menu');
+    if (m) m.style.display = 'none';
+  }
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
