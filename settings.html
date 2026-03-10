@@ -677,7 +677,7 @@ tr:hover .action-btns { opacity:1; }
         <div class="form-group"><label>Name *</label><input type="text" id="tax-name" placeholder="e.g. VAT"></div>
         <div class="form-group"><label>Rate (%) *</label><input type="number" id="tax-rate" placeholder="20" min="0" max="100" step="0.01"></div>
       </div>
-      <div class="form-row full"><div class="form-group"><label>Description</label><input type="text" id="tax-desc" placeholder="Optional description"></div></div>
+      <div class="form-row full"><div class="form-group"><label>Type (optional)</label><input type="text" id="tax-desc" placeholder="e.g. Sales Tax, VAT"></div></div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('tax-modal')">Cancel</button>
@@ -824,9 +824,7 @@ async function saveCompanyInfo() {
     website: document.getElementById('co-website').value.trim() || null,
     address: document.getElementById('co-address').value.trim() || null,
   };
-  console.log('saving company:', companyId, payload);
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
-  console.log('save error:', error);
   if (error) { showToast(error.message, 'error'); return; }
   showToast('Company info saved ✓', 'success');
 }
@@ -1252,8 +1250,8 @@ async function saveTax() {
   if (!name || isNaN(rate)) { showToast('Name and rate required', 'error'); return; }
   const payload = {
     name, rate,
-    description: document.getElementById('tax-desc').value.trim() || null,
     company_id: companyId,
+    is_active: true,
   };
   let error;
   if (editingTaxId) {
