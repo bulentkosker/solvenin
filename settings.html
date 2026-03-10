@@ -347,6 +347,7 @@ tr:hover .action-btns { opacity:1; }
 .tax-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--gray100); }
 .tax-row:last-child { border-bottom:none; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="i18n.js"></script>
 </head>
 <body>
@@ -735,10 +736,8 @@ let editingTaxId = null;
 let deleteCallback = null;
 
 // ===== SUPABASE =====
-const script = document.createElement('script');
-script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-script.onload = () => init();
-document.head.appendChild(script);
+// Init on load
+document.addEventListener('DOMContentLoaded', () => init());
 
 // ===== UTILS =====
 function showToast(msg, type='success') {
