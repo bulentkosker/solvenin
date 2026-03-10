@@ -258,6 +258,29 @@
 .nav-item.active .nav-icon { color:#60a5fa; }
 .nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
 
+
+
+/* SIDEBAR NAV */
+.sidebar-sections { flex:1; overflow-y:auto; padding:8px 0; }
+.sidebar-section { padding:12px 12px 4px; }
+.sidebar-section-label { font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.2); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .15s; margin-bottom:2px; text-decoration:none; color:rgba(255,255,255,0.45); font-size:13px; font-weight:500; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+.nav-item.active { background:rgba(37,99,235,0.2); color:#fff; font-weight:600; }
+.nav-item.active .nav-icon { color:#60a5fa; }
+.nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+
+aside.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #1a2540;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -267,16 +290,8 @@
   <div class="spinner"></div>
   <div style="font-size:13px;color:var(--gray400)">Loading...</div>
 
-  <div class="sidebar-nav">
-  <div class="nav-group " id="group-envanter">
-    <div class="nav-group-header" onclick="toggleGroup('envanter')">
-      <div style="display:flex;align-items:center;gap:10px"><span class="nav-icon">📦</span><span class="nav-group-label">Envanter Yönetimi</span></div>
-      <span class="nav-group-arrow">›</span>
-    </div>
-    <div class="nav-group-items">
-        <a class="nav-item " href="inventory.html"><span class="nav-icon">🗂️</span> Stok Kartları</a>
-
-  <div class="sidebar-sections">
+  <aside class="sidebar">
+<div class="sidebar-sections">
     <div class="sidebar-section">
       <div class="sidebar-section-label">Main</div>
     <a class="nav-item  " href="dashboard.html"><span class="nav-icon">⊞</span> Dashboard</a>
@@ -313,6 +328,7 @@
       <div class="company-info">
         <div class="company-name" id="company-name">Loading...</div>
         <div class="company-plan" id="company-plan">—</div>
+</aside>
       </div>
       <div class="company-chevron">⌄</div>
     </div>
@@ -1912,6 +1928,25 @@ document.addEventListener('keydown', function(e) {
       if (next.tagName === 'INPUT') next.select();
     }
   }
+});
+</script>
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+  const modal = e.target.closest('.modal-overlay, .modal');
+  if (!modal) return;
+  e.preventDefault();
+  const focusable = Array.from(modal.querySelectorAll(
+    'input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+  )).filter(el => el.offsetParent !== null);
+  const idx = focusable.indexOf(e.target);
+  if (idx === -1) return;
+  const next = focusable[idx + 1];
+  if (!next) return;
+  if (next.tagName === 'BUTTON' && /save|confirm|kaydet|tamam/i.test(next.textContent)) {
+    next.click();
+  } else { next.focus(); if (next.tagName === 'INPUT') next.select(); }
 });
 </script>
 </body>
