@@ -14,7 +14,7 @@
   --gray500: #64748b; --gray600: #475569; --gray800: #1e293b;
   --green: #10b981; --green-light: #ecfdf5; --red: #ef4444; --red-light: #fef2f2;
   --orange: #f59e0b; --orange-light: #fffbeb; --purple: #8b5cf6; --purple-light: #f5f3ff;
-  --sidebar-w: 240px; --topbar-h: 64px;
+  --sidebar-w: 220px; --topbar-h: 64px;
   --font-display: 'Outfit', sans-serif; --font-body: 'DM Sans', sans-serif;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
   --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
@@ -213,6 +213,11 @@ tr:hover .action-btns { opacity:1; }
 
 </style>
 <script src="i18n.js"></script>
+    <style>
+    /* Critical sidebar CSS - prevents layout flash */
+    .sidebar { width: 220px; background: #0a1628; min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50; }
+    .main { margin-left: 220px; }
+  </style>
   <script src="sidebar.js"></script>
 </head>
 <body>

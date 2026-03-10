@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
-  --navy:#0a0f1e;--navy2:#0f2650;--blue:#2563eb;--blue-light:#eff6ff;
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#60a5fa;--blue-light:#eff6ff;
   --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
   --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
   --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
@@ -19,7 +19,7 @@
   --red:#ef4444;--red-light:#fef2f2;
   --orange:#f59e0b;--orange-light:#fffbeb;
   --purple:#8b5cf6;--purple-light:#f5f3ff;
-  --sidebar-w:240px;
+  --sidebar-w:220px;
   --font-display:'Outfit',sans-serif;
   --font-body:'DM Sans',sans-serif;
   --shadow-sm:0 1px 3px rgba(0,0,0,0.06);
@@ -27,11 +27,11 @@
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:14px}
-body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flexoverflow-x:hidden}
 
 
 /* MAIN */
-.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;width:calc(100vw - var(--sidebar-w));box-sizing:border-box}
 .topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
 .topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
 .topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
@@ -198,6 +198,11 @@ tr:hover .row-actions{opacity:1}
 .new-company-box input:focus { outline: none; border-color: #3b82f6; }
 </style>
 <script src="i18n.js"></script>
+    <style>
+    /* Critical sidebar CSS - prevents layout flash */
+    .sidebar { width: 220px; background: #0a1628; min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50; }
+    .main { margin-left: 220px; }
+  </style>
   <script src="sidebar.js"></script>
 </head>
 <body>

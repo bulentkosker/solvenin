@@ -225,6 +225,11 @@
 .new-company-box p{font-size:13px;color:#64748b;margin-bottom:20px}
 .new-company-box input{width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box}
 </style>
+    <style>
+    /* Critical sidebar CSS - prevents layout flash */
+    .sidebar { width: 220px; background: #0a1628; min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50; }
+    .main { margin-left: 220px; }
+  </style>
   <script src="sidebar.js"></script>
 </head>
 <body>

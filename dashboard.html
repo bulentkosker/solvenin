@@ -722,6 +722,11 @@ tr:hover td { background: var(--gray50); }
 .stat-opt-desc{font-size:11px;color:var(--gray400)}
 </style>
 <script src="i18n.js"></script>
+    <style>
+    /* Critical sidebar CSS - prevents layout flash */
+    .sidebar { width: 220px; background: #0a1628; min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50; }
+    .main { margin-left: 220px; }
+  </style>
   <script src="sidebar.js"></script>
 </head>
 <body>
@@ -1056,7 +1061,8 @@ async function init() {
 
   // Plan
   const { data: profile } = await sb.from('profiles').select('*, companies(plan,name)').eq('id', user.id).single();
-  companyId = profile?.company_id || null;
+  companyId = profile?.company_id || localStorage.getItem('currentCompanyId') || null;
+  if (companyId) localStorage.setItem('currentCompanyId', companyId);
   const plan = profile?.companies?.plan || 'free';
   document.getElementById('sb-user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
@@ -1160,6 +1166,7 @@ function renderStatCards(data){
 }
 
 async function loadDashboardStats(){
+  if (!companyId) { console.warn('loadDashboardStats: companyId not set'); return; }
   try{
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
