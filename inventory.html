@@ -1206,7 +1206,6 @@ async function saveProduct() {
     max_stock: document.getElementById('p-max-stock').value !== '' ? parseFloat(document.getElementById('p-max-stock').value) : null,
     cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
-    location: document.getElementById('p-location').value.trim() || null,
     company_id: companyId,
     active: true,
   };
