@@ -1346,12 +1346,22 @@ function openNewCompanyModal() {
 }
 
 async function createNewCompany() {
-  const name = document.getElementById('new-company-name').value.trim();
-  const errEl = document.getElementById('new-company-err');
-  if (!name) { errEl.textContent = 'Company name is required'; errEl.style.display = 'block'; return; }
+  const name = document.getElementById('new-company-name')?.value.trim();
+  if (!name) return;
   try {
     const user = (await sb.auth.getSession()).data.session?.user;
-    
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g,'-') + '-' + Date.now();
+    const { data: comp, error } = await sb.from('companies').insert({
+      name, slug, plan: 'pro', owner_id: user.id, status: 'active'
+    }).select().single();
+    if (error) throw error;
+    await sb.from('company_users').insert({
+      company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
+    });
+    await sb.rpc('switch_company', { target_company_id: comp.id });
+    window.location.reload();
+  } catch(e) { alert(e.message); }
+}
 
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#company-switcher') && !e.target.closest('#company-menu')) {
