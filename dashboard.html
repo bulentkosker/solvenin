@@ -50,6 +50,7 @@ body {
   color: var(--gray800);
   min-height: 100vh;
   display: flex;
+  overflow-x: hidden;
 }
 
 /* ===== SIDEBAR ===== */
@@ -96,7 +97,9 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  width: calc(100vw - var(--sidebar-w));
   max-width: calc(100vw - var(--sidebar-w));
+  box-sizing: border-box;
 }
 
 /* ===== TOPBAR ===== */
@@ -738,7 +741,7 @@ tr:hover td { background: var(--gray50); }
     <div class="welcome-row fade-up">
       <div class="welcome-text">
         <h1>Good morning, <span id="greeting-name">there</span>! 👋</h1>
-        <p><p data-i18n="dash_sub">Here's what's happening with your business today.</p></p>
+        <p data-i18n="dash_sub">Here's what's happening with your business today.</p>
       </div>
       <div class="welcome-date" id="today-date">—</div>
     </div>

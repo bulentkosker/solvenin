@@ -255,7 +255,6 @@ function sidebarOpenNewCompany() {
   document.getElementById('new-company-err').style.display='none';
   document.getElementById('sb-new-company-modal').classList.add('open');
 }
-}
 document.addEventListener('click',function(e){
   if(!e.target.closest('#company-switcher')&&!e.target.closest('#company-menu')){
     const m=document.getElementById('sb-company-menu');if(m)m.style.display='none';
