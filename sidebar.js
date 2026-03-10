@@ -266,9 +266,10 @@
 
   /* ── MOUNT ───────────────────────────────────────────────── */
   function mount() {
+    if (!document.body) return false;
     injectCSS();
 
-    // Create sidebar element if not present
+    // Use existing placeholder or create new
     let sidebar = document.getElementById('sidebar');
     if (!sidebar) {
       sidebar = document.createElement('aside');
@@ -277,6 +278,7 @@
       document.body.insertBefore(sidebar, document.body.firstChild);
     }
     sidebar.innerHTML = buildHTML();
+    return true;
   }
 
   /* ── SUPABASE DATA ───────────────────────────────────────── */
@@ -408,12 +410,18 @@
     setTimeout(() => clearInterval(wait), 5000);
   }
 
-  // Mount sidebar HTML immediately (synchronous) so sb-* IDs exist for page scripts
-  mount();
-  
-  // Load data after DOM + Supabase ready
+  // Mount immediately if DOM ready, otherwise on DOMContentLoaded
+  function tryMount() {
+    if (document.body) {
+      mount();
+      window._sidebarMounted = true;
+      document.dispatchEvent(new Event('sidebarMounted'));
+    }
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
+      tryMount();
       const wait = setInterval(() => {
         if (window._supabase || window.supabase) {
           clearInterval(wait);
@@ -423,6 +431,7 @@
       setTimeout(() => clearInterval(wait), 5000);
     });
   } else {
+    tryMount();
     const wait = setInterval(() => {
       if (window._supabase || window.supabase) {
         clearInterval(wait);

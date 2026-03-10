@@ -601,8 +601,8 @@ async function init() {
   if (!user) return;
 
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
-  document.getElementById('sb-user-name').textContent = name;
-  document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
+  (document.getElementById('sb-user-name')||{}).textContent = name;
+  (document.getElementById('sb-user-avatar')||{}).textContent = name[0].toUpperCase();
 
     const _savedId = localStorage.getItem('currentCompanyId');
   const { data: _myCompanies } = await sb.rpc('get_my_companies');
@@ -1370,8 +1370,8 @@ async function loadCompanies() {
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];
     if (active) {
-      document.getElementById('sb-company-name').textContent = active.company_name;
-      document.getElementById('sb-company-plan').textContent = active.plan?.toUpperCase() || 'FREE';
+      (document.getElementById('sb-company-name')||{}).textContent = active.company_name;
+      (document.getElementById('sb-company-plan')||{}).textContent = active.plan?.toUpperCase() || 'FREE';
       if (!companyId) companyId = active.company_id;
     }
     renderCompanyMenu();

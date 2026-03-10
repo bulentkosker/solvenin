@@ -530,8 +530,8 @@ async function init() {
   if (!session) { window.location.href = '/auth.html'; return; }
   const user = session.user;
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
-  document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
-  document.getElementById('sb-user-name').textContent = name;
+  (document.getElementById('sb-user-avatar')||{}).textContent = name[0].toUpperCase();
+  (document.getElementById('sb-user-name')||{}).textContent = name;
     const _savedId = localStorage.getItem('currentCompanyId');
   const { data: _myCompanies } = await sb.rpc('get_my_companies');
   if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }

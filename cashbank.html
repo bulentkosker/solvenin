@@ -925,8 +925,8 @@ async function init() {
 
   const user = session.user;
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
-  document.getElementById('sb-user-avatar').textContent = name[0].toUpperCase();
-  document.getElementById('sb-user-name').textContent = name;
+  (document.getElementById('sb-user-avatar')||{}).textContent = name[0].toUpperCase();
+  (document.getElementById('sb-user-name')||{}).textContent = name;
 
   // Get active company from company_users
   const _savedId = localStorage.getItem('currentCompanyId');

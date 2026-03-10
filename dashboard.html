@@ -1056,8 +1056,8 @@ async function init() {
   const name = meta.full_name || meta.name || user.email.split('@')[0];
   const firstName = name.split(' ')[0];
   document.getElementById('greeting-name').textContent = firstName;
-  document.getElementById('sb-user-name').textContent = name;
-  document.getElementById('sb-user-avatar').textContent = firstName[0].toUpperCase();
+  (document.getElementById('sb-user-name')||{}).textContent = name;
+  (document.getElementById('sb-user-avatar')||{}).textContent = firstName[0].toUpperCase();
 
   // Company & Plan
   let plan = 'free';
@@ -1068,10 +1068,10 @@ async function init() {
     companyId = active.company_id;
     localStorage.setItem('currentCompanyId', companyId);
     plan = active.plan || 'free';
-    document.getElementById('sb-company-name').textContent = active.company_name || '';
-    document.getElementById('sb-company-plan').textContent = plan.toUpperCase();
+    (document.getElementById('sb-company-name')||{}).textContent = active.company_name || '';
+    (document.getElementById('sb-company-plan')||{}).textContent = plan.toUpperCase();
   }
-  document.getElementById('sb-user-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
+  (document.getElementById('sb-user-plan')||{}).textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
 
   // Date
