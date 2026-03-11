@@ -896,8 +896,8 @@ footer {
           <div onclick="selectLang('ja','JA','日本語')" style="padding:8px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.8);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">JA &nbsp; 日本語</div>
         </div>
       </div>
-      <button class="btn-ghost" data-i18n="nav_login">Log in</button>
-      <button class="btn-primary" data-i18n="nav_start">Start Free →</button>
+      <button class="btn-ghost" data-i18n="nav_login" onclick="window.location.href='/auth.html'">Log in</button>
+      <button class="btn-primary" data-i18n="nav_start" onclick="window.location.href='/auth.html'">Start Free →</button>
     </div>
   </div>
 </nav>
@@ -911,8 +911,8 @@ footer {
   <h1 data-i18n="hero_title">The Business Software<br>that <span class="highlight">Solves Everything.</span></h1>
   <p class="hero-sub" data-i18n="hero_sub">One platform for every industry. Manage inventory, sales, production, HR, and more — without complexity.</p>
   <div class="hero-actions">
-    <button class="btn-hero" data-i18n="hero_cta1">Start for Free →</button>
-    <button class="btn-hero-outline" data-i18n="hero_cta2">Watch Demo</button>
+    <button class="btn-hero" data-i18n="hero_cta1" onclick="window.location.href='/auth.html'">Start for Free →</button>
+    <button class="btn-hero-outline" data-i18n="hero_cta2" onclick="document.getElementById('demo-video')?.scrollIntoView({behavior:'smooth'}) || document.querySelector('#features')?.scrollIntoView({behavior:'smooth'})">Watch Demo</button>
   </div>
   <div class="hero-stats">
     <div class="hero-stat">
@@ -1237,44 +1237,44 @@ footer {
         <h4 data-i18n="fc1">Product</h4>
         <a href="#features" data-i18n="fc1_1">Features</a>
         <a href="#pricing" data-i18n="fc1_2">Pricing</a>
-        <a href="#" data-i18n="fc1_3">Changelog</a>
-        <a href="#" data-i18n="fc1_4">Roadmap</a>
+        <a href="/changelog.html" data-i18n="fc1_3">Changelog</a>
+        <a href="/roadmap.html" data-i18n="fc1_4">Roadmap</a>
       </div>
       <div class="footer-col">
         <h4 data-i18n="fc2">Industries</h4>
-        <a href="#" data-i18n="fc2_1">Manufacturing</a>
-        <a href="#" data-i18n="fc2_2">Retail</a>
-        <a href="#" data-i18n="fc2_3">Hospitality</a>
-        <a href="#" data-i18n="fc2_4">Restaurant</a>
+        <a href="#sectors" data-i18n="fc2_1">Manufacturing</a>
+        <a href="#sectors" data-i18n="fc2_2">Retail</a>
+        <a href="#sectors" data-i18n="fc2_3">Hospitality</a>
+        <a href="#sectors" data-i18n="fc2_4">Restaurant</a>
       </div>
       <div class="footer-col">
         <h4 data-i18n="fc3">Company</h4>
-        <a href="#" data-i18n="fc3_1">About</a>
-        <a href="#" data-i18n="fc3_2">Blog</a>
-        <a href="#" data-i18n="fc3_3">Careers</a>
-        <a href="#" data-i18n="fc3_4">Contact</a>
+        <a href="/about.html" data-i18n="fc3_1">About</a>
+        <a href="/blog.html" data-i18n="fc3_2">Blog</a>
+        <a href="/cdn-cgi/l/email-protection#543735263131262714273b3822313a3d3a7a373b39" data-i18n="fc3_3">Careers</a>
+        <a href="/cdn-cgi/l/email-protection#a0d3d5d0d0cfd2d4e0d3cfccd6c5cec9ce8ec3cfcd" data-i18n="fc3_4">Contact</a>
       </div>
       <div class="footer-col">
         <h4 data-i18n="fc4">Legal</h4>
-        <a href="#" data-i18n="fc4_1">Privacy</a>
-        <a href="#" data-i18n="fc4_2">Terms</a>
-        <a href="#" data-i18n="fc4_3">Security</a>
-        <a href="#" data-i18n="fc4_4">Cookies</a>
+        <a href="/privacy.html" data-i18n="fc4_1">Privacy</a>
+        <a href="/terms.html" data-i18n="fc4_2">Terms</a>
+        <a href="/cdn-cgi/l/email-protection#cebdabadbbbca7bab78ebda1a2b8aba0a7a0e0ada1a3" data-i18n="fc4_3">Security</a>
+        <a href="/cookies.html" data-i18n="fc4_4">Cookies</a>
       </div>
     </div>
     <div class="footer-bottom">
       <p data-i18n="footer_copy">© 2025 Solvenin. All rights reserved.</p>
       <div class="footer-socials">
-        <a class="social-btn" href="#">𝕏</a>
-        <a class="social-btn" href="#">in</a>
-        <a class="social-btn" href="#">▶</a>
-        <a class="social-btn" href="#">f</a>
+        <a class="social-btn" href="https://x.com/solvenin" target="_blank">𝕏</a>
+        <a class="social-btn" href="https://linkedin.com/company/solvenin" target="_blank">in</a>
+        <a class="social-btn" href="https://youtube.com/@solvenin" target="_blank">▶</a>
+        <a class="social-btn" href="https://facebook.com/solvenin" target="_blank">f</a>
       </div>
     </div>
   </div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ===== TRANSLATIONS =====
 const T = {
   en: {
@@ -1843,12 +1843,4 @@ function startCheckout(plan) {
   if(typeof Paddle === 'undefined') { alert('Payment loading, please try again.'); return; }
   Paddle.Checkout.open({
     items: [{ priceId: PRICES[plan][billingCycle], quantity: userCount }],
-    successUrl: 'https://solvenin.com/dashboard.html',
-  });
-}
-window.addEventListener('load', updatePrices);
-</script>
-<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-<script>Paddle.Initialize({ token: 'live_86387040169b79a333adb0388ff' });</script>
-</body>
-</html>
+    successUrl: 'https://solvenin.com/dashboard.
