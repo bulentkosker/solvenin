@@ -1252,7 +1252,7 @@ footer {
         <a href="/about.html" data-i18n="fc3_1">About</a>
         <a href="/blog.html" data-i18n="fc3_2">Blog</a>
         <a href="/cdn-cgi/l/email-protection#543735263131262714273b3822313a3d3a7a373b39" data-i18n="fc3_3">Careers</a>
-        <a href="/cdn-cgi/l/email-protection#a0d3d5d0d0cfd2d4e0d3cfccd6c5cec9ce8ec3cfcd" data-i18n="fc3_4">Contact</a>
+        <a href="mailto:support@solvenin.com" data-i18n="fc3_4">Contact</a>
       </div>
       <div class="footer-col">
         <h4 data-i18n="fc4">Legal</h4>
@@ -1843,4 +1843,9 @@ function startCheckout(plan) {
   if(typeof Paddle === 'undefined') { alert('Payment loading, please try again.'); return; }
   Paddle.Checkout.open({
     items: [{ priceId: PRICES[plan][billingCycle], quantity: userCount }],
-    successUrl: 'https://solvenin.com/dashboard.
+    successUrl: 'https://solvenin.com/dashboard.html'
+  });
+}
+</script>
+</body>
+</html>
