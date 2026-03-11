@@ -790,7 +790,7 @@ function renderMovements() {
     </td>
     <td style="color:var(--gray500);font-size:12px">${m.ref || '—'}</td>
     <td style="color:var(--gray500);font-size:12px">${m.note || '—'}</td>
-    <td>${m.reference_type && m.reference_type !== 'manual'
+    <td>${m.invoice_id
       ? `<span style="font-size:11px;color:var(--gray400)" title="${t('err_movement_has_reference')||'Linked to order'}">🔒</span>`
       : `<button class="action-btn danger" onclick="deleteMovement('${m.id}','${m.product_id}',${m.type==='in'||m.type==='return'?-1:1},${m.qty})" title="${t('lbl_cancel')||'Delete'}">🗑️</button>`
     }</td>
@@ -900,7 +900,7 @@ async function loadProducts() {
 async function loadMovements() {
   if (!companyId) return;
   const { data, error } = await sb.from('stock_movements')
-    .select('id,created_at,product_id,type,quantity,reference,notes,reference_type,reference_id,products(name)')
+    .select('id,created_at,product_id,type,quantity,reference,notes,invoice_id,products(name)')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -915,8 +915,7 @@ async function loadMovements() {
     qty: parseFloat(m.quantity || 0),
     ref: m.reference || '',
     note: m.notes || '',
-    reference_type: m.reference_type || null,
-    reference_id: m.reference_id || null,
+    invoice_id: m.invoice_id || null,
   }));
 }
 

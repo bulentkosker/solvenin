@@ -885,7 +885,7 @@ async function editOrder(id) {
 
 async function deleteOrder(id) {
   if (!confirm(t('confirm_delete_order'))) return;
-  const { count: payCount } = await sb.from('sales_payments').select('id', {count:'exact',head:true}).eq('order_id', id);
+  const { count: payCount } = await sb.from('payments').select('id', {count:'exact',head:true}).eq('order_id', id);
   if (payCount > 0) {
     showToast(t('err_has_payments').replace('{0}', payCount), 'error'); return;
   }
@@ -893,7 +893,7 @@ async function deleteOrder(id) {
   const _now = new Date().toISOString();
   // Soft delete linked stock movements
   await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id })
-    .eq('reference_id', id).eq('reference_type', 'sales_order');
+    .eq('invoice_id', id);
   // Soft delete order
   await sb.from('sales_orders').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('order_deleted'), 'success');
