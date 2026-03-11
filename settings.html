@@ -986,12 +986,16 @@ async function renameCat(id, name) {
   showToast('Renamed ✓', 'success');
 }
 
-function openDeleteCat(id, name) {
+async function openDeleteCat(id, name) {
   const children = allCategories.filter(c => c.parent_id === id);
   if (children.length) {
-    showToast('Delete sub-categories first', 'error'); return;
+    showToast(t('err_delete_subcategories_first')||'Delete sub-categories first', 'error'); return;
   }
-  document.getElementById('delete-msg').textContent = `Delete category "${name}"? This cannot be undone.`;
+  const { count: prodCount } = await sb.from('products').select('id',{count:'exact',head:true}).eq('category_id', id).eq('active',true);
+  if (prodCount > 0) {
+    showToast((t('err_has_products')||'Cannot delete: {0} product(s) use this category').replace('{0}', prodCount), 'error'); return;
+  }
+  document.getElementById('delete-msg').textContent = `${t('confirm_delete_category')||'Delete category'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('categories').delete().eq('id', id);
     if (error) { showToast(error.message, 'error'); return; }
@@ -1068,14 +1072,24 @@ async function saveWarehouse() {
   showToast('Saved ✓', 'success');
 }
 
-function openDeleteWarehouse(id, name) {
-  document.getElementById('delete-msg').textContent = `Delete warehouse "${name}"?`;
+async function openDeleteWarehouse(id, name) {
+  const [mvs, prods] = await Promise.all([
+    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('warehouse_id', id),
+    sb.from('products').select('id',{count:'exact',head:true}).eq('warehouse_id', id).eq('active',true),
+  ]);
+  if ((mvs.count||0) > 0) {
+    showToast((t('err_has_stock_movements')||'Cannot delete: {0} stock movements exist').replace('{0}', mvs.count), 'error'); return;
+  }
+  if ((prods.count||0) > 0) {
+    showToast((t('err_has_products')||'Cannot delete: {0} products use this warehouse').replace('{0}', prods.count), 'error'); return;
+  }
+  document.getElementById('delete-msg').textContent = `${t('confirm_delete_warehouse')||'Delete warehouse'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('warehouses').delete().eq('id', id);
     if (error) { showToast(error.message, 'error'); return; }
     closeModal('delete-modal');
     await loadWarehouses();
-    showToast('Deleted ✓', 'success');
+    showToast(t('toast_deleted')||'Deleted ✓', 'success');
   };
   openModal('delete-modal');
 }
@@ -1143,14 +1157,22 @@ async function saveTax() {
   showToast('Saved ✓', 'success');
 }
 
-function openDeleteTax(id, name) {
-  document.getElementById('delete-msg').textContent = `Delete tax rate "${name}"?`;
+async function openDeleteTax(id, name) {
+  const [so, po] = await Promise.all([
+    sb.from('sales_orders').select('id',{count:'exact',head:true}).eq('tax_rate_id', id),
+    sb.from('purchase_orders').select('id',{count:'exact',head:true}).eq('tax_rate_id', id),
+  ]);
+  const total = (so.count||0) + (po.count||0);
+  if (total > 0) {
+    showToast((t('err_has_tax_usage')||'Cannot delete: used in {0} order(s)').replace('{0}', total), 'error'); return;
+  }
+  document.getElementById('delete-msg').textContent = `${t('confirm_delete_tax')||'Delete tax rate'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('tax_rates').delete().eq('id', id);
     if (error) { showToast(error.message, 'error'); return; }
     closeModal('delete-modal');
     await loadTaxes();
-    showToast('Deleted ✓', 'success');
+    showToast(t('toast_deleted')||'Deleted ✓', 'success');
   };
   openModal('delete-modal');
 }

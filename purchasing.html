@@ -838,9 +838,14 @@ async function editOrder(id) {
 
 async function deleteOrder(id) {
   if (!confirm(t('confirm_delete_po'))) return;
+  // Check if stock has been received (stock_movements from this PO)
+  const { count: mvCount } = await sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('reference_id', id).eq('reference_type','purchase_order');
+  if (mvCount > 0) {
+    showToast(t('err_has_stock_movements').replace('{0}', mvCount), 'error'); return;
+  }
   await sb.from('purchase_order_items').delete().eq('order_id', id);
   await sb.from('purchase_orders').delete().eq('id', id);
-  showToast(t('toast_order_deleted'),'success');
+  showToast(t('po_deleted'),'success');
   await loadOrders();
 }
 
@@ -971,8 +976,12 @@ function editSupplier(id) { openSupplierModal(id); }
 
 async function deleteSupplier(id) {
   if (!confirm(t('confirm_delete_supplier'))) return;
+  const { count } = await sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id);
+  if (count > 0) {
+    showToast(t('err_has_purchase_orders').replace('{0}', count), 'error'); return;
+  }
   await sb.from('suppliers').delete().eq('id',id);
-  showToast(t('toast_supplier_deleted'),'success');
+  showToast(t('supplier_deleted'),'success');
   await loadSuppliers();
 }
 
@@ -1024,7 +1033,7 @@ document.addEventListener('click', function(e) {
 
 // Re-render when currency loads
 document.addEventListener('currencyLoaded', function() {
-  if (typeof recalcTotals === 'function') recalcTotals();
+  if (typeof recalcOrder === 'function') recalcOrder();
   if (typeof filterOrders === 'function') filterOrders();
   const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
   document.querySelectorAll('#lbl-discount-sym').forEach(el => el.textContent = sym);

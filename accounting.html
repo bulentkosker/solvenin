@@ -817,6 +817,9 @@ async function saveAccount() {
 
 function deleteAccount(id) {
   deleteCallback = async () => {
+    // Check journal_lines referencing this account
+    const { count } = await sb.from('journal_lines').select('id', {count:'exact',head:true}).eq('account_id', id);
+    if (count > 0) { showToast(t('err_has_journal_lines').replace('{0}', count), 'error'); return; }
     await sb.from('chart_of_accounts').update({ is_active: false }).eq('id', id);
     await loadAccounts(); updateStats();
     showToast(t('toast_deleted'), 'success');
@@ -1243,6 +1246,12 @@ function renderTaxTable() {
 
 function deleteTax(id) {
   deleteCallback = async () => {
+    const [so, po] = await Promise.all([
+      sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('tax_rate_id', id),
+      sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('tax_rate_id', id),
+    ]);
+    const total = (so.count||0) + (po.count||0);
+    if (total > 0) { showToast(t('err_has_tax_usage').replace('{0}', total), 'error'); return; }
     await sb.from('tax_rates').delete().eq('id', id);
     await loadTaxRates();
     showToast(t('toast_deleted'), 'success');
@@ -1420,6 +1429,13 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('#company-switcher')&&!e.target.closest('#company-menu')){
     const m=document.getElementById('sb-company-menu');if(m)m.style.display='none';
   }
+});
+
+document.addEventListener('currencyLoaded', function() {
+  if (typeof renderCOA === 'function') renderCOA();
+  if (typeof renderJournal === 'function') renderJournal();
+  if (typeof renderBS === 'function') renderBS();
+  if (typeof renderPL === 'function') renderPL();
 });
 </script>
 </body>

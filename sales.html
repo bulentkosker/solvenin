@@ -885,6 +885,10 @@ async function editOrder(id) {
 
 async function deleteOrder(id) {
   if (!confirm(t('confirm_delete_order'))) return;
+  const { count: payCount } = await sb.from('sales_payments').select('id', {count:'exact',head:true}).eq('order_id', id);
+  if (payCount > 0) {
+    showToast(t('err_has_payments').replace('{0}', payCount), 'error'); return;
+  }
   await sb.from('sales_order_items').delete().eq('order_id', id);
   await sb.from('sales_orders').delete().eq('id', id);
   showToast(t('order_deleted'), 'success');
@@ -917,6 +921,10 @@ function editCustomer(id) { openCustomerModal(id); }
 
 async function deleteCustomer(id) {
   if (!confirm(t('confirm_delete_customer'))) return;
+  const { count } = await sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id);
+  if (count > 0) {
+    showToast(t('err_has_sales_orders').replace('{0}', count), 'error'); return;
+  }
   await sb.from('customers').delete().eq('id', id);
   showToast(t('customer_deleted'),'success');
   await loadCustomers();
@@ -1302,7 +1310,7 @@ document.addEventListener('click', function(e) {
 
 // Re-render when currency loads
 document.addEventListener('currencyLoaded', function() {
-  if (typeof recalcTotals === 'function') recalcTotals();
+  if (typeof recalcOrder === 'function') recalcOrder();
   if (typeof filterOrders === 'function') filterOrders();
   // Update discount label symbol
   const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';

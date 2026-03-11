@@ -1201,12 +1201,30 @@ function openDeleteModal(id) {
 }
 
 async function confirmDelete() {
+  // Check dependencies before deleting
+  const [soItems, poItems, movements] = await Promise.all([
+    sb.from('sales_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
+    sb.from('purchase_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
+    sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
+  ]);
+  const soCount = soItems.count || 0;
+  const poCount = poItems.count || 0;
+  const mvCount = movements.count || 0;
+  if (mvCount > 0) {
+    showToast(t('err_has_stock_movements').replace('{0}', mvCount), 'error'); return;
+  }
+  if (soCount > 0) {
+    showToast(t('err_has_order_lines').replace('{0}', soCount), 'error'); return;
+  }
+  if (poCount > 0) {
+    showToast(t('err_has_order_lines').replace('{0}', poCount), 'error'); return;
+  }
   const { error } = await sb.from('products').update({ active: false }).eq('id', deletingId);
   if (error) { showToast(error.message, 'error'); return; }
   closeModal('delete-modal');
   await loadProducts();
   renderAll();
-  showToast(t('toast_deleted') || 'Product deleted', 'success');
+  showToast(t('product_deleted'), 'success');
 }
 
 function openMovementModal() {
