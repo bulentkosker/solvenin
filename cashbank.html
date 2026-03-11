@@ -1343,7 +1343,8 @@ function deleteRegister(id) {
   deleteCallback = async () => {
     const { count } = await sb.from('cash_transactions').select('id', {count:'exact',head:true}).eq('register_id', id);
     if (count > 0) { showToast(t('err_has_transactions').replace('{0}', count), 'error'); return; }
-    await sb.from('cash_registers').update({ is_active: false }).eq('id', id);
+    const { data: { user: _u } } = await sb.auth.getUser();
+    await sb.from('cash_registers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     if (selectedRegisterId === id) { selectedRegisterId = null; document.getElementById('cash-detail').style.display = 'none'; }
     await loadRegisters(); updateStats();
     showToast(t('toast_deleted'), 'success');
@@ -1433,7 +1434,8 @@ function deleteBank(id) {
   deleteCallback = async () => {
     const { count } = await sb.from('bank_accounts').select('id', {count:'exact',head:true}).eq('bank_id', id).eq('is_active', true);
     if (count > 0) { showToast(t('err_has_bank_accounts').replace('{0}', count), 'error'); return; }
-    await sb.from('banks').update({ is_active: false }).eq('id', id);
+    const { data: { user: _u } } = await sb.auth.getUser();
+    await sb.from('banks').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     await loadBanks(); updateAccountFilter(); updateStats();
     showToast(t('toast_deleted'), 'success');
   };
@@ -1505,7 +1507,8 @@ function deleteAccount(id) {
   deleteCallback = async () => {
     const { count } = await sb.from('bank_transactions').select('id', {count:'exact',head:true}).eq('account_id', id);
     if (count > 0) { showToast(t('err_has_transactions').replace('{0}', count), 'error'); return; }
-    await sb.from('bank_accounts').update({ is_active: false }).eq('id', id);
+    const { data: { user: _u } } = await sb.auth.getUser();
+    await sb.from('bank_accounts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     if (selectedAccountId === id) { selectedAccountId = null; document.getElementById('bank-detail').style.display = 'none'; }
     await loadBanks(); updateAccountFilter(); updateStats();
     showToast(t('toast_deleted'), 'success');

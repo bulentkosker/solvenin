@@ -556,21 +556,21 @@ await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses()]);
 }
 
 async function loadOrders() {
-  const { data } = await sb.from('purchase_orders').select('*, suppliers(name)').eq('company_id', companyId).order('created_at', { ascending: false });
+  const { data } = await sb.from('purchase_orders').select('*, suppliers(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
   renderOrders(orders);
   updateStats();
 }
 
 async function loadSuppliers() {
-  const { data } = await sb.from('suppliers').select('*').eq('company_id', companyId).order('name');
+  const { data } = await sb.from('suppliers').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
   suppliers = data || [];
   renderSuppliers(suppliers);
   updateSupplierSelects();
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,cost_price,unit').eq('company_id', companyId).eq('active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,cost_price,unit').eq('company_id', companyId).eq('is_active', true).order('name');
   products = data || [];
 }
 
@@ -838,13 +838,15 @@ async function editOrder(id) {
 
 async function deleteOrder(id) {
   if (!confirm(t('confirm_delete_po'))) return;
-  // Check if stock has been received (stock_movements from this PO)
-  const { count: mvCount } = await sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('reference_id', id).eq('reference_type','purchase_order');
+  const { count: mvCount } = await sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('reference_id', id).eq('reference_type','purchase_order').eq('is_active', true);
   if (mvCount > 0) {
     showToast(t('err_has_stock_movements').replace('{0}', mvCount), 'error'); return;
   }
-  await sb.from('purchase_order_items').delete().eq('order_id', id);
-  await sb.from('purchase_orders').delete().eq('id', id);
+  const { data: { user: _u } } = await sb.auth.getUser();
+  const _now = new Date().toISOString();
+  await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id })
+    .eq('reference_id', id).eq('reference_type', 'purchase_order');
+  await sb.from('purchase_orders').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('po_deleted'),'success');
   await loadOrders();
 }
@@ -976,11 +978,12 @@ function editSupplier(id) { openSupplierModal(id); }
 
 async function deleteSupplier(id) {
   if (!confirm(t('confirm_delete_supplier'))) return;
-  const { count } = await sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id);
+  const { count } = await sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).eq('is_active', true);
   if (count > 0) {
     showToast(t('err_has_purchase_orders').replace('{0}', count), 'error'); return;
   }
-  await sb.from('suppliers').delete().eq('id',id);
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('suppliers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
   showToast(t('supplier_deleted'),'success');
   await loadSuppliers();
 }

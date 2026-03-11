@@ -513,6 +513,48 @@ tr:hover .action-btns { opacity:1; }
           </div>
         </div>
 
+      <!-- ===== RECYCLE BIN ===== -->
+      <div class="settings-section" id="section-recycle">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="nav_recycle_bin">Recycle Bin</div>
+              <div class="settings-card-desc" data-i18n="recycle_bin_desc">Deleted records. Restore or permanently delete.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="recycle-filter" onchange="filterRecycleBin()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--gray200)">
+                <option value="">All Types</option>
+                <option value="product">Products</option>
+                <option value="customer">Customers</option>
+                <option value="supplier">Suppliers</option>
+                <option value="sales_order">Sales Orders</option>
+                <option value="purchase_order">Purchase Orders</option>
+                <option value="stock_movement">Stock Movements</option>
+                <option value="cash_register">Cash Registers</option>
+                <option value="bank_account">Bank Accounts</option>
+                <option value="coa_account">COA Accounts</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-card-body" style="padding:0">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="background:var(--gray50);border-bottom:1px solid var(--gray200)">
+                  <th style="padding:10px 16px;text-align:left;color:var(--gray500);font-weight:500" data-i18n="col_type">Type</th>
+                  <th style="padding:10px 16px;text-align:left;color:var(--gray500);font-weight:500" data-i18n="label_name">Name</th>
+                  <th style="padding:10px 16px;text-align:left;color:var(--gray500);font-weight:500" data-i18n="col_deleted_at">Deleted At</th>
+                  <th style="padding:10px 16px;text-align:left;color:var(--gray500);font-weight:500" data-i18n="col_deleted_by">Deleted By</th>
+                  <th style="padding:10px 16px;text-align:right;color:var(--gray500);font-weight:500"></th>
+                </tr>
+              </thead>
+              <tbody id="recycle-tbody">
+                <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--gray400)">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       </div><!-- /settings-content -->
     </div><!-- /settings-layout -->
   </div><!-- /content -->
@@ -1238,6 +1280,116 @@ document.addEventListener('click', function(e) {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('open'); });
 });
+
+// ===== RECYCLE BIN =====
+let allDeletedRecords = [];
+
+async function loadRecycleBin() {
+  if (!companyId) return;
+  const tbody = document.getElementById('recycle-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--gray400)">${t('loading')||'Loading...'}</td></tr>`;
+
+  // Query each table for soft-deleted records
+  const queries = await Promise.all([
+    sb.from('products').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('customers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('suppliers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('sales_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('purchase_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('stock_movements').select('id,type,quantity,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('cash_registers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('bank_accounts').select('id,account_name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('chart_of_accounts').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+  ]);
+
+  const types = ['product','customer','supplier','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account'];
+  const labelFields = ['name','name','name','order_number','order_number','type','name','account_name','name'];
+
+  allDeletedRecords = [];
+  queries.forEach(({ data }, i) => {
+    (data || []).forEach(r => {
+      allDeletedRecords.push({
+        type: types[i],
+        id: r.id,
+        label: r[labelFields[i]] || r.id,
+        extra: types[i] === 'stock_movement' ? ` (${r.quantity})` : '',
+        deleted_at: r.deleted_at,
+        deleted_by: r.deleted_by,
+      });
+    });
+  });
+
+  // Sort by deleted_at desc
+  allDeletedRecords.sort((a, b) => new Date(b.deleted_at) - new Date(a.deleted_at));
+  filterRecycleBin();
+}
+
+function filterRecycleBin() {
+  const filter = document.getElementById('recycle-filter')?.value || '';
+  const records = filter ? allDeletedRecords.filter(r => r.type === filter) : allDeletedRecords;
+  renderRecycleBin(records);
+}
+
+function renderRecycleBin(records) {
+  const tbody = document.getElementById('recycle-tbody');
+  if (!tbody) return;
+
+  const typeLabels = {
+    product: '📦 Product', customer: '👤 Customer', supplier: '🏭 Supplier',
+    sales_order: '🧾 Sales Order', purchase_order: '🛒 Purchase Order',
+    stock_movement: '📊 Movement', cash_register: '💵 Cash Register',
+    bank_account: '🏦 Bank Account', coa_account: '📒 COA Account',
+  };
+
+  if (!records.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--gray400)">🗑️ ${t('recycle_bin_empty')||'Recycle bin is empty'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map(r => `
+    <tr style="border-bottom:1px solid var(--gray100)">
+      <td style="padding:10px 16px"><span class="badge badge-gray">${typeLabels[r.type] || r.type}</span></td>
+      <td style="padding:10px 16px;font-weight:500">${r.label}${r.extra}</td>
+      <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_at ? new Date(r.deleted_at).toLocaleString() : '—'}</td>
+      <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_by ? r.deleted_by.substring(0,8)+'...' : '—'}</td>
+      <td style="padding:10px 16px;text-align:right">
+        <button class="btn btn-sm btn-success" onclick="restoreRecord('${r.type}','${r.id}')" style="margin-right:6px">↩ ${t('btn_restore')||'Restore'}</button>
+        <button class="btn btn-sm btn-danger" onclick="hardDeleteRecord('${r.type}','${r.id}','${r.label}')">✕ ${t('btn_hard_delete')||'Delete Forever'}</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function restoreRecord(type, id) {
+  const tableMap = {
+    product: 'products', customer: 'customers', supplier: 'suppliers',
+    sales_order: 'sales_orders', purchase_order: 'purchase_orders',
+    stock_movement: 'stock_movements', cash_register: 'cash_registers',
+    bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
+  };
+  const table = tableMap[type];
+  if (!table) return;
+  const { error } = await sb.from(table).update({ is_active: true, deleted_at: null, deleted_by: null }).eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_restored')||'Record restored ✓', 'success');
+  await loadRecycleBin();
+}
+
+async function hardDeleteRecord(type, id, label) {
+  if (!confirm(`${t('confirm_hard_delete')||'Permanently delete'} "${label}"? ${t('confirm_hard_delete_sub')||'This cannot be undone.'}`)) return;
+  const tableMap = {
+    product: 'products', customer: 'customers', supplier: 'suppliers',
+    sales_order: 'sales_orders', purchase_order: 'purchase_orders',
+    stock_movement: 'stock_movements', cash_register: 'cash_registers',
+    bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
+  };
+  const table = tableMap[type];
+  if (!table) return;
+  const { error } = await sb.from(table).delete().eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
+  await loadRecycleBin();
+}
 </script>
 </body>
 </html>

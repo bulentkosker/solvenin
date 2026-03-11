@@ -573,14 +573,14 @@ await Promise.all([loadCustomers(), loadProducts()]);
 
 // ===== LOAD =====
 async function loadOrders() {
-  const { data } = await sb.from('sales_orders').select('*, customers(name)').eq('company_id', companyId).order('created_at', { ascending: false });
+  const { data } = await sb.from('sales_orders').select('*, customers(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
   renderOrders(orders);
   updateStats();
 }
 
 async function loadCustomers() {
-  const { data } = await sb.from('customers').select('*').eq('company_id', companyId).order('name');
+  const { data } = await sb.from('customers').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
   customers = data || [];
   renderCustomers(customers);
   updateCustomerSelects();
@@ -592,7 +592,7 @@ async function loadWarehouses() {
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,sale_price,unit').eq('company_id', companyId).eq('active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,sale_price,unit').eq('company_id', companyId).eq('is_active', true).order('name');
   products = data || [];
 }
 
@@ -889,8 +889,13 @@ async function deleteOrder(id) {
   if (payCount > 0) {
     showToast(t('err_has_payments').replace('{0}', payCount), 'error'); return;
   }
-  await sb.from('sales_order_items').delete().eq('order_id', id);
-  await sb.from('sales_orders').delete().eq('id', id);
+  const { data: { user: _u } } = await sb.auth.getUser();
+  const _now = new Date().toISOString();
+  // Soft delete linked stock movements
+  await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id })
+    .eq('reference_id', id).eq('reference_type', 'sales_order');
+  // Soft delete order
+  await sb.from('sales_orders').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('order_deleted'), 'success');
   await loadOrders();
 }
@@ -921,11 +926,12 @@ function editCustomer(id) { openCustomerModal(id); }
 
 async function deleteCustomer(id) {
   if (!confirm(t('confirm_delete_customer'))) return;
-  const { count } = await sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id);
+  const { count } = await sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).eq('is_active', true);
   if (count > 0) {
     showToast(t('err_has_sales_orders').replace('{0}', count), 'error'); return;
   }
-  await sb.from('customers').delete().eq('id', id);
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('customers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
   showToast(t('customer_deleted'),'success');
   await loadCustomers();
 }

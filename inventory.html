@@ -790,9 +790,36 @@ function renderMovements() {
     </td>
     <td style="color:var(--gray500);font-size:12px">${m.ref || '—'}</td>
     <td style="color:var(--gray500);font-size:12px">${m.note || '—'}</td>
+    <td>${m.reference_type && m.reference_type !== 'manual'
+      ? `<span style="font-size:11px;color:var(--gray400)" title="${t('err_movement_has_reference')||'Linked to order'}">🔒</span>`
+      : `<button class="action-btn danger" onclick="deleteMovement('${m.id}','${m.product_id}',${m.type==='in'||m.type==='return'?-1:1},${m.qty})" title="${t('lbl_cancel')||'Delete'}">🗑️</button>`
+    }</td>
   </tr>`).join('');
 }
 
+
+async function deleteMovement(id, productId, stockSign, qty) {
+  if (!confirm(t('confirm_delete_movement')||'Delete this stock movement?')) return;
+  const { data: { user: _u } } = await sb.auth.getUser();
+  // Soft delete movement
+  const { error } = await sb.from('stock_movements').update({
+    is_active: false,
+    deleted_at: new Date().toISOString(),
+    deleted_by: _u?.id
+  }).eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  // Reverse stock impact
+  const delta = stockSign * qty;
+  const prod = products.find(p => p.id === productId);
+  if (prod) {
+    const newQty = Math.max(0, (prod.stock || 0) + delta);
+    await sb.from('products').update({ quantity: newQty }).eq('id', productId);
+  }
+  showToast(t('movement_deleted')||'Movement deleted ✓', 'success');
+  await loadMovements();
+  await loadProducts();
+  renderAll();
+}
 function populateAdjustSelect() {
   const sel = document.getElementById('adj-product');
   sel.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${p.stock} ${p.unit})</option>`).join('');
@@ -846,9 +873,9 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,active,company_id')
+    .select('id,name,sku,barcode,category_id,unit,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,is_active,company_id')
     .eq('company_id', companyId)
-    .eq('active', true)
+    .eq('is_active', true)
     .order('name');
   if (error) { console.error('loadProducts:', error); return; }
   products = (data || []).map(p => ({
@@ -873,8 +900,9 @@ async function loadProducts() {
 async function loadMovements() {
   if (!companyId) return;
   const { data, error } = await sb.from('stock_movements')
-    .select('id,created_at,product_id,type,quantity,reference,notes,products(name)')
+    .select('id,created_at,product_id,type,quantity,reference,notes,reference_type,reference_id,products(name)')
     .eq('company_id', companyId)
+    .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) { console.error('loadMovements:', error); return; }
@@ -887,6 +915,8 @@ async function loadMovements() {
     qty: parseFloat(m.quantity || 0),
     ref: m.reference || '',
     note: m.notes || '',
+    reference_type: m.reference_type || null,
+    reference_id: m.reference_id || null,
   }));
 }
 
@@ -1096,7 +1126,7 @@ async function saveProduct() {
     cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
     company_id: companyId,
-    active: true,
+    is_active: true,
   };
   let error;
   if (editingId) {
@@ -1205,7 +1235,7 @@ async function confirmDelete() {
   const [soItems, poItems, movements] = await Promise.all([
     sb.from('sales_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
     sb.from('purchase_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
-    sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
+    sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('product_id', deletingId).eq('is_active', true),
   ]);
   const soCount = soItems.count || 0;
   const poCount = poItems.count || 0;
@@ -1219,7 +1249,10 @@ async function confirmDelete() {
   if (poCount > 0) {
     showToast(t('err_has_order_lines').replace('{0}', poCount), 'error'); return;
   }
-  const { error } = await sb.from('products').update({ active: false }).eq('id', deletingId);
+  const { data: { user: _u } } = await sb.auth.getUser();
+  const { error } = await sb.from('products').update({
+    is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id
+  }).eq('id', deletingId);
   if (error) { showToast(error.message, 'error'); return; }
   closeModal('delete-modal');
   await loadProducts();

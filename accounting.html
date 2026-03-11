@@ -820,7 +820,8 @@ function deleteAccount(id) {
     // Check journal_lines referencing this account
     const { count } = await sb.from('journal_lines').select('id', {count:'exact',head:true}).eq('account_id', id);
     if (count > 0) { showToast(t('err_has_journal_lines').replace('{0}', count), 'error'); return; }
-    await sb.from('chart_of_accounts').update({ is_active: false }).eq('id', id);
+    const { data: { user: _u } } = await sb.auth.getUser();
+    await sb.from('chart_of_accounts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     await loadAccounts(); updateStats();
     showToast(t('toast_deleted'), 'success');
   };
