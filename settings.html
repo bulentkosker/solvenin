@@ -314,22 +314,22 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title">Company Information</div><div class="settings-card-desc">Basic details about your company</div></div>
-              <button class="btn-primary" onclick="saveCompanyInfo()">Save Changes</button>
+              <button class="btn-primary" onclick="saveCompanyInfo()" data-i18n="btn_save_changes">Save Changes</button>
             </div>
             <div class="settings-card-body">
               <div class="form-row">
-                <div class="form-group"><label>Company Name</label><input type="text" id="co-name" placeholder="Acme Corp"></div>
-                <div class="form-group"><label>Tax / Registration Number</label><input type="text" id="co-taxno" placeholder="e.g. 123456789"></div>
+                <div class="form-group"><label data-i18n="label_company_name">Company Name</label><input type="text" id="co-name" placeholder="Acme Corp"></div>
+                <div class="form-group"><label data-i18n="label_tax_number">Tax / Registration Number</label><input type="text" id="co-taxno" placeholder="e.g. 123456789"></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label>Email</label><input type="email" id="co-email" placeholder="info@company.com"></div>
-                <div class="form-group"><label>Phone</label><input type="text" id="co-phone" placeholder="+7 000 000 0000"></div>
+                <div class="form-group"><label data-i18n="label_email">Email</label><input type="email" id="co-email" placeholder="info@company.com"></div>
+                <div class="form-group"><label data-i18n="label_phone">Phone</label><input type="text" id="co-phone" placeholder="+7 000 000 0000"></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label>Website</label><input type="text" id="co-website" placeholder="https://company.com"></div>
+                <div class="form-group"><label data-i18n="label_website">Website</label><input type="text" id="co-website" placeholder="https://company.com"></div>
               </div>
               <div class="form-row full">
-                <div class="form-group"><label>Address</label><textarea id="co-address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
+                <div class="form-group"><label data-i18n="label_address">Address</label><textarea id="co-address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
               </div>
             </div>
           </div>
@@ -346,7 +346,7 @@ tr:hover .action-btns { opacity:1; }
             <div class="settings-card-body">
               <div class="form-row" style="margin-bottom:0">
                 <div class="form-group">
-                  <label>Base Currency</label>
+                  <label data-i18n="label_base_currency">Base Currency</label>
                   <select id="base-currency-select">
                     <option value="USD">USD — US Dollar</option>
 <option value="EUR">EUR — Euro</option>
@@ -464,7 +464,7 @@ tr:hover .action-btns { opacity:1; }
             </div>
             <div class="settings-card-body" style="padding:0">
               <table class="rates-table">
-                <thead><tr><th>Currency</th><th>1 Unit =</th><th>Base</th><th>Date</th><th>Source</th><th></th></tr></thead>
+                <thead><tr><th data-i18n="label_currency">Currency</th><th>1 Unit =</th><th>Base</th><th>Date</th><th>Source</th><th></th></tr></thead>
                 <tbody id="rates-tbody"></tbody>
               </table>
               <div id="rates-empty" style="text-align:center;padding:32px;color:var(--gray400);font-size:13px;display:none">
@@ -478,8 +478,8 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-categories">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Categories</div><div class="settings-card-desc">Manage product categories (max 3 levels)</div></div>
-              <button class="btn-primary" onclick="openAddCatForm(null, 0)">+ Add Category</button>
+              <div><div class="settings-card-title" data-i18n="label_categories">Categories</div><div class="settings-card-desc">Manage product categories (max 3 levels)</div></div>
+              <button class="btn-primary" onclick="openAddCatForm(null, 0)"><span data-i18n="btn_add_category">+ Add Category</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="categories-list" class="manage-list"></div>
@@ -491,8 +491,8 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-warehouses">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Warehouses</div><div class="settings-card-desc">Manage storage locations</div></div>
-              <button class="btn-primary" onclick="openWarehouseModal()">+ Add Warehouse</button>
+              <div><div class="settings-card-title" data-i18n="label_warehouses">Warehouses</div><div class="settings-card-desc">Manage storage locations</div></div>
+              <button class="btn-primary" onclick="openWarehouseModal()"><span data-i18n="btn_add_warehouse">+ Add Warehouse</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="warehouses-list" class="manage-list"></div>
@@ -504,8 +504,8 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-taxes">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Tax Rates</div><div class="settings-card-desc">Define tax rates for invoices</div></div>
-              <button class="btn-primary" onclick="openTaxModal()">+ Add Tax Rate</button>
+              <div><div class="settings-card-title" data-i18n="tab_tax_rates">Tax Rates</div><div class="settings-card-desc">Define tax rates for invoices</div></div>
+              <button class="btn-primary" onclick="openTaxModal()"><span data-i18n="btn_add_tax">+ Add Tax Rate</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="taxes-list" class="manage-list"></div>
@@ -526,9 +526,9 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row full"><div class="form-group"><label>Warehouse Name *</label><input type="text" id="wh-name" placeholder="e.g. Main Warehouse"></div></div>
-      <div class="form-row full"><div class="form-group"><label>Location / Address</label><input type="text" id="wh-location" placeholder="e.g. Building A, Floor 2"></div></div>
-      <div class="form-row full"><div class="form-group"><label>Notes</label><textarea id="wh-notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_warehouse_name">Warehouse Name *</label><input type="text" id="wh-name" placeholder="e.g. Main Warehouse"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_location">Location / Address</label><input type="text" id="wh-location" placeholder="e.g. Building A, Floor 2"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_notes">Notes</label><textarea id="wh-notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('warehouse-modal')">Cancel</button>
@@ -546,10 +546,10 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="form-group"><label>Name *</label><input type="text" id="tax-name" placeholder="e.g. VAT"></div>
-        <div class="form-group"><label>Rate (%) *</label><input type="number" id="tax-rate" placeholder="20" min="0" max="100" step="0.01"></div>
+        <div class="form-group"><label data-i18n="label_name">Name *</label><input type="text" id="tax-name" placeholder="e.g. VAT"></div>
+        <div class="form-group"><label data-i18n="label_tax_rate">Rate (%) *</label><input type="number" id="tax-rate" placeholder="20" min="0" max="100" step="0.01"></div>
       </div>
-      <div class="form-row full"><div class="form-group"><label>Type (optional)</label><input type="text" id="tax-desc" placeholder="e.g. Sales Tax, VAT"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_type">Type (optional)</label><input type="text" id="tax-desc" placeholder="e.g. Sales Tax, VAT"></div></div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('tax-modal')">Cancel</button>
@@ -713,6 +713,8 @@ async function saveBaseCurrency() {
   const { error } = await sb.from('companies').update({ base_currency: val }).eq('id', companyId);
   if (error) { showToast(error.message, 'error'); return; }
   baseCurrency = val;
+  localStorage.setItem('baseCurrency', val);
+  document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: val }));
   // Add to active currencies if not present
   if (!activeCurrencies.includes(val)) {
     activeCurrencies = [val, ...activeCurrencies];
@@ -893,7 +895,7 @@ function renderCategoriesList() {
   const roots = getChildren(null);
 
   if (!roots.length) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No categories yet. Click "+ Add Category" to start.</div>';
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No categories yet. Click "<span data-i18n="btn_add_category">+ Add Category</span>" to start.</div>';
     return;
   }
 

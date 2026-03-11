@@ -247,13 +247,13 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     <div class="stats-grid">
       <div class="stat-card blue">
         <div class="stat-label" data-i18n="stat_total_purchases">Total Purchases</div>
-        <div class="stat-val" id="stat-total">$0</div>
+        <div class="stat-val" id="stat-total">—</div>
         <div class="stat-sub" data-i18n="all_time">All time</div>
       </div>
       <div class="stat-card orange">
         <div class="stat-label" data-i18n="stat_pending_orders">Pending Orders</div>
         <div class="stat-val" id="stat-pending">0</div>
-        <div class="stat-sub" id="stat-pending-amt">$0 outstanding</div>
+        <div class="stat-sub" id="stat-pending-amt">— outstanding</div>
       </div>
       <div class="stat-card green">
         <div class="stat-label" data-i18n="stat_received">Received</div>
@@ -400,10 +400,10 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <button class="btn btn-outline btn-sm" onclick="addOrderItem()" style="margin-bottom:20px">+ Add Line</button>
 
       <div class="order-summary">
-        <div class="summary-row"><span class="label">Subtotal</span><span id="sum-subtotal">$0.00</span></div>
-        <div class="summary-row"><span class="label">Tax</span><span id="sum-tax">$0.00</span></div>
-        <div class="summary-row"><span class="label">Discount</span><span id="sum-discount">-$0.00</span></div>
-        <div class="summary-row total"><span>Total</span><span id="sum-total">$0.00</span></div>
+        <div class="summary-row"><span class="label">Subtotal</span><span id="sum-subtotal">—</span></div>
+        <div class="summary-row"><span class="label">Tax</span><span id="sum-tax">—</span></div>
+        <div class="summary-row"><span class="label">Discount</span><span id="sum-discount"><span class="zero-amt">—</span></span></div>
+        <div class="summary-row total"><span>Total</span><span id="sum-total">—</span></div>
       </div>
 
       <div class="field full" style="margin-top:16px">
@@ -511,6 +511,15 @@ const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
 window._supabase = sb;
 
+function fmt(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtShort(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; const n=parseFloat(amount||0); if(n>=1000000) return sym+(n/1000000).toFixed(1)+'M'; if(n>=1000) return sym+(n/1000).toFixed(1)+'K'; return sym+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+
+// Currency formatting - uses sidebar.js global
+function fmt(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtShort(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; const n=parseFloat(amount||0); if(n>=1000000) return sym+(n/1000000).toFixed(1)+'M'; if(n>=1000) return sym+(n/1000).toFixed(1)+'K'; return sym+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+
 let companyId = null;
 let cashRegisters = [];
 let bankAccounts = [];
@@ -584,7 +593,7 @@ function renderOrders(list) {
     <td><strong>${o.suppliers?.name||'—'}</strong></td>
     <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
     <td style="color:${o.expected_date && new Date(o.expected_date) < new Date() && o.status !== 'received' ? 'var(--red)' : 'var(--gray500)'}">${o.expected_date||'—'}</td>
-    <td><strong>$${parseFloat(o.total||0).toFixed(2)}</strong></td>
+    <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
     <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
     <td><div class="row-actions">
       ${o.status !== 'received' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
@@ -622,9 +631,9 @@ function updateStats() {
   const pending = orders.filter(o => !['received','cancelled'].includes(o.status));
   const received = orders.filter(o => o.status === 'received');
   const pendingAmt = pending.reduce((s,o) => s + parseFloat(o.total||0), 0);
-  document.getElementById('stat-total').textContent = '$'+total.toLocaleString('en',{maximumFractionDigits:0});
+  document.getElementById('stat-total').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + total.toLocaleString('en',{maximumFractionDigits:0});
   document.getElementById('stat-pending').textContent = pending.length;
-  document.getElementById('stat-pending-amt').textContent = '$'+pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' '+t('outstanding');
+  document.getElementById('stat-pending-amt').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' '+t('outstanding');
   document.getElementById('stat-received').textContent = received.length;
   document.getElementById('stat-suppliers').textContent = suppliers.length;
 }
@@ -690,20 +699,20 @@ function openOrderModal() {
   document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '0';
   document.getElementById('o-notes').value = '';
-  orderItems = [{ product_id:'', description:'', qty:1, price:0 }];
+  orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:'' }];
   renderOrderItems();
   updateSupplierSelects();
   openModal('order-modal');
 }
 
 function addOrderItem() {
-  orderItems.push({ product_id:'', description:'', qty:1, price:0 });
+  orderItems.push({ product_id:'', description:'', qty:1, price:0, warehouse_id:'' });
   renderOrderItems();
 }
 
 function removeOrderItem(i) {
   orderItems.splice(i,1);
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0 }];
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:'' }];
   renderOrderItems();
 }
 
@@ -719,7 +728,13 @@ function renderOrderItems() {
     </td>
     <td><input type="number" value="${item.qty}" min="0.01" step="0.01" oninput="orderItems[${i}].qty=parseFloat(this.value)||0;recalcOrder()"></td>
     <td><input type="number" value="${item.price}" min="0" step="0.01" oninput="orderItems[${i}].price=parseFloat(this.value)||0;recalcOrder()"></td>
-    <td class="item-total" id="item-total-${i}">$0.00</td>
+    <td>
+      <select onchange="orderItems[${i}].warehouse_id=this.value" style="min-width:90px;font-size:11px">
+        <option value="">Depo</option>
+        ${warehouses.map(w=>`<option value="${w.id}" ${item.warehouse_id===w.id?'selected':''}>${w.name}</option>`).join('')}
+      </select>
+    </td>
+    <td class="item-total" id="item-total-${i}">—</td>
     <td><button class="btn btn-danger btn-icon btn-sm" onclick="removeOrderItem(${i})">✕</button></td>
   </tr>`).join('');
   orderItems.forEach((item,i) => {
@@ -742,16 +757,16 @@ function recalcOrder() {
     const t = item.qty * item.price;
     subtotal += t;
     const el = document.getElementById('item-total-'+i);
-    if (el) el.textContent = '$'+t.toFixed(2);
+    if (el) el.textContent = fmt(t);
   });
   const taxRate = parseFloat(document.getElementById('o-tax').value)||0;
   const discount = parseFloat(document.getElementById('o-discount').value)||0;
   const tax = subtotal * taxRate / 100;
   const total = subtotal + tax - discount;
-  document.getElementById('sum-subtotal').textContent = '$'+subtotal.toFixed(2);
-  document.getElementById('sum-tax').textContent = '$'+tax.toFixed(2);
-  document.getElementById('sum-discount').textContent = '-$'+discount.toFixed(2);
-  document.getElementById('sum-total').textContent = '$'+Math.max(0,total).toFixed(2);
+  document.getElementById('sum-subtotal').textContent = fmt(subtotal);
+  document.getElementById('sum-tax').textContent = fmt(tax);
+  document.getElementById('sum-discount').textContent = '-'+fmt(discount);
+  document.getElementById('sum-total').textContent = fmt(Math.max(0,total).toFixed(2));
 }
 
 async function saveOrder(statusOverride) {
@@ -791,7 +806,8 @@ async function saveOrder(statusOverride) {
   await sb.from('purchase_order_items').insert(validItems.map(i => ({
     order_id: orderId, product_id: i.product_id||null,
     description: i.description, quantity: i.qty, unit_price: i.price,
-    total: i.qty * i.price
+    discount: i.disc || 0, total: i.qty * i.price * (1-(i.disc||0)/100),
+    warehouse_id: i.warehouse_id || null
   })));
 
   showToast(editingOrderId ? 'Order updated ✓' : 'Order created ✓', 'success');
@@ -813,8 +829,8 @@ async function editOrder(id) {
   document.getElementById('o-tax').value = order.tax_rate;
   document.getElementById('o-discount').value = order.discount;
   document.getElementById('o-notes').value = order.notes||'';
-  orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price }));
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0 }];
+  orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' }];
   updateSupplierSelects();
   renderOrderItems();
   openModal('order-modal');
@@ -1004,6 +1020,14 @@ document.addEventListener('click', function(e) {
     var m = document.getElementById('lang-menu');
     if (m) m.style.display = 'none';
   }
+});
+
+// Re-render when currency loads
+document.addEventListener('currencyLoaded', function() {
+  if (typeof recalcTotals === 'function') recalcTotals();
+  if (typeof filterOrders === 'function') filterOrders();
+  const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
+  document.querySelectorAll('#lbl-discount-sym').forEach(el => el.textContent = sym);
 });
 </script>
 </body>

@@ -931,7 +931,7 @@ async function init() {
   // Get active company from company_users
   const _savedId = localStorage.getItem('currentCompanyId');
   const { data: _myCompanies } = await sb.rpc('get_my_companies');
-  if (!_myCompanies || _myCompanies.length === 0) { showToast('Company not found', 'error'); return; }
+  if (!_myCompanies || _myCompanies.length === 0) { showToast(t('company_not_found'), 'error'); return; }
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
@@ -1611,7 +1611,7 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 function fmtNum(n) {
   return parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function fmtAmt(n) { return '$' + fmtNum(n); }
+function fmtAmt(n) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 function showToast(msg, type = 'success') {
   const el = document.getElementById('toast');

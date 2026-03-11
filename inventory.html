@@ -283,7 +283,7 @@ tr:hover .action-btns { opacity:1; }
           <span class="stat-label" data-i18n="inv_total_value">Total Value</span>
           <div class="stat-icon green">💰</div>
         </div>
-        <div class="stat-value" id="stat-value">$0</div>
+        <div class="stat-value" id="stat-value">—</div>
         <div class="stat-change up" id="stat-value-change">↑ 8.2% vs last month</div>
       </div>
       <div class="stat-card">
@@ -456,11 +456,11 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Unit Cost ($) *</label>
+          <label>Unit Cost (<span id="lbl-cost-sym">$</span>) *</label>
           <input type="number" id="p-cost" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
-          <label>Selling Price ($)</label>
+          <label>Selling Price (<span id="lbl-price-sym">$</span>)</label>
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
@@ -572,7 +572,12 @@ const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',
   'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
 );
-window._supabase = sb; // expose for sidebar.js
+window._supabase = sb;
+
+// Currency formatting - uses sidebar.js global
+function fmt(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtShort(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; const n=parseFloat(amount||0); if(n>=1000000) return sym+(n/1000000).toFixed(1)+'M'; if(n>=1000) return sym+(n/1000).toFixed(1)+'K'; return sym+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+ // expose for sidebar.js
 
 // ===== STATE =====
 let companyId = null, currentUser = null;
@@ -639,7 +644,7 @@ function updateStats() {
   const low = products.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
   const out = products.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+  document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
   document.getElementById('stat-out').textContent = out;
   document.getElementById('low-stock-alert').querySelector('strong').textContent = `${low + out} items`;
@@ -724,7 +729,7 @@ function renderTable() {
         <div class="stock-bar"><div class="stock-fill ${fillClass}" style="width:${pct}%"></div></div>
         <span class="stock-num">${p.stock} ${p.unit}</span>
       </div></td>
-      <td>${p.unit_cost ? '$' + p.unit_cost.toFixed(2) : '—'}</td>
+      <td>${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
       <td style="font-weight:600;color:var(--gray800)">${totalVal}</td>
       <td>${badge}</td>
       <td style="color:var(--gray500);font-size:12px">${p.location || '—'}</td>
@@ -1243,7 +1248,7 @@ function toggleView(view) {
           <span style="font-family:var(--font-display);font-size:20px;font-weight:800">${p.stock} <span style="font-size:12px;font-weight:400;color:var(--gray400)">${p.unit}</span></span>
           <span class="badge ${badge}">${label}</span>
         </div>
-        <div style="font-size:12px;color:var(--gray400);margin-top:8px">$${p.unit_cost.toFixed(2)}/unit</div>
+        <div style="font-size:12px;color:var(--gray400);margin-top:8px">${fmt(p.unit_cost)}/unit</div>
         <div style="display:flex;gap:6px;margin-top:12px">
           <button class="action-btn" onclick="openEditModal('${p.id}')" style="flex:1;width:auto;padding:6px;opacity:1">✏️</button>
           <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" style="flex:1;width:auto;padding:6px;opacity:1">📊</button>
@@ -1442,6 +1447,13 @@ document.addEventListener('keydown', function(e) {
       if (next.tagName === 'INPUT') next.select();
     }
   }
+});
+
+// Re-render when currency loads
+document.addEventListener('currencyLoaded', function() {
+  if (typeof renderProducts === 'function') renderProducts();
+  const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
+  document.querySelectorAll('#lbl-cost-sym, #lbl-price-sym').forEach(el => el.textContent = sym);
 });
 </script>
 </body>
