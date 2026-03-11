@@ -215,7 +215,7 @@ tr:hover .action-btns { opacity:1; }
 <style>
 /* SETTINGS SPECIFIC */
 .settings-layout { display:flex; gap:24px; align-items:flex-start; }
-.settings-nav { width:200px; flex-shrink:0; background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:8px; box-shadow:var(--shadow-sm); position:sticky; top:calc(var(--topbar-h) + 28px); }
+.settings-nav { width:200px; overflow-y:auto; flex-shrink:0; background:var(--white); border-radius:16px; border:1px solid var(--gray200); padding:8px; box-shadow:var(--shadow-sm); position:sticky; top:calc(var(--topbar-h) + 28px); }
 .settings-nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:var(--gray500); transition:all .15s; border:none; background:none; width:100%; text-align:left; }
 .settings-nav-item:hover { background:var(--gray50); color:var(--gray800); }
 .settings-nav-item.active { background:var(--blue-light); color:var(--blue); font-weight:600; }
@@ -304,6 +304,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> Categories</button>
         <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> Warehouses</button>
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> Tax Rates</button>
+        <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
       <!-- Content -->
@@ -670,6 +671,7 @@ function openModal(id) { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
 function switchSection(name, el) {
+  if (name === 'recycle') loadRecycleBin();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
