@@ -704,6 +704,7 @@ function toggleLangMenu() {
   document.getElementById('lang-dropdown').classList.toggle('open');
 }
 function selectLang(l, code, name) {
+  localStorage.setItem('solvenin_lang', l);
   document.getElementById('current-lang-code').textContent = code;
   document.getElementById('current-lang-name').textContent = name;
   document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
@@ -902,8 +903,9 @@ async function saveOnboarding() {
   const supported = ['en','tr','de','fr','es','ar','zh','ru','pt','ja'];
   const names = { en:'English',tr:'Türkçe',de:'Deutsch',fr:'Français',es:'Español',ar:'العربية',zh:'中文',ru:'Русский',pt:'Português',ja:'日本語' };
   const codes = { en:'EN',tr:'TR',de:'DE',fr:'FR',es:'ES',ar:'AR',zh:'ZH',ru:'RU',pt:'PT',ja:'JA' };
-  const detected = supported.includes((navigator.language||'en').split('-')[0].toLowerCase())
-    ? (navigator.language||'en').split('-')[0].toLowerCase() : 'en';
+  const _saved = localStorage.getItem('solvenin_lang');
+  const _browser = (navigator.language||'en').split('-')[0].toLowerCase();
+  const detected = _saved && supported.includes(_saved) ? _saved : (supported.includes(_browser) ? _browser : 'en');
   const flagEl = document.getElementById('current-lang-code');
   const nameEl = document.getElementById('current-lang-name');
   if(flagEl) flagEl.textContent = codes[detected];

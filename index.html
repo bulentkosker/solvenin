@@ -1252,7 +1252,7 @@ footer {
         <a href="/about.html" data-i18n="fc3_1">About</a>
         <a href="/blog.html" data-i18n="fc3_2">Blog</a>
         <a href="/cdn-cgi/l/email-protection#543735263131262714273b3822313a3d3a7a373b39" data-i18n="fc3_3">Careers</a>
-        <a href="mailto:support@solvenin.com" data-i18n="fc3_4">Contact</a>
+        <a href="/cdn-cgi/l/email-protection#f1828481819e8385b1829e9d87949f989fdf929e9c" data-i18n="fc3_4">Contact</a>
       </div>
       <div class="footer-col">
         <h4 data-i18n="fc4">Legal</h4>
@@ -1274,7 +1274,7 @@ footer {
   </div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ===== TRANSLATIONS =====
 const T = {
   en: {
@@ -1752,6 +1752,7 @@ function selectLang(lang, code, name) {
   document.getElementById('current-lang-flag').textContent = code;
   document.getElementById('current-lang-name').textContent = name;
   document.getElementById('lang-menu').style.display = 'none';
+  localStorage.setItem('solvenin_lang', lang);
   setLang(lang);
 }
 document.addEventListener('click', function(e) {
@@ -1787,8 +1788,9 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     'ar':'AR','zh':'ZH','ru':'RU','pt':'PT','ja':'JA'
   };
   // Get browser language (e.g. 'tr-TR' → 'tr')
+  const saved = localStorage.getItem('solvenin_lang');
   const browserLang = (navigator.language || navigator.userLanguage || 'en').split('-')[0].toLowerCase();
-  const detected = supported.includes(browserLang) ? browserLang : 'en';
+  const detected = saved && supported.includes(saved) ? saved : (supported.includes(browserLang) ? browserLang : 'en');
   // Update dropdown display
   const flagEl = document.getElementById('current-lang-flag');
   const nameEl = document.getElementById('current-lang-name');
@@ -1842,10 +1844,4 @@ function updatePrices() {
 function startCheckout(plan) {
   if(typeof Paddle === 'undefined') { alert('Payment loading, please try again.'); return; }
   Paddle.Checkout.open({
-    items: [{ priceId: PRICES[plan][billingCycle], quantity: userCount }],
-    successUrl: 'https://solvenin.com/dashboard.html'
-  });
-}
-</script>
-</body>
-</html>
+    items: 
