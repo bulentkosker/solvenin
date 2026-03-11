@@ -1274,7 +1274,7 @@ footer {
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ===== TRANSLATIONS =====
 const T = {
   en: {
@@ -1844,4 +1844,10 @@ function updatePrices() {
 function startCheckout(plan) {
   if(typeof Paddle === 'undefined') { alert('Payment loading, please try again.'); return; }
   Paddle.Checkout.open({
-    items: 
+    items: [{ priceId: PRICES[plan][billingCycle], quantity: userCount }],
+    successUrl: 'https://solvenin.com/dashboard.html'
+  });
+}
+</script>
+</body>
+</html>
