@@ -356,9 +356,9 @@ tr:hover .action-btns { opacity:1; }
               <th onclick="sortTable('stock')">Stock ↕</th>
               <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
               <th onclick="sortTable('total_value')">Total Value ↕</th>
-              <th>Status</th>
-              <th>Location</th>
-              <th style="width:80px">Actions</th>
+              <th><span data-i18n="col_status">Status</span></th>
+              <th><span data-i18n="col_location">Location</span></th>
+              <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
             </tr>
           </thead>
           <tbody id="inventory-tbody"></tbody>
@@ -379,12 +379,12 @@ tr:hover .action-btns { opacity:1; }
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Product</th>
-            <th>Type</th>
-            <th>Quantity</th>
-            <th>Reference</th>
-            <th>Note</th>
+            <th><span data-i18n="col_date">Date</span></th>
+            <th><span data-i18n="col_product">Product</span></th>
+            <th><span data-i18n="col_movement">Type</span></th>
+            <th><span data-i18n="col_qty">Quantity</span></th>
+            <th><span data-i18n="col_ref">Reference</span></th>
+            <th><span data-i18n="label_notes">Note</span></th>
           </tr>
         </thead>
         <tbody id="movements-tbody"></tbody>
@@ -405,22 +405,22 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-section-title">Basic Information</div>
       <div class="form-row">
         <div class="form-group">
-          <label>Product Name *</label>
+          <label><span data-i18n="col_product">Product Name *</span></label>
           <input type="text" id="p-name" placeholder="e.g. Laptop Dell XPS 15">
         </div>
         <div class="form-group">
-          <label>SKU / Barcode</label>
+          <label><span data-i18n="col_sku">SKU / Barcode</span></label>
           <input type="text" id="p-sku" placeholder="e.g. DELL-XPS-001">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Category</label>
+          <label><span data-i18n="label_categories">Category</span></label>
           <div class="cat-selector" id="cat-selector"></div>
           <input type="hidden" id="p-category-id">
         </div>
         <div class="form-group">
-          <label>Unit</label>
+          <label><span data-i18n="col_unit">Unit</span></label>
           <select id="p-unit">
             <option>pcs</option>
             <option>kg</option>
@@ -434,7 +434,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Description</label>
+          <label><span data-i18n="lbl_description">Description</span></label>
           <textarea id="p-desc" placeholder="Optional product description..."></textarea>
         </div>
       </div>
@@ -442,7 +442,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-section-title">Stock & Pricing</div>
       <div class="form-row three">
         <div class="form-group">
-          <label>Current Stock *</label>
+          <label><span data-i18n="col_stock">Current Stock *</span></label>
           <input type="number" id="p-stock" placeholder="0" min="0">
         </div>
         <div class="form-group">
@@ -488,7 +488,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Movement Type</label>
+          <label><span data-i18n="col_movement">Movement Type</span></label>
           <select id="adj-type" onchange="onAdjTypeChange()">
             <option value="in">Stock In (Received)</option>
             <option value="out">Stock Out (Used/Sold)</option>
@@ -498,14 +498,14 @@ tr:hover .action-btns { opacity:1; }
           </select>
         </div>
         <div class="form-group">
-          <label>Quantity</label>
+          <label><span data-i18n="col_qty">Quantity</span></label>
           <input type="number" id="adj-qty" placeholder="0" min="0.01" step="0.01">
         </div>
       </div>
       <!-- Normal warehouse (in/out/return/adjust) -->
       <div class="form-row full" id="adj-warehouse-row">
         <div class="form-group">
-          <label>Warehouse</label>
+          <label><span data-i18n="col_warehouse">Warehouse</span></label>
           <select id="adj-warehouse">
             <option value="">— Select warehouse —</option>
           </select>
@@ -695,8 +695,8 @@ function renderTable() {
   const tbody = document.getElementById('inventory-tbody');
   const start = (currentPage - 1) * perPage;
   const page = filteredProducts.slice(start, start + perPage);
-  document.getElementById('table-count').textContent = `${filteredProducts.length} items`;
-  document.getElementById('page-info').textContent = `Showing ${start + 1}–${Math.min(start + perPage, filteredProducts.length)} of ${filteredProducts.length}`;
+  document.getElementById('table-count').textContent = t('n_items').replace('{0}', filteredProducts.length);
+  document.getElementById('page-info').textContent = `${t('showing_x_of_y').replace('{0}',start+1).replace('{1}',Math.min(start+perPage,filteredProducts.length)).replace('{2}',filteredProducts.length)}`;
 
   if (page.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('inv_no_products')||'No products found'}</h3><p>${t('inv_no_products_sub')||'Try adjusting your filters or add a new product.'}</p><button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button></div></td></tr>`;
@@ -709,11 +709,11 @@ function renderTable() {
     const pct = p.max_stock ? Math.min(100, (p.stock / p.max_stock) * 100) : 50;
     const fillClass = status === 'out' ? 'critical' : status === 'low' ? 'low' : 'good';
     const badge = status === 'out'
-      ? '<span class="badge badge-red">Out of Stock</span>'
+      ? `<span class="badge badge-red">${t('status_out_of_stock')}</span>`
       : status === 'low'
-      ? '<span class="badge badge-orange">⚠ Low Stock</span>'
-      : '<span class="badge badge-green">✓ In Stock</span>';
-    const totalVal = (p.stock * p.unit_cost).toLocaleString('en-US', {style:'currency', currency:'USD'});
+      ? `<span class="badge badge-orange">${t('status_low_stock')}</span>`
+      : `<span class="badge badge-green">${t('status_in_stock')}</span>`;
+    const totalVal = p.unit_cost ? fmt(p.stock * p.unit_cost) : '—';
     const catBadge = {Electronics:'badge-blue', 'Raw Material':'badge-gray', Packaging:'badge-purple', 'Finished Goods':'badge-green', Office:'badge-gray'}[p.category] || 'badge-gray';
     return `<tr>
       <td><input type="checkbox" class="row-check" data-id="${p.id}"></td>
@@ -780,7 +780,7 @@ function sortTable(key) {
 
 function renderMovements() {
   const tbody = document.getElementById('movements-tbody');
-  const typeLabel = { in:'<span class="badge badge-green">↓ Stock In</span>', out:'<span class="badge badge-red">↑ Stock Out</span>', adjust:'<span class="badge badge-blue">⚙ Adjust</span>', transfer:'<span class="badge badge-purple">→ Transfer</span>', return:'<span class="badge badge-orange">↩ Return</span>' };
+  const typeLabel = { in:`<span class="badge badge-green">${t('move_in')}</span>`, out:`<span class="badge badge-red">${t('move_out')}</span>`, adjust:'<span class="badge badge-blue">⚙ Adjust</span>', transfer:'<span class="badge badge-purple">→ Transfer</span>', return:'<span class="badge badge-orange">↩ Return</span>' };
   tbody.innerHTML = movements.map(m => `<tr>
     <td style="color:var(--gray500);font-size:12px">${m.date}</td>
     <td style="font-weight:600">${m.product}</td>
@@ -814,7 +814,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 function openAddModal() {
   editingId = null;
-  document.getElementById('modal-title').textContent = 'Add Product';
+  document.getElementById('modal-title').textContent = t('title_add_product');
   ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('p-category-id').value = '';
   document.getElementById('p-unit').value = 'pcs';
@@ -826,7 +826,7 @@ function openEditModal(id) {
   editingId = id;
   const p = products.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('modal-title').textContent = 'Edit Product';
+  document.getElementById('modal-title').textContent = t('title_edit_product');
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
   document.getElementById('p-category-id').value = p.category_id || '';
@@ -958,7 +958,7 @@ function renderCatSelector(parentId, level, selectedId) {
   const sel = document.createElement('select');
   sel.dataset.level = level;
   sel.dataset.parentId = parentId || '';
-  sel.innerHTML = `<option value="">${level === 0 ? '— Select category —' : '— Select sub-category —'}</option>` +
+  sel.innerHTML = `<option value="">${level === 0 ? t('select_category')||'— Select category —' : '— Select sub-category —'}</option>` +
     children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   if (selectedId) sel.value = selectedId;
   sel.addEventListener('change', () => {
@@ -1266,9 +1266,9 @@ function toggleView(view) {
           <th onclick="sortTable('stock')">Stock ↕</th>
           <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
           <th onclick="sortTable('total_value')">Total Value ↕</th>
-          <th>Status</th>
-          <th>Location</th>
-          <th style="width:80px">Actions</th>
+          <th><span data-i18n="col_status">Status</span></th>
+          <th><span data-i18n="col_location">Location</span></th>
+          <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
         </tr></thead>
         <tbody id="inventory-tbody"></tbody>
       </table>`;
@@ -1284,7 +1284,7 @@ function toggleSelectAll(cb) {
 
 // ===== EXPORT =====
 function exportCSV() {
-  const header = ['Name','SKU','Category','Stock','Unit','Unit Cost','Total Value','Status','Location'];
+  const header = [t('label_name'),t('col_sku'),t('label_type'),t('col_stock'),t('col_unit'),t('col_unit_cost'),t('col_total_value'),t('col_status'),t('col_location')];
   const rows = filteredProducts.map(p => [
     p.name, p.sku, p.category, p.stock, p.unit, p.unit_cost,
     (p.stock * p.unit_cost).toFixed(2), getStockStatus(p), p.location

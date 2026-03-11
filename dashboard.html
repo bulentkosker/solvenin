@@ -1248,12 +1248,7 @@ async function loadDashboardStats(){
   } catch(e){ console.error('Dashboard stats error:', e); }
 }
 
-function fmtMoney(n) {
-  n = parseFloat(n) || 0;
-  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
-  return '$' + n.toLocaleString('en', {maximumFractionDigits:0});
-}
+function fmtMoney(n) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // ===== CHART =====
 let chart = null;
@@ -1284,7 +1279,7 @@ function initChart() {
       plugins: { legend: { display: false } },
       scales: {
         y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' },
-             ticks: { callback: v => '$' + (v>=1000 ? (v/1000).toFixed(0)+'K' : v) }},
+             ticks: { callback: v => { const s = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return s + (v>=1000?(v/1000).toFixed(0)+'K':v); } }},
         x: { grid: { display: false }}
       }
     }
@@ -1503,7 +1498,7 @@ async function loadTicker(){
       wantCrypto.forEach(c=>{
         const cd = d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
         if(!cd) return;
-        const p = cd.usd>=1000 ? '$'+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : '$'+cd.usd.toFixed(2);
+        const p = cd.usd>=1000 ? (window.getCurrencySymbol?window.getCurrencySymbol():'$')+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : (window.getCurrencySymbol?window.getCurrencySymbol():'$')+cd.usd.toFixed(2);
         items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
       });
     }
@@ -1511,7 +1506,7 @@ async function loadTicker(){
 
   // Brent (USD, static fallback)
   if(prefs.includes('oil')){
-    items.push({lbl:'Brent', sub:'USD/bbl', val:'~$82', ch:null, icon:'🛢️'});
+    items.push({lbl:'Brent', sub:'USD/bbl', val:'~82', ch:null, icon:'🛢️'});
   }
 
   renderTicker(items);

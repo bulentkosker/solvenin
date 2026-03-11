@@ -766,7 +766,7 @@ function openAccountModal(id = null) {
   editingAccountId = id;
   if (id) {
     const acc = accounts.find(a => a.id === id);
-    document.getElementById('account-modal-title').textContent = 'Edit Account';
+    document.getElementById('account-modal-title').textContent = t('title_edit_account');
     document.getElementById('acc-code').value = acc.code;
     document.getElementById('acc-type').value = acc.type;
     document.getElementById('acc-name-coa').value = acc.name;
@@ -774,7 +774,7 @@ function openAccountModal(id = null) {
     document.getElementById('acc-subtype').value = acc.subtype || '';
     document.getElementById('acc-opening-bal').value = acc.balance || '';
   } else {
-    document.getElementById('account-modal-title').textContent = 'Add Account';
+    document.getElementById('account-modal-title').textContent = t('title_add_account');
     document.getElementById('acc-code').value = '';
     document.getElementById('acc-name-coa').value = '';
     document.getElementById('acc-name-local').value = '';
@@ -826,7 +826,7 @@ function deleteAccount(id) {
 }
 
 function exportCOA() {
-  const rows = [['Code','Name','Local Name','Type','Subtype','Balance']];
+  const rows = [[t('col_ref'),t('label_name'),t('label_name'),t('label_type'),t('label_type'),t('col_amount')]];
   accounts.forEach(a => rows.push([a.code, a.name, a.name_local||'', a.type, a.subtype||'', a.balance||0]));
   const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const link = document.createElement('a');
@@ -1127,7 +1127,7 @@ async function generateBS() {
         </div>
       </div>
       <div style="margin-top:16px;padding:12px 16px;border-radius:10px;background:${balanced?'var(--green-light)':'var(--red-light)'};font-size:13px;font-weight:600;color:${balanced?'#16a34a':'#dc2626'}">
-        ${balanced ? '✅ Balance sheet is balanced' : `⚠️ Difference: ${fmtAmt(Math.abs(totalAssets - totalLiab - totalEquity))}`}
+        ${balanced ? t('balance_ok') : `⚠️ Difference: ${fmtAmt(Math.abs(totalAssets - totalLiab - totalEquity))}`}
       </div>
     </div>
   </div>`;
@@ -1178,14 +1178,14 @@ function openTaxModal(id = null) {
   editingTaxId = id;
   if (id) {
     const tax = taxRates.find(t => t.id === id);
-    document.getElementById('tax-modal-title').textContent = 'Edit Tax Rate';
+    document.getElementById('tax-modal-title').textContent = t('title_edit_tax');
     document.getElementById('tax-name').value = tax.name;
     document.getElementById('tax-rate').value = tax.rate;
     document.getElementById('tax-type').value = tax.type;
     document.getElementById('tax-account').value = tax.account_id || '';
     document.getElementById('tax-default').checked = tax.is_default;
   } else {
-    document.getElementById('tax-modal-title').textContent = 'Add Tax Rate';
+    document.getElementById('tax-modal-title').textContent = t('title_add_tax');
     document.getElementById('tax-name').value = '';
     document.getElementById('tax-rate').value = '';
     document.getElementById('tax-type').value = 'vat';

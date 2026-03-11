@@ -1298,13 +1298,13 @@ function openRegisterModal(id = null) {
   const title = document.getElementById('register-modal-title');
   if (id) {
     const r = registers.find(x => x.id === id);
-    title.textContent = 'Edit Register';
+    title.textContent = t('title_edit_register');
     document.getElementById('reg-name').value = r.name;
     setCurrency('reg-currency','reg-currency-input', r.currency_code);
     document.getElementById('reg-opening').value = r.opening_balance;
     document.getElementById('reg-desc').value = r.description || '';
   } else {
-    title.textContent = 'Add Cash Register';
+    title.textContent = t('title_add_register');
     document.getElementById('reg-name').value = '';
     setCurrency('reg-currency','reg-currency-input','TRY');
     document.getElementById('reg-opening').value = '';
@@ -1444,7 +1444,7 @@ function openAccountModal(preselectedBankId = null) {
   if (!document.getElementById('acc-currency-list').children.length) {
     buildCurrencyList('acc-currency-list', 'acc-currency', 'acc-currency-input');
   }
-  document.getElementById('account-modal-title').textContent = 'Add Bank Account';
+  document.getElementById('account-modal-title').textContent = t('title_add_bank');
   document.getElementById('acc-name').value = '';
   document.getElementById('acc-iban').value = '';
   setCurrency('acc-currency','acc-currency-input','TRY');
@@ -1456,7 +1456,7 @@ function openAccountModal(preselectedBankId = null) {
 function editAccount(id) {
   editingAccountId = id;
   const a = accounts.find(x => x.id === id);
-  document.getElementById('account-modal-title').textContent = 'Edit Account';
+  document.getElementById('account-modal-title').textContent = t('title_edit_bank');
   document.getElementById('acc-bank').value = a.bank_id;
   document.getElementById('acc-name').value = a.account_name;
   document.getElementById('acc-iban').value = a.iban || '';
@@ -1566,7 +1566,7 @@ function confirmDeleteAction() {
 function exportCashCSV() {
   const reg = registers.find(r => r.id === selectedRegisterId);
   const txs = cashTxAll.filter(tx => tx.register_id === selectedRegisterId);
-  const rows = [['Date','Description','Category','Type','Amount','Reference']];
+  const rows = [[t('col_date'),t('lbl_description'),t('label_type'),t('col_movement'),t('col_amount'),t('col_ref')]];
   txs.forEach(tx => rows.push([tx.transaction_date, tx.description, tx.category, tx.type, tx.amount, tx.reference || '']));
   downloadCSV(rows, `cash_${reg?.name || 'register'}.csv`);
 }
@@ -1574,7 +1574,7 @@ function exportCashCSV() {
 function exportBankCSV() {
   const acc = accounts.find(a => a.id === selectedAccountId);
   const txs = bankTxAll.filter(tx => tx.account_id === selectedAccountId);
-  const rows = [['Date','Description','Category','Counterparty','Type','Amount','Reference']];
+  const rows = [[t('col_date'),t('lbl_description'),t('label_type'),t('col_customer'),t('col_movement'),t('col_amount'),t('col_ref')]];
   txs.forEach(tx => rows.push([tx.transaction_date, tx.description, tx.category, tx.counterparty || '', tx.type, tx.amount, tx.reference || '']));
   downloadCSV(rows, `bank_${acc?.account_name || 'account'}.csv`);
 }

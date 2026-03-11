@@ -319,7 +319,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="supplier-search" placeholder="Search suppliers..." oninput="filterSuppliers()">
+          <input type="text" id="supplier-search" placeholder="" data-i18n-placeholder="search_suppliers" oninput="filterSuppliers()">
         </div>
         <button class="btn btn-primary btn-sm" onclick="openSupplierModal()">+ Add Supplier</button>
       </div>
@@ -388,10 +388,10 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <table class="items-table">
         <thead>
           <tr>
-            <th style="width:35%">Product / Description</th>
-            <th style="width:12%">Qty</th>
-            <th style="width:15%">Unit Cost</th>
-            <th style="width:15%">Total</th>
+            <th style="width:35%"><span data-i18n="col_prod_desc">Product / Description</span></th>
+            <th style="width:12%"><span data-i18n="col_qty">Qty</span></th>
+            <th style="width:15%"><span data-i18n="col_unit_cost">Unit Cost</span></th>
+            <th style="width:15%"><span data-i18n="col_total">Total</span></th>
             <th style="width:5%"></th>
           </tr>
         </thead>
@@ -689,7 +689,7 @@ function filterSuppliers() {
 // ===== ORDER MODAL =====
 function openOrderModal() {
   editingOrderId = null;
-  document.getElementById('order-modal-title').textContent = 'New Purchase Order';
+  document.getElementById('order-modal-title').textContent = t('title_new_po');
   document.getElementById('o-supplier').value = '';
   document.getElementById('o-number').value = 'PO-' + String(orders.length + 1).padStart(4,'0');
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
@@ -810,7 +810,7 @@ async function saveOrder(statusOverride) {
     warehouse_id: i.warehouse_id || null
   })));
 
-  showToast(editingOrderId ? 'Order updated ✓' : 'Order created ✓', 'success');
+  showToast(editingOrderId ? t('po_updated') : t('po_created'), 'success');
   closeModal('order-modal');
   await loadOrders();
 }
@@ -820,7 +820,7 @@ async function editOrder(id) {
   const order = orders.find(o => o.id === id);
   if (!order) return;
   const { data: items } = await sb.from('purchase_order_items').select('*').eq('order_id', id);
-  document.getElementById('order-modal-title').textContent = 'Edit Purchase Order';
+  document.getElementById('order-modal-title').textContent = t('title_edit_po');
   document.getElementById('o-supplier').value = order.supplier_id;
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
@@ -837,7 +837,7 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!confirm('Delete this purchase order?')) return;
+  if (!confirm(t('confirm_delete_po'))) return;
   await sb.from('purchase_order_items').delete().eq('order_id', id);
   await sb.from('purchase_orders').delete().eq('id', id);
   showToast(t('toast_order_deleted'),'success');
@@ -948,7 +948,7 @@ async function saveReceiving() {
 // ===== SUPPLIER CRUD =====
 function openSupplierModal(id=null) {
   editingSupplierId = id;
-  document.getElementById('supplier-modal-title').textContent = id ? 'Edit Supplier' : 'Add Supplier';
+  document.getElementById('supplier-modal-title').textContent = id ? t('title_edit_supplier') : t('title_add_supplier');
   if (!id) { ['s-name','s-email','s-phone','s-address','s-city','s-country','s-tax','s-notes'].forEach(i => document.getElementById(i).value=''); document.getElementById('s-terms').value='30'; }
   else {
     const s = suppliers.find(x=>x.id===id);
@@ -970,7 +970,7 @@ async function saveSupplier() {
 function editSupplier(id) { openSupplierModal(id); }
 
 async function deleteSupplier(id) {
-  if (!confirm('Delete this supplier?')) return;
+  if (!confirm(t('confirm_delete_supplier'))) return;
   await sb.from('suppliers').delete().eq('id',id);
   showToast(t('toast_supplier_deleted'),'success');
   await loadSuppliers();

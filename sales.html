@@ -286,7 +286,7 @@ tr:hover .row-actions{opacity:1}
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="order-search" placeholder="Search orders..." oninput="filterOrders()">
+          <input type="text" id="order-search" placeholder=""  data-i18n-placeholder="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
           <option value="">All Status</option>
@@ -328,7 +328,7 @@ tr:hover .row-actions{opacity:1}
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="customer-search" placeholder="Search customers..." oninput="filterCustomers()">
+          <input type="text" id="customer-search" placeholder="" data-i18n-placeholder="search_customers" oninput="filterCustomers()">
         </div>
         <button class="btn btn-primary btn-sm" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button>
       </div>
@@ -336,7 +336,7 @@ tr:hover .row-actions{opacity:1}
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th><span data-i18n="label_name">Name</span></th><th><span data-i18n="col_email">Email</span></th><th><span data-i18n="col_phone">Phone</span></th><th><span data-i18n="col_city">City</span></th><th><span data-i18n="col_tax_no">Tax No</span></th><th>Orders</th><th></th></tr>
+              <tr><th><span data-i18n="label_name">Name</span></th><th><span data-i18n="col_email">Email</span></th><th><span data-i18n="col_phone">Phone</span></th><th><span data-i18n="col_city">City</span></th><th><span data-i18n="col_tax_no">Tax No</span></th><th><span data-i18n="col_orders">Orders</span></th><th></th></tr>
             </thead>
             <tbody id="customers-tbody">
               <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>No customers yet</h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>
@@ -352,7 +352,7 @@ tr:hover .row-actions{opacity:1}
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Order</th><th><span data-i18n="col_customer">Customer</span></th><th>Amount</th><th>Method</th><th>Reference</th><th><span data-i18n="col_date">Date</span></th></tr>
+              <tr><th><span data-i18n="col_order">Order</span></th><th><span data-i18n="col_customer">Customer</span></th><th><span data-i18n="col_amount">Amount</span></th><th><span data-i18n="col_method">Method</span></th><th>Reference</th><th><span data-i18n="col_date">Date</span></th></tr>
             </thead>
             <tbody id="payments-tbody">
               <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>No payments yet</h3><p>Payments will appear here when orders are marked as paid.</p></div></td></tr>
@@ -374,25 +374,25 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:20px">
         <div class="field">
-          <label>Customer *</label>
+          <label><span data-i18n="col_customer">Customer *</span></label>
           <select id="o-customer">
             <option value="">Select customer</option>
           </select>
         </div>
         <div class="field">
-          <label>Order Number</label>
+          <label><span data-i18n="lbl_order_no">Order Number</span></label>
           <input type="text" id="o-number" placeholder="Auto-generated">
         </div>
         <div class="field">
-          <label>Issue Date</label>
+          <label><span data-i18n="lbl_issue_date">Issue Date</span></label>
           <input type="date" id="o-date">
         </div>
         <div class="field">
-          <label>Due Date</label>
+          <label><span data-i18n="lbl_due_date">Due Date</span></label>
           <input type="date" id="o-duedate">
         </div>
         <div class="field">
-          <label>Status</label>
+          <label><span data-i18n="col_status">Status</span></label>
           <select id="o-status">
             <option value="draft">Draft</option>
             <option value="confirmed">Confirmed</option>
@@ -402,7 +402,7 @@ tr:hover .row-actions{opacity:1}
           </select>
         </div>
         <div class="field">
-          <label>Tax Rate (%)</label>
+          <label><span data-i18n="lbl_tax_rate">Tax Rate (%)</span></label>
           <input type="number" id="o-tax" value="0" min="0" max="100" oninput="recalcOrder()">
         </div>
         <div class="field">
@@ -416,10 +416,10 @@ tr:hover .row-actions{opacity:1}
       <table class="items-table">
         <thead>
           <tr>
-            <th style="width:35%">Product / Description</th>
-            <th style="width:12%">Qty</th>
-            <th style="width:15%">Unit Price</th>
-            <th style="width:10%">Disc%</th>
+            <th style="width:35%"><span data-i18n="col_prod_desc">Product / Description</span></th>
+            <th style="width:12%"><span data-i18n="col_qty">Qty</span></th>
+            <th style="width:15%"><span data-i18n="col_unit_price">Unit Price</span></th>
+            <th style="width:10%"><span data-i18n="col_disc_pct">Disc%</span></th>
             <th style="width:15%"><span data-i18n="col_total">Total</span></th>
             <th style="width:5%"></th>
           </tr>
@@ -437,7 +437,7 @@ tr:hover .row-actions{opacity:1}
       </div>
 
       <div class="field full" style="margin-top:16px">
-        <label>Notes</label>
+        <label><span data-i18n="label_notes">Notes</span></label>
         <textarea id="o-notes" placeholder="Payment terms, delivery notes..."></textarea>
       </div>
     </div>
@@ -458,14 +458,14 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field full"><label>Customer Name *</label><input type="text" id="c-name" placeholder="Acme Corporation"></div>
-        <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="contact@acme.com"></div>
-        <div class="field"><label>Phone</label><input type="tel" id="c-phone" placeholder="+1 555 000 0000"></div>
+        <div class="field full"><label><span data-i18n="lbl_company_name">Customer Name *</span></label><input type="text" id="c-name" placeholder="Acme Corporation"></div>
+        <div class="field"><label><span data-i18n="col_email">Email</span></label><input type="email" id="c-email" placeholder="contact@acme.com"></div>
+        <div class="field"><label><span data-i18n="col_phone">Phone</span></label><input type="tel" id="c-phone" placeholder="+1 555 000 0000"></div>
         <div class="field full"><label>Address</label><input type="text" id="c-address" placeholder="123 Main Street"></div>
-        <div class="field"><label>City</label><input type="text" id="c-city" placeholder="New York"></div>
+        <div class="field"><label><span data-i18n="col_city">City</span></label><input type="text" id="c-city" placeholder="New York"></div>
         <div class="field"><label>Country</label><input type="text" id="c-country" placeholder="USA"></div>
-        <div class="field"><label>Tax Number</label><input type="text" id="c-tax" placeholder="Tax/VAT ID"></div>
-        <div class="field full"><label>Notes</label><textarea id="c-notes" placeholder="Optional notes..."></textarea></div>
+        <div class="field"><label><span data-i18n="col_tax_no">Tax Number</span></label><input type="text" id="c-tax" placeholder="Tax/VAT ID"></div>
+        <div class="field full"><label><span data-i18n="label_notes">Notes</span></label><textarea id="c-notes" placeholder="Optional notes..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -485,7 +485,7 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <input type="hidden" id="pay-order-id">
       <div class="form-grid cols-1">
-        <div class="field"><label>Amount *</label><input type="number" id="pay-amount" step="0.01"></div>
+        <div class="field"><label><span data-i18n="col_amount">Amount *</span></label><input type="number" id="pay-amount" step="0.01"></div>
         <div class="field"><label data-i18n="label_pay_method">Payment Method</label>
           <select id="pay-method" onchange="onPayMethodChange()">
             <option value="cash">💵 Cash (Register)</option>
@@ -721,14 +721,14 @@ function filterCustomers() {
 
 function updateCustomerSelects() {
   const opts = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  document.getElementById('o-customer').innerHTML = '<option value="">Select customer</option>' + opts;
+  document.getElementById('o-customer').innerHTML = `<option value="">${t('select_customer')}</option>` + opts;
   document.getElementById('filter-customer').innerHTML = '<option value="">All Customers</option>' + opts;
 }
 
 // ===== ORDER MODAL =====
 function openOrderModal() {
   editingOrderId = null;
-  document.getElementById('order-modal-title').textContent = 'New Order';
+  document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
   document.getElementById('o-number').value = 'INV-' + String(orders.length + 1).padStart(4,'0');
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
@@ -792,7 +792,7 @@ function onProductSelect(sel, i) {
   const price = parseFloat(opt.dataset.price) || 0;
   orderItems[i].product_id = sel.value;
   orderItems[i].price = price;
-  orderItems[i].description = opt.text !== 'Select product or type description' ? opt.text : '';
+  orderItems[i].description = opt.text !== t('select_product') ? opt.text : '';
   renderOrderItems();
 }
 
@@ -857,7 +857,7 @@ async function saveOrder(statusOverride) {
   }));
   await sb.from('sales_order_items').insert(itemsPayload);
 
-  showToast(editingOrderId ? 'Order updated ✓' : 'Order created ✓', 'success');
+  showToast(editingOrderId ? t('order_updated') : t('order_created'), 'success');
   closeModal('order-modal');
   await loadOrders();
 }
@@ -867,7 +867,7 @@ async function editOrder(id) {
   const order = orders.find(o => o.id === id);
   if (!order) return;
   const { data: items } = await sb.from('sales_order_items').select('*').eq('order_id', id);
-  document.getElementById('order-modal-title').textContent = 'Edit Order';
+  document.getElementById('order-modal-title').textContent = t('title_edit_order');
   document.getElementById('o-customer').value = order.customer_id;
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
@@ -884,7 +884,7 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!confirm('Delete this order?')) return;
+  if (!confirm(t('confirm_delete_order'))) return;
   await sb.from('sales_order_items').delete().eq('order_id', id);
   await sb.from('sales_orders').delete().eq('id', id);
   showToast(t('order_deleted'), 'success');
@@ -894,7 +894,7 @@ async function deleteOrder(id) {
 // ===== CUSTOMER CRUD =====
 function openCustomerModal(id = null) {
   editingCustomerId = id;
-  document.getElementById('customer-modal-title').textContent = id ? 'Edit Customer' : 'Add Customer';
+  document.getElementById('customer-modal-title').textContent = id ? t('title_edit_customer') : t('title_add_customer');
   if (!id) { ['c-name','c-email','c-phone','c-address','c-city','c-country','c-tax','c-notes'].forEach(i => document.getElementById(i).value = ''); }
   else {
     const c = customers.find(x => x.id === id);
@@ -916,7 +916,7 @@ async function saveCustomer() {
 function editCustomer(id) { openCustomerModal(id); }
 
 async function deleteCustomer(id) {
-  if (!confirm('Delete this customer?')) return;
+  if (!confirm(t('confirm_delete_customer'))) return;
   await sb.from('customers').delete().eq('id', id);
   showToast(t('customer_deleted'),'success');
   await loadCustomers();
@@ -1023,7 +1023,7 @@ async function viewInvoice(orderId) {
       </div>
     </div>
     <table class="inv-items">
-      <thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Disc%</th><th class="num"><span data-i18n="col_total">Total</span></th></tr></thead>
+      <thead><tr><th>#</th><th>Description</th><th class="num"><span data-i18n="col_qty">Qty</span></th><th class="num"><span data-i18n="col_unit_price">Unit Price</span></th><th class="num"><span data-i18n="col_disc_pct">Disc%</span></th><th class="num"><span data-i18n="col_total">Total</span></th></tr></thead>
       <tbody>
         ${(items||[]).map((item,i) => `<tr>
           <td>${i+1}</td>
