@@ -460,6 +460,11 @@ body {
       </div>
 
       <div class="field">
+        <label data-i18n="label_phone">Phone Number</label>
+        <input type="tel" id="signup-phone" placeholder="+7 700 000 0000" autocomplete="tel">
+      </div>
+
+      <div class="field">
         <label data-i18n="label_email">Email Address</label>
         <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
       </div>
@@ -773,11 +778,12 @@ async function handleSignup() {
   setLoading('btn-signup', true);
 
   try {
+    const phone = document.getElementById('signup-phone')?.value?.trim() || '';
     const { data, error } = await sb.auth.signUp({
       email,
       password: pass,
       options: {
-        data: { full_name: fullname, company_name: company, plan: selectedPlan }
+        data: { full_name: fullname, company_name: company, plan: selectedPlan, phone }
       }
     });
 
@@ -792,7 +798,8 @@ async function handleSignup() {
 
       if (comp) {
         await sb.from('profiles').insert({
-          id: data.user.id, company_id: comp.id, full_name: fullname, role: 'owner'
+          id: data.user.id, company_id: comp.id, full_name: fullname, role: 'owner',
+          phone: phone || null
         });
       }
     }
@@ -846,8 +853,48 @@ async function handleForgot() {
 async function handleGoogle() {
   await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + '/dashboard.html' }
+    options: { redirectTo: window.location.origin + '/auth.html?onboard=1' }
   });
+}
+
+// Called after Google redirect — check if phone is missing
+async function checkOnboarding() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('onboard')) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  // Check if profile exists and has phone
+  const { data: profile } = await sb.from('profiles').select('phone').eq('id', user.id).single();
+  if (profile && profile.phone) {
+    window.location.href = '/dashboard.html';
+    return;
+  }
+  // If profile doesn't exist yet, create it
+  if (!profile) {
+    await sb.from('profiles').upsert({
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.email,
+      role: 'owner'
+    });
+  }
+  // Show phone onboarding modal
+  showOnboardingModal(user);
+}
+
+function showOnboardingModal(user) {
+  document.getElementById('onboard-name').value = user.user_metadata?.full_name || '';
+  document.getElementById('onboard-modal').style.display = 'flex';
+}
+
+async function saveOnboarding() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const phone = document.getElementById('onboard-phone').value.trim();
+  const name = document.getElementById('onboard-name').value.trim();
+  if (!phone) { document.getElementById('onboard-error').textContent = 'Phone number is required.'; return; }
+  const { error } = await sb.from('profiles').update({ phone, full_name: name }).eq('id', user.id);
+  if (error) { document.getElementById('onboard-error').textContent = error.message; return; }
+  window.location.href = '/dashboard.html';
 }
 
 // Auto-detect language
@@ -863,6 +910,31 @@ async function handleGoogle() {
   if(nameEl) nameEl.textContent = names[detected];
   setLang(detected);
 })();
+</script>
+
+<!-- GOOGLE ONBOARDING MODAL -->
+<div id="onboard-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;margin:20px">
+    <div style="font-size:24px;font-weight:700;margin-bottom:8px">Welcome to Solvenin 👋</div>
+    <div style="color:#64748b;margin-bottom:28px;font-size:14px">Just one more step — please confirm your details.</div>
+    <div id="onboard-error" style="color:#ef4444;font-size:13px;margin-bottom:12px"></div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Full Name</label>
+      <input type="text" id="onboard-name" placeholder="John Smith" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Phone Number <span style="color:#ef4444">*</span></label>
+      <input type="tel" id="onboard-phone" placeholder="+7 700 000 0000" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box">
+    </div>
+    <button onclick="saveOnboarding()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">Continue →</button>
+  </div>
+</div>
+
+<script>
+  // Run onboarding check on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    checkOnboarding();
+  });
 </script>
 </body>
 </html>
