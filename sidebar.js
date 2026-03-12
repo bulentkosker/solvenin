@@ -205,6 +205,17 @@
   };
 
   // Global confirm dialog (replaces browser confirm())
+  // Re-render sidebar on language change
+  document.addEventListener('langChanged', function() {
+    const sb = document.getElementById('sidebar');
+    if (sb) {
+      const prev = sb.innerHTML;
+      sb.innerHTML = buildHTML();
+      // Re-attach supabase data after re-render
+      loadSidebarData();
+    }
+  });
+
   window.showConfirm = function(message, title) {
     return new Promise((resolve, reject) => {
       const overlay = document.getElementById('solvenin-confirm-overlay');
@@ -244,36 +255,36 @@
   /* ── NAV ITEMS ───────────────────────────────────────────── */
   const NAV = [
     {
-      label: 'Main',
+      labelKey: 'nav_group_main',
       items: [
-        { icon: '📦', text: 'Inventory',  href: 'inventory.html' },
-        { icon: '💰', text: 'Sales',      href: 'sales.html' },
-        { icon: '🛒', text: 'Purchasing', href: 'purchasing.html' },
-        { icon: '🏭', text: 'Production', href: '#' },
+        { icon: '📦', key: 'nav_inventory',   href: 'inventory.html' },
+        { icon: '💰', key: 'nav_sales',        href: 'sales.html' },
+        { icon: '🛒', key: 'nav_purchasing',   href: 'purchasing.html' },
+        { icon: '🏭', key: 'nav_production',   href: '#' },
       ]
     },
     {
-      label: 'Finance',
+      labelKey: 'nav_group_finance',
       items: [
-        { icon: '🏦', text: 'Cashbank',   href: 'cashbank.html' },
-        { icon: '📒', text: 'Accounting', href: 'accounting.html' },
-        { icon: '📊', text: 'Reports',    href: '#' },
+        { icon: '🏦', key: 'nav_cashbank',     href: 'cashbank.html' },
+        { icon: '📒', key: 'nav_accounting',   href: 'accounting.html' },
+        { icon: '📊', key: 'nav_reports',      href: '#' },
       ]
     },
     {
-      label: 'Management',
+      labelKey: 'nav_group_management',
       items: [
-        { icon: '👥', text: 'HR & Payroll', href: '#' },
-        { icon: '🚚', text: 'Shipping',     href: '#' },
-        { icon: '📅', text: 'Projects',     href: '#' },
-        { icon: '🔧', text: 'Maintenance',  href: '#' },
+        { icon: '👥', key: 'nav_hr',           href: '#' },
+        { icon: '🚚', key: 'nav_shipping',     href: '#' },
+        { icon: '📅', key: 'nav_projects',     href: '#' },
+        { icon: '🔧', key: 'nav_maintenance',  href: '#' },
       ]
     },
     {
-      label: 'System',
+      labelKey: 'nav_group_system',
       items: [
-        { icon: '⚙️', text: 'Settings',     href: 'settings.html' },
-        { icon: '💎', text: 'Subscription', href: 'subscription.html' },
+        { icon: '⚙️', key: 'nav_settings',     href: 'settings.html' },
+        { icon: '💎', key: 'nav_subscription', href: 'subscription.html' },
       ]
     },
   ];
@@ -292,16 +303,19 @@
   function buildHTML() {
     const page = currentPage();
     let sectionsHTML = '';
+    const _t = window.t || (k => k);
     NAV.forEach(section => {
       let itemsHTML = section.items.map(item => {
         const active = item.href !== '#' && page === item.href ? 'active' : '';
+        const label = _t(item.key) || item.key;
         return `<a class="nav-item ${active}" href="${item.href}">
-          <span class="nav-icon">${item.icon}</span> ${item.text}
+          <span class="nav-icon">${item.icon}</span> ${label}
         </a>`;
       }).join('\n');
+      const sectionLabel = _t(section.labelKey) || section.labelKey;
       sectionsHTML += `
         <div class="sidebar-section">
-          <div class="sidebar-section-label">${section.label}</div>
+          <div class="sidebar-section-label">${sectionLabel}</div>
           ${itemsHTML}
         </div>`;
     });

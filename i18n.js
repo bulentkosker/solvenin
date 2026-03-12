@@ -1782,6 +1782,10 @@ const T = window.T = {
     inv_products:'Products',
     inv_no_products:'No products found',
     inv_no_products_sub:'Try adjusting your filters or add a new product.',
+    nav_group_main:'Main',
+    nav_group_finance:'Finance',
+    nav_group_management:'Management',
+    nav_group_system:'System',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -2094,6 +2098,10 @@ const T = window.T = {
     inv_products:'Ürünler',
     inv_no_products:'Ürün bulunamadı',
     inv_no_products_sub:'Filtrelerinizi ayarlayın veya yeni ürün ekleyin.',
+    nav_group_main:'Ana Menü',
+    nav_group_finance:'Finans',
+    nav_group_management:'Yönetim',
+    nav_group_system:'Sistem',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -2232,6 +2240,10 @@ const T = window.T = {
     inv_products:'Produkte',
     inv_no_products:'Keine Produkte gefunden',
     inv_no_products_sub:'Filter anpassen oder neues Produkt hinzufügen.',
+    nav_group_main:'Hauptmenü',
+    nav_group_finance:'Finanzen',
+    nav_group_management:'Verwaltung',
+    nav_group_system:'System',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -2371,6 +2383,10 @@ const T = window.T = {
     inv_products:'Produits',
     inv_no_products:'Aucun produit trouvé',
     inv_no_products_sub:'Ajustez les filtres ou ajoutez un produit.',
+    nav_group_main:'Principal',
+    nav_group_finance:'Finance',
+    nav_group_management:'Gestion',
+    nav_group_system:'Système',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -2509,6 +2525,10 @@ const T = window.T = {
     inv_products:'Productos',
     inv_no_products:'No se encontraron productos',
     inv_no_products_sub:'Ajusta los filtros o añade un producto.',
+    nav_group_main:'Principal',
+    nav_group_finance:'Finanzas',
+    nav_group_management:'Gestión',
+    nav_group_system:'Sistema',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -2613,6 +2633,10 @@ const T = window.T = {
     inv_products:'المنتجات',
     inv_no_products:'لم يتم العثور على منتجات',
     inv_no_products_sub:'اضبط الفلاتر أو أضف منتجاً جديداً.',
+    nav_group_main:'الرئيسية',
+    nav_group_finance:'المالية',
+    nav_group_management:'الإدارة',
+    nav_group_system:'النظام',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -2716,6 +2740,10 @@ const T = window.T = {
     inv_products:'产品',
     inv_no_products:'未找到产品',
     inv_no_products_sub:'调整筛选条件或添加新产品。',
+    nav_group_main:'主菜单',
+    nav_group_finance:'财务',
+    nav_group_management:'管理',
+    nav_group_system:'系统',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -2945,6 +2973,10 @@ const T = window.T = {
     inv_products:'Produtos',
     inv_no_products:'Nenhum produto encontrado',
     inv_no_products_sub:'Ajuste os filtros ou adicione um produto.',
+    nav_group_main:'Главное',
+    nav_group_finance:'Финансы',
+    nav_group_management:'Управление',
+    nav_group_system:'Система',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -3048,6 +3080,10 @@ const T = window.T = {
     inv_products:'製品',
     inv_no_products:'製品が見つかりません',
     inv_no_products_sub:'フィルターを調整するか新しい製品を追加してください。',
+    nav_group_main:'メイン',
+    nav_group_finance:'財務',
+    nav_group_management:'管理',
+    nav_group_system:'システム',
   },
 };
 
@@ -3120,6 +3156,7 @@ function setLang(lang) {
   if (!SUPPORTED_LANGS.includes(lang)) return;
   localStorage.setItem('solvenin_lang', lang);
   applyTranslations();
+  document.dispatchEvent(new CustomEvent('langChanged', { detail: { lang } }));
 }
 
 function updateLangSwitcherUI(lang) {
