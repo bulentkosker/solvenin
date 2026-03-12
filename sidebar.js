@@ -166,7 +166,7 @@
     'ARS':'$','CLP':'$','COP':'$','PEN':'S/.','UYU':'$','VEF':'Bs',
     'SAR':'﷼','AED':'د.إ','QAR':'﷼','KWD':'د.ك','BHD':'BD','OMR':'﷼',
     'EGP':'£','ZAR':'R','NGN':'₦','KES':'KSh','GHS':'₵','MAD':'MAD',
-    'UAH':'₴','KZT':'₸','UZS':'so'm','AZN':'₼','GEL':'₾','AMD':'֏',
+    'UAH':'₴','KZT':'₸','UZS':'so\'m','AZN':'₼','GEL':'₾','AMD':'֏',
   };
 
   window.getBaseCurrency = function() {
