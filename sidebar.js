@@ -36,7 +36,38 @@
     }
     .sidebar-sections { flex: 1; overflow-y: auto; padding: 6px 0; }
     .sidebar-section { padding: 10px 10px 4px; }
-    .sidebar-section-label {
+    /* ── CONFIRM MODAL ─────────────────────────────────── */
+  #solvenin-confirm-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+    z-index:9999; align-items:center; justify-content:center;
+  }
+  #solvenin-confirm-overlay.open { display:flex; }
+  #solvenin-confirm-box {
+    background:#fff; border-radius:16px; padding:28px 32px; max-width:400px;
+    width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  }
+  #solvenin-confirm-title {
+    font-size:16px; font-weight:700; color:#0f172a; margin-bottom:8px;
+  }
+  #solvenin-confirm-msg {
+    font-size:14px; color:#64748b; margin-bottom:24px; line-height:1.5;
+  }
+  #solvenin-confirm-btns {
+    display:flex; gap:10px; justify-content:flex-end;
+  }
+  #solvenin-confirm-btns button {
+    padding:8px 20px; border-radius:8px; border:none; font-size:14px;
+    font-weight:600; cursor:pointer; transition:all .15s;
+  }
+  #solvenin-confirm-cancel {
+    background:#f1f5f9; color:#64748b;
+  }
+  #solvenin-confirm-ok {
+    background:#ef4444; color:#fff;
+  }
+  #solvenin-confirm-ok:hover { background:#dc2626; }
+
+  .sidebar-section-label {
       font-size: 9px; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: rgba(255,255,255,0.45);
       padding: 0 8px; margin-bottom: 4px;
@@ -171,6 +202,25 @@
 
   window.getBaseCurrency = function() {
     return localStorage.getItem('baseCurrency') || 'USD';
+  };
+
+  // Global confirm dialog (replaces browser confirm())
+  window.showConfirm = function(message, title) {
+    return new Promise((resolve, reject) => {
+      const overlay = document.getElementById('solvenin-confirm-overlay');
+      const msg = document.getElementById('solvenin-confirm-msg');
+      const titleEl = document.getElementById('solvenin-confirm-title');
+      const okBtn = document.getElementById('solvenin-confirm-ok');
+      if (!overlay) { resolve(window.confirm(message)); return; }
+      titleEl.textContent = title || 'Confirm';
+      msg.textContent = message;
+      overlay.classList.add('open');
+      window._confirmReject = () => { resolve(false); };
+      okBtn.onclick = () => {
+        overlay.classList.remove('open');
+        resolve(true);
+      };
+    });
   };
 
   window.getCurrencySymbol = function(code) {
@@ -312,6 +362,25 @@
       document.body.insertBefore(sidebar, document.body.firstChild);
     }
     sidebar.innerHTML = buildHTML();
+    // Inject confirm modal if not exists
+    if (!document.getElementById('solvenin-confirm-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.id = 'solvenin-confirm-overlay';
+      overlay.innerHTML = `
+        <div id="solvenin-confirm-box">
+          <div id="solvenin-confirm-title">Confirm</div>
+          <div id="solvenin-confirm-msg"></div>
+          <div id="solvenin-confirm-btns">
+            <button id="solvenin-confirm-cancel">Cancel</button>
+            <button id="solvenin-confirm-ok">Delete</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('solvenin-confirm-cancel').onclick = () => {
+        overlay.classList.remove('open');
+        if (window._confirmReject) window._confirmReject();
+      };
+    }
     return true;
   }
 

@@ -884,7 +884,7 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!confirm(t('confirm_delete_order'))) return;
+  if (!await showConfirm(t('confirm_delete_order'), t('lbl_delete')||'Delete')) return;
   const { count: payCount } = await sb.from('payments').select('id', {count:'exact',head:true}).eq('order_id', id);
   if (payCount > 0) {
     showToast(t('err_has_payments').replace('{0}', payCount), 'error'); return;
@@ -925,7 +925,7 @@ async function saveCustomer() {
 function editCustomer(id) { openCustomerModal(id); }
 
 async function deleteCustomer(id) {
-  if (!confirm(t('confirm_delete_customer'))) return;
+  if (!await showConfirm(t('confirm_delete_customer'), t('lbl_delete')||'Delete')) return;
   const { count } = await sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).eq('is_active', true);
   if (count > 0) {
     showToast(t('err_has_sales_orders').replace('{0}', count), 'error'); return;

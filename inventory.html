@@ -799,7 +799,7 @@ function renderMovements() {
 
 
 async function deleteMovement(id, productId, stockSign, qty) {
-  if (!confirm(t('confirm_delete_movement')||'Delete this stock movement?')) return;
+  if (!await showConfirm(t('confirm_delete_movement')||'Delete this stock movement?', t('lbl_delete')||'Delete')) return;
   const { data: { user: _u } } = await sb.auth.getUser();
   // Soft delete movement
   const { error } = await sb.from('stock_movements').update({

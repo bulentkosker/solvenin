@@ -837,7 +837,7 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!confirm(t('confirm_delete_po'))) return;
+  if (!await showConfirm(t('confirm_delete_po'), t('lbl_delete')||'Delete')) return;
   const { count: mvCount } = await sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('invoice_id', id).eq('is_active', true);
   if (mvCount > 0) {
     showToast(t('err_has_stock_movements').replace('{0}', mvCount), 'error'); return;
@@ -977,7 +977,7 @@ async function saveSupplier() {
 function editSupplier(id) { openSupplierModal(id); }
 
 async function deleteSupplier(id) {
-  if (!confirm(t('confirm_delete_supplier'))) return;
+  if (!await showConfirm(t('confirm_delete_supplier'), t('lbl_delete')||'Delete')) return;
   const { count } = await sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).eq('is_active', true);
   if (count > 0) {
     showToast(t('err_has_purchase_orders').replace('{0}', count), 'error'); return;
