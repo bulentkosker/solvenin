@@ -854,16 +854,31 @@ async function handleForgot() {
 async function handleGoogle() {
   await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + '/auth.html?onboard=1' }
+    options: { redirectTo: 'https://solvenin.com/auth.html?onboard=1' }
   });
 }
 
 // Called after Google redirect — check if phone is missing
 async function checkOnboarding() {
   const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+  
+  // Handle hash-based token from Supabase OAuth redirect
+  if (hash && hash.includes('access_token')) {
+    // Let Supabase process the hash and establish session
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  
   if (!params.get('onboard')) return;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
+  
+  // Wait for session to be established
+  let user = null;
+  for (let i = 0; i < 5; i++) {
+    const { data } = await sb.auth.getUser();
+    if (data?.user) { user = data.user; break; }
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (!user) { window.location.href = '/dashboard.html'; return; }
   // Check if profile exists and has phone
   const { data: profile } = await sb.from('profiles').select('phone').eq('id', user.id).single();
   if (profile && profile.phone) {
