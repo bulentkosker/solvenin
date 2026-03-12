@@ -156,12 +156,46 @@
     .new-company-box .btn-create:hover { background: #3b82f6; }
   `;
 
+
+  /* ── CURRENCY ────────────────────────────────────────────── */
+  const CURRENCY_SYMBOLS = {
+    'USD':'$','EUR':'€','GBP':'£','TRY':'₺','JPY':'¥','CNY':'¥',
+    'KRW':'₩','INR':'₹','RUB':'₽','BRL':'R$','CAD':'C$','AUD':'A$',
+    'CHF':'Fr','SEK':'kr','NOK':'kr','DKK':'kr','PLN':'zł','CZK':'Kč',
+    'HUF':'Ft','RON':'lei','BGN':'лв','HRK':'kn','ISK':'kr','MXN':'$',
+    'ARS':'$','CLP':'$','COP':'$','PEN':'S/.','UYU':'$','VEF':'Bs',
+    'SAR':'﷼','AED':'د.إ','QAR':'﷼','KWD':'د.ك','BHD':'BD','OMR':'﷼',
+    'EGP':'£','ZAR':'R','NGN':'₦','KES':'KSh','GHS':'₵','MAD':'MAD',
+    'UAH':'₴','KZT':'₸','UZS':'so'm','AZN':'₼','GEL':'₾','AMD':'֏',
+  };
+
+  window.getBaseCurrency = function() {
+    return localStorage.getItem('baseCurrency') || 'USD';
+  };
+
+  window.getCurrencySymbol = function(code) {
+    return CURRENCY_SYMBOLS[code || window.getBaseCurrency()] || (code || '$');
+  };
+
+  window.fmtMoney = function(amount, code) {
+    const sym = window.getCurrencySymbol(code);
+    const num = parseFloat(amount) || 0;
+    return sym + num.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  };
+
+  window.fmtMoneyShort = function(amount, code) {
+    const sym = window.getCurrencySymbol(code);
+    const num = parseFloat(amount) || 0;
+    if (num >= 1000000) return sym + (num/1000000).toFixed(1) + 'M';
+    if (num >= 1000) return sym + (num/1000).toFixed(1) + 'K';
+    return sym + num.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  };
+
   /* ── NAV ITEMS ───────────────────────────────────────────── */
   const NAV = [
     {
       label: 'Main',
       items: [
-        { icon: '⊞', text: 'Dashboard',  href: 'dashboard.html' },
         { icon: '📦', text: 'Inventory',  href: 'inventory.html' },
         { icon: '💰', text: 'Sales',      href: 'sales.html' },
         { icon: '🛒', text: 'Purchasing', href: 'purchasing.html' },
@@ -304,7 +338,7 @@
 
       const { data: company } = await sb
         .from('companies')
-        .select('name, plan')
+        .select('name, plan, base_currency')
         .eq('id', companyId)
         .single();
 
@@ -313,6 +347,10 @@
         const cpEl = document.getElementById('sb-company-plan');
         if (cnEl) cnEl.textContent = company.name;
         if (cpEl) cpEl.textContent = company.plan || 'Free';
+        if (company.base_currency) {
+          localStorage.setItem('baseCurrency', company.base_currency);
+          document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: company.base_currency }));
+        }
       }
 
       // All companies for switcher
