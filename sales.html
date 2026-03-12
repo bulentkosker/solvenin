@@ -885,10 +885,8 @@ async function editOrder(id) {
 
 async function deleteOrder(id) {
   if (!await showConfirm(t('confirm_delete_order'), t('lbl_delete')||'Delete')) return;
-  const { count: payCount } = await sb.from('payments').select('id', {count:'exact',head:true}).eq('order_id', id);
-  if (payCount > 0) {
-    showToast(t('err_has_payments').replace('{0}', payCount), 'error'); return;
-  }
+  // Cascade delete payments first
+  await sb.from('payments').delete().eq('order_id', id);
   const { data: { user: _u } } = await sb.auth.getUser();
   const _now = new Date().toISOString();
   // Soft delete linked stock movements
