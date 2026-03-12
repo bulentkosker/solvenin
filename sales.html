@@ -253,24 +253,24 @@ tr:hover .row-actions{opacity:1}
     <!-- STATS -->
     <div class="stats-grid">
       <div class="stat-card blue">
-        <div class="stat-label">Total Revenue</div>
+        <div class="stat-label"><span data-i18n="total_revenue"></span></div>
         <div class="stat-val" id="stat-revenue">—</div>
-        <div class="stat-sub">All time</div>
+        <div class="stat-sub"><span data-i18n="lbl_all_time">All time</span></div>
       </div>
       <div class="stat-card green">
-        <div class="stat-label">Paid Invoices</div>
+        <div class="stat-label"><span data-i18n="lbl_paid_invoices">Paid Invoices</span></div>
         <div class="stat-val" id="stat-paid">0</div>
-        <div class="stat-sub" id="stat-paid-amt">— collected</div>
+        <div class="stat-sub" id="stat-paid-amt">— <span data-i18n="lbl_collected">collected</span></div>
       </div>
       <div class="stat-card orange">
         <div class="stat-label">Pending</div>
         <div class="stat-val" id="stat-pending">0</div>
-        <div class="stat-sub" id="stat-pending-amt">— outstanding</div>
+        <div class="stat-sub" id="stat-pending-amt">— <span data-i18n="lbl_outstanding">outstanding</span></div>
       </div>
       <div class="stat-card purple">
         <div class="stat-label">Total Customers</div>
         <div class="stat-val" id="stat-customers">0</div>
-        <div class="stat-sub">Active accounts</div>
+        <div class="stat-sub"><span data-i18n="lbl_active_accounts">Active accounts</span></div>
       </div>
     </div>
 
@@ -293,11 +293,11 @@ tr:hover .row-actions{opacity:1}
           <option value="draft">Draft</option>
           <option value="confirmed">Confirmed</option>
           <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
+          <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
         </select>
         <select class="filter-select" id="filter-customer" onchange="filterOrders()">
-          <option value="">All Customers</option>
+          <option value=""><span data-i18n="lbl_all_customers">All Customers</span></option>
         </select>
       </div>
       <div class="table-card">
@@ -305,18 +305,18 @@ tr:hover .row-actions{opacity:1}
           <table>
             <thead>
               <tr>
-                <th><span data-i18n="col_order_no">Order #</span></th>
+                <th><span data-i18n="col_order_no"><span data-i18n="col_order_num">Order #</span></span></th>
                 <th><span data-i18n="col_customer">Customer</span></th>
                 <th><span data-i18n="col_date">Date</span></th>
-                <th><span data-i18n="col_due_date">Due Date</span></th>
+                <th><span data-i18n="col_due_date"><span data-i18n="col_due_date">Due Date</span></span></th>
                 <th><span data-i18n="col_total">Total</span></th>
                 <th><span data-i18n="col_status">Status</span></th>
-                <th><span data-i18n="col_payment">Payment</span></th>
+                <th><span data-i18n="col_payment"><span data-i18n="col_payment">Payment</span></span></th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders yet</h3><p>Create your first order to get started.</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders yet</h3><p><span data-i18n="no_orders_sub">Create your first order to get started.</span></p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -355,7 +355,7 @@ tr:hover .row-actions{opacity:1}
               <tr><th><span data-i18n="col_order">Order</span></th><th><span data-i18n="col_customer">Customer</span></th><th><span data-i18n="col_amount">Amount</span></th><th><span data-i18n="col_method">Method</span></th><th>Reference</th><th><span data-i18n="col_date">Date</span></th></tr>
             </thead>
             <tbody id="payments-tbody">
-              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>No payments yet</h3><p>Payments will appear here when orders are marked as paid.</p></div></td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')||'No payments yet'}</h3><p><span data-i18n="no_payments_sub">Payments will appear here when orders are marked as paid.</span></p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -368,7 +368,7 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="order-modal">
   <div class="modal" style="max-width:780px">
     <div class="modal-header">
-      <div class="modal-title" id="order-modal-title">New Order</div>
+      <div class="modal-title" id="order-modal-title"><span data-i18n="title_new_order"></span></div>
       <button class="modal-close" onclick="closeModal('order-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -388,7 +388,7 @@ tr:hover .row-actions{opacity:1}
           <input type="date" id="o-date">
         </div>
         <div class="field">
-          <label><span data-i18n="lbl_due_date">Due Date</span></label>
+          <label><span data-i18n="lbl_due_date"><span data-i18n="col_due_date">Due Date</span></span></label>
           <input type="date" id="o-duedate">
         </div>
         <div class="field">
@@ -397,8 +397,8 @@ tr:hover .row-actions{opacity:1}
             <option value="draft">Draft</option>
             <option value="confirmed">Confirmed</option>
             <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
+            <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
           </select>
         </div>
         <div class="field">
@@ -609,7 +609,7 @@ const statusLabel = { draft:'Draft', confirmed:'Confirmed', shipped:'Shipped', d
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders found</h3><p>Create your first order.</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_orders_found')||'No orders found'}</h3><p>${t('no_orders_sub')||'Create your first order.'}</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
     return;
   }
   const paidOrders = new Set(payments.map(p => p.order_id));
@@ -662,7 +662,7 @@ function renderCustomers(list) {
 function renderPayments(list) {
   const tbody = document.getElementById('payments-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>No payments yet</h3></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')||'No payments yet'}</h3></div></td></tr>`;
     return;
   }
   const methodLabel = { cash:'💵 Cash', bank:'🏦 Bank', card:'💳 Card', other:'📋 Other' };
@@ -722,7 +722,7 @@ function filterCustomers() {
 function updateCustomerSelects() {
   const opts = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   document.getElementById('o-customer').innerHTML = `<option value="">${t('select_customer')}</option>` + opts;
-  document.getElementById('filter-customer').innerHTML = '<option value="">All Customers</option>' + opts;
+  document.getElementById('filter-customer').innerHTML = '<option value=""><span data-i18n="lbl_all_customers">All Customers</span></option>' + opts;
 }
 
 // ===== ORDER MODAL =====
