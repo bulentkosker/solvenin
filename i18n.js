@@ -1894,6 +1894,8 @@ const T = window.T = {
     lbl_company_info:'Company Information',
     lbl_company_info_sub:'Basic details about your company',
     lbl_loading:'Loading...',
+    fc4_5:'Refund Policy',
+    fc4_6:'Pricing',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -2370,6 +2372,8 @@ const T = window.T = {
     lbl_company_info:'Şirket Bilgileri',
     lbl_company_info_sub:'Şirketiniz hakkında temel bilgiler',
     lbl_loading:'Yükleniyor...',
+    fc4_5:'İade Politikası',
+    fc4_6:'Fiyatlandırma',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -2677,6 +2681,8 @@ const T = window.T = {
     lbl_company_info:'Unternehmensinformationen',
     lbl_company_info_sub:'Grundlegende Angaben zu Ihrem Unternehmen',
     lbl_loading:'Wird geladen...',
+    fc4_5:'Rückgaberecht',
+    fc4_6:'Preise',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -2985,6 +2991,8 @@ const T = window.T = {
     lbl_company_info:'Informations sur l\'entreprise',
     lbl_company_info_sub:'Informations de base sur votre entreprise',
     lbl_loading:'Chargement...',
+    fc4_5:'Politique de remboursement',
+    fc4_6:'Tarifs',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -3292,6 +3300,8 @@ const T = window.T = {
     lbl_company_info:'Información de la empresa',
     lbl_company_info_sub:'Detalles básicos sobre su empresa',
     lbl_loading:'Cargando...',
+    fc4_5:'Política de reembolso',
+    fc4_6:'Precios',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -3565,6 +3575,8 @@ const T = window.T = {
     lbl_company_info:'معلومات الشركة',
     lbl_company_info_sub:'تفاصيل أساسية عن شركتك',
     lbl_loading:'جاري التحميل...',
+    fc4_5:'سياسة الاسترداد',
+    fc4_6:'الأسعار',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -3837,6 +3849,8 @@ const T = window.T = {
     lbl_company_info:'公司信息',
     lbl_company_info_sub:'公司基本信息',
     lbl_loading:'加载中...',
+    fc4_5:'退款政策',
+    fc4_6:'定价',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -4235,6 +4249,8 @@ const T = window.T = {
     lbl_company_info:'Информация о компании',
     lbl_company_info_sub:'Основная информация о компании',
     lbl_loading:'Загрузка...',
+    fc4_5:'Политика возврата',
+    fc4_6:'Цены',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -4507,6 +4523,8 @@ const T = window.T = {
     lbl_company_info:'会社情報',
     lbl_company_info_sub:'会社の基本情報',
     lbl_loading:'読み込み中...',
+    fc4_5:'返金ポリシー',
+    fc4_6:'料金',
   },
 };
 
