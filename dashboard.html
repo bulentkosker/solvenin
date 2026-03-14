@@ -872,50 +872,13 @@ tr:hover td { background: var(--gray50); }
           <a href="#" class="view-all">All →</a>
         </div>
         <div class="notif-list">
-          <div class="notif-item unread">
-            <div class="notif-dot-wrap" style="background:#fef3c7">⚠️</div>
-            <div class="notif-body">
-              <div class="notif-title">Low stock alert</div>
-              <div class="notif-desc">Item #A204 is below minimum level</div>
-              <div class="notif-time">5 minutes ago</div>
-            </div>
-            <div class="notif-unread-dot"></div>
-          </div>
-          <div class="notif-item unread">
-            <div class="notif-dot-wrap" style="background:#dcfce7">✅</div>
-            <div class="notif-body">
-              <div class="notif-title">Order #1042 confirmed</div>
-              <div class="notif-desc">Customer: Acme Corp · $1,240</div>
-              <div class="notif-time">1 hour ago</div>
-            </div>
-            <div class="notif-unread-dot"></div>
-          </div>
-          <div class="notif-item unread">
-            <div class="notif-dot-wrap" style="background:#ede9fe">💳</div>
-            <div class="notif-body">
-              <div class="notif-title">Payment received</div>
-              <div class="notif-desc">Invoice #INV-089 · $3,400</div>
-              <div class="notif-time">2 hours ago</div>
-            </div>
-            <div class="notif-unread-dot"></div>
-          </div>
+          <div id="notif-list-container">
           <div class="notif-item">
-            <div class="notif-dot-wrap" style="background:#f1f5f9">📦</div>
             <div class="notif-body">
-              <div class="notif-title">Shipment dispatched</div>
-              <div class="notif-desc">Order #1038 · DHL Express</div>
-              <div class="notif-time">Yesterday</div>
+              <div class="notif-desc" style="color:var(--gray400);text-align:center;padding:16px" data-i18n="lbl_loading">Loading...</div>
             </div>
           </div>
-          <div class="notif-item">
-            <div class="notif-dot-wrap" style="background:#f1f5f9">👤</div>
-            <div class="notif-body">
-              <div class="notif-title">New employee added</div>
-              <div class="notif-desc">Sarah Johnson joined the team</div>
-              <div class="notif-time">2 days ago</div>
-            </div>
-          </div>
-        </div>
+        </div></div>
       </div>
     </div>
 
@@ -935,44 +898,14 @@ tr:hover td { background: var(--gray50); }
           <table>
             <thead>
               <tr>
-                <th>Customer</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th data-i18n="col_customer">Customer</th>
+                <th data-i18n="col_amount">Amount</th>
+                <th data-i18n="col_status">Status</th>
+                <th data-i18n="col_date">Date</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><div class="td-name">Acme Corp</div><div style="font-size:11px;color:var(--gray400)">#INV-092</div></td>
-                <td><strong>$1,240</strong></td>
-                <td><span class="badge green">Paid</span></td>
-                <td>Today</td>
-              </tr>
-              <tr>
-                <td><div class="td-name">TechBase Ltd</div><div style="font-size:11px;color:var(--gray400)">#INV-091</div></td>
-                <td><strong>$3,400</strong></td>
-                <td><span class="badge orange">Pending</span></td>
-                <td>Yesterday</td>
-              </tr>
-              <tr>
-                <td><div class="td-name">Global Trade</div><div style="font-size:11px;color:var(--gray400)">#INV-090</div></td>
-                <td><strong>$890</strong></td>
-                <td><span class="badge green">Paid</span></td>
-                <td>Mar 1</td>
-              </tr>
-              <tr>
-                <td><div class="td-name">Star Retail</div><div style="font-size:11px;color:var(--gray400)">#INV-089</div></td>
-                <td><strong>$2,100</strong></td>
-                <td><span class="badge red">Overdue</span></td>
-                <td>Feb 28</td>
-              </tr>
-              <tr>
-                <td><div class="td-name">Nordic Foods</div><div style="font-size:11px;color:var(--gray400)">#INV-088</div></td>
-                <td><strong>$560</strong></td>
-                <td><span class="badge green">Paid</span></td>
-                <td>Feb 27</td>
-              </tr>
-            </tbody>
+            <tbody id="recent-tx-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--gray400);padding:16px" data-i18n="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1246,6 +1179,72 @@ async function loadDashboardStats(){
     window._chartData = {months, monthLabels: labels};
 
   } catch(e){ console.error('Dashboard stats error:', e); }
+
+  // Load recent transactions
+  try {
+    const { data: recentOrders } = await sb.from('sales_orders')
+      .select('id, total, status, created_at, customers(name)')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    const tbody = document.getElementById('recent-tx-tbody');
+    if (tbody && recentOrders) {
+      const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
+      if (recentOrders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--gray400);padding:16px">${t('no_data')||'No data'}</td></tr>`;
+      } else {
+        tbody.innerHTML = recentOrders.map(o => {
+          const statusBadge = {
+            'paid':'green','active':'blue','pending':'orange',
+            'cancelled':'red','delivered':'green','draft':'gray'
+          }[o.status] || 'gray';
+          const date = new Date(o.created_at).toLocaleDateString();
+          const customer = o.customers?.name || '—';
+          return `<tr>
+            <td><div class="td-name">${customer}</div></td>
+            <td><strong>${sym}${parseFloat(o.total||0).toLocaleString()}</strong></td>
+            <td><span class="badge ${statusBadge}">${t('status_'+o.status)||o.status}</span></td>
+            <td>${date}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+  } catch(e) { console.error('Recent tx error:', e); }
+
+  // Load notifications (low stock alerts)
+  try {
+    const { data: lowStock } = await sb.from('products')
+      .select('name, quantity, min_stock')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .lt('quantity', sb.raw ? undefined : 0)
+      .limit(5);
+
+    // Use products data already loaded above for low stock
+    const { data: allProducts } = await sb.from('products')
+      .select('name, quantity, min_stock')
+      .eq('company_id', companyId)
+      .eq('is_active', true);
+
+    const notifContainer = document.getElementById('notif-list-container');
+    if (notifContainer && allProducts) {
+      const lowStockItems = allProducts.filter(p => p.min_stock > 0 && p.quantity <= p.min_stock);
+      if (lowStockItems.length === 0) {
+        notifContainer.innerHTML = `<div class="notif-item"><div class="notif-body"><div class="notif-desc" style="color:var(--gray400);text-align:center;padding:16px">${t('no_data')||'No notifications'}</div></div></div>`;
+      } else {
+        notifContainer.innerHTML = lowStockItems.slice(0,5).map(p => `
+          <div class="notif-item">
+            <div class="notif-dot-wrap" style="background:#fef3c7">⚠️</div>
+            <div class="notif-body">
+              <div class="notif-title">${t('status_low_stock')||'Low Stock'}</div>
+              <div class="notif-desc">${p.name}: ${p.quantity} ${t('col_unit')||'units'}</div>
+            </div>
+          </div>`).join('');
+      }
+    }
+  } catch(e) { console.error('Notifications error:', e); }
 }
 
 function fmtMoney(n) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }

@@ -213,7 +213,7 @@ tr:hover .row-actions{opacity:1}
 <!-- MAIN -->
 <div class="main">
   <header class="topbar">
-    <div class="topbar-title" data-i18n="page_sales">Sales & Invoicing</div>
+    <div class="topbar-title" data-i18n="page_sales"><span data-i18n="page_sales"><span data-i18n="page_sales">Sales & Invoicing</span></span></div>
     <div style="display:flex;gap:8px">
         <div id="lang-switcher-wrap" style="position:relative">
     <button id="lang-switcher" onclick="toggleLangMenu()" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;border:1px solid var(--gray200);background:var(--white);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--gray600);transition:all .15s">
@@ -242,11 +242,11 @@ tr:hover .row-actions{opacity:1}
     <div class="page-header">
       <div>
         <h1>💰 Sales & Invoicing</h1>
-        <p>Manage orders, invoices and customer payments</p>
+        <p><span data-i18n="sales_sub"><span data-i18n="sales_sub">Manage orders, invoices and customer payments</span></span></p>
       </div>
       <div class="header-actions">
         <button class="btn btn-outline" onclick="openCustomerModal()">👤 Customers</button>
-        <button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button>
+        <button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button>
       </div>
     </div>
 
@@ -255,30 +255,30 @@ tr:hover .row-actions{opacity:1}
       <div class="stat-card blue">
         <div class="stat-label"><span data-i18n="total_revenue"></span></div>
         <div class="stat-val" id="stat-revenue">—</div>
-        <div class="stat-sub"><span data-i18n="lbl_all_time">All time</span></div>
+        <div class="stat-sub"><span data-i18n="lbl_all_time"><span data-i18n="lbl_all_time">All time</span></span></div>
       </div>
       <div class="stat-card green">
         <div class="stat-label"><span data-i18n="lbl_paid_invoices">Paid Invoices</span></div>
         <div class="stat-val" id="stat-paid">0</div>
-        <div class="stat-sub" id="stat-paid-amt">— <span data-i18n="lbl_collected">collected</span></div>
+        <div class="stat-sub" id="stat-paid-amt">— <span data-i18n="lbl_collected"><span data-i18n="lbl_collected">collected</span></span></div>
       </div>
       <div class="stat-card orange">
-        <div class="stat-label">Pending</div>
+        <div class="stat-label" data-i18n="lbl_pending"><span data-i18n="lbl_pending">Pending</span></div>
         <div class="stat-val" id="stat-pending">0</div>
-        <div class="stat-sub" id="stat-pending-amt">— <span data-i18n="lbl_outstanding">outstanding</span></div>
+        <div class="stat-sub" id="stat-pending-amt">— <span data-i18n="lbl_outstanding"><span data-i18n="lbl_outstanding">outstanding</span></span></div>
       </div>
       <div class="stat-card purple">
-        <div class="stat-label">Total Customers</div>
+        <div class="stat-label" data-i18n="stat_customers"><span data-i18n="stat_customers">Total Customers</span></div>
         <div class="stat-val" id="stat-customers">0</div>
-        <div class="stat-sub"><span data-i18n="lbl_active_accounts">Active accounts</span></div>
+        <div class="stat-sub"><span data-i18n="lbl_active_accounts"><span data-i18n="lbl_active_accounts">Active accounts</span></span></div>
       </div>
     </div>
 
     <!-- TABS -->
     <div class="tabs-row">
-      <button class="tab-btn active" onclick="setTab(this,'orders')"><span data-i18n="tab_orders">Orders & Invoices</span></button>
-      <button class="tab-btn" onclick="setTab(this,'customers')">Customers</button>
-      <button class="tab-btn" onclick="setTab(this,'payments')"><span data-i18n="tab_payments">Payments</span></button>
+      <button class="tab-btn active" onclick="setTab(this,'orders')"><span data-i18n="tab_orders"><span data-i18n="tab_orders">Orders & Invoices</span></span></button>
+      <button class="tab-btn" onclick="setTab(this,'customers')"><span data-i18n="tab_customers">Customers</span></button>
+      <button class="tab-btn" onclick="setTab(this,'payments')"><span data-i18n="tab_payments"><span data-i18n="tab_payments">Payments</span></span></button>
     </div>
 
     <!-- ORDERS TAB -->
@@ -289,10 +289,10 @@ tr:hover .row-actions{opacity:1}
           <input type="text" id="order-search" placeholder=""  data-i18n-placeholder="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="shipped">Shipped</option>
+          <option value="" data-i18n="all_status">All Status</option>
+          <option value="draft">{% raw %}<span data-i18n="status_draft">Draft</span>{% endraw %}</option>
+          <option value="confirmed">{% raw %}<span data-i18n="status_confirmed">Confirmed</span>{% endraw %}</option>
+          <option value="shipped">{% raw %}<span data-i18n="status_shipped">Shipped</span>{% endraw %}</option>
           <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
           <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
         </select>
@@ -316,7 +316,7 @@ tr:hover .row-actions{opacity:1}
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>No orders yet</h3><p><span data-i18n="no_orders_sub">Create your first order to get started.</span></p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3><span data-i18n="no_orders_found">No orders yet</span></h3><p><span data-i18n="no_orders_sub">Create your first order to get started.</span></p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -339,7 +339,7 @@ tr:hover .row-actions{opacity:1}
               <tr><th><span data-i18n="label_name">Name</span></th><th><span data-i18n="col_email">Email</span></th><th><span data-i18n="col_phone">Phone</span></th><th><span data-i18n="col_city">City</span></th><th><span data-i18n="col_tax_no">Tax No</span></th><th><span data-i18n="col_orders">Orders</span></th><th></th></tr>
             </thead>
             <tbody id="customers-tbody">
-              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>No customers yet</h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3><span data-i18n="no_customers">No customers yet</span></h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -352,7 +352,7 @@ tr:hover .row-actions{opacity:1}
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th><span data-i18n="col_order">Order</span></th><th><span data-i18n="col_customer">Customer</span></th><th><span data-i18n="col_amount">Amount</span></th><th><span data-i18n="col_method">Method</span></th><th>Reference</th><th><span data-i18n="col_date">Date</span></th></tr>
+              <tr><th><span data-i18n="col_order">Order</span></th><th><span data-i18n="col_customer">Customer</span></th><th><span data-i18n="col_amount">Amount</span></th><th><span data-i18n="col_method">Method</span></th><th><span data-i18n="col_reference">Reference</span></th><th><span data-i18n="col_date">Date</span></th></tr>
             </thead>
             <tbody id="payments-tbody">
               <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')||'No payments yet'}</h3><p><span data-i18n="no_payments_sub">Payments will appear here when orders are marked as paid.</span></p></div></td></tr>
@@ -376,7 +376,7 @@ tr:hover .row-actions{opacity:1}
         <div class="field">
           <label><span data-i18n="col_customer">Customer *</span></label>
           <select id="o-customer">
-            <option value="">Select customer</option>
+            <option value="">{% raw %}<span data-i18n="select_customer">Select customer</span>{% endraw %}</option>
           </select>
         </div>
         <div class="field">
@@ -394,9 +394,9 @@ tr:hover .row-actions{opacity:1}
         <div class="field">
           <label><span data-i18n="col_status">Status</span></label>
           <select id="o-status">
-            <option value="draft">Draft</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="shipped">Shipped</option>
+            <option value="draft">{% raw %}<span data-i18n="status_draft">Draft</span>{% endraw %}</option>
+            <option value="confirmed">{% raw %}<span data-i18n="status_confirmed">Confirmed</span>{% endraw %}</option>
+            <option value="shipped">{% raw %}<span data-i18n="status_shipped">Shipped</span>{% endraw %}</option>
             <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
             <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
           </select>
@@ -461,9 +461,9 @@ tr:hover .row-actions{opacity:1}
         <div class="field full"><label><span data-i18n="lbl_company_name">Customer Name *</span></label><input type="text" id="c-name" placeholder="Acme Corporation"></div>
         <div class="field"><label><span data-i18n="col_email">Email</span></label><input type="email" id="c-email" placeholder="contact@acme.com"></div>
         <div class="field"><label><span data-i18n="col_phone">Phone</span></label><input type="tel" id="c-phone" placeholder="+1 555 000 0000"></div>
-        <div class="field full"><label>Address</label><input type="text" id="c-address" placeholder="123 Main Street"></div>
+        <div class="field full"><label><span data-i18n="label_address">Address</span></label><input type="text" id="c-address" placeholder="123 Main Street"></div>
         <div class="field"><label><span data-i18n="col_city">City</span></label><input type="text" id="c-city" placeholder="New York"></div>
-        <div class="field"><label>Country</label><input type="text" id="c-country" placeholder="USA"></div>
+        <div class="field"><label><span data-i18n="label_country">Country</span></label><input type="text" id="c-country" placeholder="USA"></div>
         <div class="field"><label><span data-i18n="col_tax_no">Tax Number</span></label><input type="text" id="c-tax" placeholder="Tax/VAT ID"></div>
         <div class="field full"><label><span data-i18n="label_notes">Notes</span></label><textarea id="c-notes" placeholder="Optional notes..."></textarea></div>
       </div>
@@ -502,8 +502,8 @@ tr:hover .row-actions{opacity:1}
           <label data-i18n="label_bank_account">Bank Account *</label>
           <select id="pay-account"><option value="">Select account...</option></select>
         </div>
-        <div class="field"><label data-i18n="col_ref">Reference</label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
-        <div class="field"><label data-i18n="label_notes">Notes</label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
+        <div class="field"><label data-i18n="col_ref"><span data-i18n="col_reference">Reference</span></label><input type="text" id="pay-ref" placeholder="e.g. TXN-12345"></div>
+        <div class="field"><label data-i18n="label_notes"><span data-i18n="label_notes">Notes</span></label><textarea id="pay-notes" placeholder="Optional..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -609,7 +609,7 @@ const statusLabel = { draft:'Draft', confirmed:'Confirmed', shipped:'Shipped', d
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_orders_found')||'No orders found'}</h3><p>${t('no_orders_sub')||'Create your first order.'}</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_orders_found')||'No orders found'}</h3><p>${t('no_orders_sub')||'Create your first order.'}</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
     return;
   }
   const paidOrders = new Set(payments.map(p => p.order_id));
@@ -639,7 +639,7 @@ function renderOrders(list) {
 function renderCustomers(list) {
   const tbody = document.getElementById('customers-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>No customers yet</h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3><span data-i18n="no_customers">No customers yet</span></h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(c => {
@@ -761,7 +761,7 @@ function renderOrderItems() {
   tbody.innerHTML = orderItems.map((item, i) => `<tr>
     <td>
       <select onchange="onProductSelect(this,${i})" style="margin-bottom:4px">
-        <option value="">Select product or type description</option>${prodOpts}
+        <option value="">{% raw %}<span data-i18n="select_product">Select product or type description</span>{% endraw %}</option>${prodOpts}
       </select>
       <input type="text" value="${item.description||''}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
     </td>
@@ -1035,7 +1035,7 @@ async function viewInvoice(orderId) {
       </div>
     </div>
     <table class="inv-items">
-      <thead><tr><th>#</th><th>Description</th><th class="num"><span data-i18n="col_qty">Qty</span></th><th class="num"><span data-i18n="col_unit_price">Unit Price</span></th><th class="num"><span data-i18n="col_disc_pct">Disc%</span></th><th class="num"><span data-i18n="col_total">Total</span></th></tr></thead>
+      <thead><tr><th>#</th><th><span data-i18n="col_description">Description</span></th><th class="num"><span data-i18n="col_qty">Qty</span></th><th class="num"><span data-i18n="col_unit_price">Unit Price</span></th><th class="num"><span data-i18n="col_disc_pct">Disc%</span></th><th class="num"><span data-i18n="col_total">Total</span></th></tr></thead>
       <tbody>
         ${(items||[]).map((item,i) => `<tr>
           <td>${i+1}</td>
