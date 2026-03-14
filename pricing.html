@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Solvenin pricing — simple, transparent plans for every business. Free forever plan available.">
+<title>Solvenin - Pricing</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0a0f1e;--blue:#2563eb;--blue-light:#60a5fa;--gray500:#64748b;--gray800:#1e293b;--gray200:#e2e8f0;--gray100:#f1f5f9}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:var(--gray800);line-height:1.7}
+.navbar{background:var(--navy);padding:16px 40px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:#fff;text-decoration:none}
+.logo span{color:var(--blue-light)}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-link{color:rgba(255,255,255,0.6);text-decoration:none;font-size:13px}
+.nav-link:hover{color:#fff}
+.nav-cta{background:var(--blue);color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none}
+.nav-cta:hover{background:#1d4ed8}
+.hero{background:var(--navy);padding:80px 24px 60px;text-align:center}
+.hero h1{font-family:'Outfit',sans-serif;font-size:42px;font-weight:800;color:#fff;margin-bottom:16px}
+.hero p{font-size:16px;color:rgba(255,255,255,0.6);max-width:500px;margin:0 auto 32px}
+.toggle-wrap{display:inline-flex;background:rgba(255,255,255,0.08);border-radius:12px;padding:4px;gap:2px}
+.toggle-btn{padding:8px 24px;border-radius:9px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:rgba(255,255,255,0.5)}
+.toggle-btn.active{background:#fff;color:var(--navy)}
+.save-badge{background:#22c55e;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
+.plans{max-width:1100px;margin:0 auto;padding:60px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.plan{background:#fff;border-radius:20px;padding:32px 28px;border:1px solid var(--gray200);position:relative;transition:transform .2s,box-shadow .2s}
+.plan:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.08)}
+.plan.popular{border:2px solid var(--blue);box-shadow:0 8px 32px rgba(37,99,235,0.12)}
+.popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:20px;white-space:nowrap}
+.plan-name{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--gray800);margin-bottom:8px}
+.plan-desc{font-size:13px;color:var(--gray500);margin-bottom:24px;min-height:36px}
+.plan-price{font-family:'Outfit',sans-serif;font-size:40px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.plan-price span{font-size:16px;font-weight:500;color:var(--gray500)}
+.plan-per{font-size:12px;color:var(--gray500);margin-bottom:28px}
+.plan-btn{display:block;text-align:center;padding:12px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;margin-bottom:28px;transition:all .2s}
+.plan-btn.primary{background:var(--blue);color:#fff}
+.plan-btn.primary:hover{background:#1d4ed8}
+.plan-btn.outline{background:transparent;color:var(--blue);border:2px solid var(--blue)}
+.plan-btn.outline:hover{background:#eff6ff}
+.plan-btn.dark{background:var(--navy);color:#fff}
+.plan-btn.dark:hover{background:#111827}
+.features-title{font-size:12px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.feature{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--gray500);margin-bottom:10px}
+.feature .check{color:#22c55e;font-size:14px;flex-shrink:0;margin-top:2px}
+.feature .cross{color:#cbd5e1;font-size:14px;flex-shrink:0;margin-top:2px}
+.section{max-width:860px;margin:0 auto;padding:0 24px 80px}
+.section h2{font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;color:var(--navy);margin-bottom:32px;text-align:center}
+.faq{border:1px solid var(--gray200);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.faq summary{padding:18px 24px;font-size:15px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--gray800)}
+.faq summary::after{content:'＋';font-size:18px;color:var(--gray500)}
+.faq[open] summary::after{content:'－'}
+.faq p{padding:0 24px 18px;font-size:14px;color:var(--gray500)}
+.cta-section{background:var(--navy);padding:80px 24px;text-align:center}
+.cta-section h2{font-family:'Outfit',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:16px}
+.cta-section p{color:rgba(255,255,255,0.6);margin-bottom:32px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-white{background:#fff;color:var(--navy);padding:14px 28px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px}
+.btn-outline-white{background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.3);padding:14px 28px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px}
+.footer{background:var(--navy);padding:24px 40px;text-align:center;font-size:13px;color:rgba(255,255,255,0.3);border-top:1px solid rgba(255,255,255,0.06)}
+.footer a{color:rgba(255,255,255,0.4);text-decoration:none}
+.footer a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="logo" href="/index.html">solvenin<span>.</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="/index.html#features">Features</a>
+    <a class="nav-link" href="/index.html#sectors">Industries</a>
+    <a class="nav-link" href="/auth.html">Log in</a>
+    <a class="nav-cta" href="/auth.html">Start free →</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Simple, transparent pricing</h1>
+  <p>Pay per user. No hidden fees. Start free, upgrade when you're ready.</p>
+  <div class="toggle-wrap">
+    <button class="toggle-btn active" id="btn-monthly" onclick="setBilling('monthly')">Monthly</button>
+    <button class="toggle-btn" id="btn-yearly" onclick="setBilling('yearly')">Yearly <span class="save-badge">Save 20%</span></button>
+  </div>
+</div>
+
+<div class="plans">
+
+  <!-- FREE -->
+  <div class="plan">
+    <div class="plan-name">Free</div>
+    <div class="plan-desc">Forever free. No card required.</div>
+    <div class="plan-price">$0</div>
+    <div class="plan-per">forever</div>
+    <a href="/auth.html" class="plan-btn outline">Get started</a>
+    <div class="features-title">Includes</div>
+    <div class="feature"><span class="check">✓</span> 1 user</div>
+    <div class="feature"><span class="check">✓</span> 1 company</div>
+    <div class="feature"><span class="check">✓</span> Inventory module</div>
+    <div class="feature"><span class="check">✓</span> Sales module</div>
+    <div class="feature"><span class="check">✓</span> 100 records per module</div>
+    <div class="feature"><span class="cross">✗</span> Purchasing</div>
+    <div class="feature"><span class="cross">✗</span> Cash & Bank</div>
+    <div class="feature"><span class="cross">✗</span> Accounting</div>
+    <div class="feature"><span class="cross">✗</span> API access</div>
+  </div>
+
+  <!-- STARTER -->
+  <div class="plan">
+    <div class="plan-name">Starter</div>
+    <div class="plan-desc">All modules for growing teams.</div>
+    <div class="plan-price" id="price-starter">$9<span>/mo</span></div>
+    <div class="plan-per" id="per-starter">per user / month</div>
+    <a href="/auth.html" class="plan-btn outline">Start free trial</a>
+    <div class="features-title">Everything in Free, plus</div>
+    <div class="feature"><span class="check">✓</span> Unlimited users</div>
+    <div class="feature"><span class="check">✓</span> All modules unlocked</div>
+    <div class="feature"><span class="check">✓</span> Unlimited records</div>
+    <div class="feature"><span class="check">✓</span> Purchasing & Suppliers</div>
+    <div class="feature"><span class="check">✓</span> Cash & Bank management</div>
+    <div class="feature"><span class="check">✓</span> Accounting & Reports</div>
+    <div class="feature"><span class="check">✓</span> Email support</div>
+    <div class="feature"><span class="cross">✗</span> Multi-company</div>
+    <div class="feature"><span class="cross">✗</span> API access</div>
+  </div>
+
+  <!-- PROFESSIONAL -->
+  <div class="plan popular">
+    <div class="popular-badge">⭐ Most Popular</div>
+    <div class="plan-name">Professional</div>
+    <div class="plan-desc">Multi-company + API access.</div>
+    <div class="plan-price" id="price-pro">$19<span>/mo</span></div>
+    <div class="plan-per" id="per-pro">per user / month</div>
+    <a href="/auth.html" class="plan-btn primary">Start free trial</a>
+    <div class="features-title">Everything in Starter, plus</div>
+    <div class="feature"><span class="check">✓</span> Multi-company management</div>
+    <div class="feature"><span class="check">✓</span> API access</div>
+    <div class="feature"><span class="check">✓</span> Advanced reporting</div>
+    <div class="feature"><span class="check">✓</span> Priority support</div>
+    <div class="feature"><span class="check">✓</span> Custom categories & warehouses</div>
+    <div class="feature"><span class="check">✓</span> Data export (CSV, PDF)</div>
+  </div>
+
+  <!-- ENTERPRISE -->
+  <div class="plan">
+    <div class="plan-name">Enterprise</div>
+    <div class="plan-desc">Custom solutions for large teams.</div>
+    <div class="plan-price">Custom</div>
+    <div class="plan-per">contact us for pricing</div>
+    <a href="mailto:sales@solvenin.com" class="plan-btn dark">Contact sales</a>
+    <div class="features-title">Everything in Professional, plus</div>
+    <div class="feature"><span class="check">✓</span> Unlimited companies</div>
+    <div class="feature"><span class="check">✓</span> Dedicated support manager</div>
+    <div class="feature"><span class="check">✓</span> Custom integrations</div>
+    <div class="feature"><span class="check">✓</span> SLA guarantee</div>
+    <div class="feature"><span class="check">✓</span> On-boarding & training</div>
+    <div class="feature"><span class="check">✓</span> Custom contract & billing</div>
+  </div>
+
+</div>
+
+<!-- FAQ -->
+<div class="section">
+  <h2>Frequently asked questions</h2>
+
+  <details class="faq">
+    <summary>Is the Free plan really free forever?</summary>
+    <p>Yes. The Free plan has no time limit and requires no credit card. You can use Solvenin's core inventory and sales features at no cost, forever.</p>
+  </details>
+
+  <details class="faq">
+    <summary>Can I change plans at any time?</summary>
+    <p>Yes. You can upgrade or downgrade your plan at any time from your account settings. Upgrades take effect immediately; downgrades apply at the start of the next billing cycle.</p>
+  </details>
+
+  <details class="faq">
+    <summary>What payment methods do you accept?</summary>
+    <p>We accept all major credit and debit cards (Visa, Mastercard, Amex), as well as PayPal. Payments are securely processed by Paddle.</p>
+  </details>
+
+  <details class="faq">
+    <summary>Do you offer a refund?</summary>
+    <p>Yes. We offer a 14-day money-back guarantee on all paid plans. If you're not satisfied, contact us within 14 days of your purchase for a full refund. See our <a href="/refund.html">Refund Policy</a> for details.</p>
+  </details>
+
+  <details class="faq">
+    <summary>How does per-user pricing work?</summary>
+    <p>You pay for each active user in your account. You can add or remove users at any time; billing adjusts automatically at your next renewal.</p>
+  </details>
+
+  <details class="faq">
+    <summary>Is my data secure?</summary>
+    <p>Yes. All data is encrypted at rest (AES-256) and in transit (TLS). Each company's data is fully isolated using Row Level Security. See our <a href="/privacy.html">Privacy Policy</a> for more.</p>
+  </details>
+
+  <details class="faq">
+    <summary>Do you support multiple languages?</summary>
+    <p>Yes. Solvenin supports 10 languages: English, Turkish, German, French, Spanish, Arabic, Chinese, Russian, Portuguese, and Japanese.</p>
+  </details>
+
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>Ready to get started?</h2>
+  <p>Join businesses managing their operations with Solvenin. Start free today.</p>
+  <div class="cta-btns">
+    <a href="/auth.html" class="btn-white">Start for free →</a>
+    <a href="mailto:sales@solvenin.com" class="btn-outline-white">Contact sales</a>
+  </div>
+</div>
+
+<div class="footer">
+  © 2026 Solvenin. All rights reserved. &nbsp;·&nbsp;
+  <a href="/privacy.html">Privacy</a> &nbsp;·&nbsp;
+  <a href="/terms.html">Terms</a> &nbsp;·&nbsp;
+  <a href="/refund.html">Refund Policy</a>
+</div>
+
+<script>
+let billing = 'monthly';
+const prices = {
+  starter: { monthly: '$9', yearly: '$7' },
+  pro:     { monthly: '$19', yearly: '$15' },
+};
+
+function setBilling(type) {
+  billing = type;
+  document.getElementById('btn-monthly').classList.toggle('active', type === 'monthly');
+  document.getElementById('btn-yearly').classList.toggle('active', type === 'yearly');
+  document.getElementById('price-starter').innerHTML = prices.starter[type] + '<span>/mo</span>';
+  document.getElementById('per-starter').textContent = type === 'yearly' ? 'per user / month, billed yearly' : 'per user / month';
+  document.getElementById('price-pro').innerHTML = prices.pro[type] + '<span>/mo</span>';
+  document.getElementById('per-pro').textContent = type === 'yearly' ? 'per user / month, billed yearly' : 'per user / month';
+}
+</script>
+</body>
+</html>
