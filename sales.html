@@ -290,14 +290,14 @@ tr:hover .row-actions{opacity:1}
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
           <option value="" data-i18n="all_status">All Status</option>
-          <option value="draft">{% raw %}<span data-i18n="status_draft">Draft</span>{% endraw %}</option>
-          <option value="confirmed">{% raw %}<span data-i18n="status_confirmed">Confirmed</span>{% endraw %}</option>
-          <option value="shipped">{% raw %}<span data-i18n="status_shipped">Shipped</span>{% endraw %}</option>
-          <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
+          <option value="draft" data-i18n="status_draft">Draft</option>
+          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+          <option value="shipped" data-i18n="status_shipped">Shipped</option>
+          <option value="delivered" data-i18n="status_delivered">Delivered</option>
           <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
         </select>
         <select class="filter-select" id="filter-customer" onchange="filterOrders()">
-          <option value=""><span data-i18n="lbl_all_customers">All Customers</span></option>
+          <option value="" data-i18n="lbl_all_customers">All Customers</option>
         </select>
       </div>
       <div class="table-card">
@@ -376,7 +376,7 @@ tr:hover .row-actions{opacity:1}
         <div class="field">
           <label><span data-i18n="col_customer">Customer *</span></label>
           <select id="o-customer">
-            <option value="">{% raw %}<span data-i18n="select_customer">Select customer</span>{% endraw %}</option>
+            <option value="" data-i18n="select_customer">Select customer</option>
           </select>
         </div>
         <div class="field">
@@ -394,10 +394,10 @@ tr:hover .row-actions{opacity:1}
         <div class="field">
           <label><span data-i18n="col_status">Status</span></label>
           <select id="o-status">
-            <option value="draft">{% raw %}<span data-i18n="status_draft">Draft</span>{% endraw %}</option>
-            <option value="confirmed">{% raw %}<span data-i18n="status_confirmed">Confirmed</span>{% endraw %}</option>
-            <option value="shipped">{% raw %}<span data-i18n="status_shipped">Shipped</span>{% endraw %}</option>
-            <option value="delivered"><span data-i18n="status_delivered">Delivered</span></option>
+            <option value="draft" data-i18n="status_draft">Draft</option>
+            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+            <option value="shipped" data-i18n="status_shipped">Shipped</option>
+            <option value="delivered" data-i18n="status_delivered">Delivered</option>
             <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
           </select>
         </div>
@@ -722,7 +722,7 @@ function filterCustomers() {
 function updateCustomerSelects() {
   const opts = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   document.getElementById('o-customer').innerHTML = `<option value="">${t('select_customer')}</option>` + opts;
-  document.getElementById('filter-customer').innerHTML = '<option value=""><span data-i18n="lbl_all_customers">All Customers</span></option>' + opts;
+  document.getElementById('filter-customer').innerHTML = '<option value="" data-i18n="lbl_all_customers">All Customers</option>' + opts;
 }
 
 // ===== ORDER MODAL =====
@@ -761,7 +761,7 @@ function renderOrderItems() {
   tbody.innerHTML = orderItems.map((item, i) => `<tr>
     <td>
       <select onchange="onProductSelect(this,${i})" style="margin-bottom:4px">
-        <option value="">{% raw %}<span data-i18n="select_product">Select product or type description</span>{% endraw %}</option>${prodOpts}
+        <option value="" data-i18n="select_product">Select product or type description</option>${prodOpts}
       </select>
       <input type="text" value="${item.description||''}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
     </td>
