@@ -299,11 +299,11 @@ tr:hover .action-btns { opacity:1; }
 
       <!-- Left Nav -->
       <div class="settings-nav">
-        <button class="settings-nav-item active" onclick="switchSection('company', this)"><span class="settings-nav-icon">🏢</span> Company</button>
-        <button class="settings-nav-item" onclick="switchSection('currency', this)"><span class="settings-nav-icon">💱</span> Currency</button>
-        <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> Categories</button>
-        <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> Warehouses</button>
-        <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> Tax Rates</button>
+        <button class="settings-nav-item active" onclick="switchSection('company', this)"><span class="settings-nav-icon">🏢</span> <span data-i18n="nav_company">Company</span></button>
+        <button class="settings-nav-item" onclick="switchSection('currency', this)"><span class="settings-nav-icon">💱</span> <span data-i18n="nav_currency">Currency</span></button>
+        <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> <span data-i18n="nav_categories">Categories</span></button>
+        <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></button>
+        <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -319,18 +319,18 @@ tr:hover .action-btns { opacity:1; }
             </div>
             <div class="settings-card-body">
               <div class="form-row">
-                <div class="form-group"><label data-i18n="label_company_name">Company Name</label><input type="text" id="co-name" placeholder="Acme Corp"></div>
-                <div class="form-group"><label data-i18n="label_tax_number">Tax / Registration Number</label><input type="text" id="co-taxno" placeholder="e.g. 123456789"></div>
+                <div class="form-group"><label data-i18n="label_company_name">Company Name</label><input type="text" id="co-name" data-i18n-placeholder="placeholder_co_name" placeholder="Acme Corp"></div>
+                <div class="form-group"><label data-i18n="label_tax_number">Tax / Registration Number</label><input type="text" id="co-taxno" data-i18n-placeholder="placeholder_co_taxno" placeholder="e.g. 123456789"></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label data-i18n="label_email">Email</label><input type="email" id="co-email" placeholder="info@company.com"></div>
-                <div class="form-group"><label data-i18n="label_phone">Phone</label><input type="text" id="co-phone" placeholder="+7 000 000 0000"></div>
+                <div class="form-group"><label data-i18n="label_email">Email</label><input type="email" id="co-email" data-i18n-placeholder="placeholder_co_email" placeholder="info@company.com"></div>
+                <div class="form-group"><label data-i18n="label_phone">Phone</label><input type="text" id="co-phone" data-i18n-placeholder="placeholder_co_phone" placeholder="+7 000 000 0000"></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label data-i18n="label_website">Website</label><input type="text" id="co-website" placeholder="https://company.com"></div>
+                <div class="form-group"><label data-i18n="label_website">Website</label><input type="text" id="co-website" data-i18n-placeholder="placeholder_co_website" placeholder="https://company.com"></div>
               </div>
               <div class="form-row full">
-                <div class="form-group"><label data-i18n="label_address">Address</label><textarea id="co-address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
+                <div class="form-group"><label data-i18n="label_address">Address</label><textarea id="co-address" data-i18n-placeholder="placeholder_co_address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
               </div>
             </div>
           </div>
@@ -341,8 +341,8 @@ tr:hover .action-btns { opacity:1; }
           <!-- Base Currency -->
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Base Currency</div><div class="settings-card-desc">All reports and balances are shown in this currency</div></div>
-              <button class="btn-primary" onclick="saveBaseCurrency()">Save</button>
+              <div><div class="settings-card-title" data-i18n="lbl_base_currency_title">Base Currency</div><div class="settings-card-desc" data-i18n="desc_base_currency">All reports and balances are shown in this currency</div></div>
+              <button class="btn-primary" onclick="saveBaseCurrency()" data-i18n="btn_save">Save</button>
             </div>
             <div class="settings-card-body">
               <div class="form-row" style="margin-bottom:0">
@@ -401,7 +401,7 @@ tr:hover .action-btns { opacity:1; }
           <!-- Active Currencies -->
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Active Currencies</div><div class="settings-card-desc">Currencies you transact in. Rates are fetched daily.</div></div>
+              <div><div class="settings-card-title" data-i18n="lbl_active_currencies">Active Currencies</div><div class="settings-card-desc" data-i18n="desc_active_currencies">Currencies you transact in. Rates are fetched daily.</div></div>
             </div>
             <div class="settings-card-body">
               <div class="currency-chips" id="active-currency-chips"></div>
@@ -452,7 +452,7 @@ tr:hover .action-btns { opacity:1; }
 <option value="PHP">PHP — Philippine Peso</option>
 <option value="VND">VND — Vietnamese Dong</option>
                 </select>
-                <button class="btn-primary" onclick="addActiveCurrency()">+ Add</button>
+                <button class="btn-primary" onclick="addActiveCurrency()" data-i18n="btn_add">+ Add</button>
               </div>
             </div>
           </div>
@@ -460,15 +460,15 @@ tr:hover .action-btns { opacity:1; }
           <!-- Exchange Rates -->
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title">Exchange Rates</div><div class="settings-card-desc">Today's rates. Auto-fetched from API, override if needed.</div></div>
-              <button class="btn-secondary" onclick="fetchRatesFromAPI()" id="fetch-rates-btn">🔄 Fetch Today's Rates</button>
+              <div><div class="settings-card-title" data-i18n="lbl_exchange_rates">Exchange Rates</div><div class="settings-card-desc" data-i18n="desc_exchange_rates">Today's rates. Auto-fetched from API, override if needed.</div></div>
+              <button class="btn-secondary" onclick="fetchRatesFromAPI()" id="fetch-rates-btn" data-i18n="btn_fetch_rates">🔄 Fetch Today's Rates</button>
             </div>
             <div class="settings-card-body" style="padding:0">
               <table class="rates-table">
-                <thead><tr><th data-i18n="label_currency">Currency</th><th>1 Unit =</th><th>Base</th><th>Date</th><th>Source</th><th></th></tr></thead>
+                <thead><tr><th data-i18n="label_currency">Currency</th><th data-i18n="th_1unit">1 Unit =</th><th data-i18n="th_base">Base</th><th data-i18n="th_date">Date</th><th data-i18n="th_source">Source</th><th></th></tr></thead>
                 <tbody id="rates-tbody"></tbody>
               </table>
-              <div id="rates-empty" style="text-align:center;padding:32px;color:var(--gray400);font-size:13px;display:none">
+              <div id="rates-empty" style="text-align:center;padding:32px;color:var(--gray400);font-size:13px;display:none" data-i18n="rates_empty">
                 No active currencies. Add currencies above.
               </div>
             </div>
@@ -479,7 +479,7 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-categories">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title" data-i18n="label_categories">Categories</div><div class="settings-card-desc">Manage product categories (max 3 levels)</div></div>
+              <div><div class="settings-card-title" data-i18n="label_categories">Categories</div><div class="settings-card-desc" data-i18n="desc_categories">Manage product categories (max 3 levels)</div></div>
               <button class="btn-primary" onclick="openAddCatForm(null, 0)"><span data-i18n="btn_add_category">+ Add Category</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
@@ -492,7 +492,7 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-warehouses">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title" data-i18n="label_warehouses">Warehouses</div><div class="settings-card-desc">Manage storage locations</div></div>
+              <div><div class="settings-card-title" data-i18n="label_warehouses">Warehouses</div><div class="settings-card-desc" data-i18n="desc_warehouses">Manage storage locations</div></div>
               <button class="btn-primary" onclick="openWarehouseModal()"><span data-i18n="btn_add_warehouse">+ Add Warehouse</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
@@ -505,7 +505,7 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-section" id="section-taxes">
           <div class="settings-card">
             <div class="settings-card-head">
-              <div><div class="settings-card-title" data-i18n="tab_tax_rates">Tax Rates</div><div class="settings-card-desc">Define tax rates for invoices</div></div>
+              <div><div class="settings-card-title" data-i18n="tab_tax_rates">Tax Rates</div><div class="settings-card-desc" data-i18n="desc_tax_rates">Define tax rates for invoices</div></div>
               <button class="btn-primary" onclick="openTaxModal()"><span data-i18n="btn_add_tax">+ Add Tax Rate</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
@@ -569,13 +569,13 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row full"><div class="form-group"><label data-i18n="label_warehouse_name">Warehouse Name *</label><input type="text" id="wh-name" placeholder="e.g. Main Warehouse"></div></div>
-      <div class="form-row full"><div class="form-group"><label data-i18n="label_location">Location / Address</label><input type="text" id="wh-location" placeholder="e.g. Building A, Floor 2"></div></div>
-      <div class="form-row full"><div class="form-group"><label data-i18n="label_notes">Notes</label><textarea id="wh-notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_warehouse_name">Warehouse Name *</label><input type="text" id="wh-name" data-i18n-placeholder="placeholder_wh_name" placeholder="e.g. Main Warehouse"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_location">Location / Address</label><input type="text" id="wh-location" data-i18n-placeholder="placeholder_wh_location" placeholder="e.g. Building A, Floor 2"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_notes">Notes</label><textarea id="wh-notes" data-i18n-placeholder="placeholder_wh_notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('warehouse-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveWarehouse()">Save</button>
+      <button class="btn-secondary" onclick="closeModal('warehouse-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveWarehouse()" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -589,14 +589,14 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="form-group"><label data-i18n="label_name">Name *</label><input type="text" id="tax-name" placeholder="e.g. VAT"></div>
+        <div class="form-group"><label data-i18n="label_name">Name *</label><input type="text" id="tax-name" data-i18n-placeholder="placeholder_tax_name" placeholder="e.g. VAT"></div>
         <div class="form-group"><label data-i18n="label_tax_rate">Rate (%) *</label><input type="number" id="tax-rate" placeholder="20" min="0" max="100" step="0.01"></div>
       </div>
-      <div class="form-row full"><div class="form-group"><label data-i18n="label_type">Type (optional)</label><input type="text" id="tax-desc" placeholder="e.g. Sales Tax, VAT"></div></div>
+      <div class="form-row full"><div class="form-group"><label data-i18n="label_type">Type (optional)</label><input type="text" id="tax-desc" data-i18n-placeholder="placeholder_tax_type" placeholder="e.g. Sales Tax, VAT"></div></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('tax-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveTax()">Save</button>
+      <button class="btn-secondary" onclick="closeModal('tax-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveTax()" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -605,15 +605,15 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="delete-modal">
   <div class="modal" style="width:380px">
     <div class="modal-head">
-      <div class="modal-title">Confirm Delete</div>
+      <div class="modal-title" data-i18n="confirm_delete">Confirm Delete</div>
       <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
     </div>
     <div class="modal-body">
       <p style="font-size:14px;color:var(--gray600)" id="delete-msg">Are you sure?</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
-      <button class="btn-primary" style="background:var(--red)" onclick="confirmDeleteAction()">Delete</button>
+      <button class="btn-secondary" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" style="background:var(--red)" onclick="confirmDeleteAction()" data-i18n="btn_delete">Delete</button>
     </div>
   </div>
 </div>
@@ -621,12 +621,12 @@ tr:hover .action-btns { opacity:1; }
 <!-- New Company Modal -->
 <div class="new-company-modal" id="new-company-modal">
   <div class="new-company-box">
-    <h3>New Company</h3>
-    <p>Create a new company workspace.</p>
-    <input type="text" id="new-company-name" placeholder="Company name">
+    <h3 data-i18n="lbl_new_company">New Company</h3>
+    <p data-i18n="lbl_create_company_workspace">Create a new company workspace.</p>
+    <input type="text" id="new-company-name" data-i18n-placeholder="placeholder_new_company" placeholder="Company name">
     <div style="display:flex;gap:8px">
-      <button class="btn-primary" style="flex:1" onclick="createNewCompany()">Create</button>
-      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('sb-new-company-modal').classList.remove('open')">Cancel</button>
+      <button class="btn-primary" style="flex:1" onclick="createNewCompany()" data-i18n="btn_create">Create</button>
+      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('sb-new-company-modal').classList.remove('open')" data-i18n="btn_cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -746,7 +746,7 @@ async function saveCompanyInfo() {
   };
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
   if (error) { showToast(error.message, 'error'); return; }
-  showToast('Company info saved ✓', 'success');
+  showToast(t('toast_company_info_saved'), 'success');
 }
 
 // ===== BASE CURRENCY =====
@@ -764,7 +764,7 @@ async function saveBaseCurrency() {
     activeCurrencies = [val, ...activeCurrencies];
     await saveActiveCurrencies();
   }
-  showToast(`Base currency set to ${val} ✓`, 'success');
+  showToast(t('toast_base_currency_set').replace('{0}', val), 'success');
 }
 
 // ===== ACTIVE CURRENCIES =====
@@ -783,17 +783,17 @@ async function addActiveCurrency() {
   const sel = document.getElementById('add-currency-select');
   const val = sel.value;
   if (!val) return;
-  if (activeCurrencies.includes(val)) { showToast('Already added', 'warning'); return; }
+  if (activeCurrencies.includes(val)) { showToast(t('toast_already_added'), 'warning'); return; }
   activeCurrencies = [...activeCurrencies, val];
   await saveActiveCurrencies();
   sel.value = '';
   renderActiveCurrencies();
   await loadExchangeRates();
-  showToast(`${val} added ✓`, 'success');
+  showToast(t('toast_currency_added').replace('{0}', val), 'success');
 }
 
 async function removeCurrency(code) {
-  if (code === baseCurrency) { showToast('Cannot remove base currency', 'error'); return; }
+  if (code === baseCurrency) { showToast(t('toast_cannot_remove_base'), 'error'); return; }
   activeCurrencies = activeCurrencies.filter(c => c !== code);
   await saveActiveCurrencies();
   renderActiveCurrencies();
@@ -838,11 +838,11 @@ function renderRatesTable(rates) {
       <td>1 ${currency}</td>
       <td>
         <input class="rate-input" type="number" step="0.000001" min="0"
-          id="rate-${currency}" value="${rate}" placeholder="Enter rate">
+          id="rate-${currency}" value="${rate}" placeholder="${t('placeholder_enter_rate')}">
         <span style="margin-left:6px;font-size:12px;color:var(--gray400)">${baseCurrency}</span>
       </td>
       <td class="rate-date">${date}</td>
-      <td><span class="rate-badge ${isManual?'manual':'auto'}">${isManual?'Manual':'Auto'}</span></td>
+      <td><span class="rate-badge ${isManual?'manual':'auto'}">${isManual?t('lbl_manual'):t('lbl_auto')}</span></td>
       <td>
         <button class="btn-secondary" style="padding:5px 10px;font-size:11px" onclick="saveManualRate('${currency}')">Save</button>
       </td>
@@ -852,7 +852,7 @@ function renderRatesTable(rates) {
 
 async function saveManualRate(currency) {
   const val = parseFloat(document.getElementById(`rate-${currency}`).value);
-  if (!val || val <= 0) { showToast('Invalid rate', 'error'); return; }
+  if (!val || val <= 0) { showToast(t('toast_invalid_exchange_rate'), 'error'); return; }
   const today = new Date().toISOString().slice(0,10);
   const { error } = await sb.from('exchange_rates').upsert({
     company_id: companyId,
@@ -862,19 +862,19 @@ async function saveManualRate(currency) {
     is_manual: true,
   }, { onConflict: 'company_id,currency,rate_date' });
   if (error) { showToast(error.message, 'error'); return; }
-  showToast(`${currency} rate saved ✓`, 'success');
+  showToast(t('toast_rate_saved').replace('{0}', currency), 'success');
   await loadExchangeRates();
 }
 
 async function fetchRatesFromAPI() {
   const btn = document.getElementById('fetch-rates-btn');
-  btn.textContent = '⏳ Fetching...';
+  btn.textContent = t('btn_fetching');
   btn.disabled = true;
 
   const foreignCurrencies = activeCurrencies.filter(c => c !== baseCurrency);
   if (!foreignCurrencies.length) {
-    showToast('No currencies to fetch', 'warning');
-    btn.textContent = '🔄 Fetch Today\'s Rates';
+    showToast(t('toast_no_currencies'), 'warning');
+    btn.textContent = t('btn_fetch_rates');
     btn.disabled = false;
     return;
   }
@@ -909,12 +909,12 @@ async function fetchRatesFromAPI() {
     const { error } = await sb.from('exchange_rates').upsert(upserts2, { onConflict: 'company_id,currency,rate_date' });
     if (error) throw error;
 
-    showToast(`Rates updated for ${upserts2.length} currencies ✓`, 'success');
+    showToast(t('toast_rates_updated').replace('{0}', upserts2.length), 'success');
     await loadExchangeRates();
   } catch(e) {
-    showToast('API error: ' + e.message, 'error');
+    showToast(t('toast_api_error') + e.message, 'error');
   } finally {
-    btn.textContent = '🔄 Fetch Today\'s Rates';
+    btn.textContent = t('btn_fetch_rates');
     btn.disabled = false;
   }
 }
@@ -939,7 +939,7 @@ function renderCategoriesList() {
   const roots = getChildren(null);
 
   if (!roots.length) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No categories yet. Click "<span data-i18n="btn_add_category">+ Add Category</span>" to start.</div>';
+    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_categories')}</div>`;
     return;
   }
 
@@ -983,7 +983,7 @@ function openAddCatForm(parentId, depth) {
   if (existing) existing.remove();
 
   const parentName = parentId ? allCategories.find(c=>c.id===parentId)?.name : null;
-  const label = parentName ? `Sub-category under "${parentName}"` : 'New root category';
+  const label = parentName ? t('lbl_sub_category_under').replace('{0}', parentName) : t('lbl_new_root_cat');
 
   const div = document.createElement('div');
   div.id = 'inline-add-cat';
@@ -991,7 +991,7 @@ function openAddCatForm(parentId, depth) {
   div.innerHTML = `
     <div style="font-size:11px;color:var(--gray400);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${label}</div>
     <div style="display:flex;gap:8px">
-      <input type="text" id="new-cat-input" placeholder="Category name..." style="flex:1;padding:8px 12px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none">
+      <input type="text" id="new-cat-input" placeholder="${t('placeholder_category_name')}" style="flex:1;padding:8px 12px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none">
       <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')">Save</button>
       <button class="btn-secondary" style="padding:8px 14px" onclick="document.getElementById('inline-add-cat')?.remove()">✕</button>
     </div>
@@ -1017,7 +1017,7 @@ async function saveCatAdd(parentId) {
 function openRenameCat(id) {
   const cat = allCategories.find(c=>c.id===id);
   if (!cat) return;
-  const newName = prompt('Rename category:', cat.name);
+  const newName = prompt(t('lbl_rename_cat'), cat.name);
   if (!newName || newName.trim() === cat.name) return;
   renameCat(id, newName.trim().toUpperCase());
 }
@@ -1027,7 +1027,7 @@ async function renameCat(id, name) {
   if (error) { showToast(error.message, 'error'); return; }
   allCategories = allCategories.map(c => c.id===id ? {...c, name} : c);
   renderCategoriesList();
-  showToast('Renamed ✓', 'success');
+  showToast(t('toast_renamed'), 'success');
 }
 
 async function openDeleteCat(id, name) {
@@ -1046,7 +1046,7 @@ async function openDeleteCat(id, name) {
     allCategories = allCategories.filter(c => c.id !== id);
     closeModal('delete-modal');
     renderCategoriesList();
-    showToast('Deleted ✓', 'success');
+    showToast(t('toast_deleted'), 'success');
   };
   openModal('delete-modal');
 }
@@ -1067,7 +1067,7 @@ function renderWarehousesList() {
   const container = document.getElementById('warehouses-list');
   if (!container) return;
   if (!allWarehouses.length) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No warehouses yet.</div>';
+    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_warehouses')}</div>`;
     return;
   }
   container.innerHTML = allWarehouses.map(w => `
@@ -1088,7 +1088,7 @@ function renderWarehousesList() {
 function openWarehouseModal(id=null) {
   editingWhId = id;
   const w = id ? allWarehouses.find(x=>x.id===id) : null;
-  document.getElementById('wh-modal-title').textContent = id ? 'Edit Warehouse' : 'Add Warehouse';
+  document.getElementById('wh-modal-title').textContent = id ? t('title_edit_warehouse') : t('title_add_warehouse');
   document.getElementById('wh-name').value = w?.name || '';
   document.getElementById('wh-location').value = w?.location || '';
   document.getElementById('wh-notes').value = w?.notes || '';
@@ -1097,7 +1097,7 @@ function openWarehouseModal(id=null) {
 
 async function saveWarehouse() {
   const name = document.getElementById('wh-name').value.trim();
-  if (!name) { showToast('Name required', 'error'); return; }
+  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
   const payload = {
     name,
     location: document.getElementById('wh-location').value.trim() || null,
@@ -1113,7 +1113,7 @@ async function saveWarehouse() {
   if (error) { showToast(error.message, 'error'); return; }
   closeModal('warehouse-modal');
   await loadWarehouses();
-  showToast('Saved ✓', 'success');
+  showToast(t('toast_saved'), 'success');
 }
 
 async function openDeleteWarehouse(id, name) {
@@ -1152,7 +1152,7 @@ function renderTaxesList() {
   const container = document.getElementById('taxes-list');
   if (!container) return;
   if (!allTaxes.length) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">No tax rates yet.</div>';
+    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_taxes')}</div>`;
     return;
   }
   container.innerHTML = allTaxes.map(t => `
@@ -1173,7 +1173,7 @@ function renderTaxesList() {
 function openTaxModal(id=null) {
   editingTaxId = id;
   const t = id ? allTaxes.find(x=>x.id===id) : null;
-  document.getElementById('tax-modal-title').textContent = id ? 'Edit Tax Rate' : 'Add Tax Rate';
+  document.getElementById('tax-modal-title').textContent = id ? t('title_edit_tax') : t('title_add_tax');
   document.getElementById('tax-name').value = t?.name || '';
   document.getElementById('tax-rate').value = t?.rate || '';
   document.getElementById('tax-desc').value = t?.description || '';
@@ -1183,7 +1183,7 @@ function openTaxModal(id=null) {
 async function saveTax() {
   const name = document.getElementById('tax-name').value.trim();
   const rate = parseFloat(document.getElementById('tax-rate').value);
-  if (!name || isNaN(rate)) { showToast('Name and rate required', 'error'); return; }
+  if (!name || isNaN(rate)) { showToast(t('toast_name_rate_required'), 'error'); return; }
   const payload = {
     name, rate,
     company_id: companyId,
@@ -1198,7 +1198,7 @@ async function saveTax() {
   if (error) { showToast(error.message, 'error'); return; }
   closeModal('tax-modal');
   await loadTaxes();
-  showToast('Saved ✓', 'success');
+  showToast(t('toast_saved'), 'success');
 }
 
 async function openDeleteTax(id, name) {
@@ -1258,7 +1258,7 @@ function renderCompanyMenu() {
   const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
   footer.innerHTML = canAdd
     ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
-    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
+    : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">${t('lbl_upgrade_multi_company')}</button>`;
 }
 
 
@@ -1338,10 +1338,10 @@ function renderRecycleBin(records) {
   if (!tbody) return;
 
   const typeLabels = {
-    product: '📦 Product', customer: '👤 Customer', supplier: '🏭 Supplier',
-    sales_order: '🧾 Sales Order', purchase_order: '🛒 Purchase Order',
-    stock_movement: '📊 Movement', cash_register: '💵 Cash Register',
-    bank_account: '🏦 Bank Account', coa_account: '📒 COA Account',
+    product: t('rl_product'), customer: t('rl_customer'), supplier: t('rl_supplier'),
+    sales_order: t('rl_sales_order'), purchase_order: t('rl_purchase_order'),
+    stock_movement: t('rl_stock_movement'), cash_register: t('rl_cash_register'),
+    bank_account: t('rl_bank_account'), coa_account: t('rl_coa_account'),
   };
 
   if (!records.length) {
