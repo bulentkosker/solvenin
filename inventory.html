@@ -265,7 +265,7 @@ tr:hover .action-btns { opacity:1; }
     <div class="alert-bar fade-up" id="low-stock-alert">
       <div class="alert-icon">⚠️</div>
       <div class="alert-text"><strong>3 items</strong> are running low on stock and need restocking.</div>
-      <span class="alert-action" onclick="filterByStatus('low')">View Low Stock →</span>
+      <span class="alert-action" onclick="filterByStatus('low')" data-i18n="view_low_stock">View Low Stock →</span>
     </div>
 
     <!-- STATS -->
@@ -307,8 +307,8 @@ tr:hover .action-btns { opacity:1; }
     <!-- TABS -->
     <div class="tabs-bar fade-up fade-up-1">
       <button class="tab-btn active" onclick="switchTab('all', this)" data-i18n="inv_all_items">All Items</button>
-      <button class="tab-btn" onclick="switchTab('low', this)">Low Stock</button>
-      <button class="tab-btn" onclick="switchTab('out', this)">Out of Stock</button>
+      <button class="tab-btn" onclick="switchTab('low', this)" data-i18n="inv_low_stock">Low Stock</button>
+      <button class="tab-btn" onclick="switchTab('out', this)" data-i18n="inv_out_of_stock">Out of Stock</button>
       <button class="tab-btn" onclick="switchTab('movements', this)" data-i18n="inv_movements">Movements</button>
     </div>
 
@@ -323,10 +323,10 @@ tr:hover .action-btns { opacity:1; }
           <option value="">All Categories</option>
         </select>
         <select class="filter-btn" id="filter-status" onchange="filterTable()">
-          <option value="">All Status</option>
-          <option value="in_stock">In Stock</option>
-          <option value="low">Low Stock</option>
-          <option value="out">Out of Stock</option>
+          <option value="" data-i18n="all_status">All Status</option>
+          <option value="in_stock" data-i18n="status_in_stock">In Stock</option>
+          <option value="low" data-i18n="status_low_stock">Low Stock</option>
+          <option value="out" data-i18n="status_out_of_stock">Out of Stock</option>
         </select>
       </div>
       <button class="btn-secondary" onclick="exportCSV()" data-i18n="inv_export">⬇ Export</button>
@@ -338,7 +338,7 @@ tr:hover .action-btns { opacity:1; }
     <div class="table-card fade-up fade-up-2" id="inventory-table-card">
       <div class="table-header">
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="table-title">Products</span>
+          <span class="table-title" data-i18n="inv_products">Products</span>
           <span class="table-count" id="table-count">0 items</span>
         </div>
         <div style="display:flex;gap:8px">
@@ -351,11 +351,11 @@ tr:hover .action-btns { opacity:1; }
           <thead>
             <tr>
               <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
-              <th onclick="sortTable('name')">Product ↕</th>
-              <th onclick="sortTable('category')">Category ↕</th>
-              <th onclick="sortTable('stock')">Stock ↕</th>
-              <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
-              <th onclick="sortTable('total_value')">Total Value ↕</th>
+              <th onclick="sortTable('name')"><span data-i18n="col_product">Product</span> ↕</th>
+              <th onclick="sortTable('category')"><span data-i18n="col_category">Category</span> ↕</th>
+              <th onclick="sortTable('stock')"><span data-i18n="col_stock">Stock</span> ↕</th>
+              <th onclick="sortTable('unit_cost')"><span data-i18n="col_unit_cost">Unit Cost</span> ↕</th>
+              <th onclick="sortTable('total_value')"><span data-i18n="col_total_value">Total Value</span> ↕</th>
               <th><span data-i18n="col_status">Status</span></th>
               <th><span data-i18n="col_location">Location</span></th>
               <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
@@ -373,8 +373,8 @@ tr:hover .action-btns { opacity:1; }
     <!-- MOVEMENTS TABLE (hidden by default) -->
     <div class="table-card fade-up fade-up-2" id="movements-card" style="display:none">
       <div class="table-header">
-        <span class="table-title">Stock Movements</span>
-        <button class="btn-primary" onclick="openMovementModal()">+ Record Movement</button>
+        <span class="table-title" data-i18n="table_stock_movements">Stock Movements</span>
+        <button class="btn-primary" onclick="openMovementModal()" data-i18n="btn_record_movement">+ Record Movement</button>
       </div>
       <table>
         <thead>
@@ -402,25 +402,25 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-section-title">Basic Information</div>
+      <div class="form-section-title" data-i18n="section_basic">Basic Information</div>
       <div class="form-row">
         <div class="form-group">
-          <label><span data-i18n="col_product">Product Name *</span></label>
-          <input type="text" id="p-name" placeholder="e.g. Laptop Dell XPS 15">
+          <label><span data-i18n="label_product_name">Product Name *</span></label>
+          <input type="text" id="p-name" data-i18n-placeholder="label_product_name" placeholder="Product Name *">
         </div>
         <div class="form-group">
-          <label><span data-i18n="col_sku">SKU / Barcode</span></label>
-          <input type="text" id="p-sku" placeholder="e.g. DELL-XPS-001">
+          <label><span data-i18n="label_sku">SKU / Barcode</span></label>
+          <input type="text" id="p-sku" data-i18n-placeholder="label_sku" placeholder="SKU / Barcode">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label><span data-i18n="label_categories">Category</span></label>
+          <label><span data-i18n="label_category">Category</span></label>
           <div class="cat-selector" id="cat-selector"></div>
           <input type="hidden" id="p-category-id">
         </div>
         <div class="form-group">
-          <label><span data-i18n="col_unit">Unit</span></label>
+          <label><span data-i18n="label_unit">Unit</span></label>
           <select id="p-unit">
             <option>pcs</option>
             <option>kg</option>
@@ -434,40 +434,40 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label><span data-i18n="lbl_description">Description</span></label>
-          <textarea id="p-desc" placeholder="Optional product description..."></textarea>
+          <label><span data-i18n="label_description">Description</span></label>
+          <textarea id="p-desc" data-i18n-placeholder="label_description" placeholder="Description"></textarea>
         </div>
       </div>
       <div class="form-divider"></div>
-      <div class="form-section-title">Stock & Pricing</div>
+      <div class="form-section-title" data-i18n="section_stock">Stock & Pricing</div>
       <div class="form-row three">
         <div class="form-group">
-          <label><span data-i18n="col_stock">Current Stock *</span></label>
+          <label><span data-i18n="label_current_stock">Current Stock *</span></label>
           <input type="number" id="p-stock" placeholder="0" min="0">
         </div>
         <div class="form-group">
-          <label>Min. Stock (Alert)</label>
+          <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
           <input type="number" id="p-min-stock" placeholder="—" min="0">
         </div>
         <div class="form-group">
-          <label>Max. Stock</label>
+          <label data-i18n="label_max_stock">Max. Stock</label>
           <input type="number" id="p-max-stock" placeholder="—" min="0">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Unit Cost (<span id="lbl-cost-sym">$</span>) *</label>
+          <label><span data-i18n="label_unit_cost">Unit Cost ($) *</span></label>
           <input type="number" id="p-cost" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
-          <label>Selling Price (<span id="lbl-price-sym">$</span>)</label>
+          <label><span data-i18n="label_selling_price">Selling Price ($)</span></label>
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+      <button class="btn-secondary" onclick="closeModal('product-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveProduct()" data-i18n="btn_save_product">Save Product</button>
     </div>
   </div>
 </div>
@@ -476,19 +476,19 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="adjust-modal">
   <div class="modal" style="width:480px">
     <div class="modal-head">
-      <div class="modal-title">Stock Movement</div>
+      <div class="modal-title" data-i18n="modal_adjust">Stock Movement</div>
       <button class="modal-close" onclick="closeModal('adjust-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row full">
         <div class="form-group">
-          <label>Product</label>
+          <label data-i18n="label_adj_product">Product</label>
           <select id="adj-product"></select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label><span data-i18n="col_movement">Movement Type</span></label>
+          <label data-i18n="label_adj_type">Movement Type</label>
           <select id="adj-type" onchange="onAdjTypeChange()">
             <option value="in">Stock In (Received)</option>
             <option value="out">Stock Out (Used/Sold)</option>
@@ -498,14 +498,14 @@ tr:hover .action-btns { opacity:1; }
           </select>
         </div>
         <div class="form-group">
-          <label><span data-i18n="col_qty">Quantity</span></label>
+          <label data-i18n="label_adj_qty">Quantity</label>
           <input type="number" id="adj-qty" placeholder="0" min="0.01" step="0.01">
         </div>
       </div>
       <!-- Normal warehouse (in/out/return/adjust) -->
       <div class="form-row full" id="adj-warehouse-row">
         <div class="form-group">
-          <label><span data-i18n="col_warehouse">Warehouse</span></label>
+          <label data-i18n="label_warehouse">Warehouse</label>
           <select id="adj-warehouse">
             <option value="">— Select warehouse —</option>
           </select>
@@ -515,13 +515,13 @@ tr:hover .action-btns { opacity:1; }
       <div id="adj-transfer-rows" style="display:none">
         <div class="form-row">
           <div class="form-group">
-            <label>From Warehouse</label>
+            <label data-i18n="label_from_warehouse">From Warehouse</label>
             <select id="adj-from-warehouse">
               <option value="">— Select —</option>
             </select>
           </div>
           <div class="form-group">
-            <label>To Warehouse</label>
+            <label data-i18n="label_to_warehouse">To Warehouse</label>
             <select id="adj-to-warehouse">
               <option value="">— Select —</option>
             </select>
@@ -530,20 +530,20 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Reference (PO / SO number)</label>
+          <label data-i18n="label_adj_ref">Reference (PO / SO number)</label>
           <input type="text" id="adj-ref" placeholder="e.g. PO-2025-001">
         </div>
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label>Note</label>
+          <label data-i18n="label_adj_note">Note</label>
           <textarea id="adj-note" placeholder="Optional note..." style="min-height:60px"></textarea>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('adjust-modal')">Cancel</button>
-      <button class="btn-primary" onclick="saveAdjustment()">Save Movement</button>
+      <button class="btn-secondary" onclick="closeModal('adjust-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveAdjustment()" data-i18n="btn_save_movement">Save Movement</button>
     </div>
   </div>
 </div>
@@ -552,15 +552,15 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="delete-modal">
   <div class="modal" style="width:400px">
     <div class="modal-head">
-      <div class="modal-title">Delete Product?</div>
+      <div class="modal-title" data-i18n="modal_delete_product">Delete Product?</div>
       <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
     </div>
     <div class="modal-body">
       <p style="color:var(--gray600);font-size:13px;line-height:1.6">Are you sure you want to delete <strong id="delete-product-name"></strong>? This action cannot be undone and all stock history will be lost.</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
-      <button class="btn-primary" style="background:var(--red)" onclick="confirmDelete()">Delete</button>
+      <button class="btn-secondary" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" style="background:var(--red)" onclick="confirmDelete()" data-i18n="btn_delete">Delete</button>
     </div>
   </div>
 </div>
@@ -734,9 +734,9 @@ function renderTable() {
       <td>${badge}</td>
       <td style="color:var(--gray500);font-size:12px">${p.location || '—'}</td>
       <td><div class="action-btns">
-        <button class="action-btn" onclick="openEditModal('${p.id}')" title="Edit">✏️</button>
-        <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="Adjust Stock">📊</button>
-        <button class="action-btn danger" onclick="openDeleteModal('${p.id}')" title="Delete">🗑️</button>
+        <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
+        <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
+        <button class="action-btn danger" onclick="openDeleteModal('${p.id}')" title="${t('btn_delete')}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -945,7 +945,7 @@ function getChildren(parentId) {
 function populateCategoryFilter() {
   const sel = document.getElementById('filter-category');
   if (!sel) return;
-  let html = '<option value="">All Categories</option>';
+  let html = `<option value="">${t('all_categories')}</option>`;
   function addOpts(cats, depth) {
     cats.forEach(c => {
       html += `<option value="${c.id}">${'　'.repeat(depth)}${c.name}</option>`;
@@ -976,7 +976,7 @@ function renderCatSelector(parentId, level, selectedId) {
   if (level > 0) {
     const lbl = document.createElement('div');
     lbl.style.cssText = 'font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;padding-left:2px;margin-top:4px;';
-    lbl.textContent = level === 1 ? 'Sub-category' : 'Sub-sub-category';
+    lbl.textContent = level === 1 ? t('label_subcategory') : t('label_subsubcategory');
     wrap.appendChild(lbl);
   }
 
@@ -987,7 +987,7 @@ function renderCatSelector(parentId, level, selectedId) {
   const sel = document.createElement('select');
   sel.dataset.level = level;
   sel.dataset.parentId = parentId || '';
-  sel.innerHTML = `<option value="">${level === 0 ? t('select_category')||'— Select category —' : '— Select sub-category —'}</option>` +
+  sel.innerHTML = `<option value="">${level === 0 ? t('select_category') : t('select_subcategory')}</option>` +
     children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   if (selectedId) sel.value = selectedId;
   sel.addEventListener('change', () => {
@@ -1032,7 +1032,7 @@ function buildInlineForm(parentId, level) {
 
   const inp = document.createElement('input');
   inp.type = 'text';
-  inp.placeholder = 'Category name...';
+  inp.placeholder = t('placeholder_category_name');
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') form.remove(); });
 
   const saveBtn = document.createElement('button');
@@ -1077,7 +1077,7 @@ function buildInlineForm(parentId, level) {
     document.getElementById('p-category-id').value = data.id;
     renderCatSelector(data.id, level + 1, null);
 
-    showToast(`"${name}" added`, 'success');
+    showToast(t('toast_category_added').replace('{0}', name), 'success');
   }
 
   return form;
@@ -1167,7 +1167,7 @@ async function populateWarehouseSelects() {
     .eq('is_active', true)
     .order('name');
   const whs = data || [];
-  const opts = '<option value="">— Select warehouse —</option>' +
+  const opts = `<option value="">${t('select_warehouse')}</option>` +
     whs.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
   ['adj-warehouse','adj-from-warehouse','adj-to-warehouse'].forEach(id => {
     const el = document.getElementById(id);
@@ -1179,17 +1179,17 @@ async function saveAdjustment() {
   const pid = document.getElementById('adj-product').value;
   const qty = parseFloat(document.getElementById('adj-qty').value);
   const type = document.getElementById('adj-type').value;
-  if (!pid) { showToast('Select a product', 'error'); return; }
-  if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
+  if (!pid) { showToast(t('toast_select_product'), 'error'); return; }
+  if (!qty || qty <= 0) { showToast(t('toast_enter_valid_qty'), 'error'); return; }
 
   const isTransfer = type === 'transfer';
   const whId = isTransfer ? null : (document.getElementById('adj-warehouse').value || null);
   const fromWhId = isTransfer ? (document.getElementById('adj-from-warehouse').value || null) : null;
   const toWhId = isTransfer ? (document.getElementById('adj-to-warehouse').value || null) : null;
 
-  if (!isTransfer && !whId) { showToast('Select a warehouse', 'error'); return; }
-  if (isTransfer && (!fromWhId || !toWhId)) { showToast('Select both warehouses', 'error'); return; }
-  if (isTransfer && fromWhId === toWhId) { showToast('From and To warehouses must be different', 'error'); return; }
+  if (!isTransfer && !whId) { showToast(t('toast_select_warehouse'), 'error'); return; }
+  if (isTransfer && (!fromWhId || !toWhId)) { showToast(t('toast_select_both_warehouses'), 'error'); return; }
+  if (isTransfer && fromWhId === toWhId) { showToast(t('toast_different_warehouses'), 'error'); return; }
 
   // Insert movement — trigger handles stock_levels automatically
   const { error: movErr } = await sb.from('stock_movements').insert({
@@ -1219,7 +1219,7 @@ async function saveAdjustment() {
   closeModal('adjust-modal');
   await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
-  showToast('Movement saved ✓', 'success');
+  showToast(t('toast_movement_saved'), 'success');
 }
 
 function openDeleteModal(id) {
@@ -1311,14 +1311,14 @@ function toggleView(view) {
       container.innerHTML = `<table id="inventory-table">
         <thead><tr>
           <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
-          <th onclick="sortTable('name')">Product ↕</th>
-          <th onclick="sortTable('category')">Category ↕</th>
-          <th onclick="sortTable('stock')">Stock ↕</th>
-          <th onclick="sortTable('unit_cost')">Unit Cost ↕</th>
-          <th onclick="sortTable('total_value')">Total Value ↕</th>
-          <th><span data-i18n="col_status">Status</span></th>
-          <th><span data-i18n="col_location">Location</span></th>
-          <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
+          <th onclick="sortTable('name')">${t('col_product')} ↕</th>
+          <th onclick="sortTable('category')">${t('col_category')} ↕</th>
+          <th onclick="sortTable('stock')">${t('col_stock')} ↕</th>
+          <th onclick="sortTable('unit_cost')">${t('col_unit_cost')} ↕</th>
+          <th onclick="sortTable('total_value')">${t('col_total_value')} ↕</th>
+          <th>${t('col_status')}</th>
+          <th>${t('col_location')}</th>
+          <th style="width:80px">${t('col_actions')}</th>
         </tr></thead>
         <tbody id="inventory-tbody"></tbody>
       </table>`;
@@ -1344,7 +1344,7 @@ function exportCSV() {
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'inventory-' + new Date().toISOString().split('T')[0] + '.csv';
   a.click();
-  showToast('CSV exported!', 'success');
+  showToast(t('toast_csv_exported'), 'success');
 }
 
 // ===== LOGOUT =====
