@@ -1911,6 +1911,18 @@ const T = window.T = {
     select_subcategory:'— Select sub-category —',
     placeholder_category_name:'Category name...',
     toast_category_added:'"{0}" added',
+    // CASHBANK
+    all_transactions_title:'All Transactions',
+    cash_in:'💚 Cash In', cash_out:'🔴 Cash Out',
+    money_in:'💚 Money In', money_out:'🔴 Money Out',
+    cat_sale:'💰 Sale', cat_purchase:'🛒 Purchase', cat_expense:'📋 Expense',
+    cat_transfer:'↔ Transfer', cat_salary:'👤 Salary', cat_tax:'🏛 Tax', cat_other:'📌 Other',
+    cat_sale_collection:'💰 Sale Collection', cat_supplier_payment:'🛒 Supplier Payment', cat_bank_fee:'🏦 Bank Fee',
+    tx_badge_in:'↓ In', tx_badge_out:'↑ Out', lbl_transactions:'Transactions',
+    tx_type_in:'In', tx_type_out:'Out',
+    placeholder_tx_desc:'Transaction description', placeholder_tx_ref:'Invoice no, receipt no...',
+    placeholder_counterparty:'Sender / Recipient name', placeholder_bank_ref:'IBAN, receipt no, description...',
+    lbl_cash:'Cash',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -2431,6 +2443,18 @@ const T = window.T = {
     select_subcategory:'— Alt kategori seçin —',
     placeholder_category_name:'Kategori adı...',
     toast_category_added:'"{0}" eklendi',
+    // CASHBANK
+    all_transactions_title:'Tüm Hareketler',
+    cash_in:'💚 Para Girişi', cash_out:'🔴 Para Çıkışı',
+    money_in:'💚 Para Girişi', money_out:'🔴 Para Çıkışı',
+    cat_sale:'💰 Satış', cat_purchase:'🛒 Alım', cat_expense:'📋 Gider',
+    cat_transfer:'↔ Transfer', cat_salary:'👤 Maaş', cat_tax:'🏛 Vergi', cat_other:'📌 Diğer',
+    cat_sale_collection:'💰 Satış Tahsilatı', cat_supplier_payment:'🛒 Tedarikçi Ödemesi', cat_bank_fee:'🏦 Banka Komisyonu',
+    tx_badge_in:'↓ Giriş', tx_badge_out:'↑ Çıkış', lbl_transactions:'Hareketler',
+    tx_type_in:'Giriş', tx_type_out:'Çıkış',
+    placeholder_tx_desc:'İşlem açıklaması', placeholder_tx_ref:'Fatura no, makbuz no...',
+    placeholder_counterparty:'Gönderen / Alıcı adı', placeholder_bank_ref:'IBAN, dekont no, açıklama...',
+    lbl_cash:'Kasa',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -2755,6 +2779,18 @@ const T = window.T = {
     select_subcategory:'— Unterkategorie auswählen —',
     placeholder_category_name:'Kategoriename...',
     toast_category_added:'"{0}" hinzugefügt',
+    // CASHBANK
+    all_transactions_title:'Alle Transaktionen',
+    cash_in:'💚 Einnahme', cash_out:'🔴 Ausgabe',
+    money_in:'💚 Geldeingang', money_out:'🔴 Geldausgang',
+    cat_sale:'💰 Verkauf', cat_purchase:'🛒 Einkauf', cat_expense:'📋 Ausgabe',
+    cat_transfer:'↔ Überweisung', cat_salary:'👤 Gehalt', cat_tax:'🏛 Steuer', cat_other:'📌 Sonstige',
+    cat_sale_collection:'💰 Umsatzeinzug', cat_supplier_payment:'🛒 Lieferantenzahlung', cat_bank_fee:'🏦 Bankgebühr',
+    tx_badge_in:'↓ Ein', tx_badge_out:'↑ Aus', lbl_transactions:'Transaktionen',
+    tx_type_in:'Eingang', tx_type_out:'Ausgang',
+    placeholder_tx_desc:'Transaktionsbeschreibung', placeholder_tx_ref:'Rechnungsnr., Belegnr....',
+    placeholder_counterparty:'Absender / Empfänger', placeholder_bank_ref:'IBAN, Belegnr., Beschreibung...',
+    lbl_cash:'Kasse',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -3080,6 +3116,18 @@ const T = window.T = {
     select_subcategory:'— Sélectionner sous-catégorie —',
     placeholder_category_name:'Nom de catégorie...',
     toast_category_added:'"{0}" ajouté',
+    // CASHBANK
+    all_transactions_title:'Toutes les transactions',
+    cash_in:'💚 Encaissement', cash_out:'🔴 Décaissement',
+    money_in:'💚 Entrée d\'argent', money_out:'🔴 Sortie d\'argent',
+    cat_sale:'💰 Vente', cat_purchase:'🛒 Achat', cat_expense:'📋 Dépense',
+    cat_transfer:'↔ Virement', cat_salary:'👤 Salaire', cat_tax:'🏛 Taxe', cat_other:'📌 Autre',
+    cat_sale_collection:'💰 Encaissement vente', cat_supplier_payment:'🛒 Paiement fournisseur', cat_bank_fee:'🏦 Frais bancaires',
+    tx_badge_in:'↓ Entrée', tx_badge_out:'↑ Sortie', lbl_transactions:'Transactions',
+    tx_type_in:'Entrée', tx_type_out:'Sortie',
+    placeholder_tx_desc:'Description de la transaction', placeholder_tx_ref:'N° facture, reçu...',
+    placeholder_counterparty:'Nom expéditeur / destinataire', placeholder_bank_ref:'IBAN, n° reçu, description...',
+    lbl_cash:'Caisse',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -3404,6 +3452,18 @@ const T = window.T = {
     select_subcategory:'— Seleccionar subcategoría —',
     placeholder_category_name:'Nombre de categoría...',
     toast_category_added:'"{0}" agregado',
+    // CASHBANK
+    all_transactions_title:'Todas las transacciones',
+    cash_in:'💚 Ingreso', cash_out:'🔴 Egreso',
+    money_in:'💚 Entrada de dinero', money_out:'🔴 Salida de dinero',
+    cat_sale:'💰 Venta', cat_purchase:'🛒 Compra', cat_expense:'📋 Gasto',
+    cat_transfer:'↔ Transferencia', cat_salary:'👤 Salario', cat_tax:'🏛 Impuesto', cat_other:'📌 Otro',
+    cat_sale_collection:'💰 Cobro de venta', cat_supplier_payment:'🛒 Pago a proveedor', cat_bank_fee:'🏦 Comisión bancaria',
+    tx_badge_in:'↓ Entrada', tx_badge_out:'↑ Salida', lbl_transactions:'Transacciones',
+    tx_type_in:'Entrada', tx_type_out:'Salida',
+    placeholder_tx_desc:'Descripción de la transacción', placeholder_tx_ref:'N° factura, recibo...',
+    placeholder_counterparty:'Nombre remitente / destinatario', placeholder_bank_ref:'IBAN, n° recibo, descripción...',
+    lbl_cash:'Caja',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -3694,6 +3754,18 @@ const T = window.T = {
     select_subcategory:'— اختر فئة فرعية —',
     placeholder_category_name:'اسم الفئة...',
     toast_category_added:'تمت إضافة "{0}"',
+    // CASHBANK
+    all_transactions_title:'جميع المعاملات',
+    cash_in:'💚 إيداع نقدي', cash_out:'🔴 سحب نقدي',
+    money_in:'💚 وارد مالي', money_out:'🔴 صادر مالي',
+    cat_sale:'💰 مبيعات', cat_purchase:'🛒 مشتريات', cat_expense:'📋 مصروف',
+    cat_transfer:'↔ تحويل', cat_salary:'👤 راتب', cat_tax:'🏛 ضريبة', cat_other:'📌 أخرى',
+    cat_sale_collection:'💰 تحصيل مبيعات', cat_supplier_payment:'🛒 دفعة مورد', cat_bank_fee:'🏦 رسوم بنكية',
+    tx_badge_in:'↓ وارد', tx_badge_out:'↑ صادر', lbl_transactions:'المعاملات',
+    tx_type_in:'وارد', tx_type_out:'صادر',
+    placeholder_tx_desc:'وصف المعاملة', placeholder_tx_ref:'رقم الفاتورة، الإيصال...',
+    placeholder_counterparty:'اسم المرسل / المستلم', placeholder_bank_ref:'IBAN، رقم الإيصال، الوصف...',
+    lbl_cash:'الصندوق',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -3983,6 +4055,18 @@ const T = window.T = {
     select_subcategory:'— 选择子类别 —',
     placeholder_category_name:'类别名称...',
     toast_category_added:'已添加"{0}"',
+    // CASHBANK
+    all_transactions_title:'所有交易',
+    cash_in:'💚 现金收入', cash_out:'🔴 现金支出',
+    money_in:'💚 入账', money_out:'🔴 出账',
+    cat_sale:'💰 销售', cat_purchase:'🛒 采购', cat_expense:'📋 费用',
+    cat_transfer:'↔ 转账', cat_salary:'👤 工资', cat_tax:'🏛 税款', cat_other:'📌 其他',
+    cat_sale_collection:'💰 销售收款', cat_supplier_payment:'🛒 供应商付款', cat_bank_fee:'🏦 银行手续费',
+    tx_badge_in:'↓ 收入', tx_badge_out:'↑ 支出', lbl_transactions:'交易',
+    tx_type_in:'收入', tx_type_out:'支出',
+    placeholder_tx_desc:'交易说明', placeholder_tx_ref:'发票号、收据号...',
+    placeholder_counterparty:'发件人/收件人名称', placeholder_bank_ref:'IBAN、回执号、说明...',
+    lbl_cash:'现金',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -4124,6 +4208,18 @@ const T = window.T = {
     select_subcategory:'— Выбрать подкатегорию —',
     placeholder_category_name:'Название категории...',
     toast_category_added:'«{0}» добавлено',
+    // CASHBANK
+    all_transactions_title:'Все транзакции',
+    cash_in:'💚 Приход', cash_out:'🔴 Расход',
+    money_in:'💚 Поступление', money_out:'🔴 Списание',
+    cat_sale:'💰 Продажа', cat_purchase:'🛒 Покупка', cat_expense:'📋 Расход',
+    cat_transfer:'↔ Перевод', cat_salary:'👤 Зарплата', cat_tax:'🏛 Налог', cat_other:'📌 Прочее',
+    cat_sale_collection:'💰 Получение оплаты', cat_supplier_payment:'🛒 Оплата поставщику', cat_bank_fee:'🏦 Банковская комиссия',
+    tx_badge_in:'↓ Приход', tx_badge_out:'↑ Расход', lbl_transactions:'Транзакции',
+    tx_type_in:'Приход', tx_type_out:'Расход',
+    placeholder_tx_desc:'Описание транзакции', placeholder_tx_ref:'Номер счёта, чека...',
+    placeholder_counterparty:'Имя отправителя / получателя', placeholder_bank_ref:'IBAN, номер квитанции, описание...',
+    lbl_cash:'Касса',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -4414,6 +4510,18 @@ const T = window.T = {
     select_subcategory:'— Выбрать подкатегорию —',
     placeholder_category_name:'Название категории...',
     toast_category_added:'«{0}» добавлено',
+    // CASHBANK (PT)
+    all_transactions_title:'Todas as transações',
+    cash_in:'💚 Entrada de caixa', cash_out:'🔴 Saída de caixa',
+    money_in:'💚 Entrada bancária', money_out:'🔴 Saída bancária',
+    cat_sale:'💰 Venda', cat_purchase:'🛒 Compra', cat_expense:'📋 Despesa',
+    cat_transfer:'↔ Transferência', cat_salary:'👤 Salário', cat_tax:'🏛 Imposto', cat_other:'📌 Outro',
+    cat_sale_collection:'💰 Recebimento de venda', cat_supplier_payment:'🛒 Pagamento a fornecedor', cat_bank_fee:'🏦 Tarifa bancária',
+    tx_badge_in:'↓ Entrada', tx_badge_out:'↑ Saída', lbl_transactions:'Transações',
+    tx_type_in:'Entrada', tx_type_out:'Saída',
+    placeholder_tx_desc:'Descrição da transação', placeholder_tx_ref:'N° fatura, recibo...',
+    placeholder_counterparty:'Nome remetente / destinatário', placeholder_bank_ref:'IBAN, n° comprovante, descrição...',
+    lbl_cash:'Caixa',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -4703,6 +4811,18 @@ const T = window.T = {
     select_subcategory:'— サブカテゴリを選択 —',
     placeholder_category_name:'カテゴリ名...',
     toast_category_added:'「{0}」が追加されました',
+    // CASHBANK
+    all_transactions_title:'全取引',
+    cash_in:'💚 現金入金', cash_out:'🔴 現金出金',
+    money_in:'💚 入金', money_out:'🔴 出金',
+    cat_sale:'💰 売上', cat_purchase:'🛒 仕入れ', cat_expense:'📋 経費',
+    cat_transfer:'↔ 振替', cat_salary:'👤 給与', cat_tax:'🏛 税金', cat_other:'📌 その他',
+    cat_sale_collection:'💰 売上回収', cat_supplier_payment:'🛒 仕入先支払い', cat_bank_fee:'🏦 銀行手数料',
+    tx_badge_in:'↓ 入金', tx_badge_out:'↑ 出金', lbl_transactions:'取引',
+    tx_type_in:'入金', tx_type_out:'出金',
+    placeholder_tx_desc:'取引の説明', placeholder_tx_ref:'請求書番号、領収書番号...',
+    placeholder_counterparty:'送信者・受取人名', placeholder_bank_ref:'IBAN、領収書番号、説明...',
+    lbl_cash:'現金',
   },
 };
 
@@ -4771,6 +4891,39 @@ function applyTranslations() {
       sel.options[0].text = id === 'adj-warehouse' ? t('select_warehouse') : t('select_prompt');
     }
   });
+  // Cashbank: type filter dropdowns
+  ['cash-type-filter','bank-type-filter','all-type-filter'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) {
+      if (sel.options[0]) sel.options[0].text = t('all_types');
+      if (sel.options[1]) sel.options[1].text = t('tx_type_in');
+      if (sel.options[2]) sel.options[2].text = t('tx_type_out');
+    }
+  });
+  // Cashbank: cash transaction type
+  const ctxType = document.getElementById('ctx-type');
+  if (ctxType) {
+    if (ctxType.options[0]) ctxType.options[0].text = t('cash_in');
+    if (ctxType.options[1]) ctxType.options[1].text = t('cash_out');
+  }
+  // Cashbank: bank transaction type
+  const btxType = document.getElementById('btx-type');
+  if (btxType) {
+    if (btxType.options[0]) btxType.options[0].text = t('money_in');
+    if (btxType.options[1]) btxType.options[1].text = t('money_out');
+  }
+  // Cashbank: cash category
+  const ctxCat = document.getElementById('ctx-category');
+  if (ctxCat) {
+    const cashCatMap = {sale:t('cat_sale'),purchase:t('cat_purchase'),expense:t('cat_expense'),transfer:t('cat_transfer'),salary:t('cat_salary'),tax:t('cat_tax'),other:t('cat_other')};
+    Array.from(ctxCat.options).forEach(opt => { if (cashCatMap[opt.value]) opt.text = cashCatMap[opt.value]; });
+  }
+  // Cashbank: bank category
+  const btxCat = document.getElementById('btx-category');
+  if (btxCat) {
+    const bankCatMap = {sale:t('cat_sale_collection'),purchase:t('cat_supplier_payment'),expense:t('cat_expense'),transfer:t('cat_transfer'),salary:t('cat_salary'),tax:t('cat_tax'),fee:t('cat_bank_fee'),other:t('cat_other')};
+    Array.from(btxCat.options).forEach(opt => { if (bankCatMap[opt.value]) opt.text = bankCatMap[opt.value]; });
+  }
   // RTL support
   document.body.dir = LANG_META[lang]?.dir || 'ltr';
   // Update lang switcher UI

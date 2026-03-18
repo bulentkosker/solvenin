@@ -237,7 +237,7 @@
 <!-- LOADING -->
 <div id="loading-screen">
   <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--gray400)">Loading...</div>
+  <div style="font-size:13px;color:var(--gray400)" data-i18n="loading">Loading...</div>
 </div>
 
 <!-- SIDEBAR -->
@@ -345,7 +345,7 @@
               <div class="toolbar-left">
                 <div class="search-box">
                   <span>🔍</span>
-                  <input type="text" id="cash-search" placeholder="Search..." oninput="filterCashTx()">
+                  <input type="text" id="cash-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterCashTx()">
                 </div>
                 <select class="filter-select" id="cash-type-filter" onchange="filterCashTx()">
                   <option value="">All Types</option>
@@ -412,7 +412,7 @@
               <div class="toolbar-left">
                 <div class="search-box">
                   <span>🔍</span>
-                  <input type="text" id="bank-search" placeholder="Search..." oninput="filterBankTx()">
+                  <input type="text" id="bank-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterBankTx()">
                 </div>
                 <select class="filter-select" id="bank-type-filter" onchange="filterBankTx()">
                   <option value="">All Types</option>
@@ -457,7 +457,7 @@
             <div class="toolbar-left">
               <div class="search-box">
                 <span>🔍</span>
-                <input type="text" id="all-search" placeholder="Search..." oninput="filterAllTx()">
+                <input type="text" id="all-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterAllTx()">
               </div>
               <select class="filter-select" id="all-account-filter" onchange="filterAllTx()">
                 <option value="">All Accounts</option>
@@ -559,7 +559,7 @@
       </div>
       <div class="form-group">
         <label data-i18n="col_description">Description *</label>
-        <input type="text" id="ctx-desc" placeholder="Transaction description">
+        <input type="text" id="ctx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -581,7 +581,7 @@
       </div>
       <div class="form-group">
         <label data-i18n="col_ref">Reference</label>
-        <input type="text" id="ctx-ref" placeholder="Invoice no, receipt no...">
+        <input type="text" id="ctx-ref" placeholder="Invoice no, receipt no..." data-i18n-placeholder="placeholder_tx_ref">
       </div>
     </div>
     <div class="modal-footer">
@@ -684,7 +684,7 @@
       </div>
       <div class="form-group">
         <label data-i18n="col_description">Description *</label>
-        <input type="text" id="btx-desc" placeholder="Transaction description">
+        <input type="text" id="btx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -707,11 +707,11 @@
       </div>
       <div class="form-group">
         <label data-i18n="counterparty">Counterparty</label>
-        <input type="text" id="btx-counterparty" placeholder="Sender / Recipient name">
+        <input type="text" id="btx-counterparty" placeholder="Sender / Recipient name" data-i18n-placeholder="placeholder_counterparty">
       </div>
       <div class="form-group">
         <label data-i18n="col_ref">Reference</label>
-        <input type="text" id="btx-ref" placeholder="Dekont no, IBAN, description...">
+        <input type="text" id="btx-ref" placeholder="Dekont no, IBAN, description..." data-i18n-placeholder="placeholder_bank_ref">
       </div>
     </div>
     <div class="modal-footer">
@@ -1034,8 +1034,8 @@ function renderCashGrid() {
       <div class="account-card-header">
         <div class="account-icon cash">💵</div>
         <div class="row-actions">
-          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editRegister('${r.id}')" title="Edit">✏️</button>
-          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteRegister('${r.id}')" title="Delete">🗑️</button>
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editRegister('${r.id}')" title="${t('btn_edit')}">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteRegister('${r.id}')" title="${t('btn_delete')}">🗑️</button>
         </div>
       </div>
       <div class="account-name">${r.name}</div>
@@ -1057,7 +1057,7 @@ async function selectRegister(id) {
   renderCashGrid();
   const reg = registers.find(r => r.id === id);
   document.getElementById('cash-detail').style.display = 'block';
-  document.getElementById('cash-detail-title').textContent = reg?.name + ' – Transactions';
+  document.getElementById('cash-detail-title').textContent = reg?.name + ' – ' + t('lbl_transactions');
   // Load transactions for this register only (lazy)
   const { data } = await sb.from('cash_transactions')
     .select('*').eq('register_id', id).order('transaction_date', { ascending: false }).limit(200);
@@ -1095,7 +1095,7 @@ function renderCashTxTable(txs) {
       <td><strong>${tx.description}</strong>${src ? '<br>' + src : ''}</td>
       <td>${catIcon} ${tx.category || '—'}</td>
       <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
-      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCashTx('${tx.id}')">🗑️</button>
@@ -1127,8 +1127,8 @@ function renderBankTree() {
         <span class="badge badge-gray" style="font-size:11px">${a.currency_code}</span>
         <div class="account-row-bal ${bal >= 0 ? 'amount-in' : 'amount-out'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
         <div class="row-actions" style="opacity:1;margin-left:4px">
-          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editAccount('${a.id}')" title="Edit">✏️</button>
-          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteAccount('${a.id}')" title="Delete">🗑️</button>
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editAccount('${a.id}')" title="${t('btn_edit')}">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteAccount('${a.id}')" title="${t('btn_delete')}">🗑️</button>
         </div>
       </div>`;
     }).join('');
@@ -1144,8 +1144,8 @@ function renderBankTree() {
         <div class="bank-name">${bank.name}</div>
         <div class="bank-count">${bankAccounts.length} ${t('accounts_label')}</div>
         <div class="row-actions" style="opacity:1;margin-right:8px">
-          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editBank(${bank.id})" title="Edit">✏️</button>
-          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteBank(${bank.id})" title="Delete">🗑️</button>
+          <button class="btn btn-sm btn-outline btn-icon" onclick="event.stopPropagation();editBank(${bank.id})" title="${t('btn_edit')}">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteBank(${bank.id})" title="${t('btn_delete')}">🗑️</button>
         </div>
         <span class="bank-chevron">▼</span>
       </div>
@@ -1168,7 +1168,7 @@ async function selectAccount(id) {
   const acc = accounts.find(a => a.id === id);
   const bank = banks.find(b => b.id === acc?.bank_id);
   document.getElementById('bank-detail').style.display = 'block';
-  document.getElementById('bank-detail-title').textContent = (bank?.name || '') + ' · ' + acc?.account_name + ' – Transactions';
+  document.getElementById('bank-detail-title').textContent = (bank?.name || '') + ' · ' + acc?.account_name + ' – ' + t('lbl_transactions');
   // Load transactions for this account only (lazy)
   const { data } = await sb.from('bank_transactions')
     .select('*').eq('account_id', id).order('transaction_date', { ascending: false }).limit(200);
@@ -1206,7 +1206,7 @@ function renderBankTxTable(txs) {
       <td style="font-size:12px">${tx.category || '—'}</td>
       <td style="font-size:12px;color:var(--gray600)">${tx.counterparty || '—'}</td>
       <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
-      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
       <td>${src}</td>
       <td><div class="row-actions">
@@ -1219,7 +1219,7 @@ function renderBankTxTable(txs) {
 // ===== ALL TRANSACTIONS TAB =====
 function updateAccountFilter() {
   const sel = document.getElementById('all-account-filter');
-  const cashOpts = registers.map(r => `<option value="cash_${r.id}">${r.name} (Cash)</option>`).join('');
+  const cashOpts = registers.map(r => `<option value="cash_${r.id}">${r.name} (${t('lbl_cash')})</option>`).join('');
   const bankOpts = accounts.map(a => {
     const bank = banks.find(b => b.id === a.bank_id);
     return `<option value="bank_${a.id}">${bank?.name || '?'} · ${a.account_name}</option>`;
@@ -1281,7 +1281,7 @@ function filterAllTx() {
       <td style="font-size:12px">${accName}</td>
       <td>${tx.description}</td>
       <td style="font-size:12px">${tx.category || '—'}</td>
-      <td>${tx.type === 'in' ? '<span class="badge badge-green">↓ In</span>' : '<span class="badge badge-red">↑ Out</span>'}</td>
+      <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
       <td>${src}</td>
     </tr>`;
