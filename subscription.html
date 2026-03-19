@@ -430,6 +430,7 @@ function setLang(lang) {
 
         <!-- FREE -->
         <div class="plan-option" id="opt-free">
+          <div class="plan-option-badge" style="display:none"></div>
           <div class="plan-option-name">Free</div>
           <div class="plan-option-price">$0 <span>/user/mo</span></div>
           <ul class="plan-option-features">
@@ -443,8 +444,8 @@ function setLang(lang) {
         </div>
 
         <!-- STANDARD -->
-        <div class="plan-option current" id="opt-standard">
-          <div class="plan-option-badge current-badge">Current Plan</div>
+        <div class="plan-option" id="opt-standard">
+          <div class="plan-option-badge" style="display:none"></div>
           <div class="plan-option-name">Standard</div>
           <div class="plan-option-price">$7.20 <span>/user/mo</span></div>
           <ul class="plan-option-features">
@@ -459,7 +460,7 @@ function setLang(lang) {
 
         <!-- PROFESSIONAL -->
         <div class="plan-option" id="opt-professional">
-          <div class="plan-option-badge">Recommended</div>
+          <div class="plan-option-badge" style="display:none"></div>
           <div class="plan-option-name">Professional</div>
           <div class="plan-option-price">$10.80 <span>/user/mo</span></div>
           <ul class="plan-option-features">
@@ -690,14 +691,21 @@ function renderSubscription() {
     const btn = el.querySelector('.btn-select-plan');
     if (p === currentPlan) {
       el.className = 'plan-option current';
-      if (badge) { badge.className = 'plan-option-badge current-badge'; badge.textContent = t('current_plan'); }
+      if (badge) { badge.className = 'plan-option-badge current-badge'; badge.textContent = t('current_plan'); badge.style.display = ''; }
       btn.className = 'btn-select-plan current-plan';
       btn.textContent = t('current_plan');
       btn.onclick = null;
       btn.disabled = false;
+      btn.style.cssText = '';
     } else {
       el.className = p === 'professional' ? 'plan-option recommended' : 'plan-option';
-      if (badge) { badge.className = 'plan-option-badge'; badge.textContent = p === 'professional' ? t('recommended') : ''; }
+      if (badge) {
+        if (p === 'professional') {
+          badge.className = 'plan-option-badge'; badge.textContent = t('recommended'); badge.style.display = '';
+        } else {
+          badge.style.display = 'none'; badge.textContent = '';
+        }
+      }
       btn.className = 'btn-select-plan downgrade';
       btn.textContent = 'Yakında';
       btn.disabled = true;
