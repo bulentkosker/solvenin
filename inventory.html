@@ -594,6 +594,10 @@ tr:hover .action-btns { opacity:1; }
         <label><span data-i18n="label_product_name">Product Name *</span></label>
         <input type="text" id="qa-p-name" data-i18n-placeholder="label_product_name" placeholder="Product Name *">
       </div>
+      <div class="form-group">
+        <label><span data-i18n="lbl_barcode">Barkod</span></label>
+        <input type="text" id="qa-p-barcode" placeholder="Barkod" data-i18n-placeholder="lbl_barcode">
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label><span data-i18n="lbl_product_type">Product Type</span></label>
@@ -611,6 +615,16 @@ tr:hover .action-btns { opacity:1; }
             <option>pcs</option><option>kg</option><option>lt</option>
             <option>m</option><option>m²</option><option>box</option><option>pack</option>
           </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><span data-i18n="lbl_cost_price">Alış Fiyatı</span></label>
+          <input type="number" id="qa-p-cost" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="lbl_sale_price">Satış Fiyatı</span></label>
+          <input type="number" id="qa-p-sale" min="0" step="0.01" placeholder="0.00">
         </div>
       </div>
     </div>
@@ -1218,8 +1232,11 @@ async function saveProduct() {
 function openQAProductModal(name, callback) {
   _qaProductCallback = callback || null;
   document.getElementById('qa-p-name').value = name || '';
+  document.getElementById('qa-p-barcode').value = '';
   document.getElementById('qa-p-type').value = 'finished_good';
   document.getElementById('qa-p-unit').value = 'pcs';
+  document.getElementById('qa-p-cost').value = '';
+  document.getElementById('qa-p-sale').value = '';
   document.getElementById('qa-product-modal').classList.add('open');
   setTimeout(() => document.getElementById('qa-p-name').focus(), 100);
 }
@@ -1232,9 +1249,12 @@ async function saveQAProduct() {
   if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
   const product_type = document.getElementById('qa-p-type').value;
   const unit = document.getElementById('qa-p-unit').value;
+  const barcode = document.getElementById('qa-p-barcode').value.trim() || null;
+  const cost_price = parseFloat(document.getElementById('qa-p-cost').value) || 0;
+  const sale_price = parseFloat(document.getElementById('qa-p-sale').value) || 0;
   const { data, error } = await sb.from('products').insert({
     company_id: companyId, name, product_type, unit,
-    quantity: 0, cost_price: 0, sale_price: 0, is_active: true,
+    barcode, cost_price, sale_price, quantity: 0, is_active: true,
   }).select().single();
   if (error) { showToast(error.message, 'error'); return; }
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
