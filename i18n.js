@@ -2131,7 +2131,7 @@ const T = window.T = {
     toast_shipment_deleted:'Sevkiyat silindi', toast_vehicle_deleted:'Araç silindi', toast_driver_deleted:'Sürücü silindi',
     confirm_delete_shipment:'Bu sevkiyat silinsin mi?', confirm_delete_vehicle:'Bu araç silinsin mi?', confirm_delete_driver:'Bu sürücü silinsin mi?',
     lbl_shipment_items:'Sevkiyat Kalemleri', err_select_order:'Lütfen bir sipariş seçin',
-    nav_finance:'Finans', nav_shipping:'Kargo', nav_projects:'Projeler',
+    nav_finance:'Finans', nav_shipping:'Sevkiyat', nav_projects:'Projeler',
     nav_maintenance:'Bakım', nav_reports:'Raporlar', nav_settings:'Ayarlar',
     nav_subscription:'Abonelik',
     search_placeholder:'Her şeyi ara...',

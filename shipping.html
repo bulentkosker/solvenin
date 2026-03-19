@@ -373,8 +373,8 @@ tr:hover .row-actions{opacity:1}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script src="sidebar.js"></script>
 <script src="i18n.js"></script>
+<script src="sidebar.js"></script>
 <script>
 const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9';
@@ -389,14 +389,15 @@ let activeTab = 'shipments';
 // ===== INIT =====
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  if (!session) { window.location.href = 'auth.html'; return; }
   currentUser = session.user;
 
   const { data: profile } = await sb.from('profiles').select('company_id').eq('id', currentUser.id).single();
   companyId = profile?.company_id;
 
-  initI18n(sb, currentUser.id);
-  initSidebar(sb, 'shipping.html');
+  const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else if (typeof applyTranslations === 'function') applyTranslations();
 
   await Promise.all([loadShipments(), loadVehicles(), loadDrivers(), loadSalesOrders()]);
   updateStats();
@@ -408,7 +409,7 @@ async function init() {
 
 async function handleLogout() {
   await sb.auth.signOut();
-  window.location.href = 'index.html';
+  window.location.href = 'auth.html';
 }
 
 // ===== DATA LOADERS =====
@@ -456,7 +457,7 @@ function setTabActions() {
   } else if (activeTab === 'drivers') {
     el.innerHTML = `<button class="btn btn-primary" onclick="openDriverModal()" data-i18n="btn_add_driver">+ New Driver</button>`;
   }
-  applyI18n();
+  applyTranslations();
 }
 
 function renderTabContent() {
@@ -547,7 +548,7 @@ function renderShipments() {
 
   // restore filter value
   if (statusF) document.getElementById('ship-status-filter').value = statusF;
-  applyI18n();
+  applyTranslations();
 }
 
 // ===== RENDER VEHICLES =====
@@ -590,7 +591,7 @@ function renderVehicles() {
         </table>
       </div>
     </div>`;
-  applyI18n();
+  applyTranslations();
 }
 
 // ===== RENDER DRIVERS =====
@@ -633,7 +634,7 @@ function renderDrivers() {
         </table>
       </div>
     </div>`;
-  applyI18n();
+  applyTranslations();
 }
 
 // ===== SHIPMENT ITEMS =====
@@ -711,7 +712,7 @@ async function openShipmentModal(id = null) {
   }
 
   renderShipmentItems();
-  applyI18n();
+  applyTranslations();
   openModal('shipment-modal');
 }
 
@@ -833,7 +834,7 @@ function openVehicleModal(id = null) {
     document.getElementById('v-status').value = v.status || 'available';
     document.getElementById('v-notes').value = v.notes || '';
   }
-  applyI18n();
+  applyTranslations();
   openModal('vehicle-modal');
 }
 
@@ -895,7 +896,7 @@ function openDriverModal(id = null) {
     document.getElementById('d-status').value = d.status || 'available';
     document.getElementById('d-notes').value = d.notes || '';
   }
-  applyI18n();
+  applyTranslations();
   openModal('driver-modal');
 }
 
