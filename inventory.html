@@ -1002,7 +1002,7 @@ async function loadMovements() {
 
 async function loadWarehouses() {
   if (!companyId) return;
-  const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).eq('is_active', true);
+  const { data } = await sb.from('warehouses').select('id,name,is_default').eq('company_id', companyId).eq('is_active', true);
   warehouses = data || [];
 }
 
@@ -1280,16 +1280,17 @@ function onAdjTypeChange() {
 async function populateWarehouseSelects() {
   if (!companyId) return;
   const { data } = await sb.from('warehouses')
-    .select('id,name')
+    .select('id,name,is_default')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
   const whs = data || [];
+  const defaultId = whs.find(w => w.is_default)?.id || '';
   const opts = `<option value="">${t('select_warehouse')}</option>` +
     whs.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
   ['adj-warehouse','adj-from-warehouse','adj-to-warehouse'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = opts;
+    if (el) { el.innerHTML = opts; if (defaultId) el.value = defaultId; }
   });
 }
 

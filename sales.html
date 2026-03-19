@@ -666,9 +666,10 @@ async function loadCustomers() {
 }
 
 async function loadWarehouses() {
-  const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).order('name');
+  const { data } = await sb.from('warehouses').select('id,name,is_default').eq('company_id', companyId).eq('is_active', true).order('name');
   warehouses = data || [];
 }
+function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
 
 async function loadProducts() {
   const { data } = await sb.from('products').select('id,name,sale_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
@@ -832,20 +833,20 @@ function openOrderModal() {
   document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '0';
   document.getElementById('o-notes').value = '';
-  orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' }];
+  orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
   updateCustomerSelects();
   openModal('order-modal');
 }
 
 function addOrderItem() {
-  orderItems.push({ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' });
+  orderItems.push({ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:defaultWarehouseId() });
   renderOrderItems();
 }
 
 function removeOrderItem(i) {
   orderItems.splice(i, 1);
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' }];
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
 }
 

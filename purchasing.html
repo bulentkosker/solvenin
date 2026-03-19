@@ -629,11 +629,15 @@ async function loadProducts() {
 }
 
 async function loadWarehouses() {
-  const { data } = await sb.from('warehouses').select('*').eq('company_id', companyId).order('name');
+  const { data } = await sb.from('warehouses').select('id,name,is_default').eq('company_id', companyId).eq('is_active', true).order('name');
   warehouses = data || [];
+  const defaultId = warehouses.find(w => w.is_default)?.id || '';
   const opts = warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-  document.getElementById('receive-warehouse').innerHTML = '<option value="">Select warehouse</option>' + opts;
+  const el = document.getElementById('receive-warehouse');
+  el.innerHTML = `<option value="">${t('select_warehouse')||'— Depo Seç —'}</option>` + opts;
+  if (defaultId) el.value = defaultId;
 }
+function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
 
 // ===== RENDER =====
 function renderOrders(list) {
@@ -767,20 +771,20 @@ function openOrderModal() {
   document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '0';
   document.getElementById('o-notes').value = '';
-  orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:'' }];
+  orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
   updateSupplierSelects();
   openModal('order-modal');
 }
 
 function addOrderItem() {
-  orderItems.push({ product_id:'', description:'', qty:1, price:0, warehouse_id:'' });
+  orderItems.push({ product_id:'', description:'', qty:1, price:0, warehouse_id:defaultWarehouseId() });
   renderOrderItems();
 }
 
 function removeOrderItem(i) {
   orderItems.splice(i,1);
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:'' }];
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
 }
 

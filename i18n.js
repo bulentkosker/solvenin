@@ -2057,6 +2057,11 @@ const T = window.T = {
 
     lbl_status:'Status',
     lbl_barcode: 'Barcode',
+    lbl_default: 'Default',
+    lbl_default_warehouse: 'Default Warehouse',
+    lbl_default_warehouse_hint: 'Set this warehouse as default for all pages',
+    btn_set_default: 'Set as Default',
+    toast_default_set: 'Default warehouse set ✓',
     lbl_cost_price: 'Cost Price',
     lbl_sale_price: 'Sale Price',
 
@@ -2754,6 +2759,11 @@ const T = window.T = {
 
     lbl_status:'Durum',
     lbl_barcode: 'Barkod',
+    lbl_default: 'Varsayılan',
+    lbl_default_warehouse: 'Varsayılan Depo',
+    lbl_default_warehouse_hint: 'Bu depoyu tüm sayfalarda varsayılan olarak seç',
+    btn_set_default: 'Varsayılan Yap',
+    toast_default_set: 'Varsayılan depo ayarlandı ✓',
     lbl_cost_price: 'Alış Fiyatı',
     lbl_sale_price: 'Satış Fiyatı',
 
@@ -3256,6 +3266,11 @@ const T = window.T = {
 
     lbl_status:'Status',
     lbl_barcode: 'Barcode',
+    lbl_default: 'Standard',
+    lbl_default_warehouse: 'Standardlager',
+    lbl_default_warehouse_hint: 'Dieses Lager als Standard für alle Seiten setzen',
+    btn_set_default: 'Als Standard setzen',
+    toast_default_set: 'Standardlager gesetzt ✓',
     lbl_cost_price: 'Einkaufspreis',
     lbl_sale_price: 'Verkaufspreis',
 
@@ -3759,6 +3774,11 @@ const T = window.T = {
 
     lbl_status:'Statut',
     lbl_barcode: 'Code-barres',
+    lbl_default: 'Par défaut',
+    lbl_default_warehouse: 'Entrepôt par défaut',
+    lbl_default_warehouse_hint: 'Définir cet entrepôt par défaut pour toutes les pages',
+    btn_set_default: 'Définir par défaut',
+    toast_default_set: 'Entrepôt par défaut défini ✓',
     lbl_cost_price: "Prix d'achat",
     lbl_sale_price: 'Prix de vente',
 
@@ -4261,6 +4281,11 @@ const T = window.T = {
 
     lbl_status:'Estado',
     lbl_barcode: 'Código de barras',
+    lbl_default: 'Predeterminado',
+    lbl_default_warehouse: 'Almacén predeterminado',
+    lbl_default_warehouse_hint: 'Establecer este almacén como predeterminado para todas las páginas',
+    btn_set_default: 'Establecer predeterminado',
+    toast_default_set: 'Almacén predeterminado establecido ✓',
     lbl_cost_price: 'Precio de costo',
     lbl_sale_price: 'Precio de venta',
 
@@ -4729,6 +4754,11 @@ const T = window.T = {
 
     lbl_status:'الحالة',
     lbl_barcode: 'الباركود',
+    lbl_default: 'افتراضي',
+    lbl_default_warehouse: 'المستودع الافتراضي',
+    lbl_default_warehouse_hint: 'تعيين هذا المستودع كافتراضي لجميع الصفحات',
+    btn_set_default: 'تعيين كافتراضي',
+    toast_default_set: 'تم تعيين المستودع الافتراضي ✓',
     lbl_cost_price: 'سعر التكلفة',
     lbl_sale_price: 'سعر البيع',
 
@@ -5196,6 +5226,11 @@ const T = window.T = {
 
     lbl_status:'状态',
     lbl_barcode: '条形码',
+    lbl_default: '默认',
+    lbl_default_warehouse: '默认仓库',
+    lbl_default_warehouse_hint: '将此仓库设为所有页面的默认仓库',
+    btn_set_default: '设为默认',
+    toast_default_set: '默认仓库已设置 ✓',
     lbl_cost_price: '成本价',
     lbl_sale_price: '销售价',
 
@@ -5512,6 +5547,11 @@ const T = window.T = {
 
     lbl_status:'Статус',
     lbl_barcode: 'Штрихкод',
+    lbl_default: 'По умолчанию',
+    lbl_default_warehouse: 'Склад по умолчанию',
+    lbl_default_warehouse_hint: 'Установить этот склад по умолчанию для всех страниц',
+    btn_set_default: 'Установить по умолчанию',
+    toast_default_set: 'Склад по умолчанию установлен ✓',
     lbl_cost_price: 'Себестоимость',
     lbl_sale_price: 'Цена продажи',
 
@@ -5985,6 +6025,11 @@ const T = window.T = {
     btn_send_supplier: 'Enviar ao fornecedor',
     btn_save_draft: 'Salvar como rascunho',
     lbl_barcode: 'Código de barras',
+    lbl_default: 'Padrão',
+    lbl_default_warehouse: 'Armazém padrão',
+    lbl_default_warehouse_hint: 'Definir este armazém como padrão para todas as páginas',
+    btn_set_default: 'Definir como padrão',
+    toast_default_set: 'Armazém padrão definido ✓',
     lbl_cost_price: 'Preço de custo',
     lbl_sale_price: 'Preço de venda',
 
@@ -6452,6 +6497,11 @@ const T = window.T = {
 
     lbl_status:'ステータス',
     lbl_barcode: 'バーコード',
+    lbl_default: 'デフォルト',
+    lbl_default_warehouse: 'デフォルト倉庫',
+    lbl_default_warehouse_hint: 'この倉庫をすべてのページのデフォルトに設定',
+    btn_set_default: 'デフォルトに設定',
+    toast_default_set: 'デフォルト倉庫を設定しました ✓',
     lbl_cost_price: '原価',
     lbl_sale_price: '販売価格',
 

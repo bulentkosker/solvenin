@@ -572,6 +572,17 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row full"><div class="form-group"><label data-i18n="label_warehouse_name">Warehouse Name *</label><input type="text" id="wh-name" data-i18n-placeholder="placeholder_wh_name" placeholder="e.g. Main Warehouse"></div></div>
       <div class="form-row full"><div class="form-group"><label data-i18n="label_location">Location / Address</label><input type="text" id="wh-location" data-i18n-placeholder="placeholder_wh_location" placeholder="e.g. Building A, Floor 2"></div></div>
       <div class="form-row full"><div class="form-group"><label data-i18n="label_notes">Notes</label><textarea id="wh-notes" data-i18n-placeholder="placeholder_wh_notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
+      <div class="form-row full"><div class="form-group">
+        <label data-i18n="lbl_default_warehouse">Varsayılan Depo</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding-top:4px">
+          <div style="position:relative;width:40px;height:22px;flex-shrink:0">
+            <input type="checkbox" id="wh-default" style="opacity:0;width:0;height:0;position:absolute">
+            <span id="wh-default-track" style="position:absolute;inset:0;border-radius:11px;background:var(--gray200);transition:background .2s;cursor:pointer" onclick="document.getElementById('wh-default').click();updateDefaultTrack()"></span>
+            <span id="wh-default-thumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s;pointer-events:none"></span>
+          </div>
+          <span style="font-size:13px;color:var(--gray600)" data-i18n="lbl_default_warehouse_hint">Bu depoyu tüm sayfalarda varsayılan olarak seç</span>
+        </label>
+      </div></div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('warehouse-modal')" data-i18n="btn_cancel">Cancel</button>
@@ -1074,10 +1085,14 @@ function renderWarehousesList() {
     <div class="manage-item">
       <div class="manage-item-icon">🏗️</div>
       <div class="manage-item-info">
-        <div class="manage-item-name">${w.name}</div>
+        <div class="manage-item-name" style="display:flex;align-items:center;gap:8px">
+          ${w.name}
+          ${w.is_default ? `<span class="badge badge-blue" style="font-size:10px">★ ${t('lbl_default')||'Varsayılan'}</span>` : ''}
+        </div>
         ${w.location ? `<div class="manage-item-meta">${w.location}</div>` : ''}
       </div>
       <div class="manage-item-actions">
+        ${!w.is_default ? `<button class="action-btn" title="${t('btn_set_default')||'Varsayılan Yap'}" onclick="setDefaultWarehouse('${w.id}')">★</button>` : ''}
         <button class="action-btn" onclick="openWarehouseModal('${w.id}')">✏️</button>
         <button class="action-btn danger" onclick="openDeleteWarehouse('${w.id}','${w.name}')">🗑️</button>
       </div>
@@ -1085,6 +1100,11 @@ function renderWarehousesList() {
   `).join('');
 }
 
+function updateDefaultTrack() {
+  const checked = document.getElementById('wh-default').checked;
+  document.getElementById('wh-default-track').style.background = checked ? 'var(--blue,#3b82f6)' : 'var(--gray200)';
+  document.getElementById('wh-default-thumb').style.transform = checked ? 'translateX(18px)' : 'translateX(0)';
+}
 function openWarehouseModal(id=null) {
   editingWhId = id;
   const w = id ? allWarehouses.find(x=>x.id===id) : null;
@@ -1092,18 +1112,27 @@ function openWarehouseModal(id=null) {
   document.getElementById('wh-name').value = w?.name || '';
   document.getElementById('wh-location').value = w?.location || '';
   document.getElementById('wh-notes').value = w?.notes || '';
+  document.getElementById('wh-default').checked = w?.is_default || false;
+  updateDefaultTrack();
+  document.getElementById('wh-default').onchange = updateDefaultTrack;
   openModal('warehouse-modal');
 }
 
 async function saveWarehouse() {
   const name = document.getElementById('wh-name').value.trim();
   if (!name) { showToast(t('toast_name_required'), 'error'); return; }
+  const isDefault = document.getElementById('wh-default').checked;
   const payload = {
     name,
     location: document.getElementById('wh-location').value.trim() || null,
     notes: document.getElementById('wh-notes').value.trim() || null,
+    is_default: isDefault,
     company_id: companyId,
   };
+  // If setting as default, clear others first
+  if (isDefault) {
+    await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
+  }
   let error;
   if (editingWhId) {
     ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
@@ -1114,6 +1143,14 @@ async function saveWarehouse() {
   closeModal('warehouse-modal');
   await loadWarehouses();
   showToast(t('toast_saved'), 'success');
+}
+
+async function setDefaultWarehouse(id) {
+  await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
+  const { error } = await sb.from('warehouses').update({ is_default: true }).eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  await loadWarehouses();
+  showToast(t('toast_default_set') || 'Varsayılan depo ayarlandı ✓', 'success');
 }
 
 async function openDeleteWarehouse(id, name) {
