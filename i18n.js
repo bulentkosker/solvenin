@@ -1,34 +1,4 @@
 // ===== SOLVENIN i18n SYSTEM =====
-    lbl_barcode: '条形码',
-    lbl_cost_price: '成本价',
-    lbl_sale_price: '销售价',
-    lbl_barcode: 'الباركود',
-    lbl_cost_price: 'سعر التكلفة',
-    lbl_sale_price: 'سعر البيع',
-    lbl_barcode: 'Штрихкод',
-    lbl_cost_price: 'Себестоимость',
-    lbl_sale_price: 'Цена продажи',
-    lbl_barcode: 'Código de barras',
-    lbl_cost_price: 'Preço de custo',
-    lbl_sale_price: 'Preço de venda',
-    lbl_barcode: 'Codice a barre',
-    lbl_cost_price: 'Prezzo di costo',
-    lbl_sale_price: 'Prezzo di vendita',
-    lbl_barcode: 'Código de barras',
-    lbl_cost_price: 'Precio de costo',
-    lbl_sale_price: 'Precio de venta',
-    lbl_barcode: 'Code-barres',
-    lbl_cost_price: 'Prix d'achat',
-    lbl_sale_price: 'Prix de vente',
-    lbl_barcode: 'Barcode',
-    lbl_cost_price: 'Einkaufspreis',
-    lbl_sale_price: 'Verkaufspreis',
-    lbl_barcode: 'Barcode',
-    lbl_cost_price: 'Cost Price',
-    lbl_sale_price: 'Sale Price',
-    lbl_barcode: 'Barkod',
-    lbl_cost_price: 'Alış Fiyatı',
-    lbl_sale_price: 'Satış Fiyatı',
 // Auto-detects browser language, respects user preference saved in localStorage
 
 const SUPPORTED_LANGS = ['en','tr','de','fr','es','ar','zh','ru','pt','ja'];
@@ -2084,6 +2054,9 @@ const T = window.T = {
     toast_status_updated:'Status updated successfully',
 
     lbl_status:'Status',
+    lbl_barcode: 'Barcode',
+    lbl_cost_price: 'Cost Price',
+    lbl_sale_price: 'Sale Price',
 
     lbl_product_type:'Product Type',
     opt_raw_material:'Hammadde',
@@ -2776,6 +2749,9 @@ const T = window.T = {
     toast_status_updated:'Durum başarıyla güncellendi',
 
     lbl_status:'Durum',
+    lbl_barcode: 'Barkod',
+    lbl_cost_price: 'Alış Fiyatı',
+    lbl_sale_price: 'Satış Fiyatı',
 
     lbl_product_type:'Ürün Tipi',
     opt_raw_material:'Hammadde',
@@ -3272,6 +3248,9 @@ const T = window.T = {
     toast_status_updated:'Status erfolgreich aktualisiert',
 
     lbl_status:'Status',
+    lbl_barcode: 'Barcode',
+    lbl_cost_price: 'Einkaufspreis',
+    lbl_sale_price: 'Verkaufspreis',
 
     lbl_product_type:'Produkttyp',
     opt_raw_material:'Rohmaterial',
@@ -3769,6 +3748,9 @@ const T = window.T = {
     toast_status_updated:'Statut mis à jour avec succès',
 
     lbl_status:'Statut',
+    lbl_barcode: 'Code-barres',
+    lbl_cost_price: "Prix d'achat",
+    lbl_sale_price: 'Prix de vente',
 
     lbl_product_type:'Type de produit',
     opt_raw_material:'Matière première',
@@ -4265,6 +4247,9 @@ const T = window.T = {
     toast_status_updated:'Estado actualizado correctamente',
 
     lbl_status:'Estado',
+    lbl_barcode: 'Código de barras',
+    lbl_cost_price: 'Precio de costo',
+    lbl_sale_price: 'Precio de venta',
 
     lbl_product_type:'Tipo de producto',
     opt_raw_material:'Materia prima',
@@ -4727,6 +4712,9 @@ const T = window.T = {
     toast_status_updated:'تم تحديث الحالة بنجاح',
 
     lbl_status:'الحالة',
+    lbl_barcode: 'الباركود',
+    lbl_cost_price: 'سعر التكلفة',
+    lbl_sale_price: 'سعر البيع',
 
     lbl_product_type:'نوع المنتج',
     opt_raw_material:'مادة خام',
@@ -5188,6 +5176,9 @@ const T = window.T = {
     toast_status_updated:'状态更新成功',
 
     lbl_status:'状态',
+    lbl_barcode: '条形码',
+    lbl_cost_price: '成本价',
+    lbl_sale_price: '销售价',
 
     lbl_product_type:'产品类型',
     opt_raw_material:'原材料',
@@ -5501,6 +5492,9 @@ const T = window.T = {
     toast_status_updated:'Статус успешно обновлён',
 
     lbl_status:'Статус',
+    lbl_barcode: 'Штрихкод',
+    lbl_cost_price: 'Себестоимость',
+    lbl_sale_price: 'Цена продажи',
 
     lbl_product_type:'Тип продукта',
     opt_raw_material:'Сырьё',
@@ -5963,6 +5957,9 @@ const T = window.T = {
     toast_status_updated:'Estado atualizado com sucesso',
 
     lbl_status:'Estado',
+    lbl_barcode: 'Código de barras',
+    lbl_cost_price: 'Preço de custo',
+    lbl_sale_price: 'Preço de venda',
 
     lbl_product_type:'Tipo de produto',
     opt_raw_material:'Matéria-prima',
@@ -6424,6 +6421,9 @@ const T = window.T = {
     toast_status_updated:'ステータスが正常に更新されました',
 
     lbl_status:'ステータス',
+    lbl_barcode: 'バーコード',
+    lbl_cost_price: '原価',
+    lbl_sale_price: '販売価格',
 
     lbl_product_type:'製品タイプ',
     opt_raw_material:'原材料',
