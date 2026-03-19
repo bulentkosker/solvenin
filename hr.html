@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — HR & Payroll</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root {
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#60a5fa;--blue-light:#eff6ff;
+  --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
+  --gray600:#475569;--gray700:#334155;--gray800:#1e293b;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --sidebar-w:220px;
+  --font-display:'Outfit',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex;overflow-x:hidden}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;width:calc(100vw - var(--sidebar-w));box-sizing:border-box}
+.topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
+.topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.topbar-btn:hover{background:var(--gray100)}
+.content{padding:28px;flex:1}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-header h1{font-family:var(--font-display);font-size:22px;font-weight:700}
+.page-header p{font-size:13px;color:var(--gray500);margin-top:3px}
+.header-actions{display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2563eb;box-shadow:0 4px 12px rgba(37,99,235,.3);transform:translateY(-1px)}
+.btn-outline{background:#fff;color:var(--gray600);border:1px solid var(--gray200)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-success{background:var(--green-light);color:#065f46;border:1px solid rgba(16,185,129,.2)}
+.btn-success:hover{background:var(--green);color:#fff}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:8px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid var(--gray200);border-radius:14px;padding:18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.stat-card.blue::before{background:var(--blue)} .stat-card.green::before{background:var(--green)}
+.stat-card.orange::before{background:var(--orange)} .stat-card.purple::before{background:var(--purple)}
+.stat-label{font-size:11px;font-weight:600;color:var(--gray500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--gray800);line-height:1;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:var(--gray400);margin-top:4px}
+.tabs-row{display:flex;gap:4px;background:var(--gray100);padding:4px;border-radius:12px;width:fit-content;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:8px 18px;border-radius:9px;border:none;background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray500);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:var(--shadow-sm)}
+.filters-row{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 14px;flex:1;max-width:300px}
+.search-box input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:13px;color:var(--gray800);width:100%}
+.search-box input::placeholder{color:var(--gray400)}
+.filter-select{background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 12px;font-family:var(--font-body);font-size:13px;color:var(--gray700);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--blue)}
+.table-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase;padding:12px 16px;border-bottom:1px solid var(--gray100);background:var(--gray50);white-space:nowrap}
+td{padding:13px 16px;font-size:13px;color:var(--gray600);border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray50)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:#065f46}
+.badge-orange{background:var(--orange-light);color:#92400e}
+.badge-red{background:var(--red-light);color:#991b1b}
+.badge-blue{background:var(--blue-light);color:#1e40af}
+.badge-gray{background:var(--gray100);color:var(--gray600)}
+.badge-purple{background:var(--purple-light);color:#5b21b6}
+.row-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:22px 28px 18px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--gray400);transition:all .15s}
+.modal-close:hover{background:var(--gray100)}
+.modal-body{padding:24px 28px}
+.modal-footer{padding:16px 28px 22px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--gray100)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid.cols-1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:600;color:var(--gray500);letter-spacing:.3px;text-transform:uppercase}
+.field input,.field select,.field textarea{padding:9px 12px;border:1px solid var(--gray200);border-radius:9px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;background:#fff;transition:border .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(96,165,250,.1)}
+.field textarea{resize:vertical;min-height:72px}
+.empty-state{text-align:center;padding:56px 24px;color:var(--gray400)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--gray600);margin-bottom:6px}
+.empty-state p{font-size:13px;margin-bottom:20px}
+.section-title{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--gray800);margin-bottom:14px}
+/* QR */
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 0}
+.qr-wrap canvas,.qr-wrap img{border:6px solid var(--gray100);border-radius:12px;background:#fff}
+/* Payroll summary row */
+.pay-summary{background:var(--gray50);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.pay-summary-item label{font-size:10px;font-weight:700;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.pay-summary-item span{font-size:15px;font-weight:700;color:var(--gray800)}
+/* Attendance status dot */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dot-green{background:var(--green)} .dot-red{background:var(--red)} .dot-gray{background:var(--gray300)}
+/* QR scanner */
+#qr-reader{width:100%;max-width:400px;margin:0 auto}
+#qr-reader video{border-radius:12px}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:var(--gray800);box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999;transform:translateY(20px);opacity:0;transition:all .3s;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+/* Loading */
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--blue)}
+/* Section divider */
+.section-divider{border:none;border-top:1px solid var(--gray100);margin:20px 0}
+/* Manage items (for depts/positions) */
+.manage-list{display:flex;flex-direction:column;gap:2px}
+.manage-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;transition:background .15s}
+.manage-item:hover{background:var(--gray50)}
+.manage-item-name{flex:1;font-size:13px;font-weight:600;color:var(--gray800)}
+.manage-item-meta{font-size:11px;color:var(--gray400);margin-top:1px}
+.manage-item-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+.manage-item:hover .manage-item-actions{opacity:1}
+/* Two-column layout for depts tab */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="loading-logo">solv<span>.</span>nin</div>
+</div>
+
+<div id="sb-sidebar"></div>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" data-i18n="page_hr">HR & Payroll</div>
+    <div style="flex:1"></div>
+    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <div style="flex:1;min-width:0">
+        <h1>👥 <span data-i18n="page_hr">HR & Payroll</span></h1>
+        <p data-i18n="page_hr_sub">Çalışan yönetimi, bordro ve devam takibi</p>
+      </div>
+      <div class="header-actions" id="tab-actions"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Toplam Çalışan</div>
+        <div class="stat-val" id="stat-emp">0</div>
+        <div class="stat-sub">aktif çalışan</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Ort. Maaş</div>
+        <div class="stat-val" id="stat-salary">—</div>
+        <div class="stat-sub">baz maaş</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Bekleyen İzin</div>
+        <div class="stat-val" id="stat-leave">0</div>
+        <div class="stat-sub">onay bekliyor</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Bugün Gelen</div>
+        <div class="stat-val" id="stat-present">0</div>
+        <div class="stat-sub" id="stat-present-sub">çalışan mevcut</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="setTab(this,'employees')">👤 Çalışanlar</button>
+      <button class="tab-btn" onclick="setTab(this,'payroll')">💰 Bordro</button>
+      <button class="tab-btn" onclick="setTab(this,'leave')">🌴 İzinler</button>
+      <button class="tab-btn" onclick="setTab(this,'attendance')">📋 Devam Takibi</button>
+      <button class="tab-btn" onclick="setTab(this,'departments')">🏢 Departmanlar</button>
+    </div>
+
+    <!-- ══ TAB: EMPLOYEES ══ -->
+    <div id="tab-employees">
+      <div class="filters-row">
+        <div class="search-box">🔍 <input type="text" id="emp-search" placeholder="Ad, departman, pozisyon..." oninput="renderEmployees()"></div>
+        <select class="filter-select" id="emp-dept-filter" onchange="renderEmployees()">
+          <option value="">Tüm Departmanlar</option>
+        </select>
+        <select class="filter-select" id="emp-status-filter" onchange="renderEmployees()">
+          <option value="">Tüm Durumlar</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Pasif</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Çalışan</th>
+                <th>Departman</th>
+                <th>Pozisyon</th>
+                <th>İşe Giriş</th>
+                <th>Maaş</th>
+                <th>Durum</th>
+                <th style="width:120px"></th>
+              </tr>
+            </thead>
+            <tbody id="emp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: PAYROLL ══ -->
+    <div id="tab-payroll" style="display:none">
+      <div class="filters-row">
+        <select class="filter-select" id="pr-year" onchange="loadPayrolls()"></select>
+        <select class="filter-select" id="pr-month" onchange="loadPayrolls()">
+          <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+          <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+          <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+          <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+        </select>
+        <select class="filter-select" id="pr-status-filter" onchange="renderPayrollItems()">
+          <option value="">Tüm Durumlar</option>
+          <option value="draft">Taslak</option>
+          <option value="approved">Onaylandı</option>
+          <option value="paid">Ödendi</option>
+        </select>
+      </div>
+      <div id="payroll-header" style="display:none;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+        <span id="payroll-status-badge"></span>
+        <button class="btn btn-success btn-sm" id="btn-approve-payroll" onclick="approvePayroll()" style="display:none">✓ Onayla</button>
+        <button class="btn btn-primary btn-sm" id="btn-mark-paid" onclick="markPayrollPaid()" style="display:none">💸 Ödendi İşaretle</button>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Çalışan</th>
+                <th>Baz Maaş</th>
+                <th>Fazla Mesai</th>
+                <th>Prim</th>
+                <th>Kesintiler</th>
+                <th>Brüt</th>
+                <th>Vergi</th>
+                <th>Sigorta</th>
+                <th>Net</th>
+                <th style="width:60px"></th>
+              </tr>
+            </thead>
+            <tbody id="payroll-tbody"></tbody>
+            <tfoot id="payroll-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: LEAVE ══ -->
+    <div id="tab-leave" style="display:none">
+      <div class="tabs-row" style="margin-bottom:16px">
+        <button class="tab-btn active" onclick="setLeaveTab(this,'requests')">Talepler</button>
+        <button class="tab-btn" onclick="setLeaveTab(this,'types')">İzin Türleri</button>
+      </div>
+
+      <div id="leave-requests-panel">
+        <div class="filters-row">
+          <select class="filter-select" id="leave-emp-filter" onchange="renderLeaveRequests()">
+            <option value="">Tüm Çalışanlar</option>
+          </select>
+          <select class="filter-select" id="leave-status-filter" onchange="renderLeaveRequests()">
+            <option value="">Tüm Durumlar</option>
+            <option value="pending">Bekliyor</option>
+            <option value="approved">Onaylandı</option>
+            <option value="rejected">Reddedildi</option>
+          </select>
+        </div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Çalışan</th><th>İzin Türü</th><th>Başlangıç</th><th>Bitiş</th><th>Gün</th><th>Durum</th><th>Notlar</th><th style="width:120px"></th>
+              </tr></thead>
+              <tbody id="leave-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="leave-types-panel" style="display:none">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>İzin Türü</th><th>Yıllık Gün</th><th>Durum</th><th style="width:100px"></th></tr></thead>
+              <tbody id="leave-types-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: ATTENDANCE ══ -->
+    <div id="tab-attendance" style="display:none">
+      <div class="filters-row">
+        <input type="date" class="filter-select" id="att-date" onchange="renderAttendance()" style="cursor:pointer">
+        <select class="filter-select" id="att-emp-filter" onchange="renderAttendance()">
+          <option value="">Tüm Çalışanlar</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <label style="font-size:12px;font-weight:600;color:var(--gray500)">Standart Saat:</label>
+          <input type="number" id="standard-hours" value="8" min="1" max="24" style="width:60px;padding:6px 8px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;text-align:center;outline:none">
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Çalışan</th><th>Giriş</th><th>Çıkış</th><th>Çalışma Süresi</th><th>Fazla Mesai</th><th>Durum</th><th>Notlar</th><th style="width:120px"></th>
+            </tr></thead>
+            <tbody id="att-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: DEPARTMENTS ══ -->
+    <div id="tab-departments" style="display:none">
+      <div class="two-col">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div class="section-title" style="margin:0">🏢 Departmanlar</div>
+            <button class="btn btn-outline btn-sm" onclick="openDeptModal()">+ Ekle</button>
+          </div>
+          <div class="table-card"><div class="table-wrap"><table>
+            <thead><tr><th>Departman</th><th>Çalışan</th><th style="width:80px"></th></tr></thead>
+            <tbody id="dept-tbody"></tbody>
+          </table></div></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div class="section-title" style="margin:0">💼 Pozisyonlar</div>
+            <button class="btn btn-outline btn-sm" onclick="openPositionModal()">+ Ekle</button>
+          </div>
+          <div class="table-card"><div class="table-wrap"><table>
+            <thead><tr><th>Pozisyon</th><th>Departman</th><th style="width:80px"></th></tr></thead>
+            <tbody id="pos-tbody"></tbody>
+          </table></div></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast" class="toast"></div>
+
+<!-- ══ EMPLOYEE MODAL ══ -->
+<div class="modal-overlay" id="emp-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div class="modal-title" id="emp-modal-title">Çalışan Ekle</div>
+      <button class="modal-close" onclick="closeModal('emp-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Ad *</label><input type="text" id="e-firstname" placeholder="Ali"></div>
+        <div class="field"><label>Soyad *</label><input type="text" id="e-lastname" placeholder="Yılmaz"></div>
+        <div class="field"><label>E-posta</label><input type="email" id="e-email" placeholder="ali@firma.com"></div>
+        <div class="field"><label>Telefon</label><input type="tel" id="e-phone" placeholder="+90 555 000 00 00"></div>
+        <div class="field"><label>Departman</label><select id="e-dept"></select></div>
+        <div class="field"><label>Pozisyon</label><select id="e-pos"></select></div>
+        <div class="field"><label>İşe Giriş Tarihi *</label><input type="date" id="e-hiredate"></div>
+        <div class="field"><label>Baz Maaş *</label><input type="number" id="e-salary" placeholder="0.00" min="0" step="0.01" oninput="calcNetPreview()"></div>
+        <div class="field"><label>Vergi Oranı (%)</label><input type="number" id="e-tax" placeholder="15" min="0" max="100" step="0.1" value="15" oninput="calcNetPreview()"></div>
+        <div class="field"><label>Sigorta Oranı (%)</label><input type="number" id="e-ins" placeholder="14" min="0" max="100" step="0.1" value="14" oninput="calcNetPreview()"></div>
+        <div class="field"><label>Durum</label>
+          <select id="e-status">
+            <option value="active">Aktif</option>
+            <option value="inactive">Pasif</option>
+          </select>
+        </div>
+        <div class="field"><label>Net Maaş (Tahmini)</label>
+          <div id="e-net-preview" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--green);font-size:14px;background:var(--green-light)">—</div>
+        </div>
+        <div class="field full"><label>Notlar</label><textarea id="e-notes" placeholder="Ek bilgiler..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('emp-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QR MODAL ══ -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title" id="qr-modal-title">Çalışan QR Kodu</div>
+      <button class="modal-close" onclick="closeModal('qr-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-wrap">
+        <canvas id="qr-canvas"></canvas>
+        <div style="text-align:center">
+          <div id="qr-emp-name" style="font-weight:700;font-size:15px;color:var(--gray800)"></div>
+          <div id="qr-emp-dept" style="font-size:12px;color:var(--gray400);margin-top:2px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="downloadQR()">⬇ İndir</button>
+      <button class="btn btn-outline" onclick="printQR()">🖨 Yazdır</button>
+      <button class="btn btn-primary" onclick="closeModal('qr-modal')">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QR SCANNER MODAL ══ -->
+<div class="modal-overlay" id="scanner-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">QR ile Devam Kaydı</div>
+      <button class="modal-close" onclick="stopScanner()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--gray500);margin-bottom:16px;text-align:center">Çalışanın QR kodunu kameraya gösterin</p>
+      <div id="qr-reader"></div>
+      <div id="scanner-result" style="margin-top:16px;text-align:center;font-size:13px;font-weight:600;color:var(--green);display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="stopScanner()">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAYROLL ITEM MODAL ══ -->
+<div class="modal-overlay" id="payitem-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="payitem-title">Bordro Düzenle</div>
+      <button class="modal-close" onclick="closeModal('payitem-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Baz Maaş</label><input type="number" id="pi-base" min="0" step="0.01" oninput="calcPayPreview()"></div>
+        <div class="field"><label>Fazla Mesai Tutarı</label><input type="number" id="pi-overtime" value="0" min="0" step="0.01" oninput="calcPayPreview()"></div>
+        <div class="field"><label>Prim</label><input type="number" id="pi-bonus" value="0" min="0" step="0.01" oninput="calcPayPreview()"></div>
+        <div class="field"><label>Diğer Kesintiler</label><input type="number" id="pi-deductions" value="0" min="0" step="0.01" oninput="calcPayPreview()"></div>
+        <div class="field"><label>Vergi Oranı (%)</label><input type="number" id="pi-tax-rate" min="0" max="100" step="0.1" oninput="calcPayPreview()"></div>
+        <div class="field"><label>Sigorta Oranı (%)</label><input type="number" id="pi-ins-rate" min="0" max="100" step="0.1" oninput="calcPayPreview()"></div>
+        <div class="field full"><label>Notlar</label><textarea id="pi-notes" style="min-height:56px"></textarea></div>
+      </div>
+      <div class="pay-summary" id="pay-preview">
+        <div class="pay-summary-item"><label>Brüt</label><span id="prev-gross">—</span></div>
+        <div class="pay-summary-item"><label>Vergi</label><span id="prev-tax">—</span></div>
+        <div class="pay-summary-item"><label>Sigorta</label><span id="prev-ins">—</span></div>
+        <div class="pay-summary-item"><label style="color:var(--green)">Net</label><span id="prev-net" style="color:var(--green)">—</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('payitem-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="savePayItem()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEAVE REQUEST MODAL ══ -->
+<div class="modal-overlay" id="leave-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="leave-modal-title">İzin Talebi</div>
+      <button class="modal-close" onclick="closeModal('leave-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full"><label>Çalışan *</label><select id="lr-emp"></select></div>
+        <div class="field full"><label>İzin Türü *</label><select id="lr-type"></select></div>
+        <div class="field"><label>Başlangıç Tarihi *</label><input type="date" id="lr-start" oninput="calcLeaveDays()"></div>
+        <div class="field"><label>Bitiş Tarihi *</label><input type="date" id="lr-end" oninput="calcLeaveDays()"></div>
+        <div class="field"><label>Gün Sayısı</label>
+          <div id="lr-days-display" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--blue)">—</div>
+        </div>
+        <div class="field"><label>Durum</label>
+          <select id="lr-status">
+            <option value="pending">Bekliyor</option>
+            <option value="approved">Onaylandı</option>
+            <option value="rejected">Reddedildi</option>
+          </select>
+        </div>
+        <div class="field full"><label>Açıklama</label><textarea id="lr-reason" placeholder="İzin sebebi..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('leave-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveLeaveRequest()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEAVE TYPE MODAL ══ -->
+<div class="modal-overlay" id="leavetype-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title" id="leavetype-modal-title">İzin Türü</div>
+      <button class="modal-close" onclick="closeModal('leavetype-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-1">
+        <div class="field"><label>İzin Türü Adı *</label><input type="text" id="lt-name" placeholder="Yıllık İzin"></div>
+        <div class="field"><label>Yıllık Gün Hakkı</label><input type="number" id="lt-days" placeholder="14" min="0"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('leavetype-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveLeaveType()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ATTENDANCE MODAL ══ -->
+<div class="modal-overlay" id="att-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title" id="att-modal-title">Devam Kaydı</div>
+      <button class="modal-close" onclick="closeModal('att-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full"><label>Çalışan *</label><select id="att-emp"></select></div>
+        <div class="field"><label>Tarih *</label><input type="date" id="att-date-input"></div>
+        <div class="field" style="visibility:hidden"></div>
+        <div class="field"><label>Giriş Saati</label><input type="time" id="att-checkin" oninput="calcAttOvertime()"></div>
+        <div class="field"><label>Çıkış Saati</label><input type="time" id="att-checkout" oninput="calcAttOvertime()"></div>
+        <div class="field"><label>Fazla Mesai (saat)</label>
+          <div id="att-overtime-display" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--orange)">—</div>
+        </div>
+        <div class="field"><label>Durum</label>
+          <select id="att-status">
+            <option value="present">Geldi</option>
+            <option value="absent">Gelmedi</option>
+            <option value="late">Geç Geldi</option>
+            <option value="half">Yarım Gün</option>
+          </select>
+        </div>
+        <div class="field full"><label>Notlar</label><textarea id="att-notes" style="min-height:56px"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('att-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveAttendance()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DEPARTMENT MODAL ══ -->
+<div class="modal-overlay" id="dept-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title" id="dept-modal-title">Departman Ekle</div>
+      <button class="modal-close" onclick="closeModal('dept-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-1">
+        <div class="field"><label>Departman Adı *</label><input type="text" id="dept-name" placeholder="Muhasebe"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('dept-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveDept()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ POSITION MODAL ══ -->
+<div class="modal-overlay" id="pos-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title" id="pos-modal-title">Pozisyon Ekle</div>
+      <button class="modal-close" onclick="closeModal('pos-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-1">
+        <div class="field"><label>Pozisyon Adı *</label><input type="text" id="pos-name" placeholder="Muhasebeci"></div>
+        <div class="field"><label>Departman</label><select id="pos-dept-select"></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('pos-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="savePosition()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM ══ -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Silme Onayı</div>
+      <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="delete-msg" style="font-size:14px;color:var(--gray600);line-height:1.6"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('delete-modal')">İptal</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Sil</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCRIPTS ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const { createClient } = supabase;
+const sb = createClient(
+  'https://jaakjdzpdizjbzvbtcld.supabase.co',
+  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+);
+window._supabase = sb;
+
+function fmt(n) { const s = window.getCurrencySymbol ? window.getCurrencySymbol() : '₺'; return s + parseFloat(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtH(n) { return parseFloat(n||0).toFixed(1) + ' sa'; }
+
+// ===== STATE =====
+let companyId = null, currentUser = null;
+let employees = [], departments = [], positions = [];
+let payrolls = [], payrollItems = [];
+let leaveTypes = [], leaveRequests = [];
+let attendanceRecords = [];
+let currentPayrollId = null;
+let currentTab = 'employees';
+let editingEmpId = null, editingPayItemId = null;
+let editingLeaveId = null, editingLeaveTypeId = null;
+let editingAttId = null, editingDeptId = null, editingPosId = null;
+let deleteCallback = null;
+let html5QrScanner = null;
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    await new Promise(r => setTimeout(r, 800));
+    const { data: { session: s2 } } = await sb.auth.getSession();
+    if (!s2) { window.location.href = 'auth.html'; return; }
+  }
+  const user = (await sb.auth.getSession()).data.session?.user;
+  if (!user) return;
+  const name = user.user_metadata?.full_name || user.email.split('@')[0];
+  (document.getElementById('sb-user-name')||{}).textContent = name;
+  (document.getElementById('sb-user-avatar')||{}).textContent = name[0]?.toUpperCase() || '?';
+
+  const _savedId = localStorage.getItem('currentCompanyId');
+  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  if (!_myCompanies || !_myCompanies.length) return;
+  const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies[0]) : _myCompanies[0];
+  companyId = _active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+  currentUser = user;
+
+  // Init payroll year/month selectors
+  const now = new Date();
+  const yearSel = document.getElementById('pr-year');
+  for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) {
+    yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  document.getElementById('pr-month').value = now.getMonth() + 1;
+  document.getElementById('att-date').value = now.toISOString().slice(0,10);
+
+  await Promise.all([loadDepts(), loadPositions(), loadLeaveTypes()]);
+  await Promise.all([loadEmployees(), loadLeaveRequests(), loadAttendance()]);
+  renderAll();
+  updateStats();
+  setTabActions('employees');
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
+  if (typeof setLang === 'function') setLang(savedLang); else if (typeof applyTranslations === 'function') applyTranslations();
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200); }
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+
+// ===== LOAD =====
+async function loadDepts() {
+  const { data } = await sb.from('departments').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  departments = data || [];
+  populateDeptSelects();
+}
+async function loadPositions() {
+  const { data } = await sb.from('positions').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  positions = data || [];
+}
+async function loadEmployees() {
+  const { data } = await sb.from('employees').select('*').eq('company_id', companyId).eq('is_active', true).order('last_name');
+  employees = data || [];
+  populateEmpSelects();
+}
+async function loadLeaveTypes() {
+  const { data } = await sb.from('leave_types').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  leaveTypes = data || [];
+}
+async function loadLeaveRequests() {
+  const { data } = await sb.from('leave_requests').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+  leaveRequests = data || [];
+}
+async function loadAttendance() {
+  const dateVal = document.getElementById('att-date').value;
+  if (!dateVal) return;
+  const { data } = await sb.from('attendance').select('*').eq('company_id', companyId).eq('date', dateVal).order('created_at');
+  attendanceRecords = data || [];
+}
+async function loadPayrolls() {
+  const year = document.getElementById('pr-year').value;
+  const month = document.getElementById('pr-month').value;
+  const { data: pr } = await sb.from('payroll').select('*').eq('company_id', companyId).eq('year', year).eq('month', month).maybeSingle();
+  if (pr) {
+    currentPayrollId = pr.id;
+    const { data: items } = await sb.from('payroll_items').select('*').eq('payroll_id', pr.id);
+    payrollItems = items || [];
+    renderPayrollHeader(pr);
+  } else {
+    currentPayrollId = null;
+    payrollItems = [];
+    renderPayrollHeader(null);
+  }
+  renderPayrollItems();
+}
+
+// ===== POPULATE SELECTS =====
+function populateDeptSelects() {
+  const deptOpts = departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('e-dept').innerHTML = '<option value="">— Seç —</option>' + deptOpts;
+  document.getElementById('pos-dept-select').innerHTML = '<option value="">— Seç —</option>' + deptOpts;
+  document.getElementById('emp-dept-filter').innerHTML = '<option value="">Tüm Departmanlar</option>' + deptOpts;
+}
+function populateEmpSelects() {
+  const empOpts = employees.map(e => `<option value="${e.id}">${e.first_name} ${e.last_name}</option>`).join('');
+  ['lr-emp','att-emp','leave-emp-filter','att-emp-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isFilter = id.includes('filter');
+    el.innerHTML = (isFilter ? '<option value="">Tüm Çalışanlar</option>' : '<option value="">— Seç —</option>') + empOpts;
+  });
+}
+function populateLeaveTypeSelect() {
+  document.getElementById('lr-type').innerHTML = '<option value="">— Seç —</option>' +
+    leaveTypes.map(lt => `<option value="${lt.id}">${lt.name}</option>`).join('');
+}
+function populatePosSelect(deptId) {
+  const filtered = deptId ? positions.filter(p => p.department_id === deptId) : positions;
+  document.getElementById('e-pos').innerHTML = '<option value="">— Seç —</option>' +
+    filtered.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderEmployees();
+  renderLeaveRequests();
+  renderLeaveTypes();
+  renderAttendance();
+  renderDepts();
+  renderPositions();
+  loadPayrolls();
+}
+
+// ===== EMPLOYEES =====
+function renderEmployees() {
+  const tbody = document.getElementById('emp-tbody');
+  const search = document.getElementById('emp-search').value.toLowerCase();
+  const deptFilter = document.getElementById('emp-dept-filter').value;
+  const statusFilter = document.getElementById('emp-status-filter').value;
+
+  let list = employees.filter(e => {
+    const fullName = `${e.first_name} ${e.last_name}`.toLowerCase();
+    const dept = departments.find(d => d.id === e.department_id);
+    const pos = positions.find(p => p.id === e.position_id);
+    if (search && !fullName.includes(search) && !(dept?.name||'').toLowerCase().includes(search) && !(pos?.name||'').toLowerCase().includes(search)) return false;
+    if (deptFilter && e.department_id !== deptFilter) return false;
+    if (statusFilter && e.status !== statusFilter) return false;
+    return true;
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3>Çalışan bulunamadı</h3><p>Yeni çalışan ekleyebilirsiniz.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(e => {
+    const dept = departments.find(d => d.id === e.department_id)?.name || '—';
+    const pos = positions.find(p => p.id === e.position_id)?.name || '—';
+    const statusBadge = e.status === 'active'
+      ? '<span class="badge badge-green">● Aktif</span>'
+      : '<span class="badge badge-gray">○ Pasif</span>';
+    return `<tr>
+      <td><div style="font-weight:600;color:var(--gray800)">${e.first_name} ${e.last_name}</div><div style="font-size:11px;color:var(--gray400)">${e.email||''}</div></td>
+      <td>${dept}</td>
+      <td>${pos}</td>
+      <td style="font-size:12px">${e.hire_date ? new Date(e.hire_date).toLocaleDateString('tr-TR') : '—'}</td>
+      <td style="font-weight:600">${fmt(e.base_salary)}</td>
+      <td>${statusBadge}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openQRModal('${e.id}')" title="QR Kod">📱</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openEmpModal('${e.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('emp','${e.id}','${e.first_name} ${e.last_name}')" title="Sil">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openEmpModal(id = null) {
+  editingEmpId = id;
+  const e = id ? employees.find(x => x.id === id) : null;
+  document.getElementById('emp-modal-title').textContent = id ? 'Çalışan Düzenle' : 'Çalışan Ekle';
+  document.getElementById('e-firstname').value = e?.first_name || '';
+  document.getElementById('e-lastname').value = e?.last_name || '';
+  document.getElementById('e-email').value = e?.email || '';
+  document.getElementById('e-phone').value = e?.phone || '';
+  document.getElementById('e-salary').value = e?.base_salary || '';
+  document.getElementById('e-tax').value = e?.tax_rate ?? 15;
+  document.getElementById('e-ins').value = e?.insurance_rate ?? 14;
+  document.getElementById('e-status').value = e?.status || 'active';
+  document.getElementById('e-notes').value = e?.notes || '';
+  document.getElementById('e-hiredate').value = e?.hire_date || new Date().toISOString().slice(0,10);
+  populatePosSelect(e?.department_id || '');
+  document.getElementById('e-dept').value = e?.department_id || '';
+  document.getElementById('e-pos').value = e?.position_id || '';
+  document.getElementById('e-dept').onchange = () => {
+    populatePosSelect(document.getElementById('e-dept').value);
+  };
+  calcNetPreview();
+  openModal('emp-modal');
+}
+
+function calcNetPreview() {
+  const sal = parseFloat(document.getElementById('e-salary').value) || 0;
+  const tax = parseFloat(document.getElementById('e-tax').value) || 0;
+  const ins = parseFloat(document.getElementById('e-ins').value) || 0;
+  const net = sal - sal * tax / 100 - sal * ins / 100;
+  document.getElementById('e-net-preview').textContent = sal > 0 ? fmt(net) : '—';
+}
+
+async function saveEmployee() {
+  const firstName = document.getElementById('e-firstname').value.trim();
+  const lastName = document.getElementById('e-lastname').value.trim();
+  if (!firstName || !lastName) { showToast('Ad ve soyad zorunludur', 'error'); return; }
+  const salary = parseFloat(document.getElementById('e-salary').value) || 0;
+  if (salary <= 0) { showToast('Geçerli bir maaş girin', 'error'); return; }
+  const payload = {
+    company_id: companyId,
+    first_name: firstName,
+    last_name: lastName,
+    email: document.getElementById('e-email').value.trim() || null,
+    phone: document.getElementById('e-phone').value.trim() || null,
+    department_id: document.getElementById('e-dept').value || null,
+    position_id: document.getElementById('e-pos').value || null,
+    hire_date: document.getElementById('e-hiredate').value || null,
+    base_salary: salary,
+    tax_rate: parseFloat(document.getElementById('e-tax').value) || 0,
+    insurance_rate: parseFloat(document.getElementById('e-ins').value) || 0,
+    status: document.getElementById('e-status').value,
+    notes: document.getElementById('e-notes').value.trim() || null,
+    is_active: true,
+  };
+  let error;
+  if (editingEmpId) {
+    ({ error } = await sb.from('employees').update(payload).eq('id', editingEmpId));
+  } else {
+    ({ error } = await sb.from('employees').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(editingEmpId ? 'Çalışan güncellendi ✓' : 'Çalışan eklendi ✓', 'success');
+  closeModal('emp-modal');
+  await loadEmployees();
+  renderEmployees();
+  updateStats();
+}
+
+// ===== QR CODE =====
+function openQRModal(empId) {
+  const e = employees.find(x => x.id === empId);
+  if (!e) return;
+  document.getElementById('qr-modal-title').textContent = `${e.first_name} ${e.last_name} — QR Kod`;
+  document.getElementById('qr-emp-name').textContent = `${e.first_name} ${e.last_name}`;
+  const dept = departments.find(d => d.id === e.department_id);
+  const pos = positions.find(p => p.id === e.position_id);
+  document.getElementById('qr-emp-dept').textContent = [dept?.name, pos?.name].filter(Boolean).join(' · ') || '';
+  const qrData = `solvenin_emp:${e.id}`;
+  const canvas = document.getElementById('qr-canvas');
+  QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#0a0f1e', light: '#ffffff' } }, err => {
+    if (err) showToast('QR oluşturulamadı', 'error');
+  });
+  openModal('qr-modal');
+}
+function downloadQR() {
+  const canvas = document.getElementById('qr-canvas');
+  const empName = document.getElementById('qr-emp-name').textContent.replace(/\s+/g, '_');
+  const a = document.createElement('a');
+  a.download = `qr_${empName}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+function printQR() {
+  const canvas = document.getElementById('qr-canvas');
+  const name = document.getElementById('qr-emp-name').textContent;
+  const dept = document.getElementById('qr-emp-dept').textContent;
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>QR - ${name}</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:12px}img{border:6px solid #f1f5f9;border-radius:12px}h2{margin:0;font-size:18px}p{margin:0;color:#94a3b8;font-size:13px}</style></head><body>
+    <img src="${canvas.toDataURL('image/png')}"><h2>${name}</h2><p>${dept}</p></body></html>`);
+  w.document.close();
+  setTimeout(() => { w.print(); }, 500);
+}
+
+// ===== QR SCANNER =====
+function openScanner() {
+  openModal('scanner-modal');
+  document.getElementById('scanner-result').style.display = 'none';
+  setTimeout(() => {
+    if (typeof Html5Qrcode === 'undefined') { showToast('QR tarayıcı yüklenemedi', 'error'); return; }
+    html5QrScanner = new Html5Qrcode('qr-reader');
+    html5QrScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decoded) => handleScannedQR(decoded),
+      () => {}
+    ).catch(err => showToast('Kamera açılamadı: ' + err, 'error'));
+  }, 300);
+}
+function stopScanner() {
+  if (html5QrScanner) {
+    html5QrScanner.stop().catch(() => {});
+    html5QrScanner = null;
+  }
+  closeModal('scanner-modal');
+}
+async function handleScannedQR(decoded) {
+  if (!decoded.startsWith('solvenin_emp:')) return;
+  const empId = decoded.replace('solvenin_emp:', '');
+  const emp = employees.find(e => e.id === empId);
+  if (!emp) { showToast('Çalışan bulunamadı', 'error'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const now = new Date().toTimeString().slice(0,5);
+  // Check if already has check-in today
+  const { data: existing } = await sb.from('attendance').select('*').eq('company_id', companyId).eq('employee_id', empId).eq('date', today).maybeSingle();
+  if (existing && !existing.check_out) {
+    // Record check-out
+    const hrs = calcHoursBetween(existing.check_in, now);
+    const stdH = parseFloat(document.getElementById('standard-hours').value) || 8;
+    const ot = Math.max(0, hrs - stdH);
+    await sb.from('attendance').update({ check_out: now, overtime_hours: ot }).eq('id', existing.id);
+    const res = document.getElementById('scanner-result');
+    res.style.display = 'block';
+    res.textContent = `✓ ${emp.first_name} ${emp.last_name} — Çıkış: ${now}`;
+  } else if (!existing) {
+    // Record check-in
+    await sb.from('attendance').insert({ company_id: companyId, employee_id: empId, date: today, check_in: now, status: 'present', overtime_hours: 0 });
+    const res = document.getElementById('scanner-result');
+    res.style.display = 'block';
+    res.textContent = `✓ ${emp.first_name} ${emp.last_name} — Giriş: ${now}`;
+  }
+  await loadAttendance();
+  renderAttendance();
+  updateStats();
+}
+function calcHoursBetween(t1, t2) {
+  if (!t1 || !t2) return 0;
+  const [h1,m1] = t1.split(':').map(Number);
+  const [h2,m2] = t2.split(':').map(Number);
+  return ((h2*60+m2) - (h1*60+m1)) / 60;
+}
+
+// ===== PAYROLL =====
+function renderPayrollHeader(pr) {
+  const hdr = document.getElementById('payroll-header');
+  const btnApprove = document.getElementById('btn-approve-payroll');
+  const btnPaid = document.getElementById('btn-mark-paid');
+  const badge = document.getElementById('payroll-status-badge');
+  if (!pr) { hdr.style.display = 'none'; return; }
+  hdr.style.display = 'flex';
+  const statusMap = { draft: ['badge-gray','Taslak'], approved: ['badge-blue','Onaylandı'], paid: ['badge-green','Ödendi'] };
+  const [cls, lbl] = statusMap[pr.status] || ['badge-gray','—'];
+  badge.innerHTML = `<span class="badge ${cls}">${lbl}</span>`;
+  btnApprove.style.display = pr.status === 'draft' ? '' : 'none';
+  btnPaid.style.display = pr.status === 'approved' ? '' : 'none';
+}
+function renderPayrollItems() {
+  const tbody = document.getElementById('payroll-tbody');
+  const tfoot = document.getElementById('payroll-tfoot');
+  const statusFilter = document.getElementById('pr-status-filter').value;
+  let list = payrollItems;
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">💰</div><h3>Bu ay için bordro oluşturulmamış</h3><p>Bordro oluştur butonunu kullanın.</p></div></td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+  let totBase=0, totOT=0, totBonus=0, totDed=0, totGross=0, totTax=0, totIns=0, totNet=0;
+  tbody.innerHTML = list.map(item => {
+    const emp = employees.find(e => e.id === item.employee_id);
+    if (!emp) return '';
+    totBase+=item.base_salary||0; totOT+=item.overtime||0; totBonus+=item.bonus||0; totDed+=item.deductions||0;
+    totGross+=item.gross||0; totTax+=item.tax_amount||0; totIns+=item.insurance_amount||0; totNet+=item.net||0;
+    return `<tr>
+      <td><div style="font-weight:600">${emp.first_name} ${emp.last_name}</div><div style="font-size:11px;color:var(--gray400)">${departments.find(d=>d.id===emp.department_id)?.name||''}</div></td>
+      <td>${fmt(item.base_salary)}</td>
+      <td style="color:var(--orange)">${fmt(item.overtime)}</td>
+      <td style="color:var(--green)">${fmt(item.bonus)}</td>
+      <td style="color:var(--red)">${fmt(item.deductions)}</td>
+      <td style="font-weight:600">${fmt(item.gross)}</td>
+      <td style="color:var(--red)">${fmt(item.tax_amount)}</td>
+      <td style="color:var(--orange)">${fmt(item.insurance_amount)}</td>
+      <td style="font-weight:700;color:var(--green)">${fmt(item.net)}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openPayItemModal('${item.id}')" title="Düzenle">✏️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  tfoot.innerHTML = `<tr style="background:var(--gray50);font-weight:700">
+    <td>TOPLAM</td><td>${fmt(totBase)}</td><td>${fmt(totOT)}</td><td>${fmt(totBonus)}</td><td>${fmt(totDed)}</td>
+    <td>${fmt(totGross)}</td><td>${fmt(totTax)}</td><td>${fmt(totIns)}</td><td style="color:var(--green)">${fmt(totNet)}</td><td></td>
+  </tr>`;
+}
+async function generatePayroll() {
+  const year = parseInt(document.getElementById('pr-year').value);
+  const month = parseInt(document.getElementById('pr-month').value);
+  if (!employees.length) { showToast('Önce çalışan ekleyin', 'error'); return; }
+  // Create or get payroll header
+  let prId = currentPayrollId;
+  if (!prId) {
+    const { data, error } = await sb.from('payroll').insert({ company_id: companyId, year, month, status: 'draft' }).select().single();
+    if (error) { showToast(error.message, 'error'); return; }
+    prId = data.id;
+    currentPayrollId = prId;
+  }
+  // Generate items for all active employees (skip existing)
+  const existing = new Set(payrollItems.map(i => i.employee_id));
+  const toInsert = employees.filter(e => !existing.has(e.id) && e.status === 'active').map(e => {
+    const gross = e.base_salary || 0;
+    const tax = gross * (e.tax_rate||0) / 100;
+    const ins = gross * (e.insurance_rate||0) / 100;
+    return { payroll_id: prId, employee_id: e.id, base_salary: gross, overtime: 0, bonus: 0, deductions: 0, gross, tax_amount: tax, insurance_amount: ins, net: gross - tax - ins };
+  });
+  if (toInsert.length) {
+    const { error } = await sb.from('payroll_items').insert(toInsert);
+    if (error) { showToast(error.message, 'error'); return; }
+  }
+  showToast('Bordro oluşturuldu ✓', 'success');
+  await loadPayrolls();
+}
+async function approvePayroll() {
+  if (!currentPayrollId) return;
+  const { error } = await sb.from('payroll').update({ status: 'approved' }).eq('id', currentPayrollId);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Bordro onaylandı ✓', 'success');
+  await loadPayrolls();
+}
+async function markPayrollPaid() {
+  if (!currentPayrollId) return;
+  const { error } = await sb.from('payroll').update({ status: 'paid' }).eq('id', currentPayrollId);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Bordro ödendi olarak işaretlendi ✓', 'success');
+  await loadPayrolls();
+}
+function openPayItemModal(id) {
+  editingPayItemId = id;
+  const item = payrollItems.find(i => i.id === id);
+  if (!item) return;
+  const emp = employees.find(e => e.id === item.employee_id);
+  document.getElementById('payitem-title').textContent = emp ? `${emp.first_name} ${emp.last_name} — Bordro` : 'Bordro Düzenle';
+  document.getElementById('pi-base').value = item.base_salary || 0;
+  document.getElementById('pi-overtime').value = item.overtime || 0;
+  document.getElementById('pi-bonus').value = item.bonus || 0;
+  document.getElementById('pi-deductions').value = item.deductions || 0;
+  document.getElementById('pi-tax-rate').value = emp ? (emp.tax_rate || 0) : 0;
+  document.getElementById('pi-ins-rate').value = emp ? (emp.insurance_rate || 0) : 0;
+  document.getElementById('pi-notes').value = item.notes || '';
+  calcPayPreview();
+  openModal('payitem-modal');
+}
+function calcPayPreview() {
+  const base = parseFloat(document.getElementById('pi-base').value) || 0;
+  const ot = parseFloat(document.getElementById('pi-overtime').value) || 0;
+  const bonus = parseFloat(document.getElementById('pi-bonus').value) || 0;
+  const ded = parseFloat(document.getElementById('pi-deductions').value) || 0;
+  const taxRate = parseFloat(document.getElementById('pi-tax-rate').value) || 0;
+  const insRate = parseFloat(document.getElementById('pi-ins-rate').value) || 0;
+  const gross = base + ot + bonus - ded;
+  const tax = gross * taxRate / 100;
+  const ins = gross * insRate / 100;
+  const net = gross - tax - ins;
+  document.getElementById('prev-gross').textContent = fmt(gross);
+  document.getElementById('prev-tax').textContent = fmt(tax);
+  document.getElementById('prev-ins').textContent = fmt(ins);
+  document.getElementById('prev-net').textContent = fmt(net);
+}
+async function savePayItem() {
+  const base = parseFloat(document.getElementById('pi-base').value) || 0;
+  const ot = parseFloat(document.getElementById('pi-overtime').value) || 0;
+  const bonus = parseFloat(document.getElementById('pi-bonus').value) || 0;
+  const ded = parseFloat(document.getElementById('pi-deductions').value) || 0;
+  const taxRate = parseFloat(document.getElementById('pi-tax-rate').value) || 0;
+  const insRate = parseFloat(document.getElementById('pi-ins-rate').value) || 0;
+  const gross = base + ot + bonus - ded;
+  const tax = gross * taxRate / 100;
+  const ins = gross * insRate / 100;
+  const net = gross - tax - ins;
+  const { error } = await sb.from('payroll_items').update({
+    base_salary: base, overtime: ot, bonus, deductions: ded,
+    gross, tax_amount: tax, insurance_amount: ins, net,
+    notes: document.getElementById('pi-notes').value.trim() || null,
+  }).eq('id', editingPayItemId);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Bordro kalemi güncellendi ✓', 'success');
+  closeModal('payitem-modal');
+  await loadPayrolls();
+}
+
+// ===== LEAVE =====
+function setLeaveTab(btn, tab) {
+  btn.closest('.tabs-row').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('leave-requests-panel').style.display = tab === 'requests' ? '' : 'none';
+  document.getElementById('leave-types-panel').style.display = tab === 'types' ? '' : 'none';
+  if (tab === 'types') document.getElementById('tab-actions').innerHTML =
+    '<button class="btn btn-outline" onclick="openLeaveTypeModal()">+ İzin Türü Ekle</button>';
+  else setTabActions('leave');
+}
+function renderLeaveRequests() {
+  const tbody = document.getElementById('leave-tbody');
+  const empFilter = document.getElementById('leave-emp-filter').value;
+  const statusFilter = document.getElementById('leave-status-filter').value;
+  let list = leaveRequests.filter(r => {
+    if (empFilter && r.employee_id !== empFilter) return false;
+    if (statusFilter && r.status !== statusFilter) return false;
+    return true;
+  });
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🌴</div><h3>İzin talebi yok</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(r => {
+    const emp = employees.find(e => e.id === r.employee_id);
+    const lt = leaveTypes.find(l => l.id === r.leave_type_id);
+    const statusMap = { pending: 'badge-orange', approved: 'badge-green', rejected: 'badge-red' };
+    const statusLbl = { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi' };
+    return `<tr>
+      <td style="font-weight:600">${emp ? `${emp.first_name} ${emp.last_name}` : '—'}</td>
+      <td>${lt?.name || '—'}</td>
+      <td>${r.start_date ? new Date(r.start_date).toLocaleDateString('tr-TR') : '—'}</td>
+      <td>${r.end_date ? new Date(r.end_date).toLocaleDateString('tr-TR') : '—'}</td>
+      <td style="font-weight:600;text-align:center">${r.days || '—'}</td>
+      <td><span class="badge ${statusMap[r.status]||'badge-gray'}">${statusLbl[r.status]||r.status}</span></td>
+      <td style="font-size:12px;color:var(--gray400);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason||'—'}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-success btn-icon" onclick="quickApproveLeave('${r.id}')" title="Onayla" ${r.status!=='pending'?'style="display:none"':''}>✓</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openLeaveModal('${r.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leave','${r.id}','bu izin talebini')" title="Sil">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+async function quickApproveLeave(id) {
+  const { error } = await sb.from('leave_requests').update({ status: 'approved', approved_by: currentUser?.id, approved_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('İzin onaylandı ✓', 'success');
+  await loadLeaveRequests();
+  renderLeaveRequests();
+  updateStats();
+}
+function openLeaveModal(id = null) {
+  editingLeaveId = id;
+  const r = id ? leaveRequests.find(x => x.id === id) : null;
+  document.getElementById('leave-modal-title').textContent = id ? 'İzin Düzenle' : 'İzin Talebi';
+  document.getElementById('lr-emp').value = r?.employee_id || '';
+  populateLeaveTypeSelect();
+  document.getElementById('lr-type').value = r?.leave_type_id || '';
+  document.getElementById('lr-start').value = r?.start_date || '';
+  document.getElementById('lr-end').value = r?.end_date || '';
+  document.getElementById('lr-days-display').textContent = r?.days ? `${r.days} gün` : '—';
+  document.getElementById('lr-status').value = r?.status || 'pending';
+  document.getElementById('lr-reason').value = r?.reason || '';
+  openModal('leave-modal');
+}
+function calcLeaveDays() {
+  const s = document.getElementById('lr-start').value;
+  const e = document.getElementById('lr-end').value;
+  if (!s || !e) return;
+  const days = Math.round((new Date(e) - new Date(s)) / 86400000) + 1;
+  document.getElementById('lr-days-display').textContent = days > 0 ? `${days} gün` : '—';
+}
+async function saveLeaveRequest() {
+  const empId = document.getElementById('lr-emp').value;
+  const typeId = document.getElementById('lr-type').value;
+  const start = document.getElementById('lr-start').value;
+  const end = document.getElementById('lr-end').value;
+  if (!empId || !start || !end) { showToast('Çalışan ve tarih aralığı zorunludur', 'error'); return; }
+  const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+  const payload = { company_id: companyId, employee_id: empId, leave_type_id: typeId || null, start_date: start, end_date: end, days, status: document.getElementById('lr-status').value, reason: document.getElementById('lr-reason').value.trim() || null };
+  let error;
+  if (editingLeaveId) {
+    ({ error } = await sb.from('leave_requests').update(payload).eq('id', editingLeaveId));
+  } else {
+    ({ error } = await sb.from('leave_requests').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('İzin talebi kaydedildi ✓', 'success');
+  closeModal('leave-modal');
+  await loadLeaveRequests();
+  renderLeaveRequests();
+  updateStats();
+}
+function renderLeaveTypes() {
+  const tbody = document.getElementById('leave-types-tbody');
+  if (!leaveTypes.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><h3>İzin türü yok</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = leaveTypes.map(lt => `<tr>
+    <td style="font-weight:600">${lt.name}</td>
+    <td>${lt.days_per_year || '—'} gün/yıl</td>
+    <td><span class="badge ${lt.is_active ? 'badge-green' : 'badge-gray'}">${lt.is_active ? 'Aktif' : 'Pasif'}</span></td>
+    <td><div class="row-actions">
+      <button class="btn btn-sm btn-outline btn-icon" onclick="openLeaveTypeModal('${lt.id}')" title="Düzenle">✏️</button>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leavetype','${lt.id}','${lt.name}')" title="Sil">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+function openLeaveTypeModal(id = null) {
+  editingLeaveTypeId = id;
+  const lt = id ? leaveTypes.find(x => x.id === id) : null;
+  document.getElementById('leavetype-modal-title').textContent = id ? 'İzin Türü Düzenle' : 'İzin Türü Ekle';
+  document.getElementById('lt-name').value = lt?.name || '';
+  document.getElementById('lt-days').value = lt?.days_per_year ?? '';
+  openModal('leavetype-modal');
+}
+async function saveLeaveType() {
+  const name = document.getElementById('lt-name').value.trim();
+  if (!name) { showToast('İzin türü adı zorunludur', 'error'); return; }
+  const payload = { company_id: companyId, name, days_per_year: parseInt(document.getElementById('lt-days').value) || null, is_active: true };
+  let error;
+  if (editingLeaveTypeId) {
+    ({ error } = await sb.from('leave_types').update(payload).eq('id', editingLeaveTypeId));
+  } else {
+    ({ error } = await sb.from('leave_types').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('İzin türü kaydedildi ✓', 'success');
+  closeModal('leavetype-modal');
+  await loadLeaveTypes();
+  renderLeaveTypes();
+}
+
+// ===== ATTENDANCE =====
+function renderAttendance() {
+  const tbody = document.getElementById('att-tbody');
+  const empFilter = document.getElementById('att-emp-filter').value;
+  const stdH = parseFloat(document.getElementById('standard-hours').value) || 8;
+  let list = attendanceRecords.filter(a => !empFilter || a.employee_id === empFilter);
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><h3>Bu gün için devam kaydı yok</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(a => {
+    const emp = employees.find(e => e.id === a.employee_id);
+    const hrs = calcHoursBetween(a.check_in, a.check_out);
+    const ot = a.check_out ? Math.max(0, hrs - stdH).toFixed(1) : '—';
+    const statusMap = { present: ['badge-green','Geldi'], absent: ['badge-red','Gelmedi'], late: ['badge-orange','Geç'], half: ['badge-purple','Yarım'] };
+    const [cls, lbl] = statusMap[a.status] || ['badge-gray', a.status];
+    return `<tr>
+      <td style="font-weight:600">${emp ? `${emp.first_name} ${emp.last_name}` : '—'}</td>
+      <td style="font-weight:600;color:var(--green)">${a.check_in || '—'}</td>
+      <td style="font-weight:600;color:var(--red)">${a.check_out || '—'}</td>
+      <td>${a.check_out ? fmtH(hrs) : '—'}</td>
+      <td style="color:var(--orange);font-weight:600">${ot !== '—' && parseFloat(ot) > 0 ? fmtH(ot) : (ot === '—' ? '—' : '0')}</td>
+      <td><span class="badge ${cls}">${lbl}</span></td>
+      <td style="font-size:12px;color:var(--gray400)">${a.notes||'—'}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openAttModal('${a.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('att','${a.id}','bu devam kaydını')" title="Sil">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function openAttModal(id = null) {
+  editingAttId = id;
+  const a = id ? attendanceRecords.find(x => x.id === id) : null;
+  document.getElementById('att-modal-title').textContent = id ? 'Devam Kaydı Düzenle' : 'Devam Kaydı Ekle';
+  document.getElementById('att-emp').value = a?.employee_id || '';
+  document.getElementById('att-date-input').value = a?.date || document.getElementById('att-date').value;
+  document.getElementById('att-checkin').value = a?.check_in || '';
+  document.getElementById('att-checkout').value = a?.check_out || '';
+  document.getElementById('att-status').value = a?.status || 'present';
+  document.getElementById('att-notes').value = a?.notes || '';
+  document.getElementById('att-overtime-display').textContent = a?.overtime_hours ? fmtH(a.overtime_hours) : '—';
+  openModal('att-modal');
+}
+function calcAttOvertime() {
+  const ci = document.getElementById('att-checkin').value;
+  const co = document.getElementById('att-checkout').value;
+  const std = parseFloat(document.getElementById('standard-hours').value) || 8;
+  if (ci && co) {
+    const hrs = calcHoursBetween(ci, co);
+    const ot = Math.max(0, hrs - std);
+    document.getElementById('att-overtime-display').textContent = fmtH(ot);
+  }
+}
+async function saveAttendance() {
+  const empId = document.getElementById('att-emp').value;
+  const date = document.getElementById('att-date-input').value;
+  if (!empId || !date) { showToast('Çalışan ve tarih zorunludur', 'error'); return; }
+  const ci = document.getElementById('att-checkin').value || null;
+  const co = document.getElementById('att-checkout').value || null;
+  const std = parseFloat(document.getElementById('standard-hours').value) || 8;
+  const hrs = calcHoursBetween(ci, co);
+  const ot = (ci && co) ? Math.max(0, hrs - std) : 0;
+  const payload = { company_id: companyId, employee_id: empId, date, check_in: ci, check_out: co, overtime_hours: ot, status: document.getElementById('att-status').value, notes: document.getElementById('att-notes').value.trim() || null };
+  let error;
+  if (editingAttId) {
+    ({ error } = await sb.from('attendance').update(payload).eq('id', editingAttId));
+  } else {
+    ({ error } = await sb.from('attendance').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Devam kaydı eklendi ✓', 'success');
+  closeModal('att-modal');
+  await loadAttendance();
+  renderAttendance();
+  updateStats();
+}
+
+// ===== DEPARTMENTS =====
+function renderDepts() {
+  const tbody = document.getElementById('dept-tbody');
+  if (!departments.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state" style="padding:32px"><div class="empty-icon">🏢</div><h3>Departman yok</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = departments.map(d => {
+    const empCount = employees.filter(e => e.department_id === d.id).length;
+    return `<tr>
+      <td style="font-weight:600">${d.name}</td>
+      <td><span class="badge badge-blue">${empCount} kişi</span></td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openDeptModal('${d.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('dept','${d.id}','${d.name}')" title="Sil">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function openDeptModal(id = null) {
+  editingDeptId = id;
+  const d = id ? departments.find(x => x.id === id) : null;
+  document.getElementById('dept-modal-title').textContent = id ? 'Departman Düzenle' : 'Departman Ekle';
+  document.getElementById('dept-name').value = d?.name || '';
+  openModal('dept-modal');
+}
+async function saveDept() {
+  const name = document.getElementById('dept-name').value.trim();
+  if (!name) { showToast('Departman adı zorunludur', 'error'); return; }
+  const payload = { company_id: companyId, name, is_active: true };
+  let error;
+  if (editingDeptId) {
+    ({ error } = await sb.from('departments').update(payload).eq('id', editingDeptId));
+  } else {
+    ({ error } = await sb.from('departments').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Departman kaydedildi ✓', 'success');
+  closeModal('dept-modal');
+  await loadDepts();
+  renderDepts();
+  renderPositions();
+}
+function renderPositions() {
+  const tbody = document.getElementById('pos-tbody');
+  if (!positions.length) {
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state" style="padding:32px"><div class="empty-icon">💼</div><h3>Pozisyon yok</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = positions.map(p => {
+    const dept = departments.find(d => d.id === p.department_id);
+    return `<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td>${dept?.name || '—'}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openPositionModal('${p.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('pos','${p.id}','${p.name}')" title="Sil">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function openPositionModal(id = null) {
+  editingPosId = id;
+  const p = id ? positions.find(x => x.id === id) : null;
+  document.getElementById('pos-modal-title').textContent = id ? 'Pozisyon Düzenle' : 'Pozisyon Ekle';
+  document.getElementById('pos-name').value = p?.name || '';
+  document.getElementById('pos-dept-select').value = p?.department_id || '';
+  openModal('pos-modal');
+}
+async function savePosition() {
+  const name = document.getElementById('pos-name').value.trim();
+  if (!name) { showToast('Pozisyon adı zorunludur', 'error'); return; }
+  const payload = { company_id: companyId, name, department_id: document.getElementById('pos-dept-select').value || null, is_active: true };
+  let error;
+  if (editingPosId) {
+    ({ error } = await sb.from('positions').update(payload).eq('id', editingPosId));
+  } else {
+    ({ error } = await sb.from('positions').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Pozisyon kaydedildi ✓', 'success');
+  closeModal('pos-modal');
+  await loadPositions();
+  renderPositions();
+}
+
+// ===== DELETE =====
+function openDeleteModal(type, id, name) {
+  document.getElementById('delete-msg').textContent = `"${name}" silinecek. Bu işlem geri alınamaz.`;
+  deleteCallback = async () => {
+    let error;
+    const softDelete = { is_active: false, deleted_at: new Date().toISOString(), deleted_by: currentUser?.id };
+    if (type === 'emp') {
+      ({ error } = await sb.from('employees').update(softDelete).eq('id', id));
+      if (!error) { await loadEmployees(); renderEmployees(); updateStats(); }
+    } else if (type === 'dept') {
+      ({ error } = await sb.from('departments').update(softDelete).eq('id', id));
+      if (!error) { await loadDepts(); renderDepts(); }
+    } else if (type === 'pos') {
+      ({ error } = await sb.from('positions').update(softDelete).eq('id', id));
+      if (!error) { await loadPositions(); renderPositions(); }
+    } else if (type === 'leave') {
+      ({ error } = await sb.from('leave_requests').delete().eq('id', id));
+      if (!error) { await loadLeaveRequests(); renderLeaveRequests(); updateStats(); }
+    } else if (type === 'leavetype') {
+      ({ error } = await sb.from('leave_types').update(softDelete).eq('id', id));
+      if (!error) { await loadLeaveTypes(); renderLeaveTypes(); }
+    } else if (type === 'att') {
+      ({ error } = await sb.from('attendance').delete().eq('id', id));
+      if (!error) { await loadAttendance(); renderAttendance(); updateStats(); }
+    }
+    if (error) { showToast(error.message, 'error'); return; }
+    showToast('Silindi ✓', 'success');
+    closeModal('delete-modal');
+  };
+  openModal('delete-modal');
+}
+function confirmDelete() { if (deleteCallback) deleteCallback(); }
+
+// ===== STATS =====
+function updateStats() {
+  const active = employees.filter(e => e.status === 'active');
+  document.getElementById('stat-emp').textContent = active.length;
+  const avgSal = active.length ? active.reduce((s,e) => s + (e.base_salary||0), 0) / active.length : 0;
+  document.getElementById('stat-salary').textContent = avgSal > 0 ? fmt(avgSal) : '—';
+  document.getElementById('stat-leave').textContent = leaveRequests.filter(r => r.status === 'pending').length;
+  const today = new Date().toISOString().slice(0,10);
+  const presentToday = attendanceRecords.filter(a => a.date === today && a.status === 'present').length;
+  document.getElementById('stat-present').textContent = presentToday;
+}
+
+// ===== TABS =====
+const ALL_TABS = ['employees','payroll','leave','attendance','departments'];
+function setTab(btn, tab) {
+  document.querySelectorAll('.tabs-row > .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ALL_TABS.forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  currentTab = tab;
+  setTabActions(tab);
+  if (tab === 'payroll') loadPayrolls();
+  if (tab === 'attendance') { loadAttendance().then(() => renderAttendance()); }
+}
+function setTabActions(tab) {
+  const el = document.getElementById('tab-actions');
+  if (tab === 'employees') el.innerHTML = `
+    <button class="btn btn-outline" onclick="openScanner()">📱 QR Tara</button>
+    <button class="btn btn-primary" onclick="openEmpModal()">+ Çalışan Ekle</button>`;
+  else if (tab === 'payroll') el.innerHTML =
+    `<button class="btn btn-primary" onclick="generatePayroll()">⚙️ Bordro Oluştur</button>`;
+  else if (tab === 'leave') el.innerHTML =
+    `<button class="btn btn-primary" onclick="openLeaveModal()">+ İzin Talebi</button>`;
+  else if (tab === 'attendance') el.innerHTML = `
+    <button class="btn btn-outline" onclick="openScanner()">📱 QR Tara</button>
+    <button class="btn btn-primary" onclick="openAttModal()">+ Kayıt Ekle</button>`;
+  else if (tab === 'departments') el.innerHTML = `
+    <button class="btn btn-outline" onclick="openPositionModal()">+ Pozisyon Ekle</button>
+    <button class="btn btn-primary" onclick="openDeptModal()">+ Departman Ekle</button>`;
+  else el.innerHTML = '';
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+    if (e.target.id === 'scanner-modal') stopScanner();
+  }
+});
+
+// ===== TOAST =====
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':'')+msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== DATE FILTER FOR ATTENDANCE =====
+document.getElementById('att-date').addEventListener('change', async () => {
+  await loadAttendance();
+  renderAttendance();
+});
+
+init();
+</script>
+</body>
+</html>
