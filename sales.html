@@ -42,7 +42,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
 .page-header h1{font-family:var(--font-display);font-size:22px;font-weight:700}
 .page-header p{font-size:13px;color:var(--gray500);margin-top:3px}
-.header-actions{display:flex;gap:10px;align-items:center}
+.header-actions{display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none;white-space:nowrap}
@@ -241,13 +241,13 @@ tr:hover .row-actions{opacity:1}
 
   <div class="content">
     <div class="page-header">
-      <div>
-        <h1>💰 Sales & Invoicing</h1>
-        <p><span data-i18n="sales_sub"><span data-i18n="sales_sub">Manage orders, invoices and customer payments</span></span></p>
+      <div style="flex:1;min-width:0">
+        <h1>💰 <span data-i18n="page_sales">Sales & Invoicing</span></h1>
+        <p data-i18n="sales_sub">Manage orders, invoices and customer payments</p>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-outline" onclick="openCustomerModal()">👤 Customers</button>
-        <button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button>
+      <div class="header-actions" style="flex-shrink:0">
+        <button class="btn btn-outline" onclick="openCustomerModal()" data-i18n="tab_customers">Customers</button>
+        <button class="btn btn-primary" onclick="openOrderModal()" data-i18n="btn_new_order">+ New Order</button>
       </div>
     </div>
 
@@ -774,9 +774,9 @@ function updateStats() {
   }, 0);
   document.getElementById('stat-revenue').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + total.toLocaleString('en',{maximumFractionDigits:0});
   document.getElementById('stat-paid').textContent = paidOrds.length;
-  document.getElementById('stat-paid-amt').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + paidAmt.toLocaleString('en',{maximumFractionDigits:0})+' collected';
+  document.getElementById('stat-paid-amt').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + paidAmt.toLocaleString('en',{maximumFractionDigits:0})+' '+(t('lbl_collected')||'collected');
   document.getElementById('stat-pending').textContent = pendingOrds.length;
-  document.getElementById('stat-pending-amt').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' outstanding';
+  document.getElementById('stat-pending-amt').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : "$") + pendingAmt.toLocaleString('en',{maximumFractionDigits:0})+' '+(t('lbl_outstanding')||'outstanding');
   document.getElementById('stat-customers').textContent = customers.length;
 }
 

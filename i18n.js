@@ -6019,6 +6019,8 @@ const T = window.T = {
     toast_status_updated:'Estado atualizado com sucesso',
 
     lbl_status:'Estado',
+    lbl_collected:'coletado',
+    lbl_outstanding:'pendente',
     status_sent:'Enviado',
     status_received:'Recebido',
     lbl_order_items: 'Itens do pedido',
