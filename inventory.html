@@ -358,7 +358,6 @@ tr:hover .action-btns { opacity:1; }
               <th onclick="sortTable('unit_cost')"><span data-i18n="col_unit_cost">Unit Cost</span> ↕</th>
               <th onclick="sortTable('total_value')"><span data-i18n="col_total_value">Total Value</span> ↕</th>
               <th><span data-i18n="col_status">Status</span></th>
-              <th><span data-i18n="col_location">Location</span></th>
               <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
             </tr>
           </thead>
@@ -443,10 +442,6 @@ tr:hover .action-btns { opacity:1; }
             <option>box</option>
             <option>pack</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label><span data-i18n="label_location">Location</span></label>
-          <input type="text" id="p-location" data-i18n-placeholder="label_location" placeholder="Location">
         </div>
       </div>
       <div class="form-row full">
@@ -806,7 +801,6 @@ function renderTable() {
       <td>${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
       <td style="font-weight:600;color:var(--gray800)">${totalVal}</td>
       <td>${badge}</td>
-      <td style="color:var(--gray500);font-size:12px">${p.location || '—'}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
         <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
@@ -927,7 +921,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = t('title_add_product');
-  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-location'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('p-category-id').value = '';
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
@@ -960,7 +954,7 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,location,notes,is_active,company_id')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -978,7 +972,6 @@ async function loadProducts() {
     max_stock: p.max_stock != null ? parseFloat(p.max_stock) : null,
     unit_cost: parseFloat(p.cost_price || 0),
     price: parseFloat(p.sale_price || 0),
-    location: p.location || '',
     supplier: '',
     desc: p.notes || '',
     product_type: p.product_type || 'finished_good',
@@ -1442,7 +1435,6 @@ function toggleView(view) {
           <th onclick="sortTable('unit_cost')">${t('col_unit_cost')} ↕</th>
           <th onclick="sortTable('total_value')">${t('col_total_value')} ↕</th>
           <th>${t('col_status')}</th>
-          <th>${t('col_location')}</th>
           <th style="width:80px">${t('col_actions')}</th>
         </tr></thead>
         <tbody id="inventory-tbody"></tbody>
@@ -1459,10 +1451,10 @@ function toggleSelectAll(cb) {
 
 // ===== EXPORT =====
 function exportCSV() {
-  const header = [t('label_name'),t('col_sku'),t('label_type'),t('col_stock'),t('col_unit'),t('col_unit_cost'),t('col_total_value'),t('col_status'),t('col_location')];
+  const header = [t('label_name'),t('col_sku'),t('label_type'),t('col_stock'),t('col_unit'),t('col_unit_cost'),t('col_total_value'),t('col_status')];
   const rows = filteredProducts.map(p => [
     p.name, p.sku, p.category, p.stock, p.unit, p.unit_cost,
-    (p.stock * p.unit_cost).toFixed(2), getStockStatus(p), p.location
+    (p.stock * p.unit_cost).toFixed(2), getStockStatus(p)
   ]);
   const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const a = document.createElement('a');
