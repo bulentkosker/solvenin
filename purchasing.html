@@ -283,11 +283,11 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
           <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="sent">Sent</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="received"><span data-i18n="status_received">Received</span></option>
-          <option value="cancelled">Cancelled</option>
+          <option value="draft" data-i18n="status_draft">Draft</option>
+          <option value="sent" data-i18n="status_sent">Sent</option>
+          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+          <option value="received" data-i18n="status_received">Received</option>
+          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="filter-supplier" onchange="filterOrders()">
           <option value="">All Suppliers</option>
@@ -369,11 +369,11 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         <div class="field">
           <label data-i18n="col_status">Status</label>
           <select id="o-status">
-            <option value="draft">Draft</option>
-            <option value="sent">Sent to Supplier</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="received"><span data-i18n="status_received">Received</span></option>
-            <option value="cancelled">Cancelled</option>
+            <option value="draft" data-i18n="status_draft">Draft</option>
+            <option value="sent" data-i18n="status_sent">Sent to Supplier</option>
+            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+            <option value="received" data-i18n="status_received">Received</option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
           </select>
         </div>
         <div class="field">
@@ -386,7 +386,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         </div>
       </div>
 
-      <div style="font-size:12px;font-weight:700;color:var(--gray500);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Order Items</div>
+      <div style="font-size:12px;font-weight:700;color:var(--gray500);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px" data-i18n="lbl_order_items">Order Items</div>
       <table class="items-table">
         <thead>
           <tr>
@@ -402,10 +402,10 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <button class="btn btn-outline btn-sm" onclick="addOrderItem()" style="margin-bottom:20px">+ Add Line</button>
 
       <div class="order-summary">
-        <div class="summary-row"><span class="label">Subtotal</span><span id="sum-subtotal">—</span></div>
-        <div class="summary-row"><span class="label">Tax</span><span id="sum-tax">—</span></div>
-        <div class="summary-row"><span class="label">Discount</span><span id="sum-discount"><span class="zero-amt">—</span></span></div>
-        <div class="summary-row total"><span>Total</span><span id="sum-total">—</span></div>
+        <div class="summary-row"><span class="label" data-i18n="lbl_subtotal">Subtotal</span><span id="sum-subtotal">—</span></div>
+        <div class="summary-row"><span class="label" data-i18n="lbl_tax">Tax</span><span id="sum-tax">—</span></div>
+        <div class="summary-row"><span class="label" data-i18n="lbl_discount">Discount</span><span id="sum-discount"><span class="zero-amt">—</span></span></div>
+        <div class="summary-row total"><span data-i18n="lbl_total">Total</span><span id="sum-total">—</span></div>
       </div>
 
       <div class="field full" style="margin-top:16px">
@@ -414,9 +414,9 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('order-modal')">Cancel</button>
-      <button class="btn btn-outline" onclick="saveOrder('draft')">Save as Draft</button>
-      <button class="btn btn-primary" onclick="saveOrder('sent')">Send to Supplier</button>
+      <button class="btn btn-outline" onclick="closeModal('order-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-outline" onclick="saveOrder('draft')" data-i18n="btn_save_draft">Save as Draft</button>
+      <button class="btn btn-primary" onclick="saveOrder('sent')" data-i18n="btn_send_supplier">Send to Supplier</button>
     </div>
   </div>
 </div>
