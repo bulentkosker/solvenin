@@ -260,7 +260,7 @@
         { icon: '📦', key: 'nav_inventory',   href: 'inventory.html' },
         { icon: '💰', key: 'nav_sales',        href: 'sales.html' },
         { icon: '🛒', key: 'nav_purchasing',   href: 'purchasing.html' },
-        { icon: '🏭', key: 'nav_production',   href: '#' },
+        { icon: '🏭', key: 'nav_production',   href: 'production.html' },
       ]
     },
     {
