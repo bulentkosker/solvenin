@@ -211,6 +211,9 @@ tr:hover .action-btns { opacity:1; }
 /* SIDEBAR SECTIONS */
 
 
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
 </style>
 <style>
 /* SETTINGS SPECIFIC */
@@ -283,6 +286,10 @@ tr:hover .action-btns { opacity:1; }
   <script src="sidebar.js"></script>
 </head>
 <body>
+<div id="loading-screen">
+  <div class="loading-logo">solvenin<span>.</span></div>
+</div>
+
 <aside class="sidebar" id="sidebar"></aside>
 
 <!-- MAIN -->

@@ -170,6 +170,9 @@ tr:hover .row-actions{opacity:1}
   width: calc(100vw - var(--sidebar-w));
   box-sizing: border-box;
 }}
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
 </style>
 <script src="i18n.js"></script>
 <script>
@@ -202,6 +205,10 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
   <script src="quickadd.js"></script>
 </head>
 <body>
+<div id="loading-screen">
+  <div class="loading-logo">solvenin<span>.</span></div>
+</div>
+
 
 <aside class="sidebar" id="sidebar"></aside>
 
@@ -606,6 +613,8 @@ await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses()]);
   var savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
 }
 
 async function loadOrders() {

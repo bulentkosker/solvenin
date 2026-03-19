@@ -196,6 +196,9 @@ tr:hover .row-actions{opacity:1}
   border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;
 }
 .new-company-box input:focus { outline: none; border-color: #3b82f6; }
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
 </style>
 <script src="i18n.js"></script>
     <style>
@@ -207,6 +210,10 @@ tr:hover .row-actions{opacity:1}
   <script src="quickadd.js"></script>
 </head>
 <body>
+<div id="loading-screen">
+  <div class="loading-logo">solvenin<span>.</span></div>
+</div>
+
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar"></aside>
@@ -648,6 +655,8 @@ await Promise.all([loadCustomers(), loadProducts(), loadWarehouses()]);
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
 }
 
 // ===== LOAD =====

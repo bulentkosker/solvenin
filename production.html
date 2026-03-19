@@ -35,7 +35,9 @@
     .content{padding:24px;flex:1}
 
     /* ── LOADING ── */
-    #loading-screen{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:opacity .3s}
+    .loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
     .spinner{width:36px;height:36px;border:3px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -184,8 +186,7 @@
 
 <!-- LOADING -->
 <div id="loading-screen">
-  <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--gray400)" data-i18n="loading">Loading...</div>
+  <div class="loading-logo">solvenin<span>.</span></div>
 </div>
 
 <!-- SIDEBAR -->
