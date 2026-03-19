@@ -588,7 +588,6 @@ async function loadSubscription() {
     const { data: cu } = await sb.from('company_users')
       .select('company_id, companies(id, plan, created_at)')
       .eq('user_id', currentUser.id)
-      .eq('is_active', true)
       .limit(1)
       .single();
 
