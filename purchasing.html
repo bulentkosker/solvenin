@@ -415,8 +415,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('order-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-outline" onclick="saveOrder('draft')" data-i18n="btn_save_draft">Save as Draft</button>
-      <button class="btn btn-primary" onclick="saveOrder('sent')" data-i18n="btn_send_supplier">Send to Supplier</button>
+      <button class="btn btn-primary" onclick="saveOrder()" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -843,7 +842,7 @@ function recalcOrder() {
   document.getElementById('sum-total').textContent = fmt(Math.max(0,total).toFixed(2));
 }
 
-async function saveOrder(statusOverride) {
+async function saveOrder() {
   const supplierId = document.getElementById('o-supplier').value;
   if (!supplierId) { showToast(t('toast_select_supplier'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && (i.product_id || i.description));
@@ -855,11 +854,12 @@ async function saveOrder(statusOverride) {
   const taxAmt = subtotal * taxRate / 100;
   const total = Math.max(0, subtotal + taxAmt - discount);
   const { data: { user } } = await sb.auth.getUser();
+  const status = document.getElementById('o-status').value;
 
   const payload = {
     company_id: companyId, supplier_id: supplierId,
     order_number: document.getElementById('o-number').value || 'PO-'+Date.now(),
-    status: statusOverride || document.getElementById('o-status').value,
+    status,
     issue_date: document.getElementById('o-date').value,
     expected_date: document.getElementById('o-expected').value || null,
     subtotal, tax_rate: taxRate, tax_amount: taxAmt, discount, total,
@@ -868,6 +868,8 @@ async function saveOrder(statusOverride) {
   };
 
   let orderId = editingOrderId;
+  const prevStatus = editingOrderId ? (orders.find(o => o.id === editingOrderId)?.status) : null;
+
   if (editingOrderId) {
     await sb.from('purchase_orders').update(payload).eq('id', editingOrderId);
     await sb.from('purchase_order_items').delete().eq('order_id', editingOrderId);
@@ -877,12 +879,38 @@ async function saveOrder(statusOverride) {
     orderId = data.id;
   }
 
-  await sb.from('purchase_order_items').insert(validItems.map(i => ({
+  const savedItems = await sb.from('purchase_order_items').insert(validItems.map(i => ({
     order_id: orderId, product_id: i.product_id||null,
     description: i.description, quantity: i.qty, unit_price: i.price,
     discount: i.disc || 0, total: i.qty * i.price * (1-(i.disc||0)/100),
     warehouse_id: i.warehouse_id || null
-  })));
+  }))).select();
+
+  // Create stock movements when status becomes 'received'
+  if (status === 'received' && prevStatus !== 'received') {
+    const orderNumber = document.getElementById('o-number').value || 'PO-'+orderId;
+    const movements = validItems
+      .filter(i => i.product_id && i.qty > 0)
+      .map(i => ({
+        company_id: companyId,
+        product_id: i.product_id,
+        warehouse_id: i.warehouse_id || null,
+        type: 'in',
+        quantity: i.qty,
+        reference: orderNumber,
+        notes: document.getElementById('o-notes').value.trim() || null,
+        created_by: user.id
+      }));
+    if (movements.length) {
+      await sb.from('stock_movements').insert(movements);
+      // Update received_qty on items
+      if (savedItems.data) {
+        for (const item of savedItems.data) {
+          await sb.from('purchase_order_items').update({ received_qty: item.quantity }).eq('id', item.id);
+        }
+      }
+    }
+  }
 
   showToast(editingOrderId ? t('po_updated') : t('po_created'), 'success');
   closeModal('order-modal');
