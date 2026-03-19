@@ -386,14 +386,15 @@ function setLang(lang) {
           </div>
           <div class="usage-bar"><div class="usage-fill" id="usage-users-bar" style="width:10%"></div></div>
         </div>
-        <div class="usage-item">
+        <!-- Storage and API rows hidden — not yet active -->
+        <div class="usage-item" style="display:none">
           <div class="usage-header">
             <span class="usage-label" data-i18n="usage_storage">Storage Used</span>
-            <span class="usage-count">2.4 GB / Unlimited</span>
+            <span class="usage-count">—</span>
           </div>
-          <div class="usage-bar"><div class="usage-fill" style="width:12%"></div></div>
+          <div class="usage-bar"><div class="usage-fill" style="width:0%"></div></div>
         </div>
-        <div class="usage-item">
+        <div class="usage-item" style="display:none">
           <div class="usage-header">
             <span class="usage-label" data-i18n="usage_api">API Calls</span>
             <span class="usage-count" id="usage-api-text">—</span>
@@ -490,25 +491,7 @@ function setLang(lang) {
         </thead>
         <tbody id="invoice-tbody">
           <tr>
-            <td>Dec 4, 2025</td>
-            <td>Standard Plan · 1 user · Monthly</td>
-            <td>$7.20</td>
-            <td><span class="invoice-status paid">✓ Paid</span></td>
-            <td><a class="invoice-download" onclick="downloadInvoice()">Download PDF</a></td>
-          </tr>
-          <tr>
-            <td>Nov 4, 2025</td>
-            <td>Standard Plan · 1 user · Monthly</td>
-            <td>$7.20</td>
-            <td><span class="invoice-status paid">✓ Paid</span></td>
-            <td><a class="invoice-download" onclick="downloadInvoice()">Download PDF</a></td>
-          </tr>
-          <tr>
-            <td>Oct 4, 2025</td>
-            <td>Free Trial → Standard Plan</td>
-            <td>$0.00</td>
-            <td><span class="invoice-status paid">✓ Paid</span></td>
-            <td><a class="invoice-download" onclick="downloadInvoice()">Download PDF</a></td>
+            <td colspan="5" style="text-align:center;padding:36px 12px;color:var(--gray400);font-size:13px">Henüz fatura yok.</td>
           </tr>
         </tbody>
       </table>
@@ -562,6 +545,9 @@ let currentUser = null;
 let currentPlan = 'free'; // free / standard / professional
 let billingCycle = 'monthly';
 let subUserCount = 1;
+let companyId = null;
+let realRecordCount = 0;
+let realUserCount = 0;
 
 // ===== INIT =====
 async function init() {
@@ -595,18 +581,40 @@ async function init() {
 }
 
 
-function loadSubscription() {
-  // TODO: In production, fetch actual subscription from Supabase
-  // For now, simulate based on URL param or default to 'standard'
-  const params = new URLSearchParams(window.location.search);
-  const plan = params.get('plan') || 'standard';
-  const cycle = params.get('cycle') || 'monthly';
-  const users = parseInt(params.get('users') || '1');
+async function loadSubscription() {
+  try {
+    // Get active company + plan from DB
+    const { data: cu } = await sb.from('company_users')
+      .select('company_id, companies(id, plan, created_at)')
+      .eq('user_id', currentUser.id)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
 
-  currentPlan = plan;
-  billingCycle = cycle;
-  subUserCount = users;
+    if (cu?.company_id) {
+      companyId = cu.company_id;
+      currentPlan = cu.companies?.plan || 'free';
+    }
 
+    if (companyId) {
+      // Fetch total record count across key tables
+      const tables = ['products', 'customers', 'suppliers', 'sales_orders', 'purchase_orders'];
+      const counts = await Promise.all(
+        tables.map(tbl => sb.from(tbl).select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId).eq('is_active', true))
+      );
+      realRecordCount = counts.reduce((sum, r) => sum + (r.count || 0), 0);
+
+      // Active users in this company
+      const { count: uc } = await sb.from('company_users')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId).eq('is_active', true);
+      realUserCount = uc || 0;
+      subUserCount = realUserCount || 1;
+    }
+  } catch(e) {
+    console.error('loadSubscription:', e);
+  }
   renderSubscription();
 }
 
@@ -640,7 +648,7 @@ function renderSubscription() {
   // Details
   document.getElementById('detail-plan').textContent = plan.name;
   document.getElementById('detail-cycle').textContent = isFree ? '—' : (billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly'));
-  document.getElementById('detail-users').textContent = isFree ? `1 ${t('user_singular')}` : `${subUserCount} ${t('users_label')}`;
+  document.getElementById('detail-users').textContent = isFree ? `${realUserCount || 1} ${t('user_singular')}` : `${realUserCount || subUserCount} ${t('users_label')}`;
   document.getElementById('detail-amount').textContent = isFree ? '$0.00' : `$${totalPrice.toFixed(2)}/mo`;
   document.getElementById('detail-next').textContent = isFree ? '—' : nextStr;
   document.getElementById('detail-since').textContent = sinceStr;
@@ -653,26 +661,28 @@ function renderSubscription() {
   document.getElementById('user-prorate-info').textContent =
     `${t('current')}: ${subUserCount} ${t('users_label')} · $${totalPrice.toFixed(2)}/mo`;
 
-  // Usage
+  // Usage — real data from DB
+  const FREE_RECORD_LIMIT = 100;
+  const FREE_USER_LIMIT = 1;
+  const recBar = document.getElementById('usage-records-bar');
+  const userBar = document.getElementById('usage-users-bar');
+  recBar.classList.remove('warning'); userBar.classList.remove('full');
   if (isFree) {
-    document.getElementById('usage-records-text').textContent = '34 / 100';
-    document.getElementById('usage-records-bar').style.width = '34%';
-    document.getElementById('usage-records-bar').classList.add('warning');
-    document.getElementById('usage-users-text').textContent = '1 / 1';
-    document.getElementById('usage-users-bar').style.width = '100%';
-    document.getElementById('usage-users-bar').classList.add('full');
+    const recPct = Math.min(100, Math.round(realRecordCount / FREE_RECORD_LIMIT * 100));
+    document.getElementById('usage-records-text').textContent = `${realRecordCount} / ${FREE_RECORD_LIMIT}`;
+    recBar.style.width = Math.max(2, recPct) + '%';
+    if (recPct >= 80) recBar.classList.add('warning');
+    document.getElementById('usage-users-text').textContent = `${realUserCount} / ${FREE_USER_LIMIT}`;
+    userBar.style.width = (realUserCount >= FREE_USER_LIMIT ? 100 : Math.round(realUserCount / FREE_USER_LIMIT * 100)) + '%';
+    if (realUserCount >= FREE_USER_LIMIT) userBar.classList.add('full');
   } else {
-    document.getElementById('usage-records-text').textContent = t('unlimited');
-    document.getElementById('usage-records-bar').style.width = '22%';
-    document.getElementById('usage-users-text').textContent = `${subUserCount} / ${t('unlimited')}`;
-    document.getElementById('usage-users-bar').style.width = '8%';
+    document.getElementById('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + t('unlimited');
+    recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 5000 * 100))) + '%';
+    document.getElementById('usage-users-text').textContent = `${realUserCount} / ${t('unlimited')}`;
+    userBar.style.width = Math.max(2, Math.min(80, realUserCount * 8)) + '%';
   }
 
-  const hasAPI = currentPlan === 'professional';
-  document.getElementById('usage-api-text').textContent = hasAPI ? '1,240 / Unlimited' : 'Not available';
-  document.getElementById('usage-api-bar').style.width = hasAPI ? '12%' : '0%';
-
-  // Plan comparison cards
+  // Plan comparison cards — buttons disabled until Paddle is live
   ['free', 'standard', 'professional'].forEach(p => {
     const el = document.getElementById(`opt-${p}`);
     if (!el) return;
@@ -684,18 +694,15 @@ function renderSubscription() {
       btn.className = 'btn-select-plan current-plan';
       btn.textContent = t('current_plan');
       btn.onclick = null;
-    } else if (p === 'professional' && currentPlan !== 'professional') {
-      el.className = 'plan-option recommended';
-      if (badge) { badge.className = 'plan-option-badge'; badge.textContent = t('recommended'); }
-      btn.className = 'btn-select-plan upgrade';
-      btn.textContent = t('btn_upgrade');
-      btn.onclick = () => selectPlan(p);
+      btn.disabled = false;
     } else {
-      el.className = 'plan-option';
-      if (badge) badge.remove();
+      el.className = p === 'professional' ? 'plan-option recommended' : 'plan-option';
+      if (badge) { badge.className = 'plan-option-badge'; badge.textContent = p === 'professional' ? t('recommended') : ''; }
       btn.className = 'btn-select-plan downgrade';
-      btn.textContent = p === 'free' ? t('btn_downgrade') : t('btn_select_plan');
-      btn.onclick = () => selectPlan(p);
+      btn.textContent = 'Yakında';
+      btn.disabled = true;
+      btn.onclick = null;
+      btn.style.cssText = 'opacity:0.5;cursor:not-allowed;background:var(--gray100);color:var(--gray400);border:none;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;width:100%;margin-top:auto';
     }
   });
 }
