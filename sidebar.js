@@ -278,7 +278,7 @@
         { icon: '👥', key: 'nav_hr',           href: 'hr.html' },
         { icon: '🚚', key: 'nav_shipping',     href: 'shipping.html' },
         { icon: '📅', key: 'nav_projects',     href: 'projects.html' },
-        { icon: '🔧', key: 'nav_maintenance',  href: '#' },
+        { icon: '🔧', key: 'nav_maintenance',  href: 'maintenance.html' },
       ]
     },
     {

@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Maintenance</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#2563eb;--blue-light:#eff6ff;
+  --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
+  --gray600:#475569;--gray700:#334155;--gray800:#1e293b;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --teal:#0d9488;--teal-light:#f0fdfa;
+  --sidebar-w:220px;
+  --font-display:'Outfit',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;width:calc(100vw - var(--sidebar-w));box-sizing:border-box}
+.topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
+.topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.topbar-btn:hover{background:var(--gray100)}
+.content{padding:28px;flex:1}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-header h1{font-family:var(--font-display);font-size:22px;font-weight:700}
+.page-header p{font-size:13px;color:var(--gray500);margin-top:3px}
+.header-actions{display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 12px rgba(37,99,235,.3);transform:translateY(-1px)}
+.btn-outline{background:#fff;color:var(--gray600);border:1px solid var(--gray200)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:8px}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid var(--gray200);border-radius:14px;padding:18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.stat-card.blue::before{background:var(--blue)}.stat-card.green::before{background:var(--green)}
+.stat-card.orange::before{background:var(--orange)}.stat-card.red::before{background:var(--red)}
+.stat-label{font-size:11px;font-weight:600;color:var(--gray500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--gray800);line-height:1;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:var(--gray400);margin-top:4px}
+/* Tabs */
+.tabs-row{display:flex;gap:4px;background:var(--gray100);padding:4px;border-radius:12px;width:fit-content;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:8px 16px;border-radius:9px;border:none;background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray500);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:var(--shadow-sm)}
+/* Filters */
+.filters-row{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 14px;flex:1;max-width:280px}
+.search-box input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:13px;color:var(--gray800);width:100%}
+.search-box input::placeholder{color:var(--gray400)}
+.filter-select{background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 12px;font-family:var(--font-body);font-size:13px;color:var(--gray700);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--blue)}
+/* Table */
+.table-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase;padding:11px 16px;border-bottom:1px solid var(--gray100);background:var(--gray50);white-space:nowrap}
+td{padding:12px 16px;font-size:13px;color:var(--gray600);border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray50)}
+.row-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:#065f46}
+.badge-blue{background:var(--blue-light);color:#1e40af}
+.badge-orange{background:var(--orange-light);color:#92400e}
+.badge-red{background:var(--red-light);color:#991b1b}
+.badge-purple{background:var(--purple-light);color:#5b21b6}
+.badge-gray{background:var(--gray100);color:var(--gray600)}
+.badge-teal{background:var(--teal-light);color:#0f766e}
+/* Parts table inside modal */
+.parts-table{width:100%;border-collapse:collapse;margin-top:8px}
+.parts-table th{font-size:11px;font-weight:600;color:var(--gray400);text-transform:uppercase;padding:7px 10px;background:var(--gray50);border-bottom:1px solid var(--gray100);text-align:left}
+.parts-table td{padding:7px 10px;border-bottom:1px solid var(--gray100);font-size:13px;vertical-align:middle}
+.parts-table tr:last-child td{border-bottom:none}
+.parts-table input,.parts-table select{width:100%;border:1px solid var(--gray200);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font-body);outline:none;background:#fff}
+.parts-table input:focus,.parts-table select:focus{border-color:var(--blue)}
+/* Equipment history panel */
+.history-panel{background:var(--gray50);border-radius:12px;padding:16px;margin-top:16px}
+.history-panel-title{font-size:12px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:22px 28px 18px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--gray400)}
+.modal-close:hover{background:var(--gray100)}
+.modal-body{padding:24px 28px}
+.modal-footer{padding:16px 28px 22px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--gray100)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:600;color:var(--gray500);letter-spacing:.3px;text-transform:uppercase}
+.field input,.field select,.field textarea{padding:9px 12px;border:1px solid var(--gray200);border-radius:9px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;background:#fff;transition:border .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.field textarea{resize:vertical;min-height:68px}
+/* Section divider */
+.section-label{font-size:11px;font-weight:700;color:var(--gray400);text-transform:uppercase;letter-spacing:.8px;padding:14px 0 8px;border-bottom:1px solid var(--gray100);margin-bottom:12px;grid-column:1/-1}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:var(--gray800);box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999;transform:translateY(20px);opacity:0;transition:all .3s;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}
+/* Confirm */
+.confirm-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-box{background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.confirm-box h3{font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-box p{font-size:13px;color:var(--gray500);margin-bottom:20px}
+.confirm-actions{display:flex;gap:10px;justify-content:flex-end}
+/* Empty */
+.empty-state{text-align:center;padding:52px 24px;color:var(--gray400)}
+.empty-icon{font-size:38px;margin-bottom:10px}
+.empty-state h3{font-size:14px;font-weight:600;color:var(--gray600);margin-bottom:6px}
+/* Loading */
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
+@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="loading-logo">solvenin<span>.</span></div>
+</div>
+
+<div id="sb-sidebar"></div>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" data-i18n="page_maintenance">Maintenance</div>
+    <div style="flex:1"></div>
+    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <div style="flex:1;min-width:0">
+        <h1>🔧 <span data-i18n="page_maintenance">Maintenance</span></h1>
+        <p data-i18n="page_maintenance_sub">İş emirleri, ekipman ve bakım planları</p>
+      </div>
+      <div class="header-actions" id="tab-actions"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label" data-i18n="stat_open_wo">Open Orders</div>
+        <div class="stat-val" id="stat-open">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label" data-i18n="stat_upcoming">Upcoming</div>
+        <div class="stat-val" id="stat-upcoming">0</div>
+        <div class="stat-sub">30 days</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label" data-i18n="stat_recent_failures">Recent Failures</div>
+        <div class="stat-val" id="stat-failures">0</div>
+        <div class="stat-sub">30 days</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label" data-i18n="stat_total_equip">Equipment</div>
+        <div class="stat-val" id="stat-equip">0</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="setTab(this,'wo')">📋 <span data-i18n="tab_work_orders">Work Orders</span></button>
+      <button class="tab-btn" onclick="setTab(this,'equip')">⚙️ <span data-i18n="tab_equipment">Equipment</span></button>
+      <button class="tab-btn" onclick="setTab(this,'plans')">📅 <span data-i18n="tab_maint_plans">Maintenance Plans</span></button>
+      <button class="tab-btn" onclick="setTab(this,'failures')">⚠️ <span data-i18n="tab_failure_records">Failure Records</span></button>
+      <button class="tab-btn" onclick="setTab(this,'providers')">🏢 <span data-i18n="tab_service_providers">Service Providers</span></button>
+    </div>
+
+    <div id="tab-content"></div>
+  </div>
+</div>
+
+<!-- ===== WORK ORDER MODAL ===== -->
+<div class="modal-overlay" id="wo-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="wo-modal-title">New Work Order</div>
+      <button class="modal-close" onclick="closeModal('wo-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="lbl_wo_number">Work Order #</label>
+          <input type="text" id="wo-number" placeholder="WO-001">
+        </div>
+        <div class="field">
+          <label data-i18n="col_equip">Equipment</label>
+          <select id="wo-equip"></select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_wo_type">Type</label>
+          <select id="wo-type">
+            <option value="preventive" data-i18n="wo_type_preventive">Preventive</option>
+            <option value="corrective" data-i18n="wo_type_corrective">Corrective</option>
+            <option value="emergency" data-i18n="wo_type_emergency">Emergency</option>
+            <option value="inspection" data-i18n="wo_type_inspection">Inspection</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_priority">Priority</label>
+          <select id="wo-priority">
+            <option value="low" data-i18n="priority_low">Low</option>
+            <option value="medium" data-i18n="priority_medium">Medium</option>
+            <option value="high" data-i18n="priority_high">High</option>
+            <option value="critical" data-i18n="priority_critical">Critical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="col_status">Status</label>
+          <select id="wo-status">
+            <option value="open" data-i18n="status_open">Open</option>
+            <option value="in_progress" data-i18n="status_in_progress">In Progress</option>
+            <option value="completed" data-i18n="status_completed">Completed</option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="col_planned_date">Planned Date</label>
+          <input type="date" id="wo-planned-date">
+        </div>
+        <div class="field">
+          <label>Completion Date</label>
+          <input type="date" id="wo-completed-date">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_cost">Cost</label>
+          <input type="number" id="wo-cost" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_assignee">Assigned To</label>
+          <input type="text" id="wo-assignee">
+        </div>
+        <div class="field">
+          <label data-i18n="col_specialization">Service Provider</label>
+          <select id="wo-provider">
+            <option value="">— none —</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Description</label>
+          <textarea id="wo-desc" rows="2"></textarea>
+        </div>
+      </div>
+      <!-- PARTS -->
+      <div class="section-label" style="display:block;margin-top:8px" data-i18n="lbl_parts">Parts Used</div>
+      <table class="parts-table">
+        <thead><tr>
+          <th style="width:45%" data-i18n="col_name">Part / Product</th>
+          <th style="width:20%" data-i18n="lbl_part_qty">Qty</th>
+          <th style="width:20%" data-i18n="lbl_part_cost">Cost</th>
+          <th style="width:15%"></th>
+        </tr></thead>
+        <tbody id="wo-parts-body"></tbody>
+      </table>
+      <button class="btn btn-outline btn-sm" onclick="addWoPart()" style="margin-top:8px">+ <span data-i18n="btn_add_line">Add Part</span></button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('wo-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWO()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EQUIPMENT MODAL ===== -->
+<div class="modal-overlay" id="equip-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="equip-modal-title">New Equipment</div>
+      <button class="modal-close" onclick="closeModal('equip-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="lbl_equip_number">Equipment #</label>
+          <input type="text" id="eq-number" placeholder="EQ-001">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_equip_name">Name</label>
+          <input type="text" id="eq-name">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_equip_category">Category</label>
+          <input type="text" id="eq-category" list="eq-cat-list">
+          <datalist id="eq-cat-list"></datalist>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_brand_model">Brand / Model</label>
+          <input type="text" id="eq-brand">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_location">Location</label>
+          <input type="text" id="eq-location">
+        </div>
+        <div class="field">
+          <label data-i18n="col_status">Status</label>
+          <select id="eq-status">
+            <option value="active" data-i18n="status_active">Active</option>
+            <option value="maintenance" data-i18n="status_maintenance">Maintenance</option>
+            <option value="inactive" data-i18n="status_inactive">Inactive</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_last_maintenance">Last Maintenance</label>
+          <input type="date" id="eq-last-maint">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_next_maintenance">Next Maintenance</label>
+          <input type="date" id="eq-next-maint">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Notes</label>
+          <textarea id="eq-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('equip-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEquip()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAINTENANCE PLAN MODAL ===== -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="plan-modal-title">New Plan</div>
+      <button class="modal-close" onclick="closeModal('plan-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="lbl_plan_name">Plan Name</label>
+          <input type="text" id="pl-name">
+        </div>
+        <div class="field">
+          <label data-i18n="col_equip">Equipment</label>
+          <select id="pl-equip"></select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_frequency">Frequency</label>
+          <select id="pl-freq" onchange="updateNextMaintDate()">
+            <option value="daily" data-i18n="freq_daily">Daily</option>
+            <option value="weekly" data-i18n="freq_weekly">Weekly</option>
+            <option value="monthly" data-i18n="freq_monthly">Monthly</option>
+            <option value="quarterly" data-i18n="freq_quarterly">Quarterly</option>
+            <option value="yearly" data-i18n="freq_yearly">Yearly</option>
+            <option value="custom" data-i18n="freq_custom">Custom</option>
+          </select>
+        </div>
+        <div class="field" id="pl-interval-field" style="display:none">
+          <label>Interval (days)</label>
+          <input type="number" id="pl-interval" min="1" value="30" oninput="updateNextMaintDate()">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_last_maintenance">Last Maintenance</label>
+          <input type="date" id="pl-last-maint" oninput="updateNextMaintDate()">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_next_maintenance">Next Maintenance</label>
+          <input type="date" id="pl-next-maint" readonly style="background:var(--gray50)">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Notes</label>
+          <textarea id="pl-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('plan-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="savePlan()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FAILURE MODAL ===== -->
+<div class="modal-overlay" id="failure-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="failure-modal-title">Log Failure</div>
+      <button class="modal-close" onclick="closeModal('failure-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="col_equip">Equipment</label>
+          <select id="fa-equip"></select>
+        </div>
+        <div class="field">
+          <label data-i18n="col_date">Date</label>
+          <input type="date" id="fa-date">
+        </div>
+        <div class="field">
+          <label data-i18n="col_failure_type">Failure Type</label>
+          <input type="text" id="fa-type" placeholder="Mechanical, Electrical, Software...">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_resolution_time">Resolution Time (h)</label>
+          <input type="number" id="fa-resolution" min="0" step="0.5">
+        </div>
+        <div class="field full">
+          <label>Description</label>
+          <textarea id="fa-desc" rows="2"></textarea>
+        </div>
+        <div class="field full">
+          <label>Root Cause</label>
+          <textarea id="fa-cause" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('failure-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFailure()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROVIDER MODAL ===== -->
+<div class="modal-overlay" id="provider-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="provider-modal-title">New Provider</div>
+      <button class="modal-close" onclick="closeModal('provider-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="col_name">Company Name</label>
+          <input type="text" id="pr-name">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_contact_person">Contact Person</label>
+          <input type="text" id="pr-contact">
+        </div>
+        <div class="field">
+          <label data-i18n="col_phone">Phone</label>
+          <input type="text" id="pr-phone">
+        </div>
+        <div class="field">
+          <label data-i18n="col_email">Email</label>
+          <input type="email" id="pr-email">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_specialization">Specialization</label>
+          <input type="text" id="pr-spec" placeholder="HVAC, Electrical, Mechanical...">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Notes</label>
+          <textarea id="pr-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('provider-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProvider()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EQUIP HISTORY MODAL -->
+<div class="modal-overlay" id="hist-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="hist-modal-title">Maintenance History</div>
+      <button class="modal-close" onclick="closeModal('hist-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="hist-modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="i18n.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let companyId = null, currentUser = null;
+let workOrders = [], equipment = [], plans = [], failures = [], providers = [], products = [];
+let woParts = [];
+let editingWOId = null, editingEquipId = null, editingPlanId = null, editingFailureId = null, editingProviderId = null;
+let activeTab = 'wo';
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+  const { data: profile } = await sb.from('profiles').select('company_id').eq('id', currentUser.id).single();
+  companyId = profile?.company_id;
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else if (typeof applyTranslations === 'function') applyTranslations();
+
+  await Promise.all([loadWOs(), loadEquipment(), loadPlans(), loadFailures(), loadProviders(), loadProducts()]);
+  updateStats();
+  setTab(document.querySelector('.tab-btn.active'), 'wo');
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
+}
+
+async function handleLogout() { await sb.auth.signOut(); window.location.href = 'auth.html'; }
+
+// ===== LOADERS =====
+async function loadWOs() {
+  const { data } = await sb.from('work_orders').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  workOrders = data || [];
+}
+async function loadEquipment() {
+  const { data } = await sb.from('equipment').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  equipment = data || [];
+}
+async function loadPlans() {
+  const { data } = await sb.from('maintenance_plans').select('*').eq('company_id', companyId).eq('is_active', true).order('next_maintenance');
+  plans = data || [];
+}
+async function loadFailures() {
+  const { data } = await sb.from('failure_records').select('*').eq('company_id', companyId).eq('is_active', true).order('date', { ascending: false });
+  failures = data || [];
+}
+async function loadProviders() {
+  const { data } = await sb.from('service_providers').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  providers = data || [];
+}
+async function loadProducts() {
+  const { data } = await sb.from('products').select('id,name,unit').eq('company_id', companyId).eq('is_active', true).order('name');
+  products = data || [];
+}
+
+// ===== STATS =====
+function updateStats() {
+  const today = new Date();
+  const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+  document.getElementById('stat-open').textContent = workOrders.filter(w => ['open','in_progress'].includes(w.status)).length;
+  document.getElementById('stat-upcoming').textContent = plans.filter(p => {
+    if (!p.next_maintenance) return false;
+    const d = new Date(p.next_maintenance);
+    return d >= today && d <= in30;
+  }).length;
+  document.getElementById('stat-failures').textContent = failures.filter(f => {
+    if (!f.date) return false;
+    const d = new Date(f.date);
+    const past30 = new Date(today); past30.setDate(past30.getDate() - 30);
+    return d >= past30;
+  }).length;
+  document.getElementById('stat-equip').textContent = equipment.length;
+}
+
+// ===== TABS =====
+function setTab(btn, tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const actions = document.getElementById('tab-actions');
+  const map = { wo:'btn_add_work_order', equip:'btn_add_equipment', plans:'btn_add_maint_plan', failures:'btn_add_failure', providers:'btn_add_provider' };
+  const fnMap = { wo:'openWOModal()', equip:'openEquipModal()', plans:'openPlanModal()', failures:'openFailureModal()', providers:'openProviderModal()' };
+  actions.innerHTML = `<button class="btn btn-primary" onclick="${fnMap[tab]}" data-i18n="${map[tab]}">+ Add</button>`;
+  applyTranslations();
+  if (tab === 'wo') renderWOs();
+  else if (tab === 'equip') renderEquipment();
+  else if (tab === 'plans') renderPlans();
+  else if (tab === 'failures') renderFailures();
+  else renderProviders();
+}
+
+// ===== STATUS / TYPE HELPERS =====
+const woBadge  = { open:'badge-blue', in_progress:'badge-orange', completed:'badge-green', cancelled:'badge-gray' };
+const priBadge = { low:'badge-teal', medium:'badge-blue', high:'badge-orange', critical:'badge-red' };
+const eqBadge  = { active:'badge-green', maintenance:'badge-orange', inactive:'badge-gray', retired:'badge-red' };
+const typeBadge= { preventive:'badge-blue', corrective:'badge-orange', emergency:'badge-red', inspection:'badge-teal' };
+
+function woStatus(s) { return {open:t('status_open')||'Open',in_progress:t('status_in_progress')||'In Progress',completed:t('status_completed')||'Completed',cancelled:t('status_cancelled')||'Cancelled'}[s]||s; }
+function woType(s) { return {preventive:t('wo_type_preventive'),corrective:t('wo_type_corrective'),emergency:t('wo_type_emergency'),inspection:t('wo_type_inspection')}[s]||s; }
+function priLabel(s) { return {low:t('priority_low'),medium:t('priority_medium'),high:t('priority_high'),critical:t('priority_critical')}[s]||s; }
+function freqLabel(s) { return {daily:t('freq_daily'),weekly:t('freq_weekly'),monthly:t('freq_monthly'),quarterly:t('freq_quarterly'),yearly:t('freq_yearly'),custom:t('freq_custom')}[s]||s; }
+function equipName(id) { return equipment.find(e => e.id === id)?.name || '—'; }
+function providerName(id) { return providers.find(p => p.id === id)?.name || '—'; }
+
+// ===== RENDER WORK ORDERS =====
+function renderWOs() {
+  const search = (document.getElementById('wo-search')?.value||'').toLowerCase();
+  const sf = document.getElementById('wo-status-f')?.value||'';
+  const pf = document.getElementById('wo-prio-f')?.value||'';
+  let list = workOrders.filter(w =>
+    (!search || [w.wo_number, equipName(w.equipment_id), w.description].some(v=>(v||'').toLowerCase().includes(search))) &&
+    (!sf || w.status === sf) && (!pf || w.priority === pf)
+  );
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="filters-row">
+      <div class="search-box">🔍<input type="text" id="wo-search" placeholder="Search..." oninput="renderWOs()" value="${document.getElementById('wo-search')?.value||''}"></div>
+      <select class="filter-select" id="wo-status-f" onchange="renderWOs()">
+        <option value="" data-i18n="all_status">All</option>
+        <option value="open" data-i18n="status_open">Open</option>
+        <option value="in_progress" data-i18n="status_in_progress">In Progress</option>
+        <option value="completed" data-i18n="status_completed">Completed</option>
+        <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+      </select>
+      <select class="filter-select" id="wo-prio-f" onchange="renderWOs()">
+        <option value="">All Priority</option>
+        <option value="low" data-i18n="priority_low">Low</option>
+        <option value="medium" data-i18n="priority_medium">Medium</option>
+        <option value="high" data-i18n="priority_high">High</option>
+        <option value="critical" data-i18n="priority_critical">Critical</option>
+      </select>
+    </div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="col_wo_number">WO #</th>
+        <th data-i18n="col_equip">Equipment</th>
+        <th data-i18n="col_wo_type">Type</th>
+        <th data-i18n="lbl_priority">Priority</th>
+        <th data-i18n="col_status">Status</th>
+        <th data-i18n="col_planned_date">Planned Date</th>
+        <th data-i18n="lbl_cost">Cost</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${list.length ? list.map(w => `
+        <tr>
+          <td style="font-weight:600;color:var(--gray800)">${w.wo_number||'—'}</td>
+          <td>${equipName(w.equipment_id)}</td>
+          <td><span class="badge ${typeBadge[w.wo_type]||'badge-gray'}">${woType(w.wo_type)}</span></td>
+          <td><span class="badge ${priBadge[w.priority]||'badge-gray'}">${priLabel(w.priority)}</span></td>
+          <td><span class="badge ${woBadge[w.status]||'badge-gray'}">${woStatus(w.status)}</span></td>
+          <td style="color:${w.planned_date && new Date(w.planned_date) < new Date() && w.status !== 'completed' ? 'var(--red)' : 'var(--gray500)'}">${w.planned_date||'—'}</td>
+          <td>${w.cost != null ? fmtCurr(w.cost) : '—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openWOModal('${w.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteWO('${w.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+          </div></td>
+        </tr>`).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><h3>${t('no_data')||'No work orders'}</h3></div></td></tr>`}
+      </tbody></table></div></div>`;
+  if (sf) document.getElementById('wo-status-f').value = sf;
+  if (pf) document.getElementById('wo-prio-f').value = pf;
+  applyTranslations();
+}
+
+// ===== RENDER EQUIPMENT =====
+function renderEquipment() {
+  const search = (document.getElementById('eq-search')?.value||'').toLowerCase();
+  let list = equipment.filter(e => !search || [e.name, e.equipment_number, e.category, e.location].some(v=>(v||'').toLowerCase().includes(search)));
+  document.getElementById('tab-content').innerHTML = `
+    <div class="filters-row">
+      <div class="search-box">🔍<input type="text" id="eq-search" placeholder="Search..." oninput="renderEquipment()" value="${document.getElementById('eq-search')?.value||''}"></div>
+    </div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="lbl_equip_number">Equip #</th>
+        <th data-i18n="lbl_equip_name">Name</th>
+        <th data-i18n="lbl_equip_category">Category</th>
+        <th data-i18n="lbl_brand_model">Brand/Model</th>
+        <th data-i18n="lbl_location">Location</th>
+        <th data-i18n="col_status">Status</th>
+        <th data-i18n="lbl_next_maintenance">Next Maint.</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${list.length ? list.map(e => `
+        <tr>
+          <td style="font-size:12px;color:var(--gray400)">${e.equipment_number||'—'}</td>
+          <td style="font-weight:600;color:var(--gray800)">${e.name}</td>
+          <td>${e.category||'—'}</td>
+          <td>${e.brand_model||'—'}</td>
+          <td>${e.location||'—'}</td>
+          <td><span class="badge ${eqBadge[e.status]||'badge-gray'}">${e.status||'—'}</span></td>
+          <td style="color:${e.next_maintenance && new Date(e.next_maintenance) < new Date() ? 'var(--red)' : 'var(--gray500)'}">${e.next_maintenance||'—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="showHistory('${e.id}')" title="History">📋</button>
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openEquipModal('${e.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteEquip('${e.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+          </div></td>
+        </tr>`).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⚙️</div><h3>${t('no_data')||'No equipment'}</h3></div></td></tr>`}
+      </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== RENDER PLANS =====
+function renderPlans() {
+  const today = new Date();
+  const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+  document.getElementById('tab-content').innerHTML = `
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="col_equip">Equipment</th>
+        <th data-i18n="lbl_plan_name">Plan</th>
+        <th data-i18n="lbl_frequency">Frequency</th>
+        <th data-i18n="lbl_last_maintenance">Last Maint.</th>
+        <th data-i18n="lbl_next_maintenance">Next Maint.</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${plans.length ? plans.map(p => {
+        const overdue = p.next_maintenance && new Date(p.next_maintenance) < today;
+        const soon    = p.next_maintenance && new Date(p.next_maintenance) <= in7 && !overdue;
+        return `<tr>
+          <td style="font-weight:600">${equipName(p.equipment_id)}</td>
+          <td>${p.plan_name||'—'}</td>
+          <td><span class="badge badge-blue">${freqLabel(p.frequency)}</span></td>
+          <td style="color:var(--gray500)">${p.last_maintenance||'—'}</td>
+          <td style="color:${overdue?'var(--red)':soon?'var(--orange)':'var(--gray500)'}">
+            ${p.next_maintenance||'—'} ${overdue?'⚠️':soon?'🔔':''}
+          </td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openPlanModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deletePlan('${p.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+          </div></td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📅</div><h3>${t('no_data')||'No plans'}</h3></div></td></tr>`}
+      </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== RENDER FAILURES =====
+function renderFailures() {
+  document.getElementById('tab-content').innerHTML = `
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="col_equip">Equipment</th>
+        <th data-i18n="col_date">Date</th>
+        <th data-i18n="col_failure_type">Failure Type</th>
+        <th>Description</th>
+        <th data-i18n="col_resolution_h">Resolution (h)</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${failures.length ? failures.map(f => `
+        <tr>
+          <td style="font-weight:600">${equipName(f.equipment_id)}</td>
+          <td style="color:var(--gray500)">${f.date||'—'}</td>
+          <td><span class="badge badge-red">${f.failure_type||'—'}</span></td>
+          <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.description||'—'}</td>
+          <td>${f.resolution_hours != null ? f.resolution_hours+'h' : '—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openFailureModal('${f.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteFailure('${f.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+          </div></td>
+        </tr>`).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><h3>${t('no_data')||'No failures'}</h3></div></td></tr>`}
+      </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== RENDER PROVIDERS =====
+function renderProviders() {
+  document.getElementById('tab-content').innerHTML = `
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="col_name">Company</th>
+        <th data-i18n="lbl_contact_person">Contact</th>
+        <th data-i18n="col_phone">Phone</th>
+        <th data-i18n="col_email">Email</th>
+        <th data-i18n="col_specialization">Specialization</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${providers.length ? providers.map(p => `
+        <tr>
+          <td style="font-weight:600;color:var(--gray800)">${p.name}</td>
+          <td>${p.contact_person||'—'}</td>
+          <td>${p.phone||'—'}</td>
+          <td style="color:var(--blue)">${p.email||'—'}</td>
+          <td>${p.specialization||'—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openProviderModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteProvider('${p.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+          </div></td>
+        </tr>`).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏢</div><h3>${t('no_data')||'No providers'}</h3></div></td></tr>`}
+      </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== EQUIPMENT HISTORY =====
+async function showHistory(equipId) {
+  const eq = equipment.find(e => e.id === equipId);
+  const { data: hist } = await sb.from('work_orders')
+    .select('wo_number,wo_type,status,planned_date,completed_date,cost,description')
+    .eq('equipment_id', equipId).eq('is_active', true)
+    .order('planned_date', { ascending: false });
+  document.getElementById('hist-modal-title').textContent = (eq?.name||'') + ' — ' + (t('lbl_maintenance_history')||'History');
+  const rows = hist?.length ? hist.map(h => `
+    <tr>
+      <td>${h.wo_number||'—'}</td>
+      <td><span class="badge ${typeBadge[h.wo_type]||'badge-gray'}">${woType(h.wo_type)}</span></td>
+      <td><span class="badge ${woBadge[h.status]||'badge-gray'}">${woStatus(h.status)}</span></td>
+      <td>${h.planned_date||'—'}</td>
+      <td>${h.completed_date||'—'}</td>
+      <td>${h.cost != null ? fmtCurr(h.cost) : '—'}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--gray400);padding:24px">${t('lbl_no_history')||'No history'}</td></tr>`;
+  document.getElementById('hist-modal-body').innerHTML = `
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>WO #</th><th>Type</th><th>Status</th><th>Planned</th><th>Completed</th><th>Cost</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  openModal('hist-modal');
+}
+
+// ===== WO PARTS =====
+function populateEquipSelect(selId) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = `<option value="">— select —</option>` + equipment.map(e => `<option value="${e.id}">${e.name}${e.equipment_number?' ('+e.equipment_number+')':''}</option>`).join('');
+}
+function populateProviderSelect(selId) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = `<option value="">— none —</option>` + providers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+function renderWOParts() {
+  document.getElementById('wo-parts-body').innerHTML = woParts.map((p,i) => `
+    <tr>
+      <td><select onchange="woParts[${i}].product_id=this.value">
+        <option value="">Free text</option>
+        ${products.map(pr => `<option value="${pr.id}" ${p.product_id===pr.id?'selected':''}>${pr.name}</option>`).join('')}
+      </select></td>
+      <td><input type="number" min="0" step="0.01" value="${p.qty||1}" oninput="woParts[${i}].qty=parseFloat(this.value)||1"></td>
+      <td><input type="number" min="0" step="0.01" value="${p.cost||0}" oninput="woParts[${i}].cost=parseFloat(this.value)||0"></td>
+      <td><button class="btn btn-sm btn-danger btn-icon" onclick="woParts.splice(${i},1);renderWOParts()">✕</button></td>
+    </tr>`).join('');
+}
+function addWoPart() { woParts.push({ product_id:'', qty:1, cost:0 }); renderWOParts(); }
+
+// ===== WO CRUD =====
+async function openWOModal(id = null) {
+  editingWOId = id;
+  document.getElementById('wo-modal-title').textContent = t(id ? 'title_edit_wo' : 'title_add_wo');
+  populateEquipSelect('wo-equip');
+  populateProviderSelect('wo-provider');
+  if (!id) {
+    ['wo-number','wo-desc','wo-assignee'].forEach(f => document.getElementById(f).value = '');
+    ['wo-cost'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('wo-planned-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('wo-completed-date').value = '';
+    document.getElementById('wo-type').value = 'preventive';
+    document.getElementById('wo-priority').value = 'medium';
+    document.getElementById('wo-status').value = 'open';
+    woParts = [];
+  } else {
+    const w = workOrders.find(x => x.id === id);
+    if (!w) return;
+    document.getElementById('wo-number').value = w.wo_number||'';
+    document.getElementById('wo-equip').value = w.equipment_id||'';
+    document.getElementById('wo-type').value = w.wo_type||'preventive';
+    document.getElementById('wo-priority').value = w.priority||'medium';
+    document.getElementById('wo-status').value = w.status||'open';
+    document.getElementById('wo-planned-date').value = w.planned_date||'';
+    document.getElementById('wo-completed-date').value = w.completed_date||'';
+    document.getElementById('wo-cost').value = w.cost!=null ? w.cost : '';
+    document.getElementById('wo-assignee').value = w.assigned_to||'';
+    document.getElementById('wo-provider').value = w.provider_id||'';
+    document.getElementById('wo-desc').value = w.description||'';
+    const { data: parts } = await sb.from('work_order_parts').select('*').eq('work_order_id', id).eq('is_active', true);
+    woParts = (parts||[]).map(p => ({ id:p.id, product_id:p.product_id||'', qty:p.quantity, cost:p.unit_cost||0 }));
+  }
+  renderWOParts();
+  applyTranslations();
+  openModal('wo-modal');
+}
+
+async function saveWO() {
+  const { data: { user } } = await sb.auth.getUser();
+  const status = document.getElementById('wo-status').value;
+  const prevStatus = editingWOId ? workOrders.find(w => w.id === editingWOId)?.status : null;
+  const payload = {
+    company_id: companyId,
+    wo_number: document.getElementById('wo-number').value.trim() || 'WO-'+Date.now(),
+    equipment_id: document.getElementById('wo-equip').value || null,
+    wo_type: document.getElementById('wo-type').value,
+    priority: document.getElementById('wo-priority').value,
+    status,
+    planned_date: document.getElementById('wo-planned-date').value || null,
+    completed_date: document.getElementById('wo-completed-date').value || null,
+    cost: parseFloat(document.getElementById('wo-cost').value) || null,
+    assigned_to: document.getElementById('wo-assignee').value.trim() || null,
+    provider_id: document.getElementById('wo-provider').value || null,
+    description: document.getElementById('wo-desc').value.trim() || null,
+    created_by: user.id
+  };
+
+  let woId = editingWOId;
+  if (editingWOId) {
+    await sb.from('work_orders').update(payload).eq('id', editingWOId);
+    await sb.from('work_order_parts').update({ is_active: false }).eq('work_order_id', editingWOId);
+  } else {
+    const { data, error } = await sb.from('work_orders').insert(payload).select().single();
+    if (error) { showToast('Error: '+error.message,'error'); return; }
+    woId = data.id;
+  }
+
+  // Parts
+  if (woParts.length) {
+    await sb.from('work_order_parts').insert(woParts.map(p => ({
+      work_order_id: woId, company_id: companyId,
+      product_id: p.product_id || null, quantity: p.qty, unit_cost: p.cost,
+      created_by: user.id
+    })));
+  }
+
+  // Auto-create maintenance_history when completed
+  if (status === 'completed' && prevStatus !== 'completed') {
+    const eq = equipment.find(e => e.id === payload.equipment_id);
+    await sb.from('maintenance_history').insert({
+      company_id: companyId,
+      work_order_id: woId,
+      equipment_id: payload.equipment_id,
+      maintenance_date: payload.completed_date || payload.planned_date || new Date().toISOString().split('T')[0],
+      maintenance_type: payload.wo_type,
+      description: payload.description,
+      cost: payload.cost,
+      performed_by: payload.assigned_to,
+      created_by: user.id
+    }).select().maybeSingle();
+    // Update equipment last_maintenance
+    if (eq) {
+      await sb.from('equipment').update({ last_maintenance: payload.completed_date || payload.planned_date }).eq('id', eq.id);
+    }
+  }
+
+  showToast(t('toast_wo_saved'),'success');
+  closeModal('wo-modal');
+  await Promise.all([loadWOs(), loadEquipment()]);
+  updateStats();
+  renderWOs();
+}
+
+async function deleteWO(id) {
+  if (!await showConfirm(t('confirm_delete_wo'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('work_order_parts').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('work_order_id', id);
+  await sb.from('work_orders').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  showToast(t('toast_wo_deleted'),'success');
+  await loadWOs(); updateStats(); renderWOs();
+}
+
+// ===== EQUIPMENT CRUD =====
+function openEquipModal(id = null) {
+  editingEquipId = id;
+  document.getElementById('equip-modal-title').textContent = t(id ? 'title_edit_equip' : 'title_add_equip');
+  // Populate category datalist
+  const cats = [...new Set(equipment.map(e => e.category).filter(Boolean))];
+  document.getElementById('eq-cat-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  if (!id) {
+    ['eq-number','eq-name','eq-category','eq-brand','eq-location','eq-notes'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('eq-last-maint').value = '';
+    document.getElementById('eq-next-maint').value = '';
+    document.getElementById('eq-status').value = 'active';
+  } else {
+    const e = equipment.find(x => x.id === id);
+    if (!e) return;
+    document.getElementById('eq-number').value = e.equipment_number||'';
+    document.getElementById('eq-name').value = e.name||'';
+    document.getElementById('eq-category').value = e.category||'';
+    document.getElementById('eq-brand').value = e.brand_model||'';
+    document.getElementById('eq-location').value = e.location||'';
+    document.getElementById('eq-status').value = e.status||'active';
+    document.getElementById('eq-last-maint').value = e.last_maintenance||'';
+    document.getElementById('eq-next-maint').value = e.next_maintenance||'';
+    document.getElementById('eq-notes').value = e.notes||'';
+  }
+  applyTranslations();
+  openModal('equip-modal');
+}
+
+async function saveEquip() {
+  const name = document.getElementById('eq-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name required','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    company_id: companyId, name,
+    equipment_number: document.getElementById('eq-number').value.trim()||null,
+    category: document.getElementById('eq-category').value.trim()||null,
+    brand_model: document.getElementById('eq-brand').value.trim()||null,
+    location: document.getElementById('eq-location').value.trim()||null,
+    status: document.getElementById('eq-status').value,
+    last_maintenance: document.getElementById('eq-last-maint').value||null,
+    next_maintenance: document.getElementById('eq-next-maint').value||null,
+    notes: document.getElementById('eq-notes').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingEquipId) await sb.from('equipment').update(payload).eq('id', editingEquipId);
+  else { const { error } = await sb.from('equipment').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  showToast(t('toast_equip_saved'),'success');
+  closeModal('equip-modal');
+  await loadEquipment(); updateStats(); renderEquipment();
+}
+
+async function deleteEquip(id) {
+  if (!await showConfirm(t('confirm_delete_equip'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('equipment').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  showToast(t('toast_equip_deleted'),'success');
+  await loadEquipment(); updateStats(); renderEquipment();
+}
+
+// ===== PLAN CRUD =====
+function calcNextMaint(lastDate, freq, intervalDays) {
+  if (!lastDate) return '';
+  const d = new Date(lastDate);
+  const freqDays = { daily:1, weekly:7, monthly:30, quarterly:91, yearly:365 };
+  const days = freq === 'custom' ? (intervalDays||30) : (freqDays[freq]||30);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+function updateNextMaintDate() {
+  const freq = document.getElementById('pl-freq').value;
+  const last = document.getElementById('pl-last-maint').value;
+  const interval = parseInt(document.getElementById('pl-interval').value)||30;
+  document.getElementById('pl-interval-field').style.display = freq === 'custom' ? '' : 'none';
+  document.getElementById('pl-next-maint').value = calcNextMaint(last, freq, interval);
+}
+
+function openPlanModal(id = null) {
+  editingPlanId = id;
+  document.getElementById('plan-modal-title').textContent = t(id ? 'title_edit_plan' : 'title_add_plan');
+  populateEquipSelect('pl-equip');
+  if (!id) {
+    document.getElementById('pl-name').value = '';
+    document.getElementById('pl-freq').value = 'monthly';
+    document.getElementById('pl-last-maint').value = '';
+    document.getElementById('pl-next-maint').value = '';
+    document.getElementById('pl-interval').value = '30';
+    document.getElementById('pl-notes').value = '';
+    document.getElementById('pl-interval-field').style.display = 'none';
+  } else {
+    const p = plans.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pl-name').value = p.plan_name||'';
+    document.getElementById('pl-equip').value = p.equipment_id||'';
+    document.getElementById('pl-freq').value = p.frequency||'monthly';
+    document.getElementById('pl-last-maint').value = p.last_maintenance||'';
+    document.getElementById('pl-next-maint').value = p.next_maintenance||'';
+    document.getElementById('pl-interval').value = p.interval_days||30;
+    document.getElementById('pl-notes').value = p.notes||'';
+    document.getElementById('pl-interval-field').style.display = p.frequency === 'custom' ? '' : 'none';
+  }
+  applyTranslations();
+  openModal('plan-modal');
+}
+
+async function savePlan() {
+  const name = document.getElementById('pl-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name required','error'); return; }
+  const freq = document.getElementById('pl-freq').value;
+  const lastMaint = document.getElementById('pl-last-maint').value;
+  const interval = parseInt(document.getElementById('pl-interval').value)||30;
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    company_id: companyId, plan_name: name,
+    equipment_id: document.getElementById('pl-equip').value || null,
+    frequency: freq, interval_days: freq === 'custom' ? interval : null,
+    last_maintenance: lastMaint || null,
+    next_maintenance: calcNextMaint(lastMaint, freq, interval) || null,
+    notes: document.getElementById('pl-notes').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingPlanId) await sb.from('maintenance_plans').update(payload).eq('id', editingPlanId);
+  else { const { error } = await sb.from('maintenance_plans').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  showToast(t('toast_plan_saved'),'success');
+  closeModal('plan-modal');
+  await loadPlans(); updateStats(); renderPlans();
+}
+
+async function deletePlan(id) {
+  if (!await showConfirm(t('confirm_delete_plan'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('maintenance_plans').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await loadPlans(); updateStats(); renderPlans();
+}
+
+// ===== FAILURE CRUD =====
+function openFailureModal(id = null) {
+  editingFailureId = id;
+  document.getElementById('failure-modal-title').textContent = t(id ? 'title_edit_failure' : 'title_add_failure');
+  populateEquipSelect('fa-equip');
+  if (!id) {
+    ['fa-type','fa-desc','fa-cause'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('fa-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fa-resolution').value = '';
+  } else {
+    const f = failures.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById('fa-equip').value = f.equipment_id||'';
+    document.getElementById('fa-date').value = f.date||'';
+    document.getElementById('fa-type').value = f.failure_type||'';
+    document.getElementById('fa-resolution').value = f.resolution_hours!=null ? f.resolution_hours : '';
+    document.getElementById('fa-desc').value = f.description||'';
+    document.getElementById('fa-cause').value = f.root_cause||'';
+  }
+  applyTranslations();
+  openModal('failure-modal');
+}
+
+async function saveFailure() {
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    company_id: companyId,
+    equipment_id: document.getElementById('fa-equip').value || null,
+    date: document.getElementById('fa-date').value || null,
+    failure_type: document.getElementById('fa-type').value.trim() || null,
+    resolution_hours: parseFloat(document.getElementById('fa-resolution').value) || null,
+    description: document.getElementById('fa-desc').value.trim() || null,
+    root_cause: document.getElementById('fa-cause').value.trim() || null,
+    created_by: user.id
+  };
+  if (editingFailureId) await sb.from('failure_records').update(payload).eq('id', editingFailureId);
+  else { const { error } = await sb.from('failure_records').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  showToast(t('toast_failure_saved'),'success');
+  closeModal('failure-modal');
+  await loadFailures(); updateStats(); renderFailures();
+}
+
+async function deleteFailure(id) {
+  if (!await showConfirm(t('confirm_delete_failure'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('failure_records').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await loadFailures(); updateStats(); renderFailures();
+}
+
+// ===== PROVIDER CRUD =====
+function openProviderModal(id = null) {
+  editingProviderId = id;
+  document.getElementById('provider-modal-title').textContent = t(id ? 'title_edit_provider' : 'title_add_provider');
+  if (!id) {
+    ['pr-name','pr-contact','pr-phone','pr-email','pr-spec','pr-notes'].forEach(f => document.getElementById(f).value = '');
+  } else {
+    const p = providers.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pr-name').value = p.name||'';
+    document.getElementById('pr-contact').value = p.contact_person||'';
+    document.getElementById('pr-phone').value = p.phone||'';
+    document.getElementById('pr-email').value = p.email||'';
+    document.getElementById('pr-spec').value = p.specialization||'';
+    document.getElementById('pr-notes').value = p.notes||'';
+  }
+  applyTranslations();
+  openModal('provider-modal');
+}
+
+async function saveProvider() {
+  const name = document.getElementById('pr-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name required','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    company_id: companyId, name,
+    contact_person: document.getElementById('pr-contact').value.trim()||null,
+    phone: document.getElementById('pr-phone').value.trim()||null,
+    email: document.getElementById('pr-email').value.trim()||null,
+    specialization: document.getElementById('pr-spec').value.trim()||null,
+    notes: document.getElementById('pr-notes').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingProviderId) await sb.from('service_providers').update(payload).eq('id', editingProviderId);
+  else { const { error } = await sb.from('service_providers').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  showToast(t('toast_provider_saved'),'success');
+  closeModal('provider-modal');
+  await loadProviders(); renderProviders();
+}
+
+async function deleteProvider(id) {
+  if (!await showConfirm(t('confirm_delete_provider'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('service_providers').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await loadProviders(); renderProviders();
+}
+
+// ===== HELPERS =====
+function fmtCurr(n) { return n == null || isNaN(n) ? '—' : new Intl.NumberFormat(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}).format(n); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+let toastTimer;
+function showToast(msg, type='default') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type !== 'default' ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+function showConfirm(msg, confirmLabel='Confirm') {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `<div class="confirm-box"><h3>${t('lbl_confirm')||'Confirm'}</h3><p>${msg}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" id="cn">${t('btn_cancel')||'Cancel'}</button>
+        <button class="btn btn-danger" id="cy">${confirmLabel}</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#cy').onclick = () => { overlay.remove(); resolve(true); };
+    overlay.querySelector('#cn').onclick  = () => { overlay.remove(); resolve(false); };
+  });
+}
+
+init();
+</script>
+</body>
+</html>
