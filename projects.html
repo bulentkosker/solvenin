@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Projects</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#2563eb;--blue-light:#eff6ff;
+  --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
+  --gray600:#475569;--gray700:#334155;--gray800:#1e293b;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --teal:#0d9488;--teal-light:#f0fdfa;
+  --sidebar-w:220px;
+  --font-display:'Outfit',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;width:calc(100vw - var(--sidebar-w));box-sizing:border-box}
+.topbar{height:64px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--gray800);flex:1}
+.topbar-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .15s}
+.topbar-btn:hover{background:var(--gray100)}
+.content{padding:28px;flex:1}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-header h1{font-family:var(--font-display);font-size:22px;font-weight:700}
+.page-header p{font-size:13px;color:var(--gray500);margin-top:3px}
+.header-actions{display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 12px rgba(37,99,235,.3);transform:translateY(-1px)}
+.btn-outline{background:#fff;color:var(--gray600);border:1px solid var(--gray200)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-ghost{background:none;border:none;color:var(--gray500);cursor:pointer;font-size:13px;font-weight:600;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+.btn-ghost:hover{background:var(--gray100);color:var(--gray800)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:8px}
+
+/* Project cards grid */
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.project-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;padding:20px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.project-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--blue)}
+.project-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.project-card-name{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--gray800);flex:1;margin-right:10px}
+.project-card-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.project-card:hover .project-card-actions{opacity:1}
+.project-card-meta{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.project-card-desc{font-size:12px;color:var(--gray500);margin-bottom:12px;line-height:1.5}
+.progress-bar{height:6px;background:var(--gray100);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .3s}
+.progress-fill.green{background:var(--green)}
+.progress-fill.orange{background:var(--orange)}
+.project-card-footer{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--gray400);margin-top:12px;padding-top:12px;border-top:1px solid var(--gray100)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:#065f46}
+.badge-blue{background:var(--blue-light);color:#1e40af}
+.badge-orange{background:var(--orange-light);color:#92400e}
+.badge-red{background:var(--red-light);color:#991b1b}
+.badge-purple{background:var(--purple-light);color:#5b21b6}
+.badge-gray{background:var(--gray100);color:var(--gray600)}
+.badge-teal{background:var(--teal-light);color:#0f766e}
+
+/* Filters */
+.filters-row{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 14px;flex:1;max-width:300px}
+.search-box input{background:none;border:none;outline:none;font-family:var(--font-body);font-size:13px;color:var(--gray800);width:100%}
+.search-box input::placeholder{color:var(--gray400)}
+.filter-select{background:#fff;border:1px solid var(--gray200);border-radius:9px;padding:8px 12px;font-family:var(--font-body);font-size:13px;color:var(--gray700);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--blue)}
+
+/* Detail view */
+#detail-view{display:none}
+.detail-header{background:#fff;border:1px solid var(--gray200);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.detail-title{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--gray800);margin-bottom:8px}
+.detail-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
+.detail-stat{padding:14px 16px;background:var(--gray50);border-radius:12px}
+.detail-stat-label{font-size:11px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.detail-stat-val{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--gray800)}
+
+/* Tabs */
+.tabs-row{display:flex;gap:4px;background:var(--gray100);padding:4px;border-radius:12px;width:fit-content;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:8px 18px;border-radius:9px;border:none;background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--gray500);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:var(--shadow-sm)}
+
+/* Table */
+.table-card{background:#fff;border:1px solid var(--gray200);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase;padding:12px 16px;border-bottom:1px solid var(--gray100);background:var(--gray50);white-space:nowrap}
+td{padding:12px 16px;font-size:13px;color:var(--gray600);border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray50)}
+.row-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+
+/* Kanban */
+.kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
+.kanban-col{background:var(--gray50);border-radius:14px;padding:14px;min-height:200px}
+.kanban-col-header{font-size:12px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.kanban-col-count{background:var(--gray200);color:var(--gray600);border-radius:99px;padding:2px 8px;font-size:11px}
+.kanban-card{background:#fff;border:1px solid var(--gray200);border-radius:10px;padding:12px;margin-bottom:8px;cursor:grab;transition:all .15s;box-shadow:var(--shadow-sm)}
+.kanban-card:hover{box-shadow:var(--shadow-md);border-color:var(--blue)}
+.kanban-card.dragging{opacity:.5;cursor:grabbing}
+.kanban-col.drag-over{background:var(--blue-light);border:2px dashed var(--blue)}
+.kanban-card-title{font-size:13px;font-weight:600;color:var(--gray800);margin-bottom:6px}
+.kanban-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:22px 28px 18px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--gray400)}
+.modal-close:hover{background:var(--gray100)}
+.modal-body{padding:24px 28px}
+.modal-footer{padding:16px 28px 22px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--gray100)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:600;color:var(--gray500);letter-spacing:.3px;text-transform:uppercase}
+.field input,.field select,.field textarea{padding:9px 12px;border:1px solid var(--gray200);border-radius:9px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;background:#fff;transition:border .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.field textarea{resize:vertical;min-height:68px}
+
+/* Expense summary */
+.budget-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.budget-card{background:#fff;border:1px solid var(--gray200);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm)}
+.budget-card-label{font-size:11px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.budget-card-val{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--gray800)}
+
+/* Time logs grouped */
+.time-group{margin-bottom:16px}
+.time-group-header{font-size:12px;font-weight:700;color:var(--gray500);letter-spacing:.5px;text-transform:uppercase;padding:8px 0;border-bottom:1px solid var(--gray100);margin-bottom:8px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray400)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-state h3{font-size:14px;font-weight:600;color:var(--gray600);margin-bottom:6px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:var(--gray800);box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999;transform:translateY(20px);opacity:0;transition:all .3s;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}
+
+/* Confirm */
+.confirm-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-box{background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.confirm-box h3{font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:8px}
+.confirm-box p{font-size:13px;color:var(--gray500);margin-bottom:20px}
+.confirm-actions{display:flex;gap:10px;justify-content:flex-end}
+
+/* Loading */
+#loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:var(--sky)}
+
+@media(max-width:900px){
+  .kanban-board{grid-template-columns:1fr 1fr}
+  .detail-stats{grid-template-columns:1fr 1fr}
+  .projects-grid{grid-template-columns:1fr}
+  .budget-summary{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="loading-logo">solvenin<span>.</span></div>
+</div>
+
+<div id="sb-sidebar"></div>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" data-i18n="page_projects">Projects</div>
+    <div style="flex:1"></div>
+    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red)">⏻</div>
+  </header>
+
+  <div class="content">
+
+    <!-- ===== PROJECT LIST VIEW ===== -->
+    <div id="list-view">
+      <div class="page-header">
+        <div style="flex:1;min-width:0">
+          <h1>📅 <span data-i18n="page_projects">Projects</span></h1>
+          <p data-i18n="page_projects_sub">Proje, görev ve milestone yönetimi</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openProjectModal()" data-i18n="btn_add_project">+ New Project</button>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <div class="search-box">🔍 <input type="text" id="proj-search" placeholder="Search projects..." oninput="renderProjects()"></div>
+        <select class="filter-select" id="proj-status" onchange="renderProjects()">
+          <option value="" data-i18n="all_status">All Status</option>
+          <option value="planning" data-i18n="status_draft">Planning</option>
+          <option value="active" data-i18n="status_active">Active</option>
+          <option value="on_hold" data-i18n="status_on_hold">On Hold</option>
+          <option value="completed" data-i18n="status_completed">Completed</option>
+          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+        </select>
+        <select class="filter-select" id="proj-priority" onchange="renderProjects()">
+          <option value="">All Priority</option>
+          <option value="low" data-i18n="priority_low">Low</option>
+          <option value="medium" data-i18n="priority_medium">Medium</option>
+          <option value="high" data-i18n="priority_high">High</option>
+          <option value="critical" data-i18n="priority_critical">Critical</option>
+        </select>
+      </div>
+
+      <div class="projects-grid" id="projects-grid"></div>
+    </div>
+
+    <!-- ===== DETAIL VIEW ===== -->
+    <div id="detail-view">
+      <div style="margin-bottom:16px">
+        <button class="btn-ghost" onclick="closeDetail()" data-i18n="lbl_back_projects">← Projects</button>
+      </div>
+
+      <div class="detail-header" id="detail-header"></div>
+
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="setDetailTab(this,'tasks')" data-i18n="tab_tasks">Tasks</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'kanban')" data-i18n="tab_kanban">Kanban</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'time')" data-i18n="tab_time">Time</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'expenses')" data-i18n="tab_expenses">Expenses</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'milestones')" data-i18n="tab_milestones">Milestones</button>
+      </div>
+
+      <div class="header-actions" id="detail-tab-actions" style="margin-bottom:16px"></div>
+      <div id="detail-tab-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== PROJECT MODAL ===== -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="project-modal-title">New Project</div>
+      <button class="modal-close" onclick="closeModal('project-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="lbl_project_name">Project Name</label>
+          <input type="text" id="p-name">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Description</label>
+          <textarea id="p-desc" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label data-i18n="col_status">Status</label>
+          <select id="p-status">
+            <option value="planning">Planning</option>
+            <option value="active" data-i18n="status_active">Active</option>
+            <option value="on_hold" data-i18n="status_on_hold">On Hold</option>
+            <option value="completed" data-i18n="status_completed">Completed</option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_priority">Priority</label>
+          <select id="p-priority">
+            <option value="low" data-i18n="priority_low">Low</option>
+            <option value="medium" data-i18n="priority_medium">Medium</option>
+            <option value="high" data-i18n="priority_high">High</option>
+            <option value="critical" data-i18n="priority_critical">Critical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_start_date">Start Date</label>
+          <input type="date" id="p-start">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_end_date">End Date</label>
+          <input type="date" id="p-end">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_budget">Budget</label>
+          <input type="number" id="p-budget" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_progress">Progress (%)</label>
+          <input type="number" id="p-progress" min="0" max="100" value="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('project-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TASK MODAL ===== -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="task-modal-title">New Task</div>
+      <button class="modal-close" onclick="closeModal('task-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="col_task">Task</label>
+          <input type="text" id="t-title">
+        </div>
+        <div class="field">
+          <label data-i18n="col_status">Status</label>
+          <select id="t-status">
+            <option value="todo" data-i18n="status_todo">To Do</option>
+            <option value="in_progress" data-i18n="status_in_progress">In Progress</option>
+            <option value="in_review" data-i18n="status_in_review">In Review</option>
+            <option value="completed" data-i18n="status_completed">Completed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_priority">Priority</label>
+          <select id="t-priority">
+            <option value="low" data-i18n="priority_low">Low</option>
+            <option value="medium" data-i18n="priority_medium">Medium</option>
+            <option value="high" data-i18n="priority_high">High</option>
+            <option value="critical" data-i18n="priority_critical">Critical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="col_assignee">Assignee</label>
+          <input type="text" id="t-assignee" placeholder="Name or email">
+        </div>
+        <div class="field">
+          <label data-i18n="col_deadline">Deadline</label>
+          <input type="date" id="t-deadline">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_estimated_hours">Est. Hours</label>
+          <input type="number" id="t-est-h" min="0" step="0.5">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Notes</label>
+          <textarea id="t-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('task-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TIME LOG MODAL ===== -->
+<div class="modal-overlay" id="time-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="title_add_time_log">Log Time</div>
+      <button class="modal-close" onclick="closeModal('time-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="col_date">Date</label>
+          <input type="date" id="tl-date">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_duration_h">Duration (h)</label>
+          <input type="number" id="tl-hours" min="0.25" step="0.25" placeholder="1.5">
+        </div>
+        <div class="field">
+          <label data-i18n="col_task">Task</label>
+          <select id="tl-task"></select>
+        </div>
+        <div class="field">
+          <label data-i18n="col_assignee">Person</label>
+          <input type="text" id="tl-person" placeholder="Name">
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Description</label>
+          <textarea id="tl-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('time-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTimeLog()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPENSE MODAL ===== -->
+<div class="modal-overlay" id="expense-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="expense-modal-title">New Expense</div>
+      <button class="modal-close" onclick="closeModal('expense-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="label_notes">Description</label>
+          <input type="text" id="ex-desc">
+        </div>
+        <div class="field">
+          <label data-i18n="col_amount">Amount</label>
+          <input type="number" id="ex-amount" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label data-i18n="col_date">Date</label>
+          <input type="date" id="ex-date">
+        </div>
+        <div class="field full">
+          <label data-i18n="lbl_category">Category</label>
+          <input type="text" id="ex-category" placeholder="Labour, Materials, Travel...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('expense-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MILESTONE MODAL ===== -->
+<div class="modal-overlay" id="milestone-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="milestone-modal-title">New Milestone</div>
+      <button class="modal-close" onclick="closeModal('milestone-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="lbl_milestone">Milestone</label>
+          <input type="text" id="ms-name">
+        </div>
+        <div class="field">
+          <label data-i18n="col_deadline">Deadline</label>
+          <input type="date" id="ms-deadline">
+        </div>
+        <div class="field">
+          <label data-i18n="col_status">Status</label>
+          <select id="ms-status">
+            <option value="pending" data-i18n="status_pending">Pending</option>
+            <option value="completed" data-i18n="status_completed">Completed</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label data-i18n="label_notes">Notes</label>
+          <textarea id="ms-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('milestone-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMilestone()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="i18n.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let companyId = null, currentUser = null;
+let projects = [], tasks = [], timeLogs = [], expenses = [], milestones = [];
+let currentProject = null;
+let editingProjectId = null, editingTaskId = null, editingExpenseId = null, editingMilestoneId = null;
+let activeDetailTab = 'tasks';
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+  const { data: profile } = await sb.from('profiles').select('company_id').eq('id', currentUser.id).single();
+  companyId = profile?.company_id;
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else if (typeof applyTranslations === 'function') applyTranslations();
+
+  await loadProjects();
+  renderProjects();
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+
+// ===== LOADERS =====
+async function loadProjects() {
+  const { data } = await sb.from('projects').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  projects = data || [];
+}
+async function loadTasks(projectId) {
+  const { data } = await sb.from('tasks').select('*').eq('project_id', projectId).eq('is_active', true).order('created_at', { ascending: false });
+  tasks = data || [];
+}
+async function loadTimeLogs(projectId) {
+  const { data } = await sb.from('time_logs').select('*').eq('project_id', projectId).eq('is_active', true).order('date', { ascending: false });
+  timeLogs = data || [];
+}
+async function loadExpenses(projectId) {
+  const { data } = await sb.from('project_expenses').select('*').eq('project_id', projectId).eq('is_active', true).order('date', { ascending: false });
+  expenses = data || [];
+}
+async function loadMilestones(projectId) {
+  const { data } = await sb.from('milestones').select('*').eq('project_id', projectId).eq('is_active', true).order('deadline');
+  milestones = data || [];
+}
+
+// ===== STATUS / PRIORITY HELPERS =====
+const projStatusBadge = { planning:'badge-gray', active:'badge-blue', on_hold:'badge-orange', completed:'badge-green', cancelled:'badge-red' };
+const taskStatusBadge = { todo:'badge-gray', in_progress:'badge-blue', in_review:'badge-orange', completed:'badge-green' };
+const priorityBadge   = { low:'badge-teal', medium:'badge-blue', high:'badge-orange', critical:'badge-red' };
+const msBadge         = { pending:'badge-orange', completed:'badge-green' };
+
+function pLabel(s) { return {low:t('priority_low'),medium:t('priority_medium'),high:t('priority_high'),critical:t('priority_critical')}[s]||s; }
+function sLabel(s) { return {planning:'Planning',active:t('status_active'),on_hold:t('status_on_hold'),completed:t('status_completed'),cancelled:t('status_cancelled')}[s]||s; }
+function tLabel(s) { return {todo:t('status_todo'),in_progress:t('status_in_progress'),in_review:t('status_in_review'),completed:t('status_completed')}[s]||s; }
+
+// ===== RENDER PROJECTS =====
+function renderProjects() {
+  const q = (document.getElementById('proj-search')?.value||'').toLowerCase();
+  const sf = document.getElementById('proj-status')?.value||'';
+  const pf = document.getElementById('proj-priority')?.value||'';
+
+  const list = projects.filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q)) &&
+    (!sf || p.status === sf) &&
+    (!pf || p.priority === pf)
+  );
+
+  const grid = document.getElementById('projects-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📅</div><h3>${t('no_data')||'No projects'}</h3></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(p => {
+    const prog = p.progress || 0;
+    const progColor = prog >= 100 ? 'green' : prog >= 60 ? '' : prog >= 30 ? '' : 'orange';
+    const overBudget = p.budget && p.spent > p.budget;
+    return `
+    <div class="project-card" onclick="openDetail('${p.id}')">
+      <div class="project-card-top">
+        <div class="project-card-name">${p.name}</div>
+        <div class="project-card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="openProjectModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deleteProject('${p.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
+        </div>
+      </div>
+      <div class="project-card-meta">
+        <span class="badge ${projStatusBadge[p.status]||'badge-gray'}">${sLabel(p.status)}</span>
+        <span class="badge ${priorityBadge[p.priority]||'badge-gray'}">${pLabel(p.priority)}</span>
+      </div>
+      ${p.description ? `<div class="project-card-desc">${p.description}</div>` : ''}
+      <div class="progress-bar"><div class="progress-fill ${progColor}" style="width:${prog}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray400);margin-bottom:4px">
+        <span>${t('lbl_progress')||'Progress'}</span><span>${prog}%</span>
+      </div>
+      <div class="project-card-footer">
+        <span>${p.start_date||'—'} → ${p.end_date||'—'}</span>
+        <span style="color:${overBudget?'var(--red)':'var(--gray400)'}">
+          ${p.budget ? fmtCurr(p.spent||0)+' / '+fmtCurr(p.budget) : '—'}
+        </span>
+      </div>
+    </div>`;
+  }).join('');
+  applyTranslations();
+}
+
+// ===== OPEN DETAIL =====
+async function openDetail(id) {
+  currentProject = projects.find(p => p.id === id);
+  if (!currentProject) return;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'block';
+  renderDetailHeader();
+  await loadTasks(id);
+  await loadTimeLogs(id);
+  await loadExpenses(id);
+  await loadMilestones(id);
+  setDetailTab(document.querySelector('#detail-view .tab-btn.active'), activeDetailTab);
+  applyTranslations();
+}
+
+function closeDetail() {
+  currentProject = null;
+  document.getElementById('list-view').style.display = '';
+  document.getElementById('detail-view').style.display = 'none';
+  activeDetailTab = 'tasks';
+  document.querySelectorAll('#detail-view .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+}
+
+function renderDetailHeader() {
+  const p = currentProject;
+  const prog = p.progress || 0;
+  const spent = expenses.reduce((s,e) => s + (e.amount||0), 0);
+  const remaining = p.budget ? Math.max(0, p.budget - spent) : null;
+  document.getElementById('detail-header').innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="detail-title">${p.name}</div>
+        <div class="detail-meta">
+          <span class="badge ${projStatusBadge[p.status]||'badge-gray'}">${sLabel(p.status)}</span>
+          <span class="badge ${priorityBadge[p.priority]||'badge-gray'}">${pLabel(p.priority)}</span>
+          ${p.start_date ? `<span style="font-size:12px;color:var(--gray500)">📅 ${p.start_date} → ${p.end_date||'?'}</span>` : ''}
+        </div>
+        ${p.description ? `<p style="font-size:13px;color:var(--gray500)">${p.description}</p>` : ''}
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openProjectModal('${p.id}')">✏️ ${t('btn_edit')||'Edit'}</button>
+    </div>
+    <div style="margin-top:14px">
+      <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${prog}%"></div></div>
+      <div style="font-size:11px;color:var(--gray400);margin-top:4px">${prog}% ${t('lbl_progress')||'progress'}</div>
+    </div>
+    <div class="detail-stats">
+      <div class="detail-stat">
+        <div class="detail-stat-label" data-i18n="tab_tasks">Tasks</div>
+        <div class="detail-stat-val">${tasks.length}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label" data-i18n="lbl_budget">Budget</div>
+        <div class="detail-stat-val">${p.budget ? fmtCurr(p.budget) : '—'}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label" data-i18n="lbl_spent">Spent</div>
+        <div class="detail-stat-val" style="color:${p.budget && spent > p.budget ? 'var(--red)' : 'var(--gray800)'}">${fmtCurr(spent)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label" data-i18n="lbl_remaining">Remaining</div>
+        <div class="detail-stat-val">${remaining !== null ? fmtCurr(remaining) : '—'}</div>
+      </div>
+    </div>`;
+}
+
+// ===== DETAIL TABS =====
+function setDetailTab(btn, tab) {
+  activeDetailTab = tab;
+  document.querySelectorAll('#detail-view .tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const actions = document.getElementById('detail-tab-actions');
+  if (tab === 'tasks') {
+    actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openTaskModal()" data-i18n="btn_add_task">+ Add Task</button>`;
+    renderTasks();
+  } else if (tab === 'kanban') {
+    actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openTaskModal()" data-i18n="btn_add_task">+ Add Task</button>`;
+    renderKanban();
+  } else if (tab === 'time') {
+    actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openTimeModal()" data-i18n="btn_add_time_log">+ Log Time</button>`;
+    renderTime();
+  } else if (tab === 'expenses') {
+    actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openExpenseModal()" data-i18n="btn_add_expense">+ Add Expense</button>`;
+    renderExpenses();
+  } else if (tab === 'milestones') {
+    actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openMilestoneModal()" data-i18n="btn_add_milestone">+ Add Milestone</button>`;
+    renderMilestones();
+  }
+  applyTranslations();
+}
+
+// ===== TASKS TAB =====
+function renderTasks() {
+  const el = document.getElementById('detail-tab-content');
+  if (!tasks.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><h3 data-i18n="lbl_no_tasks">No tasks yet</h3></div>`;
+    applyTranslations(); return;
+  }
+  el.innerHTML = `<div class="table-card"><div class="table-wrap"><table>
+    <thead><tr>
+      <th data-i18n="col_task">Task</th>
+      <th data-i18n="col_status">Status</th>
+      <th data-i18n="lbl_priority">Priority</th>
+      <th data-i18n="col_assignee">Assignee</th>
+      <th data-i18n="col_deadline">Deadline</th>
+      <th data-i18n="col_est_h">Est. h</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${tasks.map(t2 => `
+      <tr>
+        <td style="font-weight:600;color:var(--gray800)">${t2.title}</td>
+        <td><span class="badge ${taskStatusBadge[t2.status]||'badge-gray'}">${tLabel(t2.status)}</span></td>
+        <td><span class="badge ${priorityBadge[t2.priority]||'badge-gray'}">${pLabel(t2.priority)}</span></td>
+        <td>${t2.assignee||'—'}</td>
+        <td style="color:${t2.deadline && new Date(t2.deadline) < new Date() && t2.status !== 'completed' ? 'var(--red)' : 'var(--gray500)'}">${t2.deadline||'—'}</td>
+        <td>${t2.estimated_hours != null ? t2.estimated_hours+'h' : '—'}</td>
+        <td><div class="row-actions">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="openTaskModal('${t2.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deleteTask('${t2.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== KANBAN TAB =====
+function renderKanban() {
+  const cols = [
+    { key:'todo',       label: t('kanban_todo')||'To Do' },
+    { key:'in_progress',label: t('kanban_doing')||'In Progress' },
+    { key:'in_review',  label: t('kanban_review')||'Review' },
+    { key:'completed',  label: t('kanban_done')||'Done' }
+  ];
+  const el = document.getElementById('detail-tab-content');
+  el.innerHTML = `<div class="kanban-board">${cols.map(col => {
+    const colTasks = tasks.filter(t => t.status === col.key);
+    return `<div class="kanban-col" data-col="${col.key}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="onKanbanDrop(event,'${col.key}')">
+      <div class="kanban-col-header">
+        <span>${col.label}</span>
+        <span class="kanban-col-count">${colTasks.length}</span>
+      </div>
+      ${colTasks.map(t => `
+        <div class="kanban-card" draggable="true" data-task-id="${t.id}"
+          ondragstart="onKanbanDragStart(event,'${t.id}')"
+          ondragend="this.classList.remove('dragging')">
+          <div class="kanban-card-title">${t.title}</div>
+          <div class="kanban-card-meta">
+            <span class="badge ${priorityBadge[t.priority]||'badge-gray'}" style="font-size:10px">${pLabel(t.priority)}</span>
+            ${t.assignee ? `<span style="font-size:11px;color:var(--gray400)">👤 ${t.assignee}</span>` : ''}
+            ${t.deadline ? `<span style="font-size:11px;color:${new Date(t.deadline)<new Date()&&t.status!=='completed'?'var(--red)':'var(--gray400)'}">📅 ${t.deadline}</span>` : ''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+let dragTaskId = null;
+function onKanbanDragStart(event, taskId) {
+  dragTaskId = taskId;
+  event.currentTarget.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+}
+async function onKanbanDrop(event, newStatus) {
+  event.currentTarget.classList.remove('drag-over');
+  if (!dragTaskId) return;
+  const task = tasks.find(t => t.id === dragTaskId);
+  if (!task || task.status === newStatus) { dragTaskId = null; return; }
+  await sb.from('tasks').update({ status: newStatus }).eq('id', dragTaskId);
+  task.status = newStatus;
+  dragTaskId = null;
+  renderKanban();
+}
+
+// ===== TIME TAB =====
+function renderTime() {
+  const el = document.getElementById('detail-tab-content');
+  if (!timeLogs.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⏱️</div><h3>${t('no_data')||'No time logs'}</h3></div>`;
+    return;
+  }
+  const totalH = timeLogs.reduce((s,l) => s + (l.hours||0), 0);
+  // Group by person
+  const byPerson = {};
+  timeLogs.forEach(l => {
+    const k = l.person || 'Unknown';
+    byPerson[k] = (byPerson[k]||0) + (l.hours||0);
+  });
+  el.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="detail-stat" style="flex:1;min-width:140px">
+        <div class="detail-stat-label">${t('lbl_logged_hours')||'Total Hours'}</div>
+        <div class="detail-stat-val">${totalH.toFixed(1)}h</div>
+      </div>
+      ${Object.entries(byPerson).map(([p,h]) => `
+        <div class="detail-stat" style="flex:1;min-width:140px">
+          <div class="detail-stat-label">👤 ${p}</div>
+          <div class="detail-stat-val">${h.toFixed(1)}h</div>
+        </div>`).join('')}
+    </div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="col_date">Date</th>
+        <th>${t('lbl_duration_h')||'Hours'}</th>
+        <th data-i18n="col_task">Task</th>
+        <th>${t('col_assignee')||'Person'}</th>
+        <th data-i18n="label_notes">Notes</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${timeLogs.map(l => {
+        const taskName = tasks.find(t => t.id === l.task_id)?.title || '—';
+        return `<tr>
+          <td>${l.date||'—'}</td>
+          <td style="font-weight:600">${l.hours}h</td>
+          <td>${taskName}</td>
+          <td>${l.person||'—'}</td>
+          <td>${l.notes||'—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteTimeLog('${l.id}')">🗑️</button>
+          </div></td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== EXPENSES TAB =====
+function renderExpenses() {
+  const el = document.getElementById('detail-tab-content');
+  const totalSpent = expenses.reduce((s,e) => s + (e.amount||0), 0);
+  const budget = currentProject?.budget || 0;
+  const remaining = budget ? Math.max(0, budget - totalSpent) : null;
+
+  let html = `<div class="budget-summary">
+    <div class="budget-card">
+      <div class="budget-card-label" data-i18n="lbl_budget">Budget</div>
+      <div class="budget-card-val">${budget ? fmtCurr(budget) : '—'}</div>
+    </div>
+    <div class="budget-card">
+      <div class="budget-card-label" data-i18n="lbl_spent">Spent</div>
+      <div class="budget-card-val" style="color:${budget && totalSpent > budget ? 'var(--red)' : 'inherit'}">${fmtCurr(totalSpent)}</div>
+    </div>
+    <div class="budget-card">
+      <div class="budget-card-label" data-i18n="lbl_remaining">Remaining</div>
+      <div class="budget-card-val">${remaining !== null ? fmtCurr(remaining) : '—'}</div>
+    </div>
+  </div>`;
+
+  if (!expenses.length) {
+    html += `<div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_data')||'No expenses'}</h3></div>`;
+  } else {
+    html += `<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th data-i18n="label_notes">Description</th>
+        <th data-i18n="col_amount">Amount</th>
+        <th data-i18n="col_date">Date</th>
+        <th data-i18n="lbl_category">Category</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${expenses.map(e => `
+        <tr>
+          <td style="font-weight:600">${e.description||'—'}</td>
+          <td style="color:var(--gray800);font-weight:600">${fmtCurr(e.amount||0)}</td>
+          <td style="color:var(--gray500)">${e.date||'—'}</td>
+          <td>${e.category||'—'}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="openExpenseModal('${e.id}')">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteExpense('${e.id}')">🗑️</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table></div></div>`;
+  }
+  el.innerHTML = html;
+  applyTranslations();
+}
+
+// ===== MILESTONES TAB =====
+function renderMilestones() {
+  const el = document.getElementById('detail-tab-content');
+  if (!milestones.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><h3 data-i18n="lbl_no_milestones">No milestones</h3></div>`;
+    applyTranslations(); return;
+  }
+  el.innerHTML = `<div class="table-card"><div class="table-wrap"><table>
+    <thead><tr>
+      <th data-i18n="lbl_milestone">Milestone</th>
+      <th data-i18n="col_deadline">Deadline</th>
+      <th data-i18n="col_status">Status</th>
+      <th data-i18n="label_notes">Notes</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${milestones.map(m => `
+      <tr>
+        <td style="font-weight:600;color:var(--gray800)">${m.name}</td>
+        <td style="color:${m.deadline && new Date(m.deadline) < new Date() && m.status !== 'completed' ? 'var(--red)' : 'var(--gray500)'}">${m.deadline||'—'}</td>
+        <td><span class="badge ${msBadge[m.status]||'badge-gray'}">${m.status === 'completed' ? t('status_completed') : t('status_pending')}</span></td>
+        <td>${m.notes||'—'}</td>
+        <td><div class="row-actions">
+          <button class="btn btn-sm btn-outline btn-icon" onclick="openMilestoneModal('${m.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deleteMilestone('${m.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table></div></div>`;
+  applyTranslations();
+}
+
+// ===== PROJECT CRUD =====
+function openProjectModal(id = null) {
+  editingProjectId = id;
+  document.getElementById('project-modal-title').textContent = t(id ? 'title_edit_project' : 'title_add_project');
+  if (!id) {
+    ['p-name','p-desc','p-start','p-end'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('p-budget').value = '';
+    document.getElementById('p-progress').value = '0';
+    document.getElementById('p-status').value = 'planning';
+    document.getElementById('p-priority').value = 'medium';
+  } else {
+    const p = projects.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('p-name').value = p.name||'';
+    document.getElementById('p-desc').value = p.description||'';
+    document.getElementById('p-status').value = p.status||'planning';
+    document.getElementById('p-priority').value = p.priority||'medium';
+    document.getElementById('p-start').value = p.start_date||'';
+    document.getElementById('p-end').value = p.end_date||'';
+    document.getElementById('p-budget').value = p.budget!=null ? p.budget : '';
+    document.getElementById('p-progress').value = p.progress||0;
+  }
+  applyTranslations();
+  openModal('project-modal');
+}
+
+async function saveProject() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name required','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    company_id: companyId, name,
+    description: document.getElementById('p-desc').value.trim()||null,
+    status: document.getElementById('p-status').value,
+    priority: document.getElementById('p-priority').value,
+    start_date: document.getElementById('p-start').value||null,
+    end_date: document.getElementById('p-end').value||null,
+    budget: parseFloat(document.getElementById('p-budget').value)||null,
+    progress: parseInt(document.getElementById('p-progress').value)||0,
+    created_by: user.id
+  };
+  if (editingProjectId) {
+    await sb.from('projects').update(payload).eq('id', editingProjectId);
+    if (currentProject?.id === editingProjectId) {
+      Object.assign(currentProject, payload);
+      renderDetailHeader();
+    }
+  } else {
+    const { error } = await sb.from('projects').insert(payload);
+    if (error) { showToast('Error: '+error.message,'error'); return; }
+  }
+  showToast(t('toast_project_saved'),'success');
+  closeModal('project-modal');
+  await loadProjects();
+  renderProjects();
+}
+
+async function deleteProject(id) {
+  if (!await showConfirm(t('confirm_delete_project'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('projects').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  showToast(t('toast_project_deleted'),'success');
+  if (currentProject?.id === id) closeDetail();
+  await loadProjects();
+  renderProjects();
+}
+
+// ===== TASK CRUD =====
+function openTaskModal(id = null) {
+  editingTaskId = id;
+  document.getElementById('task-modal-title').textContent = t(id ? 'title_edit_task' : 'title_add_task');
+  if (!id) {
+    ['t-title','t-assignee','t-notes'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('t-deadline').value = '';
+    document.getElementById('t-est-h').value = '';
+    document.getElementById('t-status').value = 'todo';
+    document.getElementById('t-priority').value = 'medium';
+  } else {
+    const t2 = tasks.find(x => x.id === id);
+    if (!t2) return;
+    document.getElementById('t-title').value = t2.title||'';
+    document.getElementById('t-status').value = t2.status||'todo';
+    document.getElementById('t-priority').value = t2.priority||'medium';
+    document.getElementById('t-assignee').value = t2.assignee||'';
+    document.getElementById('t-deadline').value = t2.deadline||'';
+    document.getElementById('t-est-h').value = t2.estimated_hours!=null ? t2.estimated_hours : '';
+    document.getElementById('t-notes').value = t2.notes||'';
+  }
+  applyTranslations();
+  openModal('task-modal');
+}
+
+async function saveTask() {
+  const title = document.getElementById('t-title').value.trim();
+  if (!title) { showToast(t('toast_name_required')||'Title required','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    project_id: currentProject.id, company_id: companyId, title,
+    status: document.getElementById('t-status').value,
+    priority: document.getElementById('t-priority').value,
+    assignee: document.getElementById('t-assignee').value.trim()||null,
+    deadline: document.getElementById('t-deadline').value||null,
+    estimated_hours: parseFloat(document.getElementById('t-est-h').value)||null,
+    notes: document.getElementById('t-notes').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingTaskId) {
+    await sb.from('tasks').update(payload).eq('id', editingTaskId);
+  } else {
+    const { error } = await sb.from('tasks').insert(payload);
+    if (error) { showToast('Error: '+error.message,'error'); return; }
+  }
+  showToast(t('toast_task_saved'),'success');
+  closeModal('task-modal');
+  await loadTasks(currentProject.id);
+  setDetailTab(null, activeDetailTab);
+}
+
+async function deleteTask(id) {
+  if (!await showConfirm(t('confirm_delete_task'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('tasks').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  showToast(t('toast_task_deleted'),'success');
+  await loadTasks(currentProject.id);
+  setDetailTab(null, activeDetailTab);
+}
+
+// ===== TIME LOG CRUD =====
+function openTimeModal() {
+  document.getElementById('tl-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('tl-hours').value = '';
+  document.getElementById('tl-notes').value = '';
+  document.getElementById('tl-person').value = '';
+  // Populate task select
+  const sel = document.getElementById('tl-task');
+  sel.innerHTML = `<option value="">— ${t('col_task')||'Task'} —</option>` +
+    tasks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+  applyTranslations();
+  openModal('time-modal');
+}
+
+async function saveTimeLog() {
+  const hours = parseFloat(document.getElementById('tl-hours').value);
+  if (!hours || hours <= 0) { showToast(t('toast_invalid_qty')||'Enter hours','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    project_id: currentProject.id, company_id: companyId,
+    date: document.getElementById('tl-date').value,
+    hours,
+    task_id: document.getElementById('tl-task').value||null,
+    person: document.getElementById('tl-person').value.trim()||null,
+    notes: document.getElementById('tl-notes').value.trim()||null,
+    created_by: user.id
+  };
+  const { error } = await sb.from('time_logs').insert(payload);
+  if (error) { showToast('Error: '+error.message,'error'); return; }
+  showToast(t('toast_time_saved'),'success');
+  closeModal('time-modal');
+  await loadTimeLogs(currentProject.id);
+  renderTime();
+}
+
+async function deleteTimeLog(id) {
+  if (!await showConfirm(t('confirm_delete_task'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('time_logs').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await loadTimeLogs(currentProject.id);
+  renderTime();
+}
+
+// ===== EXPENSE CRUD =====
+function openExpenseModal(id = null) {
+  editingExpenseId = id;
+  document.getElementById('expense-modal-title').textContent = t(id ? 'title_edit_expense' : 'title_add_expense');
+  if (!id) {
+    ['ex-desc','ex-category'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('ex-amount').value = '';
+    document.getElementById('ex-date').value = new Date().toISOString().split('T')[0];
+  } else {
+    const e = expenses.find(x => x.id === id);
+    if (!e) return;
+    document.getElementById('ex-desc').value = e.description||'';
+    document.getElementById('ex-amount').value = e.amount||'';
+    document.getElementById('ex-date').value = e.date||'';
+    document.getElementById('ex-category').value = e.category||'';
+  }
+  applyTranslations();
+  openModal('expense-modal');
+}
+
+async function saveExpense() {
+  const description = document.getElementById('ex-desc').value.trim();
+  const amount = parseFloat(document.getElementById('ex-amount').value);
+  if (!description || !amount) { showToast(t('toast_name_required')||'Fill required fields','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    project_id: currentProject.id, company_id: companyId,
+    description, amount,
+    date: document.getElementById('ex-date').value||null,
+    category: document.getElementById('ex-category').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingExpenseId) {
+    await sb.from('project_expenses').update(payload).eq('id', editingExpenseId);
+  } else {
+    const { error } = await sb.from('project_expenses').insert(payload);
+    if (error) { showToast('Error: '+error.message,'error'); return; }
+  }
+  showToast(t('toast_expense_saved'),'success');
+  closeModal('expense-modal');
+  await loadExpenses(currentProject.id);
+  // Update project spent
+  const totalSpent = expenses.reduce((s,e) => s + (e.amount||0), 0);
+  await sb.from('projects').update({ spent: totalSpent }).eq('id', currentProject.id);
+  currentProject.spent = totalSpent;
+  renderDetailHeader();
+  renderExpenses();
+}
+
+async function deleteExpense(id) {
+  if (!await showConfirm(t('confirm_delete_expense'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('project_expenses').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  showToast(t('toast_expense_saved'),'success');
+  await loadExpenses(currentProject.id);
+  renderExpenses();
+}
+
+// ===== MILESTONE CRUD =====
+function openMilestoneModal(id = null) {
+  editingMilestoneId = id;
+  document.getElementById('milestone-modal-title').textContent = t(id ? 'title_edit_milestone' : 'title_add_milestone');
+  if (!id) {
+    ['ms-name','ms-notes'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('ms-deadline').value = '';
+    document.getElementById('ms-status').value = 'pending';
+  } else {
+    const m = milestones.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('ms-name').value = m.name||'';
+    document.getElementById('ms-deadline').value = m.deadline||'';
+    document.getElementById('ms-status').value = m.status||'pending';
+    document.getElementById('ms-notes').value = m.notes||'';
+  }
+  applyTranslations();
+  openModal('milestone-modal');
+}
+
+async function saveMilestone() {
+  const name = document.getElementById('ms-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name required','error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    project_id: currentProject.id, company_id: companyId, name,
+    deadline: document.getElementById('ms-deadline').value||null,
+    status: document.getElementById('ms-status').value,
+    notes: document.getElementById('ms-notes').value.trim()||null,
+    created_by: user.id
+  };
+  if (editingMilestoneId) {
+    await sb.from('milestones').update(payload).eq('id', editingMilestoneId);
+  } else {
+    const { error } = await sb.from('milestones').insert(payload);
+    if (error) { showToast('Error: '+error.message,'error'); return; }
+  }
+  showToast(t('toast_milestone_saved'),'success');
+  closeModal('milestone-modal');
+  await loadMilestones(currentProject.id);
+  renderMilestones();
+}
+
+async function deleteMilestone(id) {
+  if (!await showConfirm(t('confirm_delete_milestone'), t('lbl_delete')||'Delete')) return;
+  const _now = new Date().toISOString();
+  const { data: { user: _u } } = await sb.auth.getUser();
+  await sb.from('milestones').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await loadMilestones(currentProject.id);
+  renderMilestones();
+}
+
+// ===== HELPERS =====
+function fmtCurr(n) {
+  if (n == null || isNaN(n)) return '—';
+  return new Intl.NumberFormat(undefined, { minimumFractionDigits:0, maximumFractionDigits:2 }).format(n);
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+let toastTimer;
+function showToast(msg, type='default') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type !== 'default' ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+function showConfirm(msg, confirmLabel='Confirm') {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `<div class="confirm-box">
+      <h3>${t('lbl_confirm')||'Confirm'}</h3><p>${msg}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" id="conf-no">${t('btn_cancel')||'Cancel'}</button>
+        <button class="btn btn-danger" id="conf-yes">${confirmLabel}</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#conf-yes').onclick = () => { overlay.remove(); resolve(true); };
+    overlay.querySelector('#conf-no').onclick  = () => { overlay.remove(); resolve(false); };
+  });
+}
+
+init();
+</script>
+</body>
+</html>
