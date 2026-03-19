@@ -275,7 +275,7 @@
     {
       labelKey: 'nav_group_management',
       items: [
-        { icon: '👥', key: 'nav_hr',           href: '#' },
+        { icon: '👥', key: 'nav_hr',           href: 'hr.html' },
         { icon: '🚚', key: 'nav_shipping',     href: '#' },
         { icon: '📅', key: 'nav_projects',     href: '#' },
         { icon: '🔧', key: 'nav_maintenance',  href: '#' },
