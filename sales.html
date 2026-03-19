@@ -295,7 +295,7 @@ tr:hover .row-actions{opacity:1}
           <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
           <option value="shipped" data-i18n="status_shipped">Shipped</option>
           <option value="delivered" data-i18n="status_delivered">Delivered</option>
-          <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
+          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="filter-customer" onchange="filterOrders()">
           <option value="" data-i18n="lbl_all_customers">All Customers</option>
@@ -398,7 +398,7 @@ tr:hover .row-actions{opacity:1}
             <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
             <option value="shipped" data-i18n="status_shipped">Shipped</option>
             <option value="delivered" data-i18n="status_delivered">Delivered</option>
-            <option value="cancelled"><span data-i18n="status_cancelled"></span></option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
           </select>
         </div>
         <div class="field">
@@ -949,6 +949,30 @@ async function saveOrder(statusOverride) {
     warehouse_id: i.warehouse_id || null
   }));
   await sb.from('sales_order_items').insert(itemsPayload);
+
+  // Stock movements
+  const _now = new Date().toISOString();
+  const status = payload.status;
+  if (editingOrderId) {
+    // Soft-delete existing movements for this order before recreating
+    await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: user.id })
+      .eq('invoice_id', orderId).eq('is_active', true);
+  }
+  if (status !== 'cancelled') {
+    const movements = validItems
+      .filter(i => i.product_id && i.qty > 0)
+      .map(i => ({
+        company_id: companyId,
+        product_id: i.product_id,
+        warehouse_id: i.warehouse_id || null,
+        type: 'sale',
+        quantity: i.qty,
+        invoice_id: orderId,
+        reference: payload.order_number,
+        created_by: user.id
+      }));
+    if (movements.length) await sb.from('stock_movements').insert(movements);
+  }
 
   showToast(editingOrderId ? t('order_updated') : t('order_created'), 'success');
   closeModal('order-modal');
