@@ -20,17 +20,18 @@
       display: flex; flex-direction: column; z-index: 50;
     }
     .sidebar-logo {
-      padding: 18px 20px 14px;
+      padding: 20px 16px 16px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
-      text-decoration: none; display: block;
+      text-decoration: none; display: block; overflow: hidden;
     }
     .sidebar-logo .wordmark {
-      font-family: var(--font-display); font-size: 20px;
-      font-weight: 800; color: #fff; letter-spacing: -0.5px;
+      font-family: var(--font-display); font-size: 26px;
+      font-weight: 800; color: #fff; letter-spacing: -1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
     }
     .sidebar-logo .dot { color: var(--accent); }
     .sidebar-logo .underline {
-      height: 2px; width: 60%; margin-top: 4px;
+      height: 3px; width: 72%; margin-top: 5px;
       background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
       border-radius: 99px;
     }
