@@ -397,7 +397,7 @@ tr:hover .action-btns { opacity:1; }
 
 <!-- ADD/EDIT PRODUCT MODAL -->
 <div class="modal-overlay" id="product-modal">
-  <div class="modal">
+  <div class="modal" style="width:700px">
     <div class="modal-head">
       <div class="modal-title" id="modal-title">Add Product</div>
       <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
@@ -421,6 +421,18 @@ tr:hover .action-btns { opacity:1; }
           <input type="hidden" id="p-category-id">
         </div>
         <div class="form-group">
+          <label><span data-i18n="lbl_product_type">Product Type</span></label>
+          <select id="p-type">
+            <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
+            <option value="raw_material" data-i18n="opt_raw_material">Hammadde</option>
+            <option value="consumable" data-i18n="opt_consumable">Sarf Malzeme</option>
+            <option value="by_product" data-i18n="opt_by_product">Yan Ürün</option>
+            <option value="waste" data-i18n="opt_waste">Atık</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label><span data-i18n="label_unit">Unit</span></label>
           <select id="p-unit">
             <option>pcs</option>
@@ -430,18 +442,6 @@ tr:hover .action-btns { opacity:1; }
             <option>m²</option>
             <option>box</option>
             <option>pack</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label><span data-i18n="lbl_product_type">Product Type</span></label>
-          <select id="p-type">
-            <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
-            <option value="raw_material" data-i18n="opt_raw_material">Hammadde</option>
-            <option value="consumable" data-i18n="opt_consumable">Sarf Malzeme</option>
-            <option value="by_product" data-i18n="opt_by_product">Yan Ürün</option>
-            <option value="waste" data-i18n="opt_waste">Atık</option>
           </select>
         </div>
         <div class="form-group">
@@ -457,18 +457,10 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-divider"></div>
       <div class="form-section-title" data-i18n="section_stock">Stock & Pricing</div>
-      <div class="form-row three">
+      <div class="form-row full">
         <div class="form-group">
           <label><span data-i18n="label_current_stock">Current Stock *</span></label>
           <input type="number" id="p-stock" placeholder="0" min="0">
-        </div>
-        <div class="form-group">
-          <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
-          <input type="number" id="p-min-stock" placeholder="—" min="0">
-        </div>
-        <div class="form-group">
-          <label data-i18n="label_max_stock">Max. Stock</label>
-          <input type="number" id="p-max-stock" placeholder="—" min="0">
         </div>
       </div>
       <div class="form-row">
@@ -479,6 +471,16 @@ tr:hover .action-btns { opacity:1; }
         <div class="form-group">
           <label><span data-i18n="label_selling_price">Selling Price ($)</span></label>
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
+          <input type="number" id="p-min-stock" placeholder="—" min="0">
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_max_stock">Max. Stock</label>
+          <input type="number" id="p-max-stock" placeholder="—" min="0">
         </div>
       </div>
     </div>
