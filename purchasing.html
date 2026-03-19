@@ -199,6 +199,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
+  <script src="quickadd.js"></script>
 </head>
 <body>
 
@@ -350,7 +351,8 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <div class="form-grid" style="margin-bottom:20px">
         <div class="field">
           <label data-i18n="label_supplier_req">Supplier *</label>
-          <select id="o-supplier"><option value="">Select supplier</option></select>
+          <div id="o-supplier-qa"></div>
+          <input type="hidden" id="o-supplier">
         </div>
         <div class="field">
           <label data-i18n="col_po_number"><span data-i18n="col_po_number">PO Number</span></label>
@@ -506,6 +508,54 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
 
 <div class="toast" id="toast"></div>
 
+<!-- QUICK-ADD PRODUCT MINI MODAL -->
+<div class="modal-overlay" id="qa-product-modal" style="z-index:2000">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title" data-i18n="title_quick_add_product">Quick Add Product</div><button class="modal-close" onclick="closeQAProductModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label data-i18n="label_product_name">Product Name *</label><input type="text" id="qa-p-name" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label data-i18n="lbl_product_type">Product Type</label>
+          <select id="qa-p-type" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
+            <option value="raw_material" data-i18n="opt_raw_material">Hammadde</option>
+            <option value="consumable" data-i18n="opt_consumable">Sarf Malzeme</option>
+            <option value="by_product" data-i18n="opt_by_product">Yan Ürün</option>
+            <option value="waste" data-i18n="opt_waste">Atık</option>
+          </select>
+        </div>
+        <div class="form-group"><label data-i18n="label_unit">Unit</label>
+          <select id="qa-p-unit" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option>pcs</option><option>kg</option><option>lt</option><option>m</option><option>m²</option><option>box</option><option>pack</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQAProduct()" data-i18n="btn_add">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK-ADD SUPPLIER MINI MODAL -->
+<div class="modal-overlay" id="qa-supplier-modal" style="z-index:2000">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header"><div class="modal-title" data-i18n="title_quick_add_supplier">Quick Add Supplier</div><button class="modal-close" onclick="closeQASupplierModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label data-i18n="col_supplier">Supplier Name *</label><input type="text" id="qa-s-name" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label data-i18n="lbl_email">Email</label><input type="email" id="qa-s-email" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
+        <div class="form-group"><label data-i18n="lbl_phone">Phone</label><input type="tel" id="qa-s-phone" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeQASupplierModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQASupplier()" data-i18n="btn_add">Add</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
@@ -525,6 +575,8 @@ let cashRegisters = [];
 let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
 let editingOrderId = null, editingSupplierId = null;
+let supplierQA = null;
+let _qaProductCb = null;
 let orderItems = [];
 
 const statusBadge = { draft:'badge-gray', sent:'badge-blue', confirmed:'badge-purple', received:'badge-green', cancelled:'badge-red' };
@@ -570,7 +622,7 @@ async function loadSuppliers() {
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,cost_price,unit').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,cost_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
   products = data || [];
 }
 
@@ -640,8 +692,21 @@ function updateStats() {
 
 function updateSupplierSelects() {
   const opts = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('o-supplier').innerHTML = `<option value="">${t('select_supplier')}</option>` + opts;
   document.getElementById('filter-supplier').innerHTML = `<option value="">${t('all_suppliers')}</option>` + opts;
+  const container = document.getElementById('o-supplier-qa');
+  if (!container) return;
+  const items = suppliers.map(s => ({ id: s.id, name: s.name }));
+  if (supplierQA) {
+    supplierQA.setItems(items);
+  } else {
+    supplierQA = QA.create(container, {
+      items,
+      placeholder: t('placeholder_search_suppliers') || 'Tedarikçi ara...',
+      onSelect(id) { document.getElementById('o-supplier').value = id; },
+      onAdd(query) { openQASupplierModal(query); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_supplier_add_new') || 'tedarikçi ekle'}`; },
+    });
+  }
 }
 
 // ===== CASH & BANK INTEGRATION =====
@@ -691,6 +756,7 @@ function openOrderModal() {
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_po');
   document.getElementById('o-supplier').value = '';
+  if (supplierQA) supplierQA.setValue('');
   document.getElementById('o-number').value = 'PO-' + String(orders.length + 1).padStart(4,'0');
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
   const exp = new Date(); exp.setDate(exp.getDate() + 14);
@@ -718,13 +784,10 @@ function removeOrderItem(i) {
 
 function renderOrderItems() {
   const tbody = document.getElementById('order-items');
-  const prodOpts = products.map(p => `<option value="${p.id}" data-price="${p.cost_price}">${p.name}</option>`).join('');
   tbody.innerHTML = orderItems.map((item,i) => `<tr>
     <td>
-      <select onchange="onProductSelect(this,${i})" style="margin-bottom:4px">
-        <option value="">Select product</option>${prodOpts}
-      </select>
-      <input type="text" value="${item.description||''}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
+      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="margin-bottom:4px;min-width:160px"></div>
+      <input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
     </td>
     <td><input type="number" value="${item.qty}" min="0.01" step="0.01" oninput="orderItems[${i}].qty=parseFloat(this.value)||0;recalcOrder()"></td>
     <td><input type="number" value="${item.price}" min="0" step="0.01" oninput="orderItems[${i}].price=parseFloat(this.value)||0;recalcOrder()"></td>
@@ -737,18 +800,23 @@ function renderOrderItems() {
     <td class="item-total" id="item-total-${i}">—</td>
     <td><button class="btn btn-danger btn-icon btn-sm" onclick="removeOrderItem(${i})">✕</button></td>
   </tr>`).join('');
-  orderItems.forEach((item,i) => {
-    if (item.product_id) { const sel = tbody.querySelectorAll('select')[i]; if(sel) sel.value = item.product_id; }
+  tbody.querySelectorAll('.qa-wrap[data-qa-idx]').forEach(wrap => {
+    const idx = parseInt(wrap.dataset.qaIdx);
+    QA.create(wrap, {
+      items: products.map(p => ({ id: p.id, name: p.name, _price: p.cost_price })),
+      value: wrap.dataset.qaVal || '',
+      placeholder: t('select_product') || 'Ürün seç...',
+      onSelect(id, p) {
+        orderItems[idx].product_id = id;
+        orderItems[idx].price = parseFloat(p?._price || 0);
+        orderItems[idx].description = p?.name || '';
+        recalcOrder();
+      },
+      onAdd(query) { openQAProductModal(query, (prod) => { orderItems[idx].product_id = prod.id; orderItems[idx].price = prod.cost_price || 0; orderItems[idx].description = prod.name; recalcOrder(); renderOrderItems(); }); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_product_add_new') || 'ürün ekle'}`; },
+    });
   });
   recalcOrder();
-}
-
-function onProductSelect(sel,i) {
-  const opt = sel.options[sel.selectedIndex];
-  orderItems[i].product_id = sel.value;
-  orderItems[i].price = parseFloat(opt.dataset.price)||0;
-  orderItems[i].description = sel.value ? opt.text : '';
-  renderOrderItems();
 }
 
 function recalcOrder() {
@@ -822,6 +890,7 @@ async function editOrder(id) {
   const { data: items } = await sb.from('purchase_order_items').select('*').eq('order_id', id);
   document.getElementById('order-modal-title').textContent = t('title_edit_po');
   document.getElementById('o-supplier').value = order.supplier_id;
+  if (supplierQA) supplierQA.setValue(order.supplier_id);
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-expected').value = order.expected_date||'';
@@ -1001,6 +1070,57 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 function showToast(msg,type='') { const t=document.getElementById('toast'); t.textContent=(type==='success'?'✓ ':type==='error'?'✕ ':'')+msg; t.className='toast show '+type; setTimeout(()=>t.classList.remove('show'),3000); }
 async function handleLogout() { await sb.auth.signOut(); window.location.href='/auth.html'; }
+
+// ===== QUICK-ADD HELPERS =====
+function openQAProductModal(name, callback) {
+  _qaProductCb = callback || null;
+  document.getElementById('qa-p-name').value = name || '';
+  document.getElementById('qa-p-type').value = 'raw_material';
+  document.getElementById('qa-p-unit').value = 'pcs';
+  document.getElementById('qa-product-modal').classList.add('open');
+  setTimeout(() => document.getElementById('qa-p-name').focus(), 100);
+}
+function closeQAProductModal() { document.getElementById('qa-product-modal').classList.remove('open'); _qaProductCb = null; }
+async function saveQAProduct() {
+  const name = document.getElementById('qa-p-name').value.trim();
+  if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
+  const { data, error } = await sb.from('products').insert({
+    company_id: companyId, name,
+    product_type: document.getElementById('qa-p-type').value,
+    unit: document.getElementById('qa-p-unit').value,
+    quantity: 0, cost_price: 0, sale_price: 0, is_active: true,
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
+  closeQAProductModal();
+  products.push(data);
+  if (_qaProductCb) _qaProductCb(data);
+}
+function openQASupplierModal(name) {
+  document.getElementById('qa-s-name').value = name || '';
+  document.getElementById('qa-s-email').value = '';
+  document.getElementById('qa-s-phone').value = '';
+  document.getElementById('qa-supplier-modal').classList.add('open');
+  setTimeout(() => document.getElementById('qa-s-name').focus(), 100);
+}
+function closeQASupplierModal() { document.getElementById('qa-supplier-modal').classList.remove('open'); }
+async function saveQASupplier() {
+  const name = document.getElementById('qa-s-name').value.trim();
+  if (!name) { showToast(t('toast_supplier_name_required') || 'Name required', 'error'); return; }
+  const { data, error } = await sb.from('suppliers').insert({
+    company_id: companyId, name,
+    email: document.getElementById('qa-s-email').value.trim() || null,
+    phone: document.getElementById('qa-s-phone').value.trim() || null,
+    is_active: true,
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_supplier_quick_added') || 'Tedarikçi eklendi ✓', 'success');
+  closeQASupplierModal();
+  await loadSuppliers();
+  updateSupplierSelects();
+  if (supplierQA) supplierQA.addAndSelect({ id: data.id, name: data.name });
+  document.getElementById('o-supplier').value = data.id;
+}
 
 init();
 </script>

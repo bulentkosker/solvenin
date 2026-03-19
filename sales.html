@@ -204,6 +204,7 @@ tr:hover .row-actions{opacity:1}
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
+  <script src="quickadd.js"></script>
 </head>
 <body>
 
@@ -375,9 +376,8 @@ tr:hover .row-actions{opacity:1}
       <div class="form-grid" style="margin-bottom:20px">
         <div class="field">
           <label><span data-i18n="col_customer">Customer *</span></label>
-          <select id="o-customer">
-            <option value="" data-i18n="select_customer">Select customer</option>
-          </select>
+          <div id="o-customer-qa"></div>
+          <input type="hidden" id="o-customer">
         </div>
         <div class="field">
           <label><span data-i18n="lbl_order_no">Order Number</span></label>
@@ -532,6 +532,75 @@ tr:hover .row-actions{opacity:1}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- QUICK-ADD PRODUCT MINI MODAL -->
+<div class="modal-overlay" id="qa-product-modal" style="z-index:2000">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="title_quick_add_product">Quick Add Product</div>
+      <button class="modal-close" onclick="closeQAProductModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_product_name">Product Name *</label>
+        <input type="text" id="qa-p-name" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label data-i18n="lbl_product_type">Product Type</label>
+          <select id="qa-p-type" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
+            <option value="raw_material" data-i18n="opt_raw_material">Hammadde</option>
+            <option value="consumable" data-i18n="opt_consumable">Sarf Malzeme</option>
+            <option value="by_product" data-i18n="opt_by_product">Yan Ürün</option>
+            <option value="waste" data-i18n="opt_waste">Atık</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_unit">Unit</label>
+          <select id="qa-p-unit" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option>pcs</option><option>kg</option><option>lt</option>
+            <option>m</option><option>m²</option><option>box</option><option>pack</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQAProduct()" data-i18n="btn_add">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK-ADD CUSTOMER MINI MODAL -->
+<div class="modal-overlay" id="qa-customer-modal" style="z-index:2000">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="title_quick_add_customer">Quick Add Customer</div>
+      <button class="modal-close" onclick="closeQACustomerModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="col_customer">Customer Name *</label>
+        <input type="text" id="qa-c-name" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label data-i18n="lbl_email">Email</label>
+          <input type="email" id="qa-c-email" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_phone">Phone</label>
+          <input type="tel" id="qa-c-phone" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeQACustomerModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQACustomer()" data-i18n="btn_add">Add</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
@@ -545,6 +614,8 @@ function fmtShort(amount) { const sym = window.getCurrencySymbol ? window.getCur
 let companyId = null, companyName = 'My Company';
 let orders = [], customers = [], products = [], payments = [];
 let editingOrderId = null, editingCustomerId = null;
+let customerQA = null;
+let _qaProductCb = null, _qaCustomerCb = null;
 let orderItems = [];
 let warehouses = [];
 let currentInvoiceOrder = null;
@@ -592,7 +663,7 @@ async function loadWarehouses() {
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,sale_price,unit').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,sale_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
   products = data || [];
 }
 
@@ -721,8 +792,22 @@ function filterCustomers() {
 
 function updateCustomerSelects() {
   const opts = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  document.getElementById('o-customer').innerHTML = `<option value="">${t('select_customer')}</option>` + opts;
   document.getElementById('filter-customer').innerHTML = '<option value="" data-i18n="lbl_all_customers">All Customers</option>' + opts;
+  // QA component for order modal
+  const container = document.getElementById('o-customer-qa');
+  if (!container) return;
+  const items = customers.map(c => ({ id: c.id, name: c.name }));
+  if (customerQA) {
+    customerQA.setItems(items);
+  } else {
+    customerQA = QA.create(container, {
+      items,
+      placeholder: t('placeholder_search_customers') || 'Müşteri ara...',
+      onSelect(id) { document.getElementById('o-customer').value = id; },
+      onAdd(query) { openQACustomerModal(query); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_customer_add_new') || 'müşteri ekle'}`; },
+    });
+  }
 }
 
 // ===== ORDER MODAL =====
@@ -730,6 +815,7 @@ function openOrderModal() {
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
+  if (customerQA) customerQA.setValue('');
   document.getElementById('o-number').value = 'INV-' + String(orders.length + 1).padStart(4,'0');
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
   const due = new Date(); due.setDate(due.getDate() + 30);
@@ -757,13 +843,10 @@ function removeOrderItem(i) {
 
 function renderOrderItems() {
   const tbody = document.getElementById('order-items');
-  const prodOpts = products.map(p => `<option value="${p.id}" data-price="${p.sale_price}">${p.name}</option>`).join('');
   tbody.innerHTML = orderItems.map((item, i) => `<tr>
     <td>
-      <select onchange="onProductSelect(this,${i})" style="margin-bottom:4px">
-        <option value="" data-i18n="select_product">Select product or type description</option>${prodOpts}
-      </select>
-      <input type="text" value="${item.description||''}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
+      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="margin-bottom:4px;min-width:160px"></div>
+      <input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
     </td>
     <td><input type="number" value="${item.qty}" min="0.01" step="0.01" oninput="orderItems[${i}].qty=parseFloat(this.value)||0;recalcOrder()"></td>
     <td><input type="number" value="${item.price}" min="0" step="0.01" oninput="orderItems[${i}].price=parseFloat(this.value)||0;recalcOrder()"></td>
@@ -777,23 +860,24 @@ function renderOrderItems() {
     <td class="item-total" id="item-total-${i}">—</td>
     <td><button class="btn btn-danger btn-icon btn-sm" onclick="removeOrderItem(${i})">✕</button></td>
   </tr>`).join('');
-  // Set selected products
-  orderItems.forEach((item, i) => {
-    if (item.product_id) {
-      const sel = tbody.querySelectorAll('select')[i];
-      if (sel) sel.value = item.product_id;
-    }
+  // Initialize QA on each product cell
+  tbody.querySelectorAll('.qa-wrap[data-qa-idx]').forEach(wrap => {
+    const idx = parseInt(wrap.dataset.qaIdx);
+    QA.create(wrap, {
+      items: products.map(p => ({ id: p.id, name: p.name, _price: p.sale_price })),
+      value: wrap.dataset.qaVal || '',
+      placeholder: t('select_product') || 'Ürün seç...',
+      onSelect(id, p) {
+        orderItems[idx].product_id = id;
+        orderItems[idx].price = parseFloat(p?._price || 0);
+        orderItems[idx].description = p?.name || '';
+        recalcOrder();
+      },
+      onAdd(query) { openQAProductModal(query, (prod) => { orderItems[idx].product_id = prod.id; orderItems[idx].price = prod.sale_price || 0; orderItems[idx].description = prod.name; recalcOrder(); renderOrderItems(); }); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_product_add_new') || 'ürün ekle'}`; },
+    });
   });
   recalcOrder();
-}
-
-function onProductSelect(sel, i) {
-  const opt = sel.options[sel.selectedIndex];
-  const price = parseFloat(opt.dataset.price) || 0;
-  orderItems[i].product_id = sel.value;
-  orderItems[i].price = price;
-  orderItems[i].description = opt.text !== t('select_product') ? opt.text : '';
-  renderOrderItems();
 }
 
 function recalcOrder() {
@@ -869,6 +953,7 @@ async function editOrder(id) {
   const { data: items } = await sb.from('sales_order_items').select('*').eq('order_id', id);
   document.getElementById('order-modal-title').textContent = t('title_edit_order');
   document.getElementById('o-customer').value = order.customer_id;
+  if (customerQA) customerQA.setValue(order.customer_id);
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-duedate').value = order.due_date || '';
@@ -1210,6 +1295,57 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); }));
 function showToast(msg, type='') { const t=document.getElementById('toast'); t.textContent=(type==='success'?'✓ ':type==='error'?'✕ ':'')+msg; t.className='toast show '+type; setTimeout(()=>t.classList.remove('show'),3000); }
 async function handleLogout() { await sb.auth.signOut(); window.location.href='/auth.html'; }
+
+// ===== QUICK-ADD HELPERS =====
+function openQAProductModal(name, callback) {
+  _qaProductCb = callback || null;
+  document.getElementById('qa-p-name').value = name || '';
+  document.getElementById('qa-p-type').value = 'finished_good';
+  document.getElementById('qa-p-unit').value = 'pcs';
+  document.getElementById('qa-product-modal').classList.add('open');
+  setTimeout(() => document.getElementById('qa-p-name').focus(), 100);
+}
+function closeQAProductModal() { document.getElementById('qa-product-modal').classList.remove('open'); _qaProductCb = null; }
+async function saveQAProduct() {
+  const name = document.getElementById('qa-p-name').value.trim();
+  if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
+  const { data, error } = await sb.from('products').insert({
+    company_id: companyId, name,
+    product_type: document.getElementById('qa-p-type').value,
+    unit: document.getElementById('qa-p-unit').value,
+    quantity: 0, cost_price: 0, sale_price: 0, is_active: true,
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
+  closeQAProductModal();
+  await loadProducts();
+  if (_qaProductCb) _qaProductCb(data);
+}
+function openQACustomerModal(name) {
+  document.getElementById('qa-c-name').value = name || '';
+  document.getElementById('qa-c-email').value = '';
+  document.getElementById('qa-c-phone').value = '';
+  document.getElementById('qa-customer-modal').classList.add('open');
+  setTimeout(() => document.getElementById('qa-c-name').focus(), 100);
+}
+function closeQACustomerModal() { document.getElementById('qa-customer-modal').classList.remove('open'); }
+async function saveQACustomer() {
+  const name = document.getElementById('qa-c-name').value.trim();
+  if (!name) { showToast(t('customer_required') || 'Name required', 'error'); return; }
+  const { data, error } = await sb.from('customers').insert({
+    company_id: companyId, name,
+    email: document.getElementById('qa-c-email').value.trim() || null,
+    phone: document.getElementById('qa-c-phone').value.trim() || null,
+    is_active: true,
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_customer_quick_added') || 'Müşteri eklendi ✓', 'success');
+  closeQACustomerModal();
+  await loadCustomers();
+  updateCustomerSelects();
+  if (customerQA) customerQA.addAndSelect({ id: data.id, name: data.name });
+  document.getElementById('o-customer').value = data.id;
+}
 
 init();
 </script>

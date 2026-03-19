@@ -178,6 +178,7 @@
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
+  <script src="quickadd.js"></script>
 </head>
 <body>
 
@@ -474,6 +475,45 @@
   </div>
 </div>
 
+<!-- ════ QUICK-ADD PRODUCT MINI MODAL ════ -->
+<div class="modal-overlay" id="qa-product-modal" style="z-index:2000">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="title_quick_add_product">Quick Add Product</div>
+      <button class="modal-close" onclick="closeQAProductModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label data-i18n="label_product_name">Product Name *</label>
+        <input type="text" id="qa-p-name" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="lbl_product_type">Product Type</label>
+          <select id="qa-p-type" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option value="raw_material" data-i18n="opt_raw_material">Hammadde</option>
+            <option value="consumable" data-i18n="opt_consumable">Sarf Malzeme</option>
+            <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
+            <option value="by_product" data-i18n="opt_by_product">Yan Ürün</option>
+            <option value="waste" data-i18n="opt_waste">Atık</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_unit">Unit</label>
+          <select id="qa-p-unit" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+            <option>pcs</option><option>kg</option><option>lt</option>
+            <option>m</option><option>m²</option><option>box</option><option>pack</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQAProduct()" data-i18n="btn_add">Add</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════ DELETE CONFIRM MODAL ════ -->
 <div class="modal-overlay" id="delete-modal">
   <div class="modal" style="max-width:400px">
@@ -757,22 +797,12 @@ function renderBomLines() {
   const inputEl = document.getElementById('bom-inputs-list');
   const outputEl = document.getElementById('bom-outputs-list');
 
-  const productOptions = products
-    .filter(p => ['raw_material', 'consumable'].includes(p.product_type))
-    .map(p => `<option value="${p.id}">${escHtml(p.name)}${p.sku ? ' ('+escHtml(p.sku)+')' : ''}</option>`)
-    .join('');
-
-  const outputProductOptions = products
-    .filter(p => ['finished_good', 'by_product', 'waste', 'raw_material', 'consumable'].includes(p.product_type))
-    .map(p => `<option value="${p.id}">${escHtml(p.name)}${p.sku ? ' ('+escHtml(p.sku)+')' : ''}</option>`)
-    .join('');
+  const inputProducts = products.filter(p => ['raw_material', 'consumable'].includes(p.product_type));
+  const outputProducts = products.filter(p => ['finished_good', 'by_product', 'waste', 'raw_material', 'consumable'].includes(p.product_type));
 
   inputEl.innerHTML = bomInputLines.map((line, i) => `
-    <div class="bom-line" style="display:grid;grid-template-columns:1fr 90px 80px 36px;gap:8px;align-items:center;margin-bottom:8px">
-      <select class="form-group" style="margin:0;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px" onchange="updateBomInputLine(${i},'product_id',this.value)">
-        <option value="">${t('placeholder_select_product')}</option>
-        ${productOptions.replace(`value="${line.product_id}"`, `value="${line.product_id}" selected`)}
-      </select>
+    <div style="display:grid;grid-template-columns:1fr 90px 80px 36px;gap:8px;align-items:center;margin-bottom:8px">
+      <div class="qa-wrap" data-qa-type="input" data-qa-idx="${i}" data-qa-val="${line.product_id||''}"></div>
       <input type="number" min="0.001" step="0.001" value="${line.qty || 1}" style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;width:100%" oninput="updateBomInputLine(${i},'qty',this.value)" placeholder="${t('lbl_qty')}">
       <input type="text" value="${escHtml(line.unit || '')}" style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;width:100%" oninput="updateBomInputLine(${i},'unit',this.value)" placeholder="${t('lbl_unit')}">
       <button type="button" class="btn btn-danger btn-sm btn-icon" onclick="removeBomInputLine(${i})">✕</button>
@@ -780,10 +810,7 @@ function renderBomLines() {
 
   outputEl.innerHTML = bomOutputLines.map((line, i) => `
     <div style="display:grid;grid-template-columns:1fr 90px 80px 130px 36px;gap:8px;align-items:center;margin-bottom:8px">
-      <select style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px" onchange="updateBomOutputLine(${i},'product_id',this.value)">
-        <option value="">${t('placeholder_select_product')}</option>
-        ${outputProductOptions.replace(`value="${line.product_id}"`, `value="${line.product_id}" selected`)}
-      </select>
+      <div class="qa-wrap" data-qa-type="output" data-qa-idx="${i}" data-qa-val="${line.product_id||''}"></div>
       <input type="number" min="0.001" step="0.001" value="${line.qty || 1}" style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;width:100%" oninput="updateBomOutputLine(${i},'qty',this.value)" placeholder="${t('lbl_qty')}">
       <input type="text" value="${escHtml(line.unit || '')}" style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;width:100%" oninput="updateBomOutputLine(${i},'unit',this.value)" placeholder="${t('lbl_unit')}">
       <select style="padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px" onchange="updateBomOutputLine(${i},'output_type',this.value)">
@@ -793,6 +820,32 @@ function renderBomLines() {
       </select>
       <button type="button" class="btn btn-danger btn-sm btn-icon" onclick="removeBomOutputLine(${i})">✕</button>
     </div>`).join('');
+
+  // Init QA on input product cells
+  inputEl.querySelectorAll('.qa-wrap[data-qa-type="input"]').forEach(wrap => {
+    const idx = parseInt(wrap.dataset.qaIdx);
+    QA.create(wrap, {
+      items: inputProducts.map(p => ({ id: p.id, name: p.name + (p.sku ? ` (${p.sku})` : '') })),
+      value: wrap.dataset.qaVal || '',
+      placeholder: t('placeholder_select_product') || 'Ürün seç...',
+      onSelect(id) { updateBomInputLine(idx, 'product_id', id); },
+      onAdd(query) { openQAProductModal(query, (prod) => { products.push(prod); updateBomInputLine(idx, 'product_id', prod.id); renderBomLines(); }); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_product_add_new') || 'ürün ekle'}`; },
+    });
+  });
+
+  // Init QA on output product cells
+  outputEl.querySelectorAll('.qa-wrap[data-qa-type="output"]').forEach(wrap => {
+    const idx = parseInt(wrap.dataset.qaIdx);
+    QA.create(wrap, {
+      items: outputProducts.map(p => ({ id: p.id, name: p.name + (p.sku ? ` (${p.sku})` : '') })),
+      value: wrap.dataset.qaVal || '',
+      placeholder: t('placeholder_select_product') || 'Ürün seç...',
+      onSelect(id) { updateBomOutputLine(idx, 'product_id', id); },
+      onAdd(query) { openQAProductModal(query, (prod) => { products.push(prod); updateBomOutputLine(idx, 'product_id', prod.id); renderBomLines(); }); },
+      addLabel(q) { return `+ "${q}" ${t('lbl_product_add_new') || 'ürün ekle'}`; },
+    });
+  });
 }
 
 function updateBomInputLine(i, key, val) { bomInputLines[i][key] = val; }
@@ -1200,6 +1253,35 @@ async function confirmDelete() {
 }
 
 // ===== UTILS =====
+// ===== QUICK-ADD PRODUCT =====
+let _qaProductCb = null;
+function openQAProductModal(name, callback) {
+  _qaProductCb = callback || null;
+  document.getElementById('qa-p-name').value = name || '';
+  document.getElementById('qa-p-type').value = 'raw_material';
+  document.getElementById('qa-p-unit').value = 'pcs';
+  document.getElementById('qa-product-modal').classList.add('open');
+  setTimeout(() => document.getElementById('qa-p-name').focus(), 100);
+}
+function closeQAProductModal() {
+  document.getElementById('qa-product-modal').classList.remove('open');
+  _qaProductCb = null;
+}
+async function saveQAProduct() {
+  const name = document.getElementById('qa-p-name').value.trim();
+  if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
+  const { data, error } = await sb.from('products').insert({
+    company_id: companyId, name,
+    product_type: document.getElementById('qa-p-type').value,
+    unit: document.getElementById('qa-p-unit').value,
+    quantity: 0, cost_price: 0, sale_price: 0, is_active: true,
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
+  closeQAProductModal();
+  if (_qaProductCb) _qaProductCb(data);
+}
+
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
