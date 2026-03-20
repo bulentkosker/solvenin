@@ -592,10 +592,12 @@ async function loadSubscription() {
       .limit(1)
       .single();
 
+    console.log('[subscription] company_users query result:', cu);
     if (cu?.company_id) {
       companyId = cu.company_id;
       currentPlan = cu.companies?.plan || 'free';
     }
+    console.log('[subscription] currentPlan:', currentPlan);
 
     if (companyId) {
       // Fetch total record count across key tables
