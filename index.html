@@ -494,12 +494,12 @@ footer{background:var(--emerald-dark);border-top:1px solid rgba(255,255,255,0.06
     <h2 class="section-title" data-i18n="pri_title">Simple, transparent pricing</h2>
     <p class="section-sub" data-i18n="pri_sub">Pay per user. No hidden fees. 7-day free trial. Cancel anytime.</p>
     <div class="toggle-wrap" style="margin-top:32px">
-      <span id="toggle-monthly-label" style="font-size:14px;font-weight:600;color:var(--gray-dark)">Monthly</span>
+      <span id="toggle-monthly-label" data-i18n="toggle_monthly" style="font-size:14px;font-weight:600;color:var(--gray-dark)">Monthly</span>
       <div class="toggle-track" onclick="toggleBilling()"><div id="toggle-thumb"></div></div>
-      <span style="font-size:14px;font-weight:600;color:var(--gray-mid)">Yearly <span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px">Save 20%</span></span>
+      <span style="font-size:14px;font-weight:600;color:var(--gray-mid)"><span data-i18n="toggle_yearly">Yearly</span> <span data-i18n="toggle_save" style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px">Save 20%</span></span>
     </div>
     <div class="user-ctrl">
-      <span style="font-size:14px;color:var(--gray-dark);font-weight:500">Users:</span>
+      <span data-i18n="users_label" style="font-size:14px;color:var(--gray-dark);font-weight:500">Users:</span>
       <button class="user-ctrl-btn" onclick="changeUsers(-1)">−</button>
       <span id="user-count" style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--text);min-width:32px;text-align:center">1</span>
       <button class="user-ctrl-btn" onclick="changeUsers(1)">+</button>
@@ -553,7 +553,7 @@ footer{background:var(--emerald-dark);border-top:1px solid rgba(255,255,255,0.06
         <button class="btn-plan btn-plan-gold" onclick="startCheckout('professional')" data-i18n="plan_trial">Start Free Trial</button>
       </div>
     </div>
-    <p style="text-align:center;font-size:13px;color:var(--gray-mid);margin-top:24px">✓ All plans include hosting, updates &amp; support &nbsp;·&nbsp; Annual billing saves 20% &nbsp;·&nbsp; Cancel anytime</p>
+    <p data-i18n="pricing_note2" style="text-align:center;font-size:13px;color:var(--gray-mid);margin-top:24px">✓ All plans include hosting, updates &amp; support &nbsp;·&nbsp; Annual billing saves 20% &nbsp;·&nbsp; Cancel anytime</p>
   </div>
 </div>
 
@@ -736,7 +736,21 @@ const T = {
     fc2:"Industries", fc2_1:"Manufacturing", fc2_2:"Retail", fc2_3:"Hospitality", fc2_4:"Restaurant",
     fc3:"Company", fc3_1:"About", fc3_2:"Blog", fc3_3:"Careers", fc3_4:"Contact",
     fc4:"Legal", fc4_1:"Privacy", fc4_2:"Terms", fc4_3:"Security", fc4_4:"Cookies",
-    footer_copy:"© 2025 Solvenin. All rights reserved."
+    footer_copy:"© 2025 Solvenin. All rights reserved.",
+    hero_line1:"The Business Software", hero_line2:"that Solves", hero_line3:"Everything.",
+    trust1:"No credit card required", trust2:"7-day free trial", trust3:"Cancel anytime",
+    how_tag:"How It Works", how_title:"Up and running in 3 steps",
+    how_sub:"No setup fees, no consultants, no complexity.",
+    step1_title:"Create Your Account",
+    step1_desc:"Sign up free in seconds. No credit card required. Your data is isolated and secure from day one.",
+    step2_title:"Set Up Your Company",
+    step2_desc:"Add your company details, invite your team, and activate the modules you need.",
+    step3_title:"Start Managing",
+    step3_desc:"Manage inventory, sales, finance, HR and more from a single dashboard. Grow without limits.",
+    toggle_monthly:"Monthly", toggle_yearly:"Yearly", toggle_save:"Save 20%",
+    users_label:"Users:",
+    pricing_note2:"✓ All plans include hosting, updates &amp; support &nbsp;·&nbsp; Annual billing saves 20% &nbsp;·&nbsp; Cancel anytime",
+    fc4_5:"Refund Policy", fc4_6:"Pricing"
   },
   tr: {
     nav_features:"Özellikler", nav_sectors:"Sektörler", nav_pricing:"Fiyatlar", nav_faq:"SSS",
@@ -800,7 +814,21 @@ const T = {
     fc2:"Sektörler", fc2_1:"İmalat", fc2_2:"Perakende", fc2_3:"Konaklama", fc2_4:"Restoran",
     fc3:"Şirket", fc3_1:"Hakkımızda", fc3_2:"Blog", fc3_3:"Kariyer", fc3_4:"İletişim",
     fc4:"Hukuki", fc4_1:"Gizlilik", fc4_2:"Şartlar", fc4_3:"Güvenlik", fc4_4:"Çerezler",
-    footer_copy:"© 2025 Solvenin. Tüm hakları saklıdır."
+    footer_copy:"© 2025 Solvenin. Tüm hakları saklıdır.",
+    hero_line1:"Her Şeyi Çözen", hero_line2:"İş Yazılımı", hero_line3:"Çözer.",
+    trust1:"Kredi kartı gerekmez", trust2:"7 gün ücretsiz deneme", trust3:"İstediğin zaman iptal",
+    how_tag:"Nasıl Çalışır", how_title:"3 adımda başla",
+    how_sub:"Kurulum ücreti yok, danışman yok, karmaşıklık yok.",
+    step1_title:"Hesap Oluştur",
+    step1_desc:"Saniyeler içinde ücretsiz kaydolun. Kredi kartı gerekmez. Verileriniz ilk günden itibaren güvende.",
+    step2_title:"Şirketini Kur",
+    step2_desc:"Şirket bilgilerini ekle, ekibini davet et ve ihtiyacın olan modülleri etkinleştir.",
+    step3_title:"Kullanmaya Başla",
+    step3_desc:"Stok, satış, finans, İK ve daha fazlasını tek panelden yönet. Sınırsız büyü.",
+    toggle_monthly:"Aylık", toggle_yearly:"Yıllık", toggle_save:"%20 Tasarruf",
+    users_label:"Kullanıcılar:",
+    pricing_note2:"✓ Tüm planlar hosting ve güncellemeleri kapsar · Yıllık ödemede %20 indirim · İstediğiniz zaman iptal",
+    trial:"7 gün ücretsiz deneme"
   },
   de: {
     nav_features:"Funktionen", nav_sectors:"Branchen", nav_pricing:"Preise", nav_faq:"FAQ",
@@ -828,7 +856,75 @@ const T = {
     pf3_1:"Alles in Standard", pf3_2:"Multi-Unternehmen", pf3_3:"API & Webhooks", pf3_4:"Individuelle Integrationen", pf3_5:"Dedizierter Support",
     plan_trial:"Kostenlos testen", trial:"7 Tage kostenlos testen",
     faq_tag:"FAQ", faq_title:"Häufig gestellte Fragen",
-    footer_desc:"Business-Software für jede Branche. Einfach, leistungsstark und wirklich global."
+    footer_desc:"Business-Software für jede Branche. Einfach, leistungsstark und wirklich global.",
+    hero_line1:"Die Business-Software,", hero_line2:"die alles", hero_line3:"löst.",
+    trust1:"Keine Kreditkarte erforderlich", trust2:"7 Tage kostenlos testen", trust3:"Jederzeit kündigen",
+    how_tag:"So funktioniert es", how_title:"In 3 Schritten loslegen",
+    how_sub:"Keine Einrichtungsgebühren, keine Berater, keine Komplexität.",
+    step1_title:"Konto erstellen",
+    step1_desc:"In Sekunden kostenlos registrieren. Keine Kreditkarte. Ihre Daten sind von Anfang an sicher.",
+    step2_title:"Ihr Unternehmen einrichten",
+    step2_desc:"Fügen Sie Ihre Unternehmensdaten hinzu, laden Sie Ihr Team ein und aktivieren Sie die benötigten Module.",
+    step3_title:"Verwalten Sie jetzt",
+    step3_desc:"Verwalten Sie Inventar, Vertrieb, Finanzen, HR und mehr über ein einziges Dashboard. Wachsen Sie ohne Grenzen.",
+    toggle_monthly:"Monatlich", toggle_yearly:"Jährlich", toggle_save:"20% sparen",
+    users_label:"Benutzer:",
+    pricing_note2:"✓ Alle Pläne beinhalten Hosting, Updates &amp; Support · Jährliche Abrechnung spart 20% · Jederzeit kündigen",
+    stat1:"Branchen", stat2:"Module", stat3:"Sprachen", stat4:"Startkosten",
+    feat_tag:"Funktionen", feat_title:"Alles, was Ihr Unternehmen braucht", feat_sub:"Modular gestaltet. Nutzen Sie nur, was Sie brauchen.",
+    sec_tag:"Branchen", sec_title:"Für jeden Unternehmenstyp entwickelt", sec_sub:"Ob Fabrik, Café oder Hotel — Solvenin passt sich an.",
+    s1:"Fertigung", s1d:"Produktion, Stückliste, Qualitätskontrolle",
+    s2:"Handel", s2d:"POS, Lager, Filialverwaltung",
+    s3:"Hotels & Gastronomie", s3d:"Reservierungen, Housekeeping, Abrechnung",
+    s4:"Cafés & Restaurants", s4d:"Bestellungen, Speisekarte, Küchenanzeige",
+    s5:"Bau", s5d:"Projekte, Materialien, Subunternehmer",
+    s6:"Landwirtschaft", s6d:"Ernteverfolgung, Feldverwaltung",
+    s7:"Gesundheitswesen", s7d:"Klinikmanagement, Termine",
+    s8:"E-Commerce", s8d:"Bestellungen, Lager, Versand",
+    pri_sub:"Pro Nutzer bezahlen. Keine versteckten Kosten. Jederzeit kündigen.",
+    q1:"Ist der kostenlose Plan wirklich für immer kostenlos?", a1:"Ja. Keine Kreditkarte erforderlich. Unser kostenloser Plan umfasst 1 Nutzer, 1 Modul und bis zu 100 Einträge pro Monat — für immer.",
+    q2:"Kann ich Solvenin in meiner Sprache nutzen?", a2:"Ja. Solvenin unterstützt 10+ Sprachen.",
+    q3:"Wie funktioniert die Preisgestaltung pro Nutzer?", a3:"Sie zahlen nur für aktive Nutzer.",
+    q4:"Kann ich zwischen Tarifen wechseln?", a4:"Ja. Sie können jederzeit upgraden, downgraden oder kündigen.",
+    q5:"Sind meine Daten sicher?", a5:"Ja. Alle Daten werden verschlüsselt. Die Daten jedes Unternehmens sind vollständig isoliert.",
+    nav_features:"Funktionen", nav_sectors:"Branchen", nav_pricing:"Preise", nav_faq:"FAQ",
+    nav_login:"Anmelden", nav_start:"Kostenlos starten →",
+    hero_sub:"Eine Plattform für jede Branche. Verwalten Sie Inventar, Vertrieb, Produktion und HR — ohne Komplexität.",
+    hero_cta1:"Kostenlos starten →", hero_cta2:"Demo ansehen",
+    test_tag:"Bewertungen", test_title:"Weltweit vertrauen Unternehmen uns", test_sub:"Sehen Sie, was unsere Kunden über Solvenin sagen.",
+    t1:'"Wir wechselten von einem komplexen ERP und Solvenin war in einem Tag einsatzbereit."',
+    t1r:"CEO, Rossi Manufacturing — Italien",
+    t2:'"Der kostenlose Plan hat uns überzeugt. Jetzt verwalten wir 3 Restaurantstandorte."',
+    t2r:"Betriebsleiterin, Seoul Kitchen — Südkorea",
+    t3:'"Endlich ein ERP ohne Berater. Unser Hotelteam war in unter 2 Stunden eingerichtet."',
+    t3r:"Hoteldirektор, Desert Rose — VAE",
+    cta_title:"Bereit, Ihr Unternehmen zu lösen?", cta_sub:"Starten Sie noch heute kostenlos.",
+    cta_btn1:"Kostenlos starten →", cta_btn2:"Vertrieb kontaktieren",
+    footer_copy:"© 2025 Solvenin. Alle Rechte vorbehalten.",
+    footer_desc:"Business-Software für jede Branche. Einfach, leistungsstark und wirklich global.",
+    fc1:"Produkt", fc1_1:"Funktionen", fc1_2:"Preise", fc1_3:"Änderungsprotokoll", fc1_4:"Roadmap",
+    fc2:"Branchen", fc2_1:"Fertigung", fc2_2:"Handel", fc2_3:"Gastgewerbe", fc2_4:"Restaurant",
+    fc3:"Unternehmen", fc3_1:"Über uns", fc3_2:"Blog", fc3_3:"Karriere", fc3_4:"Kontakt",
+    fc4:"Rechtliches", fc4_1:"Datenschutz", fc4_2:"Nutzungsbedingungen", fc4_3:"Sicherheit", fc4_4:"Cookies", fc4_5:"Rückerstattungsrichtlinie", fc4_6:"Preise",
+    f1_title:"Inventar & Lager", f1_desc:"Echtzeit-Bestandsverfolgung, Niedrigbestandsbenachrichtigungen, Multi-Lager-Unterstützung und Barcode-Scanning.",
+    f2_title:"Vertrieb & Fakturierung", f2_desc:"Erstellen Sie Angebote, Bestellungen und PDF-Rechnungen in Sekunden.",
+    f3_title:"Produktion", f3_desc:"Stücklisten, Arbeitsaufträge, Produktionsverfolgung und Kapazitätsplanung an einem Ort.",
+    f4_title:"Einkauf", f4_desc:"Verwalten Sie Lieferanten, Bestellungen und Lieferungen.",
+    f5_title:"HR & Gehaltsabrechnung", f5_desc:"Mitarbeiterverwaltung, Urlaubsverfolgung, Gehaltsberechnung.",
+    f6_title:"Finanzen & Banking", f6_desc:"Kasse, Bankkonten, Ausgabenverfolgung und Echtzeit-Finanzberichte.",
+    f7_title:"Versand & Logistik", f7_desc:"Sendungen verwalten, Pakete verfolgen, Etiketten drucken.",
+    f8_title:"Projekte & Aufgaben", f8_desc:"Kanban-Boards, Aufgabenzuweisungen, Fristen und Team-Kollaboration.",
+    f9_title:"Wartung", f9_desc:"Wartungen planen, Ausfälle verfolgen, Techniker zuweisen.",
+    popular:"Beliebteste", plan_start:"Jetzt starten", plan_trial:"Kostenlos testen",
+    pf1_1:"1 Benutzer", pf1_2:"Basismodule", pf1_3:"100 Einträge/Monat", pf1_4:"PDF-Rechnungen", pf1_5:"API-Zugang",
+    pf2_1:"Unbegrenzte Benutzer", pf2_2:"Alle Module", pf2_3:"PDF-Rechnungen", pf2_4:"Prioritätssupport", pf2_5:"API-Zugang",
+    pf3_1:"Alles in Standard", pf3_2:"Multi-Unternehmen", pf3_3:"API & Webhooks", pf3_4:"Individuelle Integrationen", pf3_5:"Dedizierter Support",
+    plan1:"Kostenlos", plan2:"Standard", plan3:"Professionell",
+    plan1d:"Für immer kostenlos. Keine Kreditkarte erforderlich.",
+    plan2d:"Alle Module für wachsende Teams.",
+    plan3d:"Multi-Unternehmen + API-Zugang.",
+    per_user:"/Nutzer/Mo", trial:"7 Tage kostenlos testen",
+    stat1:"Branchen", stat2:"Module", stat3:"Sprachen", stat4:"Startkosten"
   },
   fr: {
     nav_features:"Fonctionnalités", nav_sectors:"Secteurs", nav_pricing:"Tarifs", nav_faq:"FAQ",
@@ -856,7 +952,24 @@ const T = {
     pf3_1:"Tout en Standard", pf3_2:"Multi-entreprise", pf3_3:"API & Webhooks", pf3_4:"Intégrations personnalisées", pf3_5:"Support dédié",
     plan_trial:"Essai gratuit", trial:"Essai gratuit 7 jours",
     faq_tag:"FAQ", faq_title:"Questions fréquentes",
-    footer_desc:"Logiciel professionnel pour tous les secteurs. Simple, puissant et vraiment mondial."
+    footer_desc:"Logiciel professionnel pour tous les secteurs. Simple, puissant et vraiment mondial.",
+    hero_line1:"Le logiciel professionnel", hero_line2:"qui tout", hero_line3:"résout.",
+    trust1:"Aucune carte de crédit requise", trust2:"Essai gratuit 7 jours", trust3:"Annulez à tout moment",
+    how_tag:"Comment ça marche", how_title:"Prêt en 3 étapes",
+    how_sub:"Aucun frais de configuration, aucun consultant, aucune complexité.",
+    step1_title:"Créez votre compte",
+    step1_desc:"Inscrivez-vous gratuitement en quelques secondes. Sans carte. Vos données sont sécurisées dès le premier jour.",
+    step2_title:"Configurez votre entreprise",
+    step2_desc:"Ajoutez vos informations, invitez votre équipe et activez les modules dont vous avez besoin.",
+    step3_title:"Commencez à gérer",
+    step3_desc:"Gérez l'inventaire, les ventes, la finance, les RH et plus depuis un seul tableau de bord. Grandissez sans limites.",
+    toggle_monthly:"Mensuel", toggle_yearly:"Annuel", toggle_save:"Économisez 20%",
+    users_label:"Utilisateurs :",
+    pricing_note2:"✓ Tous les plans incluent l'hébergement, les mises à jour &amp; le support · La facturation annuelle économise 20% · Annulez à tout moment",
+    nav_features:"Fonctionnalités", nav_sectors:"Secteurs", nav_pricing:"Tarifs", nav_faq:"FAQ",
+    nav_login:"Connexion", nav_start:"Démarrer gratuitement →",
+    stat1:"Secteurs", stat2:"Modules", stat3:"Langues", stat4:"Pour commencer",
+    trial:"Essai gratuit 7 jours"
   },
   es: {
     nav_features:"Funciones", nav_sectors:"Industrias", nav_pricing:"Precios", nav_faq:"FAQ",
@@ -884,7 +997,24 @@ const T = {
     pf3_1:"Todo en Estándar", pf3_2:"Multi-empresa", pf3_3:"API & Webhooks", pf3_4:"Integraciones personalizadas", pf3_5:"Soporte dedicado",
     plan_trial:"Prueba gratuita", trial:"Prueba gratuita 7 días",
     faq_tag:"FAQ", faq_title:"Preguntas frecuentes",
-    footer_desc:"Software empresarial para cada industria. Simple, potente y verdaderamente global."
+    footer_desc:"Software empresarial para cada industria. Simple, potente y verdaderamente global.",
+    hero_line1:"El software empresarial", hero_line2:"que lo", hero_line3:"resuelve todo.",
+    trust1:"No se requiere tarjeta de crédito", trust2:"Prueba gratuita 7 días", trust3:"Cancela cuando quieras",
+    how_tag:"Cómo funciona", how_title:"Listo en 3 pasos",
+    how_sub:"Sin tarifas de configuración, sin consultores, sin complejidad.",
+    step1_title:"Crea tu cuenta",
+    step1_desc:"Regístrese gratis en segundos. Sin tarjeta. Sus datos están seguros desde el primer día.",
+    step2_title:"Configura tu empresa",
+    step2_desc:"Añada los datos de su empresa, invite a su equipo y active los módulos que necesita.",
+    step3_title:"Empiece a gestionar",
+    step3_desc:"Gestione inventario, ventas, finanzas, RRHH y más desde un único panel. Crezca sin límites.",
+    toggle_monthly:"Mensual", toggle_yearly:"Anual", toggle_save:"Ahorra 20%",
+    users_label:"Usuarios:",
+    pricing_note2:"✓ Todos los planes incluyen alojamiento, actualizaciones &amp; soporte · La facturación anual ahorra 20% · Cancela cuando quieras",
+    nav_features:"Funciones", nav_sectors:"Industrias", nav_pricing:"Precios", nav_faq:"FAQ",
+    nav_login:"Iniciar sesión", nav_start:"Empezar gratis →",
+    stat1:"Sectores", stat2:"Módulos", stat3:"Idiomas", stat4:"Para empezar",
+    trial:"Prueba gratuita 7 días"
   },
   ar: {
     nav_features:"الميزات", nav_sectors:"القطاعات", nav_pricing:"الأسعار", nav_faq:"الأسئلة",
@@ -912,7 +1042,24 @@ const T = {
     pf3_1:"كل شيء في القياسي", pf3_2:"متعدد الشركات", pf3_3:"API و Webhooks", pf3_4:"تكاملات مخصصة", pf3_5:"دعم مخصص",
     plan_trial:"تجربة مجانية", trial:"تجربة مجانية 7 أيام",
     faq_tag:"الأسئلة الشائعة", faq_title:"الأسئلة الشائعة",
-    footer_desc:"برنامج أعمال لكل الصناعات. بسيط وقوي وعالمي حقاً."
+    footer_desc:"برنامج أعمال لكل الصناعات. بسيط وقوي وعالمي حقاً.",
+    hero_line1:"برنامج الأعمال الذي", hero_line2:"يحل", hero_line3:"كل شيء.",
+    trust1:"لا حاجة لبطاقة ائتمان", trust2:"تجربة مجانية 7 أيام", trust3:"إلغاء في أي وقت",
+    how_tag:"كيف يعمل", how_title:"ابدأ في 3 خطوات",
+    how_sub:"لا رسوم إعداد، لا مستشارين، لا تعقيد.",
+    step1_title:"أنشئ حسابك",
+    step1_desc:"سجل مجاناً في ثوانٍ. لا بطاقة مطلوبة. بياناتك آمنة من اليوم الأول.",
+    step2_title:"أعد إعداد شركتك",
+    step2_desc:"أضف تفاصيل شركتك، ادعُ فريقك، وفعّل الوحدات التي تحتاجها.",
+    step3_title:"ابدأ الإدارة",
+    step3_desc:"أدر المخزون والمبيعات والمالية والموارد البشرية والمزيد من لوحة قيادة واحدة. انمُ بلا حدود.",
+    toggle_monthly:"شهري", toggle_yearly:"سنوي", toggle_save:"وفر 20%",
+    users_label:"المستخدمون:",
+    pricing_note2:"✓ تشمل جميع الخطط الاستضافة والتحديثات والدعم · الفوترة السنوية توفر 20% · إلغاء في أي وقت",
+    nav_features:"الميزات", nav_sectors:"القطاعات", nav_pricing:"الأسعار", nav_faq:"الأسئلة",
+    nav_login:"تسجيل الدخول", nav_start:"ابدأ مجاناً ←",
+    stat1:"قطاعات", stat2:"وحدات", stat3:"لغات", stat4:"للبدء",
+    trial:"تجربة مجانية 7 أيام"
   },
   zh: {
     nav_features:"功能", nav_sectors:"行业", nav_pricing:"价格", nav_faq:"常见问题",
@@ -940,7 +1087,24 @@ const T = {
     pf3_1:"标准版所有功能", pf3_2:"多公司", pf3_3:"API和Webhooks", pf3_4:"自定义集成", pf3_5:"专属支持",
     plan_trial:"免费试用", trial:"7天免费试用",
     faq_tag:"常见问题", faq_title:"常见问题解答",
-    footer_desc:"适用于各行业的商业软件。简单、强大且真正全球化。"
+    footer_desc:"适用于各行业的商业软件。简单、强大且真正全球化。",
+    hero_line1:"解决一切的", hero_line2:"商业", hero_line3:"软件。",
+    trust1:"无需信用卡", trust2:"7天免费试用", trust3:"随时取消",
+    how_tag:"如何运作", how_title:"3步即可开始",
+    how_sub:"无安装费，无顾问，无复杂性。",
+    step1_title:"创建您的账户",
+    step1_desc:"几秒内免费注册。无需信用卡。您的数据从第一天起就安全隔离。",
+    step2_title:"设置您的公司",
+    step2_desc:"添加公司详情，邀请团队，激活所需模块。",
+    step3_title:"开始管理",
+    step3_desc:"从单一仪表板管理库存、销售、财务、人力资源等。无限制增长。",
+    toggle_monthly:"每月", toggle_yearly:"每年", toggle_save:"节省20%",
+    users_label:"用户：",
+    pricing_note2:"✓ 所有计划包括托管、更新和支持 · 年度计费节省20% · 随时取消",
+    nav_features:"功能", nav_sectors:"行业", nav_pricing:"价格", nav_faq:"常见问题",
+    nav_login:"登录", nav_start:"免费开始 →",
+    stat1:"行业", stat2:"模块", stat3:"语言", stat4:"起始费用",
+    trial:"7天免费试用"
   },
   ru: {
     nav_features:"Функции", nav_sectors:"Отрасли", nav_pricing:"Цены", nav_faq:"FAQ",
@@ -968,7 +1132,24 @@ const T = {
     pf3_1:"Всё из Стандарта", pf3_2:"Мультикомпания", pf3_3:"API и Webhooks", pf3_4:"Индивидуальные интеграции", pf3_5:"Выделенная поддержка",
     plan_trial:"Бесплатный пробный", trial:"7-дневный пробный период",
     faq_tag:"FAQ", faq_title:"Часто задаваемые вопросы",
-    footer_desc:"Бизнес-软件 для каждой отрасли. Простое, мощное и действительно глобальное."
+    footer_desc:"Бизнес-ПО для каждой отрасли. Простое, мощное и действительно глобальное.",
+    hero_line1:"Бизнес-ПО,", hero_line2:"которое", hero_line3:"решает всё.",
+    trust1:"Кредитная карта не нужна", trust2:"7 дней бесплатно", trust3:"Отмена в любое время",
+    how_tag:"Как это работает", how_title:"Начните за 3 шага",
+    how_sub:"Никаких комиссий, консультантов или сложностей.",
+    step1_title:"Создайте аккаунт",
+    step1_desc:"Зарегистрируйтесь бесплатно за секунды. Без карты. Данные защищены с первого дня.",
+    step2_title:"Настройте компанию",
+    step2_desc:"Добавьте данные компании, пригласите команду и активируйте нужные модули.",
+    step3_title:"Начните управление",
+    step3_desc:"Управляйте запасами, продажами, финансами, HR и многим другим с единой панели. Растите без ограничений.",
+    toggle_monthly:"Ежемесячно", toggle_yearly:"Ежегодно", toggle_save:"Экономия 20%",
+    users_label:"Пользователи:",
+    pricing_note2:"✓ Все тарифы включают хостинг, обновления &amp; поддержку · Годовая оплата экономит 20% · Отмена в любое время",
+    nav_features:"Функции", nav_sectors:"Отрасли", nav_pricing:"Цены", nav_faq:"FAQ",
+    nav_login:"Войти", nav_start:"Начать бесплатно →",
+    stat1:"Отраслей", stat2:"Модулей", stat3:"Языков", stat4:"Для старта",
+    trial:"7-дневный пробный период"
   },
   pt: {
     nav_features:"Funcionalidades", nav_sectors:"Setores", nav_pricing:"Preços", nav_faq:"FAQ",
@@ -996,7 +1177,24 @@ const T = {
     pf3_1:"Tudo no Padrão", pf3_2:"Multi-empresa", pf3_3:"API & Webhooks", pf3_4:"Integrações personalizadas", pf3_5:"Suporte dedicado",
     plan_trial:"Teste grátis", trial:"Teste grátis 7 dias",
     faq_tag:"FAQ", faq_title:"Perguntas frequentes",
-    footer_desc:"Software empresarial para todos os setores. Simples, poderoso e verdadeiramente global."
+    footer_desc:"Software empresarial para todos os setores. Simples, poderoso e verdadeiramente global.",
+    hero_line1:"O software empresarial", hero_line2:"que", hero_line3:"resolve tudo.",
+    trust1:"Sem necessidade de cartão", trust2:"Teste grátis 7 dias", trust3:"Cancele a qualquer momento",
+    how_tag:"Como funciona", how_title:"Pronto em 3 passos",
+    how_sub:"Sem taxas, sem consultores, sem complexidade.",
+    step1_title:"Crie sua conta",
+    step1_desc:"Cadastre-se grátis em segundos. Sem cartão. Seus dados estão seguros desde o primeiro dia.",
+    step2_title:"Configure sua empresa",
+    step2_desc:"Adicione os detalhes da empresa, convide sua equipe e ative os módulos necessários.",
+    step3_title:"Comece a gerenciar",
+    step3_desc:"Gerencie estoque, vendas, finanças, RH e mais em um único painel. Cresça sem limites.",
+    toggle_monthly:"Mensal", toggle_yearly:"Anual", toggle_save:"Economize 20%",
+    users_label:"Usuários:",
+    pricing_note2:"✓ Todos os planos incluem hospedagem, atualizações &amp; suporte · Faturamento anual economiza 20% · Cancele a qualquer momento",
+    nav_features:"Funcionalidades", nav_sectors:"Setores", nav_pricing:"Preços", nav_faq:"FAQ",
+    nav_login:"Entrar", nav_start:"Começar grátis →",
+    stat1:"Setores", stat2:"Módulos", stat3:"Idiomas", stat4:"Para começar",
+    trial:"Teste grátis 7 dias"
   },
   ja: {
     nav_features:"機能", nav_sectors:"業界", nav_pricing:"料金", nav_faq:"FAQ",
@@ -1024,7 +1222,24 @@ const T = {
     pf3_1:"スタンダードの全機能", pf3_2:"マルチ会社", pf3_3:"APIとWebhooks", pf3_4:"カスタム統合", pf3_5:"専任サポート",
     plan_trial:"無料トライアル", trial:"7日間無料トライアル",
     faq_tag:"FAQ", faq_title:"よくある質問",
-    footer_desc:"あらゆる業界向けのビジネスソフトウェア。シンプル、強力、そして真にグローバル。"
+    footer_desc:"あらゆる業界向けのビジネスソフトウェア。シンプル、強力、そして真にグローバル。",
+    hero_line1:"すべてを", hero_line2:"解決する", hero_line3:"ビジネスソフトウェア。",
+    trust1:"クレジットカード不要", trust2:"7日間無料トライアル", trust3:"いつでもキャンセル可能",
+    how_tag:"使い方", how_title:"3ステップで始める",
+    how_sub:"設定費用なし、コンサルタント不要、複雑さなし。",
+    step1_title:"アカウントを作成",
+    step1_desc:"数秒で無料登録。カード不要。データは初日から安全に隔離されます。",
+    step2_title:"会社を設定する",
+    step2_desc:"会社情報を追加し、チームを招待して、必要なモジュールを有効にする。",
+    step3_title:"管理を開始する",
+    step3_desc:"在庫、売上、財務、人事などを1つのダッシュボードで管理。制限なく成長。",
+    toggle_monthly:"月額", toggle_yearly:"年額", toggle_save:"20%お得",
+    users_label:"ユーザー数：",
+    pricing_note2:"✓ すべてのプランにホスティング、アップデート &amp; サポートが含まれます · 年間請求で20%節約 · いつでもキャンセル可能",
+    nav_features:"機能", nav_sectors:"業界", nav_pricing:"料金", nav_faq:"FAQ",
+    nav_login:"ログイン", nav_start:"無料で始める →",
+    stat1:"業界", stat2:"モジュール", stat3:"言語", stat4:"開始費用",
+    trial:"7日間無料トライアル"
   }
 };
 
