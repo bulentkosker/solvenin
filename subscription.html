@@ -634,55 +634,57 @@ function renderSubscription() {
   const nextStr = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const sinceStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+  const g = id => document.getElementById(id);
+
   // Hero
-  document.getElementById('current-plan-name').textContent = plan.name;
-  document.getElementById('current-plan-price').textContent = currentPlan === 'free' ? '$0' : '$' + plan.price.toFixed(2);
-  document.getElementById('current-plan-unit').textContent = plan.unit;
-  document.getElementById('current-plan-cycle').textContent = currentPlan === 'free'
+  if (g('current-plan-name')) g('current-plan-name').textContent = plan.name;
+  if (g('current-plan-price')) g('current-plan-price').textContent = currentPlan === 'free' ? '$0' : '$' + plan.price.toFixed(2);
+  if (g('current-plan-unit')) g('current-plan-unit').textContent = plan.unit;
+  if (g('current-plan-cycle')) g('current-plan-cycle').textContent = currentPlan === 'free'
     ? t('no_active_sub')
-    : `${t('billed')} ${billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly')} · ${subUserCount} ${t('users_label')}${subUserCount > 1 ? '' : ''} · ${t('next_billing_short')}: ${nextStr}`;
+    : `${t('billed')} ${billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly')} · ${subUserCount} ${t('users_label')} · ${t('next_billing_short')}: ${nextStr}`;
 
   // Show/hide elements based on plan
   const isFree = currentPlan === 'free';
-  document.getElementById('upgrade-banner').style.display = isFree ? 'flex' : 'none';
-  document.getElementById('user-management-card').style.display = isFree ? 'none' : 'block';
-  document.querySelector('.btn-cancel').style.display = isFree ? 'none' : 'block';
+  if (g('upgrade-banner')) g('upgrade-banner').style.display = isFree ? 'flex' : 'none';
+  if (g('user-management-card')) g('user-management-card').style.display = isFree ? 'none' : 'block';
+  const btnCancel = document.querySelector('.btn-cancel');
+  if (btnCancel) btnCancel.style.display = isFree ? 'none' : 'block';
 
   // Details
-  document.getElementById('detail-plan').textContent = plan.name;
-  document.getElementById('detail-cycle').textContent = isFree ? '—' : (billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly'));
-  document.getElementById('detail-users').textContent = isFree ? `${realUserCount || 1} ${t('user_singular')}` : `${realUserCount || subUserCount} ${t('users_label')}`;
-  document.getElementById('detail-amount').textContent = isFree ? '$0.00' : `$${totalPrice.toFixed(2)}/mo`;
-  document.getElementById('detail-next').textContent = isFree ? '—' : nextStr;
-  document.getElementById('detail-since').textContent = sinceStr;
+  if (g('detail-plan')) g('detail-plan').textContent = plan.name;
+  if (g('detail-cycle')) g('detail-cycle').textContent = isFree ? '—' : (billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly'));
+  if (g('detail-users')) g('detail-users').textContent = isFree ? `${realUserCount || 1} ${t('user_singular')}` : `${realUserCount || subUserCount} ${t('users_label')}`;
+  if (g('detail-amount')) g('detail-amount').textContent = isFree ? '$0.00' : `$${totalPrice.toFixed(2)}/mo`;
+  if (g('detail-next')) g('detail-next').textContent = isFree ? '—' : nextStr;
+  if (g('detail-since')) g('detail-since').textContent = sinceStr;
 
   // User plan label in sidebar
-  document.getElementById('user-plan-label').textContent = plan.name;
+  if (g('user-plan-label')) g('user-plan-label').textContent = plan.name;
 
   // User management
-  document.getElementById('sub-user-count').textContent = subUserCount;
-  document.getElementById('user-prorate-info').textContent =
+  if (g('sub-user-count')) g('sub-user-count').textContent = subUserCount;
+  if (g('user-prorate-info')) g('user-prorate-info').textContent =
     `${t('current')}: ${subUserCount} ${t('users_label')} · $${totalPrice.toFixed(2)}/mo`;
 
   // Usage — real data from DB
   const FREE_RECORD_LIMIT = 100;
   const FREE_USER_LIMIT = 1;
-  const recBar = document.getElementById('usage-records-bar');
-  const userBar = document.getElementById('usage-users-bar');
-  recBar.classList.remove('warning'); userBar.classList.remove('full');
+  const recBar = g('usage-records-bar');
+  const userBar = g('usage-users-bar');
+  if (recBar) recBar.classList.remove('warning');
+  if (userBar) userBar.classList.remove('full');
   if (isFree) {
     const recPct = Math.min(100, Math.round(realRecordCount / FREE_RECORD_LIMIT * 100));
-    document.getElementById('usage-records-text').textContent = `${realRecordCount} / ${FREE_RECORD_LIMIT}`;
-    recBar.style.width = Math.max(2, recPct) + '%';
-    if (recPct >= 80) recBar.classList.add('warning');
-    document.getElementById('usage-users-text').textContent = `${realUserCount} / ${FREE_USER_LIMIT}`;
-    userBar.style.width = (realUserCount >= FREE_USER_LIMIT ? 100 : Math.round(realUserCount / FREE_USER_LIMIT * 100)) + '%';
-    if (realUserCount >= FREE_USER_LIMIT) userBar.classList.add('full');
+    if (g('usage-records-text')) g('usage-records-text').textContent = `${realRecordCount} / ${FREE_RECORD_LIMIT}`;
+    if (recBar) { recBar.style.width = Math.max(2, recPct) + '%'; if (recPct >= 80) recBar.classList.add('warning'); }
+    if (g('usage-users-text')) g('usage-users-text').textContent = `${realUserCount} / ${FREE_USER_LIMIT}`;
+    if (userBar) { userBar.style.width = (realUserCount >= FREE_USER_LIMIT ? 100 : Math.round(realUserCount / FREE_USER_LIMIT * 100)) + '%'; if (realUserCount >= FREE_USER_LIMIT) userBar.classList.add('full'); }
   } else {
-    document.getElementById('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + t('unlimited');
-    recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 5000 * 100))) + '%';
-    document.getElementById('usage-users-text').textContent = `${realUserCount} / ${t('unlimited')}`;
-    userBar.style.width = Math.max(2, Math.min(80, realUserCount * 8)) + '%';
+    if (g('usage-records-text')) g('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + t('unlimited');
+    if (recBar) recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 5000 * 100))) + '%';
+    if (g('usage-users-text')) g('usage-users-text').textContent = `${realUserCount} / ${t('unlimited')}`;
+    if (userBar) userBar.style.width = Math.max(2, Math.min(80, realUserCount * 8)) + '%';
   }
 
   // Plan comparison cards — buttons disabled until Paddle is live
@@ -800,11 +802,13 @@ function showToast(msg, type = 'info') {
 }
 
 // ===== CLOSE MODAL ON OUTSIDE CLICK =====
-document.getElementById('cancel-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeCancelModal();
+document.addEventListener('DOMContentLoaded', function() {
+  const cancelModal = document.getElementById('cancel-modal');
+  if (cancelModal) cancelModal.addEventListener('click', function(e) {
+    if (e.target === this) closeCancelModal();
+  });
+  init();
 });
-
-init();
 </script>
 <script>
 window.addEventListener('load', function() {
