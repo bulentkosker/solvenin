@@ -1,0 +1,202 @@
+/* ============================================================
+   theme.css — Solvenin Global Theme
+   Tüm modül sayfaları bu dosyayı yükler.
+   Bu dosya <head> sonunda yüklenir — inline :root'u override eder.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  /* ── BRAND ── */
+  --primary:        #0d4f3c;
+  --primary-dark:   #0a2e20;
+  --primary-mid:    #1a6b52;
+  --primary-light:  rgba(13,79,60,0.10);
+  --accent:         #f0a500;
+  --accent-dark:    #d4900a;
+  --accent-light:   #fff8e6;
+
+  /* ── BACKGROUNDS ── */
+  --bg:             #f8f7f4;
+  --bg-page:        #f8f7f4;
+  --bg-card:        #ffffff;
+  --white:          #ffffff;
+
+  /* ── TEXT & GRAYS ── */
+  --text:           #1a1a2e;
+  --gray-light:     #e8e4dc;
+  --gray-mid:       #b8b2a8;
+  --gray-dark:      #6b6560;
+
+  /* ── OLD VARIABLE REMAPS (pages use these via var()) ── */
+  --navy:           #0a2e20;
+  --navy2:          #0d4f3c;
+  --blue:           #0d4f3c;
+  --blue-dark:      #0a2e20;
+  --blue-light:     rgba(13,79,60,0.10);
+  --sky:            #1a6b52;
+
+  --gray50:         #f8f7f4;
+  --gray100:        #f3f0eb;
+  --gray200:        #e8e4dc;
+  --gray300:        #d1cdc4;
+  --gray400:        #a09890;
+  --gray500:        #6b6560;
+  --gray600:        #4f4a45;
+  --gray700:        #3a3530;
+  --gray800:        #1a1a2e;
+
+  /* ── STATUS ── */
+  --green:          #22c55e;
+  --green-light:    #dcfce7;
+  --red:            #ef4444;
+  --red-light:      #fee2e2;
+  --orange:         #f59e0b;
+  --orange-light:   #fef3c7;
+  --purple:         #8b5cf6;
+  --purple-light:   #f5f3ff;
+  --teal:           #0d9488;
+  --teal-light:     #f0fdfa;
+
+  /* ── SEMANTIC BADGE TOKENS ── */
+  --badge-success-bg:   #dcfce7;
+  --badge-success-text: #166534;
+  --badge-warning-bg:   #fef3c7;
+  --badge-warning-text: #92400e;
+  --badge-danger-bg:    #fee2e2;
+  --badge-danger-text:  #991b1b;
+  --badge-info-bg:      rgba(13,79,60,0.10);
+  --badge-info-text:    #0d4f3c;
+
+  /* ── TYPOGRAPHY ── */
+  --font-display:   'Outfit', sans-serif;
+  --font-body:      'DM Sans', sans-serif;
+
+  /* ── RADIUS ── */
+  --radius:         12px;
+  --radius-card:    12px;
+  --radius-btn:     8px;
+  --radius-sm:      6px;
+  --radius-lg:      16px;
+
+  /* ── SHADOWS ── */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:  0 10px 40px rgba(0,0,0,0.10);
+}
+
+/* ── BASE ─────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4, h5, h6,
+.page-title, .section-title, .card-title,
+.stat-label, .stat-value {
+  font-family: var(--font-display);
+  color: var(--text);
+}
+
+/* ── CARDS ─────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── PRIMARY BUTTON ─────────────────────────────────────────── */
+.btn-primary,
+button.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s, transform .18s, box-shadow .18s;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(13,79,60,0.3);
+}
+
+/* ── ACCENT / GOLD BUTTON ─────────────────────────────────── */
+.btn-accent,
+.btn-gold,
+button.btn-accent {
+  background: var(--accent);
+  color: #1a1a2e;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-body);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s, transform .18s, box-shadow .18s;
+}
+.btn-accent:hover:not(:disabled),
+.btn-gold:hover:not(:disabled) {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(240,165,0,0.35);
+}
+
+/* ── INPUTS ─────────────────────────────────────────────────── */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(13,79,60,0.12) !important;
+  outline: none;
+}
+
+/* ── TABLE HEADER ─────────────────────────────────────────── */
+table thead tr,
+.table-header,
+th {
+  background: var(--bg);
+}
+
+/* ── LINKS ───────────────────────────────────────────────── */
+a { color: var(--primary); }
+a:hover { color: var(--primary-dark); }
+
+/* ── BADGES ─────────────────────────────────────────────── */
+.badge-success, .status-active, .badge-active,
+.badge.active, .badge.success, span.active {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+}
+.badge-warning, .badge.pending, .status-pending {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+.badge-danger, .badge.cancelled, .status-cancelled,
+.badge.overdue, .status-overdue {
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
+}
+.badge-info, .badge.draft {
+  background: var(--badge-info-bg);
+  color: var(--badge-info-text);
+}
+
+/* ── TOPBAR / PAGE HEADER ACCENT ────────────────────────── */
+.topbar-title,
+.page-header h1,
+.page-header .title {
+  color: var(--text);
+  font-family: var(--font-display);
+}
+
+/* ── CRITICAL SIDEBAR OVERRIDE (flash prevention) ─────── */
+.sidebar {
+  background: var(--primary-dark) !important;
+  width: 220px;
+}
+.main { margin-left: 220px; }
