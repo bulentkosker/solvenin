@@ -266,23 +266,23 @@
           icon: '📦', key: 'nav_inventory', href: 'inventory.html',
           children: [
             { key: 'nav_products',        href: 'inventory.html' },
-            { key: 'nav_stock_movements', href: 'stock-movements.html' },
-            { key: 'nav_warehouses',      href: 'warehouses.html' },
+            { key: 'nav_stock_movements', href: 'inventory.html#movements' },
+            { key: 'nav_warehouses',      href: 'settings.html#warehouses' },
           ]
         },
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
           children: [
             { key: 'nav_sales_orders', href: 'sales.html' },
-            { key: 'nav_customers',    href: 'customers.html' },
-            { key: 'nav_payments',     href: 'payments.html' },
+            { key: 'nav_customers',    href: 'sales.html#customers' },
+            { key: 'nav_payments',     href: 'sales.html#payments' },
           ]
         },
         {
           icon: '🛒', key: 'nav_purchasing', href: 'purchasing.html',
           children: [
             { key: 'nav_purchase_orders', href: 'purchasing.html' },
-            { key: 'nav_suppliers',       href: 'suppliers.html' },
+            { key: 'nav_suppliers',       href: 'purchasing.html#suppliers' },
           ]
         },
         { icon: '🏭', key: 'nav_production', href: 'production.html' },
@@ -308,9 +308,9 @@
           icon: '👥', key: 'nav_hr', href: 'hr.html',
           children: [
             { key: 'nav_employees',  href: 'hr.html' },
-            { key: 'nav_payroll',    href: 'payroll.html' },
-            { key: 'nav_leave',      href: 'leave.html' },
-            { key: 'nav_attendance', href: 'attendance.html' },
+            { key: 'nav_payroll',    href: 'hr.html#payroll' },
+            { key: 'nav_leave',      href: 'hr.html#leaves' },
+            { key: 'nav_attendance', href: 'hr.html#attendance' },
           ]
         },
         { icon: '🚚', key: 'nav_shipping',    href: 'shipping.html' },
@@ -331,12 +331,16 @@
   // Manually toggled groups (persists across language re-renders)
   const _manualOpen = new Set();
 
+  function hrefBase(href) {
+    return href ? href.split('#')[0] : href;
+  }
+
   function isGroupOpen(key, page) {
     if (_manualOpen.has(key)) return true;
     // Auto-open if any child page is active
     const section = NAV.flatMap(s => s.items).find(i => i.key === key);
     if (!section || !section.children) return false;
-    return section.children.some(c => c.href && c.href !== '#' && page === c.href);
+    return section.children.some(c => c.href && c.href !== '#' && page === hrefBase(c.href));
   }
 
   /* ── HELPERS ─────────────────────────────────────────────── */
@@ -365,7 +369,7 @@
           // ── Accordion parent ──
           const open = isGroupOpen(item.key, page);
           const hasActive = item.children.some(c =>
-            c.href && c.href !== '#' && page === c.href
+            c.href && c.href !== '#' && page === hrefBase(c.href)
           );
           const parentClasses = [
             'nav-parent',
@@ -374,7 +378,10 @@
           ].filter(Boolean).join(' ');
 
           const childrenHTML = item.children.map(child => {
-            const active = child.href && child.href !== '#' && page === child.href;
+            const childBase = hrefBase(child.href);
+            const childHash = child.href && child.href.includes('#') ? '#' + child.href.split('#')[1] : null;
+            const active = child.href && child.href !== '#' && page === childBase &&
+              (!childHash || window.location.hash === childHash);
             const label = _t(child.key) || child.key;
             return `<a class="nav-child${active ? ' active' : ''}" href="${child.href || '#'}">
               <span class="nav-child-dot"></span>${label}
