@@ -1497,7 +1497,7 @@ async function loadTicker(){
       wantCrypto.forEach(c=>{
         const cd = d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
         if(!cd) return;
-        const p = cd.usd>=1000 ? (window.getCurrencySymbol?window.getCurrencySymbol():'$')+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : (window.getCurrencySymbol?window.getCurrencySymbol():'$')+cd.usd.toFixed(2);
+        const p = cd.usd>=1000 ? '$'+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : '$'+cd.usd.toFixed(2);
         items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
       });
     }
