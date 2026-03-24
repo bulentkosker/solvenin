@@ -8,7 +8,7 @@
   /* ── CSS ─────────────────────────────────────────────────── */
   const CSS = `
     :root {
-      --sidebar-w: 220px;
+      --sidebar-w: 200px;
       --navy: #0a1628;
       --accent: #60a5fa;
       --accent2: #93c5fd;
@@ -20,12 +20,12 @@
       display: flex; flex-direction: column; z-index: 50;
     }
     .sidebar-logo {
-      padding: 20px 16px 16px;
+      padding: 18px 14px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       text-decoration: none; display: block; overflow: hidden;
     }
     .sidebar-logo .wordmark {
-      font-family: var(--font-display); font-size: 26px;
+      font-family: var(--font-display); font-size: 24px;
       font-weight: 800; color: #fff; letter-spacing: -1px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
     }
@@ -36,81 +36,113 @@
       border-radius: 99px;
     }
     .sidebar-sections { flex: 1; overflow-y: auto; padding: 6px 0; }
-    .sidebar-section { padding: 10px 10px 4px; }
-    /* ── CONFIRM MODAL ─────────────────────────────────── */
-  #solvenin-confirm-overlay {
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
-    z-index:9999; align-items:center; justify-content:center;
-  }
-  #solvenin-confirm-overlay.open { display:flex; }
-  #solvenin-confirm-box {
-    background:#fff; border-radius:16px; padding:28px 32px; max-width:400px;
-    width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);
-  }
-  #solvenin-confirm-title {
-    font-size:16px; font-weight:700; color:#0f172a; margin-bottom:8px;
-  }
-  #solvenin-confirm-msg {
-    font-size:14px; color:#64748b; margin-bottom:24px; line-height:1.5;
-  }
-  #solvenin-confirm-btns {
-    display:flex; gap:10px; justify-content:flex-end;
-  }
-  #solvenin-confirm-btns button {
-    padding:8px 20px; border-radius:8px; border:none; font-size:14px;
-    font-weight:600; cursor:pointer; transition:all .15s;
-  }
-  #solvenin-confirm-cancel {
-    background:#f1f5f9; color:#64748b;
-  }
-  #solvenin-confirm-ok {
-    background:#ef4444; color:#fff;
-  }
-  #solvenin-confirm-ok:hover { background:#dc2626; }
-
-  .sidebar-section-label {
+    .sidebar-section { padding: 8px 8px 4px; }
+    .sidebar-section-label {
       font-size: 9px; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: rgba(255,255,255,0.45);
       padding: 0 8px; margin-bottom: 4px;
     }
+
+    /* ── Regular nav item ── */
     .nav-item {
-      display: flex; align-items: center; gap: 9px;
-      padding: 7px 10px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 8px; cursor: pointer;
       transition: all .15s; margin-bottom: 1px;
       text-decoration: none; color: rgba(255,255,255,0.85);
-      font-size: 12.5px; font-weight: 500;
+      font-size: 12px; font-weight: 500;
     }
     .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
     .nav-item.active { background: rgba(96,165,250,0.2); color: #fff; font-weight: 600; }
     .nav-item.active .nav-icon { color: var(--accent); }
-    .nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+    .nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
     .nav-badge {
       margin-left: auto; background: rgba(255,255,255,0.2);
       color: #fff; font-size: 10px; font-weight: 700;
       padding: 2px 7px; border-radius: 99px;
     }
-    .sidebar-footer {
-      padding: 10px;
-      border-top: 1px solid rgba(255,255,255,0.1);
+
+    /* ── Accordion parent ── */
+    .nav-parent {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 8px; cursor: pointer;
+      transition: all .15s; margin-bottom: 1px;
+      color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 500;
+      user-select: none;
     }
-    /* Company switcher */
+    .nav-parent:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .nav-parent.open { color: #fff; }
+    .nav-parent.has-active { color: #fff; }
+    .nav-parent.has-active .nav-icon { color: var(--accent); }
+    .nav-parent-label { flex: 1; }
+    .nav-arrow {
+      font-size: 8px; color: rgba(255,255,255,0.35);
+      transition: transform .22s ease; flex-shrink: 0; display: inline-block;
+    }
+    .nav-parent.open .nav-arrow { transform: rotate(90deg); }
+
+    /* ── Accordion children ── */
+    .nav-children {
+      overflow: hidden; max-height: 0;
+      transition: max-height .25s ease;
+    }
+    .nav-children.open { max-height: 320px; }
+    .nav-child {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px 6px 30px; border-radius: 7px;
+      transition: all .15s; margin-bottom: 1px;
+      text-decoration: none; color: rgba(255,255,255,0.6);
+      font-size: 11.5px; font-weight: 400;
+    }
+    .nav-child:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+    .nav-child.active {
+      background: rgba(96,165,250,0.15); color: var(--accent2); font-weight: 600;
+    }
+    .nav-child-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: rgba(255,255,255,0.25); flex-shrink: 0;
+    }
+    .nav-child.active .nav-child-dot { background: var(--accent); }
+
+    /* ── Confirm modal ── */
+    #solvenin-confirm-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      z-index:9999; align-items:center; justify-content:center;
+    }
+    #solvenin-confirm-overlay.open { display:flex; }
+    #solvenin-confirm-box {
+      background:#fff; border-radius:16px; padding:28px 32px; max-width:400px;
+      width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+    }
+    #solvenin-confirm-title { font-size:16px; font-weight:700; color:#0f172a; margin-bottom:8px; }
+    #solvenin-confirm-msg { font-size:14px; color:#64748b; margin-bottom:24px; line-height:1.5; }
+    #solvenin-confirm-btns { display:flex; gap:10px; justify-content:flex-end; }
+    #solvenin-confirm-btns button {
+      padding:8px 20px; border-radius:8px; border:none; font-size:14px;
+      font-weight:600; cursor:pointer; transition:all .15s;
+    }
+    #solvenin-confirm-cancel { background:#f1f5f9; color:#64748b; }
+    #solvenin-confirm-ok { background:#ef4444; color:#fff; }
+    #solvenin-confirm-ok:hover { background:#dc2626; }
+
+    /* ── Sidebar footer ── */
+    .sidebar-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
     .company-switcher {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 10px; margin: 0 0 4px;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; margin: 0 0 4px;
       border-radius: 8px; cursor: pointer;
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
       transition: background .15s;
     }
     .company-switcher:hover { background: rgba(96,165,250,0.15); }
-    .company-icon { font-size: 16px; flex-shrink: 0; }
+    .company-icon { font-size: 15px; flex-shrink: 0; }
     .company-info { flex: 1; min-width: 0; }
     .company-name {
-      font-size: 12px; font-weight: 700; color: #fff;
+      font-size: 11px; font-weight: 700; color: #fff;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .company-plan { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .5px; }
-    .company-chevron { color: rgba(255,255,255,0.4); font-size: 14px; flex-shrink: 0; }
+    .company-chevron { color: rgba(255,255,255,0.4); font-size: 13px; flex-shrink: 0; }
     .company-menu {
       margin: 0 0 6px; border-radius: 10px;
       background: rgba(255,255,255,0.97);
@@ -141,22 +173,24 @@
       font-size: 11px; cursor: pointer; transition: all .15s;
     }
     .company-menu-footer button:hover { background: #eff6ff; color: #60a5fa; border-color: #60a5fa; }
-    /* User card */
+
+    /* ── User card ── */
     .user-card {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 10px; border-radius: 10px; cursor: pointer; transition: all .15s;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: all .15s;
     }
     .user-card:hover { background: rgba(255,255,255,0.08); }
     .user-avatar {
-      width: 32px; height: 32px; border-radius: 9px;
+      width: 30px; height: 30px; border-radius: 8px;
       background: rgba(96,165,250,0.35);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: #fff; font-size: 13px; flex-shrink: 0;
+      font-weight: 700; color: #fff; font-size: 12px; flex-shrink: 0;
     }
-    .user-name { font-size: 12px; font-weight: 600; color: #fff; }
+    .user-name { font-size: 11px; font-weight: 600; color: #fff; }
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
-    .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 18px; }
-    /* New company modal */
+    .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
+
+    /* ── New company modal ── */
     .new-company-modal {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.5); z-index: 9999;
@@ -188,7 +222,6 @@
     .new-company-box .btn-create:hover { background: #3b82f6; }
   `;
 
-
   /* ── CURRENCY ────────────────────────────────────────────── */
   const CURRENCY_SYMBOLS = {
     'USD':'$','EUR':'€','GBP':'£','TRY':'₺','JPY':'¥','CNY':'¥',
@@ -203,36 +236,6 @@
 
   window.getBaseCurrency = function() {
     return localStorage.getItem('baseCurrency') || 'USD';
-  };
-
-  // Global confirm dialog (replaces browser confirm())
-  // Re-render sidebar on language change
-  document.addEventListener('langChanged', function() {
-    const sb = document.getElementById('sidebar');
-    if (sb) {
-      const prev = sb.innerHTML;
-      sb.innerHTML = buildHTML();
-      // Re-attach supabase data after re-render
-      loadSidebarData();
-    }
-  });
-
-  window.showConfirm = function(message, title) {
-    return new Promise((resolve, reject) => {
-      const overlay = document.getElementById('solvenin-confirm-overlay');
-      const msg = document.getElementById('solvenin-confirm-msg');
-      const titleEl = document.getElementById('solvenin-confirm-title');
-      const okBtn = document.getElementById('solvenin-confirm-ok');
-      if (!overlay) { resolve(window.confirm(message)); return; }
-      titleEl.textContent = title || 'Confirm';
-      msg.textContent = message;
-      overlay.classList.add('open');
-      window._confirmReject = () => { resolve(false); };
-      okBtn.onclick = () => {
-        overlay.classList.remove('open');
-        resolve(true);
-      };
-    });
   };
 
   window.getCurrencySymbol = function(code) {
@@ -254,31 +257,65 @@
   };
 
   /* ── NAV ITEMS ───────────────────────────────────────────── */
+  // children[] → accordion sub-items; no children → direct link
   const NAV = [
     {
       labelKey: 'nav_group_main',
       items: [
-        { icon: '📦', key: 'nav_inventory',   href: 'inventory.html' },
-        { icon: '💰', key: 'nav_sales',        href: 'sales.html' },
-        { icon: '🛒', key: 'nav_purchasing',   href: 'purchasing.html' },
-        { icon: '🏭', key: 'nav_production',   href: 'production.html' },
+        {
+          icon: '📦', key: 'nav_inventory', href: 'inventory.html',
+          children: [
+            { key: 'nav_products',        href: 'inventory.html' },
+            { key: 'nav_stock_movements', href: 'stock-movements.html' },
+            { key: 'nav_warehouses',      href: 'warehouses.html' },
+          ]
+        },
+        {
+          icon: '💰', key: 'nav_sales', href: 'sales.html',
+          children: [
+            { key: 'nav_sales_orders', href: 'sales.html' },
+            { key: 'nav_customers',    href: 'customers.html' },
+            { key: 'nav_payments',     href: 'payments.html' },
+          ]
+        },
+        {
+          icon: '🛒', key: 'nav_purchasing', href: 'purchasing.html',
+          children: [
+            { key: 'nav_purchase_orders', href: 'purchasing.html' },
+            { key: 'nav_suppliers',       href: 'suppliers.html' },
+          ]
+        },
+        { icon: '🏭', key: 'nav_production', href: 'production.html' },
       ]
     },
     {
       labelKey: 'nav_group_finance',
       items: [
-        { icon: '🏦', key: 'nav_cashbank',     href: 'cashbank.html' },
-        { icon: '📒', key: 'nav_accounting',   href: 'accounting.html' },
-        { icon: '📊', key: 'nav_reports',      href: '#' },
+        {
+          icon: '💳', key: 'nav_finance', href: null,
+          children: [
+            { key: 'nav_cashbank',   href: 'cashbank.html' },
+            { key: 'nav_accounting', href: 'accounting.html' },
+          ]
+        },
+        { icon: '📊', key: 'nav_reports', href: '#' },
       ]
     },
     {
       labelKey: 'nav_group_management',
       items: [
-        { icon: '👥', key: 'nav_hr',           href: 'hr.html' },
-        { icon: '🚚', key: 'nav_shipping',     href: 'shipping.html' },
-        { icon: '📅', key: 'nav_projects',     href: 'projects.html' },
-        { icon: '🔧', key: 'nav_maintenance',  href: 'maintenance.html' },
+        {
+          icon: '👥', key: 'nav_hr', href: 'hr.html',
+          children: [
+            { key: 'nav_employees',  href: 'hr.html' },
+            { key: 'nav_payroll',    href: 'payroll.html' },
+            { key: 'nav_leave',      href: 'leave.html' },
+            { key: 'nav_attendance', href: 'attendance.html' },
+          ]
+        },
+        { icon: '🚚', key: 'nav_shipping',    href: 'shipping.html' },
+        { icon: '📅', key: 'nav_projects',    href: 'projects.html' },
+        { icon: '🔧', key: 'nav_maintenance', href: 'maintenance.html' },
       ]
     },
     {
@@ -290,29 +327,82 @@
     },
   ];
 
+  /* ── ACCORDION STATE ─────────────────────────────────────── */
+  // Manually toggled groups (persists across language re-renders)
+  const _manualOpen = new Set();
+
+  function isGroupOpen(key, page) {
+    if (_manualOpen.has(key)) return true;
+    // Auto-open if any child page is active
+    const section = NAV.flatMap(s => s.items).find(i => i.key === key);
+    if (!section || !section.children) return false;
+    return section.children.some(c => c.href && c.href !== '#' && page === c.href);
+  }
+
   /* ── HELPERS ─────────────────────────────────────────────── */
   function currentPage() {
     return window.location.pathname.split('/').pop() || 'dashboard.html';
   }
 
   function injectCSS() {
+    if (document.getElementById('solvenin-sidebar-css')) return;
     const style = document.createElement('style');
+    style.id = 'solvenin-sidebar-css';
     style.textContent = CSS;
     document.head.appendChild(style);
   }
 
+  /* ── BUILD HTML ──────────────────────────────────────────── */
   function buildHTML() {
     const page = currentPage();
-    let sectionsHTML = '';
     const _t = window.t || (k => k);
+    let sectionsHTML = '';
+
     NAV.forEach(section => {
       let itemsHTML = section.items.map(item => {
-        const active = item.href !== '#' && page === item.href ? 'active' : '';
-        const label = _t(item.key) || item.key;
-        return `<a class="nav-item ${active}" href="${item.href}">
-          <span class="nav-icon">${item.icon}</span> ${label}
-        </a>`;
-      }).join('\n');
+
+        if (item.children) {
+          // ── Accordion parent ──
+          const open = isGroupOpen(item.key, page);
+          const hasActive = item.children.some(c =>
+            c.href && c.href !== '#' && page === c.href
+          );
+          const parentClasses = [
+            'nav-parent',
+            open ? 'open' : '',
+            hasActive ? 'has-active' : ''
+          ].filter(Boolean).join(' ');
+
+          const childrenHTML = item.children.map(child => {
+            const active = child.href && child.href !== '#' && page === child.href;
+            const label = _t(child.key) || child.key;
+            return `<a class="nav-child${active ? ' active' : ''}" href="${child.href || '#'}">
+              <span class="nav-child-dot"></span>${label}
+            </a>`;
+          }).join('');
+
+          const label = _t(item.key) || item.key;
+          return `
+            <div class="${parentClasses}" data-key="${item.key}" onclick="sidebarToggleAccordion('${item.key}')">
+              <span class="nav-icon">${item.icon}</span>
+              <span class="nav-parent-label">${label}</span>
+              <span class="nav-arrow">▶</span>
+            </div>
+            <div class="nav-children${open ? ' open' : ''}" data-key="${item.key}">
+              ${childrenHTML}
+            </div>`;
+
+        } else {
+          // ── Regular nav item ──
+          const active = item.href && item.href !== '#' && page === item.href;
+          const label = _t(item.key) || item.key;
+          return `<a class="nav-item${active ? ' active' : ''}" href="${item.href || '#'}">
+            <span class="nav-icon">${item.icon}</span>${label}
+          </a>`;
+        }
+
+      }).join('');
+
       const sectionLabel = _t(section.labelKey) || section.labelKey;
       sectionsHTML += `
         <div class="sidebar-section">
@@ -368,7 +458,6 @@
     if (!document.body) return false;
     injectCSS();
 
-    // Use existing placeholder or create new
     let sidebar = document.getElementById('sidebar');
     if (!sidebar) {
       sidebar = document.createElement('aside');
@@ -377,6 +466,7 @@
       document.body.insertBefore(sidebar, document.body.firstChild);
     }
     sidebar.innerHTML = buildHTML();
+
     // Inject confirm modal if not exists
     if (!document.getElementById('solvenin-confirm-overlay')) {
       const overlay = document.createElement('div');
@@ -408,7 +498,6 @@
       const { data: { user } } = await sb.auth.getUser();
       if (!user) return;
 
-      // User info
       const email = user.email || '';
       const initials = email.substring(0, 2).toUpperCase();
       const nameEl = document.getElementById('sb-user-name');
@@ -416,7 +505,6 @@
       if (nameEl) nameEl.textContent = email;
       if (avatarEl) avatarEl.textContent = initials;
 
-      // Company
       const companyId = localStorage.getItem('currentCompanyId');
       if (!companyId) return;
 
@@ -437,7 +525,6 @@
         }
       }
 
-      // All companies for switcher
       const { data: companies } = await sb.rpc('get_my_companies');
       if (companies) renderCompanyMenu(companies, companyId);
 
@@ -465,12 +552,27 @@
   }
 
   /* ── PUBLIC FUNCTIONS ────────────────────────────────────── */
-  window.sidebarToggleCompanyMenu = function () {
+  window.sidebarToggleAccordion = function(key) {
+    if (_manualOpen.has(key)) {
+      _manualOpen.delete(key);
+    } else {
+      _manualOpen.add(key);
+    }
+    // Update DOM in-place (no full re-render needed)
+    const page = currentPage();
+    const open = isGroupOpen(key, page);
+    const parentEl = document.querySelector(`.nav-parent[data-key="${key}"]`);
+    const childrenEl = document.querySelector(`.nav-children[data-key="${key}"]`);
+    if (parentEl) parentEl.classList.toggle('open', open);
+    if (childrenEl) childrenEl.classList.toggle('open', open);
+  };
+
+  window.sidebarToggleCompanyMenu = function() {
     const menu = document.getElementById('sb-company-menu');
     if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
   };
 
-  window.sidebarSwitchCompany = async function (id) {
+  window.sidebarSwitchCompany = async function(id) {
     try {
       const sb = window._supabase || window.supabase;
       if (!sb) return;
@@ -482,19 +584,19 @@
     }
   };
 
-  window.sidebarOpenNewCompany = function () {
+  window.sidebarOpenNewCompany = function() {
     const modal = document.getElementById('sb-new-company-modal');
     if (modal) modal.classList.add('open');
     const menu = document.getElementById('sb-company-menu');
     if (menu) menu.style.display = 'none';
   };
 
-  window.sidebarCloseNewCompany = function () {
+  window.sidebarCloseNewCompany = function() {
     const modal = document.getElementById('sb-new-company-modal');
     if (modal) modal.classList.remove('open');
   };
 
-  window.sidebarCreateCompany = async function () {
+  window.sidebarCreateCompany = async function() {
     const nameInput = document.getElementById('sb-new-company-name');
     const name = nameInput ? nameInput.value.trim() : '';
     if (!name) return;
@@ -520,47 +622,57 @@
     }
   };
 
+  window.showConfirm = function(message, title) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('solvenin-confirm-overlay');
+      const msg = document.getElementById('solvenin-confirm-msg');
+      const titleEl = document.getElementById('solvenin-confirm-title');
+      const okBtn = document.getElementById('solvenin-confirm-ok');
+      if (!overlay) { resolve(window.confirm(message)); return; }
+      titleEl.textContent = title || 'Confirm';
+      msg.textContent = message;
+      overlay.classList.add('open');
+      window._confirmReject = () => { resolve(false); };
+      okBtn.onclick = () => {
+        overlay.classList.remove('open');
+        resolve(true);
+      };
+    });
+  };
+
+  /* ── LANGUAGE CHANGE — re-render preserving open state ───── */
+  document.addEventListener('langChanged', function() {
+    const sb = document.getElementById('sidebar');
+    if (sb) {
+      sb.innerHTML = buildHTML();
+      loadSidebarData();
+    }
+  });
+
   /* ── INIT ────────────────────────────────────────────────── */
-  function init() {
-    // mount() already called synchronously - just load data
+  function waitForSupabase(cb) {
     const wait = setInterval(() => {
       if (window._supabase || window.supabase) {
         clearInterval(wait);
-        loadSidebarData();
+        cb();
       }
     }, 100);
     setTimeout(() => clearInterval(wait), 5000);
   }
 
-  // Mount immediately if DOM ready, otherwise on DOMContentLoaded
   function tryMount() {
     if (document.body) {
       mount();
       window._sidebarMounted = true;
       document.dispatchEvent(new Event('sidebarMounted'));
+      waitForSupabase(loadSidebarData);
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      tryMount();
-      const wait = setInterval(() => {
-        if (window._supabase || window.supabase) {
-          clearInterval(wait);
-          loadSidebarData();
-        }
-      }, 100);
-      setTimeout(() => clearInterval(wait), 5000);
-    });
+    document.addEventListener('DOMContentLoaded', tryMount);
   } else {
     tryMount();
-    const wait = setInterval(() => {
-      if (window._supabase || window.supabase) {
-        clearInterval(wait);
-        loadSidebarData();
-      }
-    }, 100);
-    setTimeout(() => clearInterval(wait), 5000);
   }
 
 })();
