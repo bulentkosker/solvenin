@@ -2,266 +2,294 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solvenin — Sign Up</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Solvenin — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --navy: #0a0f1e;
-  --navy2: #0f2650;
-  --blue: #2563eb;
-  --sky: #60a5fa;
+  --emerald: #0d4f3c;
+  --emerald-dark: #0a2e20;
+  --emerald-mid: #1a6b52;
+  --emerald-light: rgba(13,79,60,0.08);
+  --gold: #f0a500;
+  --gold-dark: #d99200;
+  --gold-light: #fff8e6;
+  --bg: #f8f7f4;
+  --text: #1a1a2e;
+  --gray-light: #e8e4dc;
+  --gray-mid: #b8b2a8;
+  --gray-dark: #6b6560;
   --white: #ffffff;
-  --gray50: #f8fafc;
-  --gray100: #f1f5f9;
-  --gray200: #e2e8f0;
-  --gray400: #94a3b8;
-  --gray600: #475569;
-  --gray800: #1e293b;
-  --green: #10b981;
   --red: #ef4444;
+  --green: #10b981;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
 }
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 14px; }
 body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--navy);
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
   display: flex;
+}
+
+/* ── TWO-COLUMN LAYOUT ── */
+.auth-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── LEFT PANEL ── */
+.auth-left {
+  width: 45%;
+  background: var(--emerald-dark);
+  position: relative;
+  display: flex;
   flex-direction: column;
-}
-
-/* BACKGROUND */
-.bg-glow {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
+  padding: 48px 52px;
   overflow: hidden;
-  z-index: 0;
 }
-.bg-glow::before {
-  content: '';
-  position: absolute;
-  width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 65%);
-  top: -200px; left: 50%; transform: translateX(-50%);
-}
-.bg-glow::after {
+.auth-left::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+.auth-left::after {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(240,165,0,0.08) 0%, transparent 65%);
+  bottom: -200px; right: -200px;
+  pointer-events: none;
 }
 
-/* LAYOUT */
-.page {
+.left-logo {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 60px;
   position: relative;
   z-index: 1;
+}
+.left-logo .dot { color: var(--gold); }
+
+.left-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.left-tagline {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+.left-tagline .gold { color: var(--gold); }
+
+.left-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.65;
+  margin-bottom: 48px;
+  max-width: 320px;
+}
+
+/* ISO-style graphic */
+.iso-scene {
+  margin-bottom: 48px;
+}
+
+/* Feature list */
+.feat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.feat-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.feat-icon {
+  width: 36px; height: 36px;
+  background: rgba(240,165,0,0.12);
+  border: 1px solid rgba(240,165,0,0.2);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.feat-text {
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.feat-text strong {
+  display: block;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  margin-bottom: 1px;
+}
+
+.left-footer {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ── RIGHT PANEL ── */
+.auth-right {
+  flex: 1;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: 32px 16px;
+  padding: 48px 32px;
+  position: relative;
 }
 
-/* LOGO */
-.logo {
+.right-top {
+  position: absolute;
+  top: 28px;
+  right: 28px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 32px;
-  cursor: pointer;
-  text-decoration: none;
-}
-.logo .wordmark {
-  font-family: 'Outfit', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-.logo .wordmark .dot { color: var(--blue); }
-.logo .underline {
-  height: 2px;
-  width: 80%;
-  margin-top: 4px;
-  background: linear-gradient(90deg, var(--blue), var(--sky), transparent);
-  border-radius: 99px;
+  gap: 12px;
 }
 
-/* CARD */
-.card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 24px;
-  padding: 40px;
+.form-box {
   width: 100%;
-  max-width: 440px;
-  backdrop-filter: blur(20px);
+  max-width: 420px;
 }
 
-/* TABS */
-.tabs {
+/* ── TABS ── */
+.tab-bar {
   display: flex;
-  background: rgba(255,255,255,0.05);
-  border-radius: 12px;
+  background: rgba(13,79,60,0.06);
+  border: 1px solid rgba(13,79,60,0.12);
+  border-radius: 14px;
   padding: 4px;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
-.tab {
+.tab-btn {
   flex: 1;
-  padding: 10px;
-  text-align: center;
+  padding: 10px 16px;
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
-  color: var(--gray400);
-  border-radius: 9px;
-  cursor: pointer;
-  transition: all .2s;
+  color: var(--gray-dark);
   border: none;
   background: none;
-  font-family: 'DM Sans', sans-serif;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: all .22s ease;
 }
-.tab.active {
-  background: var(--blue);
+.tab-btn.active {
+  background: var(--emerald);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+  box-shadow: 0 4px 14px rgba(13,79,60,0.3);
 }
 
-/* FORM */
+/* ── FORM HEADER ── */
+.form-head { margin-bottom: 28px; }
 .form-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
   margin-bottom: 6px;
 }
 .form-sub {
-  font-size: 13px;
-  color: var(--gray400);
-  margin-bottom: 28px;
+  font-size: 13.5px;
+  color: var(--gray-dark);
   line-height: 1.5;
 }
 
-.field {
-  margin-bottom: 16px;
+/* ── FIELDS ── */
+.field { margin-bottom: 16px; }
+.field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
 }
 .field label {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: var(--gray400);
-  letter-spacing: 0.5px;
+  color: var(--text);
+  letter-spacing: 0.3px;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  opacity: 0.65;
 }
 .field input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-light);
+  border-radius: 12px;
   padding: 12px 16px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
-  color: #fff;
+  color: var(--text);
   outline: none;
   transition: all .2s;
+  box-shadow: var(--shadow-sm);
 }
-.field input::placeholder { color: var(--gray600); }
+.field input::placeholder { color: var(--gray-mid); }
 .field input:focus {
-  border-color: var(--blue);
-  background: rgba(37,99,235,0.08);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 3px rgba(13,79,60,0.1), var(--shadow-sm);
 }
 .field input.error { border-color: var(--red); }
 
-/* PASSWORD TOGGLE */
-.field-wrap {
-  position: relative;
-}
+.field-wrap { position: relative; }
 .field-wrap input { padding-right: 44px; }
 .eye-btn {
-  position: absolute;
-  right: 14px;
-  top: 50%;
+  position: absolute; right: 14px; top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: var(--gray400);
-  padding: 4px;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--gray-mid); padding: 4px;
   transition: color .2s;
 }
-.eye-btn:hover { color: #fff; }
+.eye-btn:hover { color: var(--text); }
 
-/* PLAN SELECT */
-
-/* SUBMIT BTN */
-.btn-submit {
-  width: 100%;
-  padding: 14px;
-  background: var(--blue);
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .2s;
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.btn-submit:hover:not(:disabled) {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(37,99,235,0.4);
-}
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-/* DIVIDER */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-}
-.divider::before, .divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: rgba(255,255,255,0.08);
-}
-.divider span { font-size: 12px; color: var(--gray600); }
-
-/* GOOGLE BTN */
-.btn-google {
-  width: 100%;
-  padding: 12px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+.forgot-link {
+  font-size: 12px;
+  color: var(--emerald);
+  text-decoration: none;
   font-weight: 500;
   cursor: pointer;
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  transition: opacity .15s;
 }
-.btn-google:hover { background: rgba(255,255,255,0.1); }
+.forgot-link:hover { opacity: 0.7; }
 
-/* MESSAGES */
+/* ── MESSAGES ── */
 .msg {
   padding: 12px 16px;
   border-radius: 10px;
@@ -270,270 +298,431 @@ body {
   display: none;
   line-height: 1.5;
 }
-.msg.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; display: block; }
-.msg.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; display: block; }
+.msg.error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #c53030;
+  display: block;
+}
+.msg.success {
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.25);
+  color: #065f46;
+  display: block;
+}
 
-/* LOADING SPINNER */
+/* ── BUTTONS ── */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  border: none;
+  border-radius: 12px;
+  color: #1a1a2e;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .22s;
+  margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--gold-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(240,165,0,0.35);
+}
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-google {
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-light);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.btn-google:hover {
+  border-color: var(--gray-mid);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── DIVIDER ── */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 18px 0;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--gray-light);
+}
+.divider span { font-size: 12px; color: var(--gray-mid); font-weight: 500; }
+
+/* ── TERMS ── */
+.terms {
+  font-size: 11.5px;
+  color: var(--gray-dark);
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+.terms a { color: var(--emerald); text-decoration: none; font-weight: 500; }
+.terms a:hover { text-decoration: underline; }
+
+/* ── ALT ACTION ── */
+.alt-action {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--gray-dark);
+}
+.alt-action a {
+  color: var(--emerald); font-weight: 600;
+  text-decoration: none; cursor: pointer;
+}
+.alt-action a:hover { text-decoration: underline; }
+
+/* ── SUCCESS SCREEN ── */
+.success-screen {
+  text-align: center;
+  display: none;
+  padding: 20px 0;
+}
+.success-icon {
+  width: 72px; height: 72px;
+  background: rgba(13,79,60,0.08);
+  border: 2px solid rgba(13,79,60,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px;
+}
+.success-screen h2 {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 800;
+  color: var(--text); margin-bottom: 10px;
+}
+.success-screen p {
+  font-size: 14px; color: var(--gray-dark); line-height: 1.6;
+}
+
+/* ── SPINNER ── */
 .spinner {
   width: 18px; height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
+  border: 2px solid rgba(26,26,46,0.2);
+  border-top-color: #1a1a2e;
   border-radius: 50%;
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* FOOTER LINK */
-.alt-action {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 13px;
-  color: var(--gray400);
-}
-.alt-action a {
-  color: var(--sky);
-  text-decoration: none;
-  font-weight: 500;
-  cursor: pointer;
-}
-.alt-action a:hover { text-decoration: underline; }
-
-/* TERMS */
-.terms {
-  font-size: 11px;
-  color: var(--gray600);
-  text-align: center;
-  margin-top: 16px;
-  line-height: 1.6;
-}
-.terms a { color: var(--gray400); text-decoration: none; }
-.terms a:hover { color: var(--sky); }
-
-/* SUCCESS SCREEN */
-.success-screen {
-  text-align: center;
-  display: none;
-}
-.success-icon {
-  width: 72px; height: 72px;
-  background: rgba(16,185,129,0.12);
-  border: 2px solid rgba(16,185,129,0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  margin: 0 auto 20px;
-}
-.success-screen h2 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 8px;
-}
-.success-screen p {
-  font-size: 14px;
-  color: var(--gray400);
-  line-height: 1.6;
-}
-
-/* FORGOT PASSWORD */
-.forgot-link {
-  font-size: 12px;
-  color: var(--gray400);
-  text-decoration: none;
-  float: right;
-  margin-top: -2px;
-  transition: color .2s;
-  cursor: pointer;
-}
-.forgot-link:hover { color: var(--sky); }
-
-/* LANG */
-.lang-row {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-}
+/* ── LANG DROPDOWN ── */
 .lang-dropdown { position: relative; }
 .lang-dropdown-btn {
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px; padding: 7px 14px;
-  color: rgba(255,255,255,0.7);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-light);
+  border-radius: 10px; padding: 7px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 600;
   cursor: pointer; transition: all .15s;
+  box-shadow: var(--shadow-sm);
 }
-.lang-dropdown-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.lang-arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform .2s; }
+.lang-dropdown-btn:hover { border-color: var(--gray-mid); }
+.lang-arrow { font-size: 9px; color: var(--gray-mid); transition: transform .2s; }
 .lang-dropdown.open .lang-arrow { transform: rotate(180deg); }
 .lang-menu {
-  display: none; position: absolute; top: calc(100% + 8px); left: 50%;
-  transform: translateX(-50%);
-  background: #1a2540; border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px; padding: 6px; min-width: 160px; z-index: 999;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   display: none;
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: #1a2540;
+  border-radius: 14px; padding: 6px; min-width: 170px; z-index: 999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 .lang-dropdown.open .lang-menu { display: block; }
 .lang-option {
   padding: 8px 12px; border-radius: 8px; font-size: 13px;
   color: rgba(255,255,255,0.7); cursor: pointer; transition: all .15s;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
 }
-.lang-option:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.lang-option:hover { background: rgba(255,255,255,0.1); color: #fff; }
 .lang-option.active { color: #fff; font-weight: 600; }
 
-@media(max-width: 480px) {
-  .card { padding: 28px 20px; }
+/* ── FORM SLIDE ANIMATION ── */
+.form-panel {
+  transition: opacity .2s ease, transform .2s ease;
+}
+.form-panel.hidden {
+  display: none;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .auth-left { display: none; }
+  .auth-right {
+    padding: 40px 20px;
+    justify-content: flex-start;
+    padding-top: 72px;
+  }
+  .right-top { top: 20px; right: 20px; }
+  .mobile-logo {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 24px; font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    margin-bottom: 32px;
+  }
+  .mobile-logo .dot { color: var(--emerald); }
+}
+@media (min-width: 769px) {
+  .mobile-logo { display: none; }
 }
 </style>
 </head>
 <body>
-<div class="bg-glow"></div>
+<div class="auth-layout">
 
-<div class="page">
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="auth-left">
+    <a class="left-logo" href="index.html">solvenin<span class="dot">.</span></a>
 
-  <!-- LANG -->
-  <div class="lang-row">
-    <div class="lang-dropdown" id="lang-dropdown">
-      <button class="lang-dropdown-btn" onclick="toggleLangMenu()">
-        <span id="current-lang-code">EN</span>
-        <span id="current-lang-name">English</span>
-        <span class="lang-arrow">&#9662;</span>
-      </button>
-      <div class="lang-menu" id="lang-menu">
-        <div class="lang-option active" onclick="selectLang('en','EN','English')">EN &nbsp; English</div>
-        <div class="lang-option" onclick="selectLang('tr','TR','Türkçe')">TR &nbsp; Türkçe</div>
-        <div class="lang-option" onclick="selectLang('de','DE','Deutsch')">DE &nbsp; Deutsch</div>
-        <div class="lang-option" onclick="selectLang('fr','FR','Français')">FR &nbsp; Français</div>
-        <div class="lang-option" onclick="selectLang('es','ES','Español')">ES &nbsp; Español</div>
-        <div class="lang-option" onclick="selectLang('ar','AR','العربية')">AR &nbsp; العربية</div>
-        <div class="lang-option" onclick="selectLang('zh','ZH','中文')">ZH &nbsp; 中文</div>
-        <div class="lang-option" onclick="selectLang('ru','RU','Русский')">RU &nbsp; Русский</div>
-        <div class="lang-option" onclick="selectLang('pt','PT','Português')">PT &nbsp; Português</div>
-        <div class="lang-option" onclick="selectLang('ja','JA','日本語')">JA &nbsp; 日本語</div>
+    <div class="left-body">
+      <div class="left-tagline">
+        Her sektör için<br><span class="gold">akıllı iş yazılımı.</span>
+      </div>
+      <div class="left-sub">
+        Envanter, satış, finans, İK ve daha fazlasını tek platformda yönetin.
+      </div>
+
+      <!-- Mini isometric SVG scene -->
+      <div class="iso-scene">
+        <svg width="260" height="160" viewBox="0 0 260 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Base platform -->
+          <ellipse cx="130" cy="140" rx="110" ry="18" fill="rgba(255,255,255,0.04)"/>
+          <!-- Center hub box -->
+          <rect x="100" y="72" width="60" height="52" rx="8" fill="rgba(240,165,0,0.18)" stroke="rgba(240,165,0,0.4)" stroke-width="1.5"/>
+          <rect x="108" y="80" width="44" height="16" rx="4" fill="rgba(240,165,0,0.25)"/>
+          <rect x="108" y="102" width="20" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
+          <rect x="132" y="102" width="20" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
+          <!-- Left module -->
+          <rect x="22" y="88" width="48" height="38" rx="6" fill="rgba(26,107,82,0.4)" stroke="rgba(26,107,82,0.6)" stroke-width="1"/>
+          <rect x="30" y="96" width="32" height="8" rx="3" fill="rgba(255,255,255,0.12)"/>
+          <rect x="30" y="109" width="20" height="5" rx="2" fill="rgba(255,255,255,0.08)"/>
+          <!-- Right module -->
+          <rect x="190" y="88" width="48" height="38" rx="6" fill="rgba(26,107,82,0.4)" stroke="rgba(26,107,82,0.6)" stroke-width="1"/>
+          <rect x="198" y="96" width="32" height="8" rx="3" fill="rgba(255,255,255,0.12)"/>
+          <rect x="198" y="109" width="20" height="5" rx="2" fill="rgba(255,255,255,0.08)"/>
+          <!-- Top module -->
+          <rect x="104" y="28" width="52" height="34" rx="6" fill="rgba(26,107,82,0.4)" stroke="rgba(26,107,82,0.6)" stroke-width="1"/>
+          <rect x="112" y="36" width="36" height="8" rx="3" fill="rgba(255,255,255,0.12)"/>
+          <rect x="112" y="49" width="22" height="5" rx="2" fill="rgba(255,255,255,0.08)"/>
+          <!-- Connection lines -->
+          <line x1="100" y1="98" x2="70" y2="107" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="160" y1="98" x2="190" y2="107" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="130" y1="72" x2="130" y2="62" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <!-- Dots at connection ends -->
+          <circle cx="70" cy="107" r="3" fill="rgba(240,165,0,0.5)"/>
+          <circle cx="190" cy="107" r="3" fill="rgba(240,165,0,0.5)"/>
+          <circle cx="130" cy="62" r="3" fill="rgba(240,165,0,0.5)"/>
+          <!-- Animated pulse on center -->
+          <circle cx="130" cy="98" r="6" fill="rgba(240,165,0,0.2)">
+            <animate attributeName="r" values="6;10;6" dur="2.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.2;0;0.2" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="130" cy="98" r="4" fill="rgba(240,165,0,0.7)"/>
+        </svg>
+      </div>
+
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">📦</div>
+          <div class="feat-text">
+            <strong>Envanter & Stok</strong>
+            Gerçek zamanlı stok takibi
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">💰</div>
+          <div class="feat-text">
+            <strong>Satış & Finans</strong>
+            Sipariş, fatura, muhasebe
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">👥</div>
+          <div class="feat-text">
+            <strong>İnsan Kaynakları</strong>
+            Çalışan, bordro, izin takibi
+          </div>
+        </div>
       </div>
     </div>
+
+    <div class="left-footer">© 2025 Solvenin. All rights reserved.</div>
   </div>
 
-  <!-- LOGO -->
-  <a class="logo" href="https://solvenin.com">
-    <div class="wordmark">solvenin<span class="dot">.</span></div>
-    <div class="underline"></div>
-  </a>
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="auth-right">
 
-  <!-- CARD -->
-  <div class="card">
-
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab active" id="tab-signup" onclick="showTab('signup')" data-i18n="tab_signup">Sign Up</button>
-      <button class="tab" id="tab-login" onclick="showTab('login')" data-i18n="tab_login">Log In</button>
+    <!-- Top-right: lang picker -->
+    <div class="right-top">
+      <div class="lang-dropdown" id="lang-dropdown">
+        <button class="lang-dropdown-btn" onclick="toggleLangMenu()">
+          <span id="current-lang-code">EN</span>
+          <span id="current-lang-name">English</span>
+          <span class="lang-arrow">&#9662;</span>
+        </button>
+        <div class="lang-menu" id="lang-menu">
+          <div class="lang-option active" onclick="selectLang('en','EN','English')">EN &nbsp; English</div>
+          <div class="lang-option" onclick="selectLang('tr','TR','Türkçe')">TR &nbsp; Türkçe</div>
+          <div class="lang-option" onclick="selectLang('de','DE','Deutsch')">DE &nbsp; Deutsch</div>
+          <div class="lang-option" onclick="selectLang('fr','FR','Français')">FR &nbsp; Français</div>
+          <div class="lang-option" onclick="selectLang('es','ES','Español')">ES &nbsp; Español</div>
+          <div class="lang-option" onclick="selectLang('ar','AR','العربية')">AR &nbsp; العربية</div>
+          <div class="lang-option" onclick="selectLang('zh','ZH','中文')">ZH &nbsp; 中文</div>
+          <div class="lang-option" onclick="selectLang('ru','RU','Русский')">RU &nbsp; Русский</div>
+          <div class="lang-option" onclick="selectLang('pt','PT','Português')">PT &nbsp; Português</div>
+          <div class="lang-option" onclick="selectLang('ja','JA','日本語')">JA &nbsp; 日本語</div>
+        </div>
+      </div>
     </div>
 
-    <!-- SUCCESS SCREEN -->
-    <div class="success-screen" id="success-screen">
-      <div class="success-icon">✉️</div>
-      <h2 data-i18n="success_title">Check your email!</h2>
-      <p data-i18n="success_desc">We've sent a confirmation link to your email address. Click it to activate your account.</p>
+    <div class="form-box">
+
+      <!-- Mobile-only logo -->
+      <a class="mobile-logo" href="index.html">solvenin<span class="dot">.</span></a>
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-signup" onclick="showTab('signup')" data-i18n="tab_signup">Sign Up</button>
+        <button class="tab-btn" id="tab-login" onclick="showTab('login')" data-i18n="tab_login">Log In</button>
+      </div>
+
+      <!-- SUCCESS SCREEN -->
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">✉️</div>
+        <h2 data-i18n="success_title">Check your email!</h2>
+        <p data-i18n="success_desc">We've sent a confirmation link to your email address. Click it to activate your account.</p>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div class="form-panel" id="form-signup">
+        <div class="form-head">
+          <div class="form-title" data-i18n="signup_title">Create your account</div>
+          <div class="form-sub" data-i18n="signup_sub">Start free. No credit card required.</div>
+        </div>
+
+        <div id="msg-signup" class="msg"></div>
+
+        <div class="field">
+          <label data-i18n="label_company">Company Name</label>
+          <input type="text" id="company" placeholder="Acme Inc." autocomplete="organization">
+        </div>
+        <div class="field">
+          <label data-i18n="label_name">Full Name</label>
+          <input type="text" id="fullname" placeholder="John Smith" autocomplete="name">
+        </div>
+        <div class="field">
+          <label data-i18n="label_phone">Phone Number</label>
+          <input type="tel" id="signup-phone" placeholder="+1 555 000 0000" autocomplete="tel">
+        </div>
+        <div class="field">
+          <label data-i18n="label_email">Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label data-i18n="label_pass">Password</label>
+          <div class="field-wrap">
+            <input type="password" id="signup-pass" placeholder="Min. 8 characters" autocomplete="new-password">
+            <button class="eye-btn" onclick="togglePass('signup-pass', this)">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btn-signup" onclick="handleSignup()">
+          <span data-i18n="btn_signup">Create Account →</span>
+        </button>
+
+        <div class="divider"><span data-i18n="or">or</span></div>
+
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <span data-i18n="btn_google">Continue with Google</span>
+        </button>
+
+        <p class="terms" data-i18n="terms_text">By signing up, you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="form-panel hidden" id="form-login">
+        <div class="form-head">
+          <div class="form-title" data-i18n="login_title">Welcome back</div>
+          <div class="form-sub" data-i18n="login_sub">Sign in to your Solvenin account.</div>
+        </div>
+
+        <div id="msg-login" class="msg"></div>
+
+        <div class="field">
+          <label data-i18n="label_email">Email Address</label>
+          <input type="email" id="login-email" placeholder="you@company.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <div class="field-header">
+            <label style="margin:0" data-i18n="label_pass">Password</label>
+            <span class="forgot-link" onclick="handleForgot()" data-i18n="forgot">Forgot password?</span>
+          </div>
+          <div class="field-wrap">
+            <input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password">
+            <button class="eye-btn" onclick="togglePass('login-pass', this)">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btn-login" onclick="handleLogin()">
+          <span data-i18n="btn_login">Sign In →</span>
+        </button>
+
+        <div class="divider"><span data-i18n="or">or</span></div>
+
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <span data-i18n="btn_google">Continue with Google</span>
+        </button>
+      </div>
+
+      <!-- ALT ACTION -->
+      <div class="alt-action" id="alt-action">
+        <span data-i18n="have_account">Already have an account?</span>
+        <a onclick="showTab('login')" data-i18n="go_login">Sign in</a>
+      </div>
+
     </div>
-
-    <!-- SIGNUP FORM -->
-    <div id="form-signup">
-      <div class="form-title" data-i18n="signup_title">Create your account</div>
-      <div class="form-sub" data-i18n="signup_sub">Start free. No credit card required.</div>
-
-      <div id="msg-signup" class="msg"></div>
-
-      <div class="field">
-        <label data-i18n="label_company">Company Name</label>
-        <input type="text" id="company" placeholder="Acme Inc." autocomplete="organization">
-      </div>
-
-      <div class="field">
-        <label data-i18n="label_name">Full Name</label>
-        <input type="text" id="fullname" placeholder="John Smith" autocomplete="name">
-      </div>
-
-      <div class="field">
-        <label data-i18n="label_phone">Phone Number</label>
-        <input type="tel" id="signup-phone" placeholder="+7 700 000 0000" autocomplete="tel">
-      </div>
-
-      <div class="field">
-        <label data-i18n="label_email">Email Address</label>
-        <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
-      </div>
-
-      <div class="field">
-        <label data-i18n="label_pass">Password</label>
-        <div class="field-wrap">
-          <input type="password" id="signup-pass" placeholder="Min. 8 characters" autocomplete="new-password">
-          <button class="eye-btn" onclick="togglePass('signup-pass', this)">👁</button>
-        </div>
-      </div>
-
-      <button class="btn-submit" id="btn-signup" onclick="handleSignup()">
-        <span data-i18n="btn_signup">Create Account →</span>
-      </button>
-
-      <div class="divider"><span data-i18n="or">or</span></div>
-
-      <button class="btn-google" onclick="handleGoogle()">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        <span data-i18n="btn_google">Continue with Google</span>
-      </button>
-
-      <p class="terms" data-i18n="terms_text">By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
-    </div>  <!-- /form-signup -->
-
-    <!-- LOGIN FORM -->
-    <div id="form-login" style="display:none">
-      <div class="form-title" data-i18n="login_title">Welcome back</div>
-      <div class="form-sub" data-i18n="login_sub">Sign in to your Solvenin account.</div>
-
-      <div id="msg-login" class="msg"></div>
-
-      <div class="field">
-        <label data-i18n="label_email">Email Address</label>
-        <input type="email" id="login-email" placeholder="you@company.com" autocomplete="email">
-      </div>
-
-      <div class="field">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <label style="margin:0;font-size:12px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase" data-i18n="label_pass">Password</label>
-          <span class="forgot-link" onclick="handleForgot()" data-i18n="forgot">Forgot password?</span>
-        </div>
-        <div class="field-wrap">
-          <input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password">
-          <button class="eye-btn" onclick="togglePass('login-pass', this)">👁</button>
-        </div>
-      </div>
-
-      <button class="btn-submit" id="btn-login" onclick="handleLogin()">
-        <span data-i18n="btn_login">Sign In →</span>
-      </button>
-
-      <div class="divider"><span data-i18n="or">or</span></div>
-
-      <button class="btn-google" onclick="handleGoogle()">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        <span data-i18n="btn_google">Continue with Google</span>
-      </button>
-
-    </div>  <!-- /form-login -->
-
-  </div>  <!-- /card -->
-
-  <div class="alt-action" id="alt-action">
-    <span data-i18n="have_account">Already have an account?</span>
-    <a onclick="showTab('login')" data-i18n="go_login">Sign in</a>
   </div>
+</div>
 
+<!-- ══ GOOGLE ONBOARDING MODAL ══ -->
+<div id="onboard-modal" style="display:none;position:fixed;inset:0;background:rgba(10,46,32,0.55);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:44px 40px;width:100%;max-width:420px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.2)">
+    <div style="font-family:'Outfit',sans-serif;font-size:26px;font-weight:800;color:#1a1a2e;margin-bottom:8px;letter-spacing:-0.5px">Welcome to Solvenin 👋</div>
+    <div style="color:#6b6560;margin-bottom:28px;font-size:14px;line-height:1.5">Just one more step — please confirm your details.</div>
+    <div id="onboard-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;min-height:18px"></div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:600;color:#1a1a2e;opacity:.65;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:7px">Full Name</label>
+      <input type="text" id="onboard-name" placeholder="John Smith" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#0d4f3c'" onblur="this.style.borderColor='#e8e4dc'">
+    </div>
+    <div style="margin-bottom:28px">
+      <label style="font-size:12px;font-weight:600;color:#1a1a2e;opacity:.65;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:7px">Phone Number <span style="color:#ef4444">*</span></label>
+      <input type="tel" id="onboard-phone" placeholder="+1 555 000 0000" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#0d4f3c'" onblur="this.style.borderColor='#e8e4dc'">
+    </div>
+    <button onclick="saveOnboarding()" style="width:100%;padding:14px;background:#f0a500;color:#1a1a2e;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#d99200'" onmouseout="this.style.background='#f0a500'">Continue →</button>
+  </div>
 </div>
 
 <script>
@@ -552,12 +741,11 @@ const T = {
     tab_signup:"Sign Up", tab_login:"Log In",
     signup_title:"Create your account", signup_sub:"Start free. No credit card required.",
     login_title:"Welcome back", login_sub:"Sign in to your Solvenin account.",
-    label_company:"Company Name", label_name:"Full Name",
-    label_email:"Email Address", label_pass:"Password", label_plan:"Choose Your Plan",
-    plan_free:"Free", plan_free_p:"$0 forever", plan_starter:"Starter", plan_pro:"Professional", plan_ent:"Enterprise",
+    label_company:"Company Name", label_name:"Full Name", label_phone:"Phone Number",
+    label_email:"Email Address", label_pass:"Password",
     btn_signup:"Create Account →", btn_login:"Sign In →",
     btn_google:"Continue with Google", forgot:"Forgot password?",
-    or:"or", terms_text:'By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.',
+    or:"or", terms_text:'By signing up, you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.',
     have_account:"Already have an account?", go_login:"Sign in",
     no_account:"Don't have an account?", go_signup:"Sign up",
     success_title:"Check your email!", success_desc:"We've sent a confirmation link. Click it to activate your account.",
@@ -571,12 +759,11 @@ const T = {
     tab_signup:"Kayıt Ol", tab_login:"Giriş Yap",
     signup_title:"Hesabınızı oluşturun", signup_sub:"Ücretsiz başlayın. Kredi kartı gerekmez.",
     login_title:"Tekrar hoş geldiniz", login_sub:"Solvenin hesabınıza giriş yapın.",
-    label_company:"Şirket Adı", label_name:"Ad Soyad",
-    label_email:"E-posta Adresi", label_pass:"Şifre", label_plan:"Plan Seçin",
-    plan_free:"Ücretsiz", plan_free_p:"Sonsuza kadar $0", plan_starter:"Başlangıç", plan_pro:"Profesyonel", plan_ent:"Kurumsal",
+    label_company:"Şirket Adı", label_name:"Ad Soyad", label_phone:"Telefon Numarası",
+    label_email:"E-posta Adresi", label_pass:"Şifre",
     btn_signup:"Hesap Oluştur →", btn_login:"Giriş Yap →",
     btn_google:"Google ile devam et", forgot:"Şifremi unuttum",
-    or:"veya", terms_text:'Kayıt olarak <a href="#">Kullanım Şartları</a>\'nı ve <a href="#">Gizlilik Politikası</a>\'nı kabul etmiş olursunuz.',
+    or:"veya", terms_text:'Kayıt olarak <a href="terms.html">Kullanım Şartları</a>\'nı ve <a href="privacy.html">Gizlilik Politikası</a>\'nı kabul etmiş olursunuz.',
     have_account:"Zaten hesabınız var mı?", go_login:"Giriş yapın",
     no_account:"Hesabınız yok mu?", go_signup:"Kayıt olun",
     success_title:"E-postanızı kontrol edin!", success_desc:"Onay bağlantısı gönderdik. Hesabınızı aktifleştirmek için tıklayın.",
@@ -590,12 +777,11 @@ const T = {
     tab_signup:"Registrieren", tab_login:"Anmelden",
     signup_title:"Konto erstellen", signup_sub:"Kostenlos starten. Keine Kreditkarte erforderlich.",
     login_title:"Willkommen zurück", login_sub:"Melden Sie sich bei Solvenin an.",
-    label_company:"Firmenname", label_name:"Vollständiger Name",
-    label_email:"E-Mail-Adresse", label_pass:"Passwort", label_plan:"Plan wählen",
-    plan_free:"Kostenlos", plan_free_p:"$0 für immer", plan_starter:"Starter", plan_pro:"Professionell", plan_ent:"Enterprise",
+    label_company:"Firmenname", label_name:"Vollständiger Name", label_phone:"Telefonnummer",
+    label_email:"E-Mail-Adresse", label_pass:"Passwort",
     btn_signup:"Konto erstellen →", btn_login:"Anmelden →",
     btn_google:"Mit Google fortfahren", forgot:"Passwort vergessen?",
-    or:"oder", terms_text:'Mit der Registrierung stimmen Sie unseren <a href="#">Nutzungsbedingungen</a> zu.',
+    or:"oder", terms_text:'Mit der Registrierung stimmen Sie unseren <a href="terms.html">Nutzungsbedingungen</a> zu.',
     have_account:"Haben Sie bereits ein Konto?", go_login:"Anmelden",
     no_account:"Noch kein Konto?", go_signup:"Registrieren",
     success_title:"E-Mail prüfen!", success_desc:"Wir haben einen Bestätigungslink gesendet.",
@@ -607,12 +793,11 @@ const T = {
     tab_signup:"S'inscrire", tab_login:"Se connecter",
     signup_title:"Créer votre compte", signup_sub:"Commencez gratuitement. Sans carte bancaire.",
     login_title:"Bon retour", login_sub:"Connectez-vous à votre compte Solvenin.",
-    label_company:"Nom de l'entreprise", label_name:"Nom complet",
-    label_email:"Adresse e-mail", label_pass:"Mot de passe", label_plan:"Choisir un plan",
-    plan_free:"Gratuit", plan_free_p:"$0 pour toujours", plan_starter:"Débutant", plan_pro:"Professionnel", plan_ent:"Entreprise",
+    label_company:"Nom de l'entreprise", label_name:"Nom complet", label_phone:"Numéro de téléphone",
+    label_email:"Adresse e-mail", label_pass:"Mot de passe",
     btn_signup:"Créer un compte →", btn_login:"Se connecter →",
     btn_google:"Continuer avec Google", forgot:"Mot de passe oublié?",
-    or:"ou", terms_text:'En vous inscrivant, vous acceptez nos <a href="#">Conditions d\'utilisation</a>.',
+    or:"ou", terms_text:'En vous inscrivant, vous acceptez nos <a href="terms.html">Conditions d\'utilisation</a>.',
     have_account:"Vous avez déjà un compte?", go_login:"Se connecter",
     no_account:"Pas de compte?", go_signup:"S'inscrire",
     success_title:"Vérifiez votre e-mail!", success_desc:"Nous avons envoyé un lien de confirmation.",
@@ -624,12 +809,11 @@ const T = {
     tab_signup:"Registrarse", tab_login:"Iniciar sesión",
     signup_title:"Crear su cuenta", signup_sub:"Empiece gratis. Sin tarjeta de crédito.",
     login_title:"Bienvenido de nuevo", login_sub:"Inicie sesión en su cuenta de Solvenin.",
-    label_company:"Nombre de empresa", label_name:"Nombre completo",
-    label_email:"Correo electrónico", label_pass:"Contraseña", label_plan:"Elegir plan",
-    plan_free:"Gratis", plan_free_p:"$0 para siempre", plan_starter:"Inicial", plan_pro:"Profesional", plan_ent:"Empresarial",
+    label_company:"Nombre de empresa", label_name:"Nombre completo", label_phone:"Número de teléfono",
+    label_email:"Correo electrónico", label_pass:"Contraseña",
     btn_signup:"Crear cuenta →", btn_login:"Iniciar sesión →",
     btn_google:"Continuar con Google", forgot:"¿Olvidó su contraseña?",
-    or:"o", terms_text:'Al registrarse, acepta nuestros <a href="#">Términos de servicio</a>.',
+    or:"o", terms_text:'Al registrarse, acepta nuestros <a href="terms.html">Términos de servicio</a>.',
     have_account:"¿Ya tiene una cuenta?", go_login:"Iniciar sesión",
     no_account:"¿No tiene cuenta?", go_signup:"Registrarse",
     success_title:"¡Revise su correo!", success_desc:"Hemos enviado un enlace de confirmación.",
@@ -641,12 +825,11 @@ const T = {
     tab_signup:"إنشاء حساب", tab_login:"تسجيل الدخول",
     signup_title:"إنشاء حسابك", signup_sub:"ابدأ مجاناً. لا حاجة لبطاقة ائتمان.",
     login_title:"مرحباً بعودتك", login_sub:"سجّل الدخول إلى حساب Solvenin.",
-    label_company:"اسم الشركة", label_name:"الاسم الكامل",
-    label_email:"البريد الإلكتروني", label_pass:"كلمة المرور", label_plan:"اختر الخطة",
-    plan_free:"مجاني", plan_free_p:"$0 للأبد", plan_starter:"مبتدئ", plan_pro:"احترافي", plan_ent:"مؤسسي",
+    label_company:"اسم الشركة", label_name:"الاسم الكامل", label_phone:"رقم الهاتف",
+    label_email:"البريد الإلكتروني", label_pass:"كلمة المرور",
     btn_signup:"إنشاء الحساب ←", btn_login:"تسجيل الدخول ←",
     btn_google:"المتابعة مع Google", forgot:"نسيت كلمة المرور؟",
-    or:"أو", terms_text:'بالتسجيل، توافق على <a href="#">شروط الخدمة</a>.',
+    or:"أو", terms_text:'بالتسجيل، توافق على <a href="terms.html">شروط الخدمة</a>.',
     have_account:"هل لديك حساب بالفعل؟", go_login:"تسجيل الدخول",
     no_account:"ليس لديك حساب؟", go_signup:"إنشاء حساب",
     success_title:"تحقق من بريدك!", success_desc:"أرسلنا رابط تأكيد إلى بريدك الإلكتروني.",
@@ -658,12 +841,11 @@ const T = {
     tab_signup:"注册", tab_login:"登录",
     signup_title:"创建您的账户", signup_sub:"免费开始。无需信用卡。",
     login_title:"欢迎回来", login_sub:"登录您的 Solvenin 账户。",
-    label_company:"公司名称", label_name:"全名",
-    label_email:"电子邮件地址", label_pass:"密码", label_plan:"选择计划",
-    plan_free:"免费", plan_free_p:"永久$0", plan_starter:"入门版", plan_pro:"专业版", plan_ent:"企业版",
+    label_company:"公司名称", label_name:"全名", label_phone:"电话号码",
+    label_email:"电子邮件地址", label_pass:"密码",
     btn_signup:"创建账户 →", btn_login:"登录 →",
     btn_google:"使用 Google 继续", forgot:"忘记密码？",
-    or:"或", terms_text:'注册即表示您同意我们的<a href="#">服务条款</a>。',
+    or:"或", terms_text:'注册即表示您同意我们的<a href="terms.html">服务条款</a>。',
     have_account:"已有账户？", go_login:"登录",
     no_account:"没有账户？", go_signup:"注册",
     success_title:"检查您的电子邮件！", success_desc:"我们已发送确认链接。",
@@ -675,34 +857,68 @@ const T = {
     tab_signup:"Регистрация", tab_login:"Войти",
     signup_title:"Создайте аккаунт", signup_sub:"Начните бесплатно. Без кредитной карты.",
     login_title:"С возвращением", login_sub:"Войдите в свой аккаунт Solvenin.",
-    label_company:"Название компании", label_name:"Полное имя",
-    label_email:"Электронная почта", label_pass:"Пароль", label_plan:"Выберите план",
-    plan_free:"Бесплатно", plan_free_p:"$0 навсегда", plan_starter:"Стартер", plan_pro:"Профессиональный", plan_ent:"Корпоративный",
+    label_company:"Название компании", label_name:"Полное имя", label_phone:"Номер телефона",
+    label_email:"Электронная почта", label_pass:"Пароль",
     btn_signup:"Создать аккаунт →", btn_login:"Войти →",
     btn_google:"Продолжить с Google", forgot:"Забыли пароль?",
-    or:"или", terms_text:'Регистрируясь, вы соглашаетесь с <a href="#">Условиями использования</a>.',
+    or:"или", terms_text:'Регистрируясь, вы соглашаетесь с <a href="terms.html">Условиями использования</a>.',
     have_account:"Уже есть аккаунт?", go_login:"Войти",
     no_account:"Нет аккаунта?", go_signup:"Зарегистрироваться",
     success_title:"Проверьте почту!", success_desc:"Мы отправили ссылку для подтверждения.",
     err_fill:"Пожалуйста, заполните все поля.", err_pass:"Пароль должен быть не менее 8 символов.",
     err_generic:"Что-то пошло не так.", ok_signup:"Аккаунт создан! Проверьте почту.",
     ok_forgot:"Ссылка для сброса пароля отправлена.", err_login:"Неверный email или пароль."
+  },
+  pt: {
+    tab_signup:"Cadastrar", tab_login:"Entrar",
+    signup_title:"Crie sua conta", signup_sub:"Comece grátis. Sem cartão de crédito.",
+    login_title:"Bem-vindo de volta", login_sub:"Entre na sua conta Solvenin.",
+    label_company:"Nome da empresa", label_name:"Nome completo", label_phone:"Número de telefone",
+    label_email:"Endereço de e-mail", label_pass:"Senha",
+    btn_signup:"Criar conta →", btn_login:"Entrar →",
+    btn_google:"Continuar com Google", forgot:"Esqueceu a senha?",
+    or:"ou", terms_text:'Ao se cadastrar, você concorda com nossos <a href="terms.html">Termos de Serviço</a>.',
+    have_account:"Já tem uma conta?", go_login:"Entrar",
+    no_account:"Não tem conta?", go_signup:"Cadastrar",
+    success_title:"Verifique seu e-mail!", success_desc:"Enviamos um link de confirmação.",
+    err_fill:"Por favor preencha todos os campos.", err_pass:"A senha deve ter pelo menos 8 caracteres.",
+    err_generic:"Algo deu errado.", ok_signup:"Conta criada! Verifique seu e-mail.",
+    ok_forgot:"Link de redefinição enviado.", err_login:"E-mail ou senha inválidos."
+  },
+  ja: {
+    tab_signup:"登録", tab_login:"ログイン",
+    signup_title:"アカウントを作成", signup_sub:"無料で始めましょう。クレジットカード不要。",
+    login_title:"おかえりなさい", login_sub:"Solveninアカウントにサインイン。",
+    label_company:"会社名", label_name:"氏名", label_phone:"電話番号",
+    label_email:"メールアドレス", label_pass:"パスワード",
+    btn_signup:"アカウントを作成 →", btn_login:"サインイン →",
+    btn_google:"Googleで続ける", forgot:"パスワードをお忘れですか？",
+    or:"または", terms_text:'登録することで、<a href="terms.html">利用規約</a>に同意したことになります。',
+    have_account:"すでにアカウントをお持ちですか？", go_login:"サインイン",
+    no_account:"アカウントをお持ちでないですか？", go_signup:"登録",
+    success_title:"メールを確認してください！", success_desc:"確認リンクを送信しました。",
+    err_fill:"すべてのフィールドを入力してください。", err_pass:"パスワードは8文字以上必要です。",
+    err_generic:"エラーが発生しました。", ok_signup:"アカウントが作成されました！メールを確認してください。",
+    ok_forgot:"パスワードリセットリンクを送信しました。", err_login:"メールまたはパスワードが無効です。"
   }
 };
 
 let lang = 'en';
+
 function setLang(l) {
   lang = l;
   const t = T[l] || T['en'];
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (t[key]) el.innerHTML = t[key];
+    if (t[key] !== undefined) el.innerHTML = t[key];
   });
   document.body.style.direction = l === 'ar' ? 'rtl' : 'ltr';
 }
+
 function toggleLangMenu() {
   document.getElementById('lang-dropdown').classList.toggle('open');
 }
+
 function selectLang(l, code, name) {
   localStorage.setItem('solvenin_lang', l);
   document.getElementById('current-lang-code').textContent = code;
@@ -712,19 +928,25 @@ function selectLang(l, code, name) {
   document.getElementById('lang-dropdown').classList.remove('open');
   setLang(l);
 }
+
 document.addEventListener('click', function(e) {
   const dd = document.getElementById('lang-dropdown');
   if (dd && !dd.contains(e.target)) dd.classList.remove('open');
 });
 
-
 function showTab(tab) {
   const isSignup = tab === 'signup';
-  document.getElementById('form-signup').style.display = isSignup ? 'block' : 'none';
-  document.getElementById('form-login').style.display = isSignup ? 'none' : 'block';
-  document.getElementById('success-screen').style.display = 'none';
+  const signupEl = document.getElementById('form-signup');
+  const loginEl  = document.getElementById('form-login');
+  const successEl = document.getElementById('success-screen');
+
+  signupEl.classList.toggle('hidden', !isSignup);
+  loginEl.classList.toggle('hidden', isSignup);
+  successEl.style.display = 'none';
+
   document.getElementById('tab-signup').classList.toggle('active', isSignup);
   document.getElementById('tab-login').classList.toggle('active', !isSignup);
+
   const t = T[lang] || T['en'];
   const altEl = document.getElementById('alt-action');
   if (isSignup) {
@@ -732,12 +954,6 @@ function showTab(tab) {
   } else {
     altEl.innerHTML = `<span>${t.no_account}</span> <a onclick="showTab('signup')">${t.go_signup}</a>`;
   }
-}
-
-function selectPlan(el, plan) {
-  document.querySelectorAll('.plan-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedPlan = plan;
 }
 
 function togglePass(id, btn) {
@@ -752,22 +968,24 @@ function showMsg(id, type, text) {
   el.textContent = text;
 }
 
-function setLoading(btnId, loading) {
+function setLoading(btnId, loading, restoreKey) {
   const btn = document.getElementById(btnId);
   if (loading) {
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div>';
   } else {
     btn.disabled = false;
+    const t = T[lang] || T['en'];
+    btn.innerHTML = `<span>${t[restoreKey]}</span>`;
   }
 }
 
 async function handleSignup() {
   const t = T[lang] || T['en'];
-  const company = document.getElementById('company').value.trim();
+  const company  = document.getElementById('company').value.trim();
   const fullname = document.getElementById('fullname').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
-  const pass = document.getElementById('signup-pass').value;
+  const email    = document.getElementById('signup-email').value.trim();
+  const pass     = document.getElementById('signup-pass').value;
 
   if (!company || !fullname || !email || !pass) {
     showMsg('msg-signup', 'error', t.err_fill); return;
@@ -781,22 +999,16 @@ async function handleSignup() {
   try {
     const phone = document.getElementById('signup-phone')?.value?.trim() || '';
     const { data, error } = await sb.auth.signUp({
-      email,
-      password: pass,
-      options: {
-        data: { full_name: fullname, company_name: company, plan: selectedPlan, phone }
-      }
+      email, password: pass,
+      options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone } }
     });
-
     if (error) throw error;
 
-    // Create company + profile
     if (data.user) {
       const slug = company.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const { data: comp } = await sb.from('companies').insert({
         name: company, slug: slug + '-' + Date.now(), plan: selectedPlan
       }).select().single();
-
       if (comp) {
         await sb.from('profiles').insert({
           id: data.user.id, company_id: comp.id, full_name: fullname, role: 'owner',
@@ -805,22 +1017,20 @@ async function handleSignup() {
       }
     }
 
-    document.getElementById('form-signup').style.display = 'none';
+    document.getElementById('form-signup').classList.add('hidden');
     document.getElementById('success-screen').style.display = 'block';
     document.getElementById('alt-action').style.display = 'none';
 
   } catch (err) {
     showMsg('msg-signup', 'error', err.message || t.err_generic);
+    setLoading('btn-signup', false, 'btn_signup');
   }
-
-  setLoading('btn-signup', false);
-  document.getElementById('btn-signup').innerHTML = `<span>${(T[lang]||T['en']).btn_signup}</span>`;
 }
 
 async function handleLogin() {
   const t = T[lang] || T['en'];
   const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
+  const pass  = document.getElementById('login-pass').value;
 
   if (!email || !pass) { showMsg('msg-login', 'error', t.err_fill); return; }
 
@@ -832,10 +1042,8 @@ async function handleLogin() {
     window.location.href = '/dashboard.html';
   } catch (err) {
     showMsg('msg-login', 'error', t.err_login);
+    setLoading('btn-login', false, 'btn_login');
   }
-
-  setLoading('btn-login', false);
-  document.getElementById('btn-login').innerHTML = `<span>${(T[lang]||T['en']).btn_login}</span>`;
 }
 
 async function handleForgot() {
@@ -846,7 +1054,6 @@ async function handleForgot() {
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + '/reset-password'
   });
-
   if (error) { showMsg('msg-login', 'error', error.message); }
   else { showMsg('msg-login', 'success', t.ok_forgot); }
 }
@@ -858,20 +1065,15 @@ async function handleGoogle() {
   });
 }
 
-// Called after Google redirect — check if phone is missing
 async function checkOnboarding() {
   const params = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
-  
-  // Handle hash-based token from Supabase OAuth redirect
+
   if (hash && hash.includes('access_token')) {
-    // Let Supabase process the hash and establish session
     await new Promise(r => setTimeout(r, 1000));
   }
-  
   if (!params.get('onboard')) return;
-  
-  // Wait for session to be established
+
   let user = null;
   for (let i = 0; i < 5; i++) {
     const { data } = await sb.auth.getUser();
@@ -879,13 +1081,10 @@ async function checkOnboarding() {
     await new Promise(r => setTimeout(r, 500));
   }
   if (!user) { window.location.href = '/dashboard.html'; return; }
-  // Check if profile exists and has phone
+
   const { data: profile } = await sb.from('profiles').select('phone').eq('id', user.id).single();
-  if (profile && profile.phone) {
-    window.location.href = '/dashboard.html';
-    return;
-  }
-  // If profile doesn't exist yet, create it
+  if (profile && profile.phone) { window.location.href = '/dashboard.html'; return; }
+
   if (!profile) {
     await sb.from('profiles').upsert({
       id: user.id,
@@ -893,7 +1092,6 @@ async function checkOnboarding() {
       role: 'owner'
     });
   }
-  // Show phone onboarding modal
   showOnboardingModal(user);
 }
 
@@ -906,7 +1104,7 @@ async function saveOnboarding() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
   const phone = document.getElementById('onboard-phone').value.trim();
-  const name = document.getElementById('onboard-name').value.trim();
+  const name  = document.getElementById('onboard-name').value.trim();
   if (!phone) { document.getElementById('onboard-error').textContent = 'Phone number is required.'; return; }
   const { error } = await sb.from('profiles').update({ phone, full_name: name }).eq('id', user.id);
   if (error) { document.getElementById('onboard-error').textContent = error.message; return; }
@@ -918,40 +1116,15 @@ async function saveOnboarding() {
   const supported = ['en','tr','de','fr','es','ar','zh','ru','pt','ja'];
   const names = { en:'English',tr:'Türkçe',de:'Deutsch',fr:'Français',es:'Español',ar:'العربية',zh:'中文',ru:'Русский',pt:'Português',ja:'日本語' };
   const codes = { en:'EN',tr:'TR',de:'DE',fr:'FR',es:'ES',ar:'AR',zh:'ZH',ru:'RU',pt:'PT',ja:'JA' };
-  const _saved = localStorage.getItem('solvenin_lang');
-  const _browser = (navigator.language||'en').split('-')[0].toLowerCase();
+  const _saved   = localStorage.getItem('solvenin_lang');
+  const _browser = (navigator.language || 'en').split('-')[0].toLowerCase();
   const detected = _saved && supported.includes(_saved) ? _saved : (supported.includes(_browser) ? _browser : 'en');
-  const flagEl = document.getElementById('current-lang-code');
-  const nameEl = document.getElementById('current-lang-name');
-  if(flagEl) flagEl.textContent = codes[detected];
-  if(nameEl) nameEl.textContent = names[detected];
+  document.getElementById('current-lang-code').textContent = codes[detected];
+  document.getElementById('current-lang-name').textContent = names[detected];
   setLang(detected);
 })();
-</script>
 
-<!-- GOOGLE ONBOARDING MODAL -->
-<div id="onboard-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;margin:20px">
-    <div style="font-size:24px;font-weight:700;margin-bottom:8px">Welcome to Solvenin 👋</div>
-    <div style="color:#64748b;margin-bottom:28px;font-size:14px">Just one more step — please confirm your details.</div>
-    <div id="onboard-error" style="color:#ef4444;font-size:13px;margin-bottom:12px"></div>
-    <div style="margin-bottom:16px">
-      <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Full Name</label>
-      <input type="text" id="onboard-name" placeholder="John Smith" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box">
-    </div>
-    <div style="margin-bottom:24px">
-      <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Phone Number <span style="color:#ef4444">*</span></label>
-      <input type="tel" id="onboard-phone" placeholder="+7 700 000 0000" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;box-sizing:border-box">
-    </div>
-    <button onclick="saveOnboarding()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">Continue →</button>
-  </div>
-</div>
-
-<script>
-  // Run onboarding check on page load
-  window.addEventListener('DOMContentLoaded', () => {
-    checkOnboarding();
-  });
+window.addEventListener('DOMContentLoaded', () => { checkOnboarding(); });
 </script>
 </body>
 </html>
