@@ -821,13 +821,9 @@ async function init() {
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
 await loadCompanies();
-  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadCountriesForModal(), loadRegimes()]);
-
-  // Set country dropdown after both loadCompanyData and loadCountriesForModal have finished
-  if (companyData && companyData.country_code) {
-    const coCountry = document.getElementById('co-country');
-    if (coCountry) coCountry.value = companyData.country_code;
-  }
+  // Load countries first so dropdown options exist before loadCompanyData sets the value
+  await loadCountriesForModal();
+  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes()]);
 
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); }
