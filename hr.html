@@ -664,13 +664,13 @@ let html5QrScanner = null;
 
 // ===== INIT =====
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
+  let session = (await sb.auth.getSession()).data.session;
   if (!session) {
     await new Promise(r => setTimeout(r, 800));
-    const { data: { session: s2 } } = await sb.auth.getSession();
-    if (!s2) { window.location.href = 'auth.html'; return; }
+    session = (await sb.auth.getSession()).data.session;
+    if (!session) { window.location.href = 'auth.html'; return; }
   }
-  const user = (await sb.auth.getSession()).data.session?.user;
+  const user = session.user;
   if (!user) return;
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
   (document.getElementById('sb-user-name')||{}).textContent = name;
@@ -693,8 +693,7 @@ async function init() {
   document.getElementById('pr-month').value = now.getMonth() + 1;
   document.getElementById('att-date').value = now.toISOString().slice(0,10);
 
-  await Promise.all([loadDepts(), loadPositions(), loadLeaveTypes()]);
-  await Promise.all([loadEmployees(), loadLeaveRequests(), loadAttendance()]);
+  await Promise.all([loadDepts(), loadPositions(), loadLeaveTypes(), loadEmployees(), loadLeaveRequests(), loadAttendance()]);
   renderAll();
   updateStats();
   setTabActions('employees');

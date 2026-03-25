@@ -653,9 +653,7 @@ async function init() {
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
-await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates()]);
-  await Promise.all([loadOrders(), loadPayments()]);
-  await loadCashBankAccounts();
+await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts()]);
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();

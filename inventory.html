@@ -673,30 +673,28 @@ let _qaProductCallback = null; // callback after quick-add product
 
 // ===== INIT =====
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
+  let session = (await sb.auth.getSession()).data.session;
   if (!session) {
     await new Promise(r => setTimeout(r, 800));
-    const { data: { session: s2 } } = await sb.auth.getSession();
-    if (!s2) { window.location.href = 'auth.html'; return; }
+    session = (await sb.auth.getSession()).data.session;
+    if (!session) { window.location.href = 'auth.html'; return; }
   }
-  const user = (await sb.auth.getSession()).data.session?.user;
+  const user = session.user;
   if (!user) return;
 
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
   (document.getElementById('sb-user-name')||{}).textContent = name;
   (document.getElementById('sb-user-avatar')||{}).textContent = name[0].toUpperCase();
 
-    const _savedId = localStorage.getItem('currentCompanyId');
+  const _savedId = localStorage.getItem('currentCompanyId');
   const { data: _myCompanies } = await sb.rpc('get_my_companies');
   if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
-console.log('companyId set to:', companyId);
   currentUser = user;
 
-  await loadCategories();
-  await Promise.all([loadProducts(), loadMovements(), loadWarehouses()]);
+  await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';

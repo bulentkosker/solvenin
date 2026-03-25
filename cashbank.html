@@ -940,10 +940,9 @@ async function init() {
   const plan = _active.plan || 'free';
   const planEl = document.getElementById('user-plan-label');
   if (planEl) planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
-  await loadCompanies();
-
-  // Now fire data queries with correct companyId
-  const [registersRes, banksRes, accountsRes] = await Promise.all([
+  // Load companies + data queries in parallel
+  const [, registersRes, banksRes, accountsRes] = await Promise.all([
+    loadCompanies(),
     sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at'),
     sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
