@@ -653,10 +653,10 @@
     if (!list) return;
 
     list.innerHTML = companies.map(c => `
-      <div class="company-menu-item ${c.id === currentId ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
-           onclick="sidebarSwitchCompany('${c.id}')">
+      <div class="company-menu-item ${c.company_id === currentId ? 'active' : ''} ${c.status === 'suspended' ? 'suspended' : ''}"
+           onclick="sidebarSwitchCompany('${c.company_id}')">
         <div class="c-dot"></div>
-        <div class="c-label">${c.name}</div>
+        <div class="c-label">${c.company_name}</div>
         <div class="c-role">${c.role || ''}</div>
       </div>`).join('');
 
