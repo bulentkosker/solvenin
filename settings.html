@@ -1001,9 +1001,9 @@ async function replaceTaxRatesFromLocalization(countryCode) {
     return;
   }
 
-  // 3. Soft-delete existing tax rates for this company (avoids FK constraint errors)
+  // 3. Deactivate existing tax rates for this company
   const { error: delErr } = await sb.from('tax_rates')
-    .update({ is_active: false, deleted_at: new Date().toISOString() })
+    .update({ is_active: false })
     .eq('company_id', companyId)
     .eq('is_active', true);
   if (delErr) {
