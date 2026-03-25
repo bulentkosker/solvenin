@@ -796,7 +796,6 @@
         const whName = SIDEBAR_WAREHOUSE_NAMES[lang] || SIDEBAR_WAREHOUSE_NAMES['EN'];
         await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
       }
-
       localStorage.setItem('currentCompanyId', comp.id);
       toast('Company created!', 'success');
       sidebarCloseNewCompany();
