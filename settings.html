@@ -312,6 +312,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> <span data-i18n="nav_categories">Categories</span></button>
         <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></button>
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
+        <button class="settings-nav-item" onclick="switchSection('tax-regime', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="nav_tax_regime">Tax Regime</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -523,6 +524,46 @@ tr:hover .action-btns { opacity:1; }
           </div>
         </div>
 
+        <!-- TAX REGIME -->
+        <div class="settings-section" id="section-tax-regime">
+          <div class="settings-card" style="margin-bottom:16px">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="lbl_active_regime">Active Tax Regime</div>
+                <div class="settings-card-desc" data-i18n="desc_active_regime">The tax regime currently applied to your company</div>
+              </div>
+            </div>
+            <div class="settings-card-body">
+              <div id="active-regime-display" style="padding:12px 0;color:var(--gray500);font-size:13px" data-i18n="lbl_no_regime_set">No regime set</div>
+            </div>
+          </div>
+
+          <div class="settings-card" style="margin-bottom:16px">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="lbl_template_regimes">Template Regimes</div>
+                <div class="settings-card-desc" data-i18n="desc_template_regimes">Predefined regimes for your country</div>
+              </div>
+            </div>
+            <div class="settings-card-body" style="padding:0 24px">
+              <div id="template-regimes-list" class="manage-list"></div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="lbl_custom_regimes">Custom Regimes</div>
+                <div class="settings-card-desc" data-i18n="desc_custom_regimes">Your company's custom tax regimes</div>
+              </div>
+              <button class="btn-primary" onclick="openRegimeModal()"><span data-i18n="btn_add_regime">+ Add Regime</span></button>
+            </div>
+            <div class="settings-card-body" style="padding:0 24px">
+              <div id="custom-regimes-list" class="manage-list"></div>
+            </div>
+          </div>
+        </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -638,6 +679,57 @@ tr:hover .action-btns { opacity:1; }
   </div>
 </div>
 
+<!-- Tax Regime Modal -->
+<div class="modal-overlay" id="regime-modal">
+  <div class="modal" style="width:520px">
+    <div class="modal-head">
+      <div class="modal-title" id="regime-modal-title">Add Tax Regime</div>
+      <button class="modal-close" onclick="closeModal('regime-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row full">
+        <div class="form-group"><label data-i18n="label_name">Name *</label><input type="text" id="rg-name" placeholder="e.g. Standard VAT Regime"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label data-i18n="lbl_description">Description</label><textarea id="rg-desc" style="min-height:60px" placeholder=""></textarea></div>
+      </div>
+      <div style="height:1px;background:var(--gray200);margin:16px 0"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="lbl_vat_applicable">VAT Applicable?</label>
+          <select id="rg-vat-applicable">
+            <option value="true" data-i18n="lbl_yes">Yes</option>
+            <option value="false" data-i18n="lbl_no">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_vat_rate">VAT Rate (%)</label>
+          <input type="number" id="rg-vat-rate" value="0" min="0" max="100" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="lbl_income_tax_type">Income/Corporate Tax Type</label>
+          <select id="rg-income-type">
+            <option value="none" data-i18n="lbl_none">None</option>
+            <option value="revenue_based" data-i18n="lbl_revenue_based">Revenue Based</option>
+            <option value="profit_based" data-i18n="lbl_profit_based">Profit Based</option>
+            <option value="fixed" data-i18n="lbl_fixed">Fixed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_income_tax_rate">Tax Rate (%)</label>
+          <input type="number" id="rg-income-rate" value="0" min="0" max="100" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('regime-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" onclick="saveRegime()" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- New Company Modal -->
 <div class="new-company-modal" id="new-company-modal">
   <div class="new-company-box">
@@ -675,6 +767,8 @@ let activeCurrencies = [];
 let baseCurrency = 'USD';
 let editingWhId = null;
 let editingTaxId = null;
+let editingRegimeId = null;
+let allRegimes = [];
 let deleteCallback = null;
 
 // ===== SUPABASE =====
@@ -725,7 +819,7 @@ async function init() {
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
 await loadCompanies();
-  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadCountriesForModal()]);
+  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadCountriesForModal(), loadRegimes()]);
 
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); }
@@ -813,7 +907,7 @@ async function createNewCompany() {
 async function loadCompanyData() {
   if (!companyId) return;
   const { data, error } = await sb.from('companies')
-    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code')
+    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id')
     .eq('id', companyId).single();
   if (error) { console.error(error); return; }
   companyData = data;
@@ -884,32 +978,55 @@ async function onCountryChange() {
 }
 
 async function replaceTaxRatesFromLocalization(countryCode) {
-  try {
-    const { data: loc } = await sb.from('localizations')
-      .select('id')
-      .eq('country_code', countryCode)
-      .single();
-    if (!loc) return;
+  // 1. Find localization record for this country
+  const { data: loc, error: locErr } = await sb.from('localizations')
+    .select('id')
+    .eq('country_code', countryCode)
+    .single();
+  if (locErr || !loc) {
+    showToast('Localization not found for ' + countryCode, 'error');
+    return;
+  }
 
-    // Delete existing tax rates for this company
-    await sb.from('tax_rates').delete().eq('company_id', companyId);
+  // 2. Fetch tax rates from localization template
+  const { data: taxData, error: fetchErr } = await sb.from('localization_tax_rates')
+    .select('name, rate, description, is_default')
+    .eq('localization_id', loc.id);
+  if (fetchErr) {
+    showToast('Failed to load tax templates: ' + fetchErr.message, 'error');
+    return;
+  }
+  if (!taxData || !taxData.length) {
+    showToast('No tax rates defined for this country', 'warning');
+    return;
+  }
 
-    // Copy from localization
-    const { data: taxData } = await sb.from('localization_tax_rates')
-      .select('name, rate, description, is_default')
-      .eq('localization_id', loc.id);
-    if (taxData && taxData.length) {
-      await sb.from('tax_rates').insert(
-        taxData.map(tr => ({
-          company_id: companyId, name: tr.name, rate: tr.rate,
-          description: tr.description, is_default: tr.is_default || false
-        }))
-      );
-    }
+  // 3. Delete existing tax rates for this company
+  const { error: delErr } = await sb.from('tax_rates')
+    .delete()
+    .eq('company_id', companyId);
+  if (delErr) {
+    showToast('Failed to clear old tax rates: ' + delErr.message, 'error');
+    return;
+  }
 
-    // Reload tax rates in the UI
-    if (typeof loadTaxes === 'function') await loadTaxes();
-  } catch (e) { console.error('Tax rates copy failed', e); }
+  // 4. Insert new tax rates from localization
+  const { error: insErr } = await sb.from('tax_rates').insert(
+    taxData.map(tr => ({
+      company_id: companyId,
+      name: tr.name,
+      rate: tr.rate,
+      description: tr.description || null,
+      is_default: tr.is_default || false
+    }))
+  );
+  if (insErr) {
+    showToast('Failed to insert tax rates: ' + insErr.message, 'error');
+    return;
+  }
+
+  // 5. Reload UI
+  if (typeof loadTaxes === 'function') await loadTaxes();
 }
 
 // ===== BASE CURRENCY =====
@@ -1580,6 +1697,174 @@ async function hardDeleteRecord(type, id, label) {
   if (error) { showToast(error.message, 'error'); return; }
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
   await loadRecycleBin();
+}
+
+// ===== TAX REGIMES =====
+async function loadRegimes() {
+  if (!companyId) return;
+  const countryCode = companyData?.country_code || '';
+
+  // Fetch template regimes (company_id IS NULL, matching country)
+  let templateRegimes = [];
+  if (countryCode) {
+    const { data: loc } = await sb.from('localizations').select('id').eq('country_code', countryCode).single();
+    if (loc) {
+      const { data } = await sb.from('tax_regimes')
+        .select('*')
+        .is('company_id', null)
+        .eq('localization_id', loc.id)
+        .eq('is_active', true)
+        .order('name');
+      templateRegimes = data || [];
+    }
+  }
+
+  // Fetch custom regimes (company's own)
+  const { data: customData } = await sb.from('tax_regimes')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .order('name');
+  const customRegimes = customData || [];
+
+  allRegimes = [...templateRegimes, ...customRegimes];
+
+  const activeId = companyData?.tax_regime_id || null;
+
+  // Render active regime
+  const activeRegime = allRegimes.find(r => r.id === activeId);
+  const activeEl = document.getElementById('active-regime-display');
+  if (activeEl) {
+    if (activeRegime) {
+      activeEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:20px">🏛️</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--text)">${activeRegime.name}</div>
+            ${activeRegime.description ? `<div style="font-size:12px;color:var(--gray500);margin-top:2px">${activeRegime.description}</div>` : ''}
+            <div style="font-size:11px;color:var(--gray400);margin-top:4px">
+              ${activeRegime.vat_applicable ? 'VAT ' + (activeRegime.vat_rate||0) + '%' : t('lbl_no_vat')||'No VAT'}
+              ${activeRegime.income_tax_type && activeRegime.income_tax_type !== 'none' ? ' · ' + activeRegime.income_tax_type + ' ' + (activeRegime.income_tax_rate||0) + '%' : ''}
+            </div>
+          </div>
+        </div>`;
+    } else {
+      activeEl.innerHTML = `<span style="color:var(--gray400)">${t('lbl_no_regime_set')||'No regime set'}</span>`;
+    }
+  }
+
+  // Render template regimes
+  renderRegimeList('template-regimes-list', templateRegimes, activeId, false);
+  // Render custom regimes
+  renderRegimeList('custom-regimes-list', customRegimes, activeId, true);
+}
+
+function renderRegimeList(containerId, regimes, activeId, editable) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!regimes.length) {
+    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_regimes')||'No regimes found'}</div>`;
+    return;
+  }
+  container.innerHTML = regimes.map(r => `
+    <div class="manage-item">
+      <div class="manage-item-icon">🏛️</div>
+      <div class="manage-item-info" style="flex:1">
+        <div class="manage-item-name">
+          ${r.name}
+          ${r.id === activeId ? `<span class="badge badge-green" style="margin-left:8px;font-size:10px">${t('lbl_active')||'Active'}</span>` : ''}
+        </div>
+        <div class="manage-item-meta">
+          ${r.vat_applicable ? 'VAT ' + (r.vat_rate||0) + '%' : t('lbl_no_vat')||'No VAT'}
+          ${r.income_tax_type && r.income_tax_type !== 'none' ? ' · ' + r.income_tax_type + ' ' + (r.income_tax_rate||0) + '%' : ''}
+          ${r.description ? ' · ' + r.description : ''}
+        </div>
+      </div>
+      <div class="manage-item-actions">
+        ${r.id !== activeId ? `<button class="btn-primary btn-sm" onclick="applyRegime('${r.id}','${r.name.replace(/'/g,"\\'")}')" style="font-size:11px;padding:5px 12px">${t('btn_apply')||'Apply'}</button>` : ''}
+        ${editable ? `<button class="action-btn" onclick="openRegimeModal('${r.id}')">✏️</button><button class="action-btn danger" onclick="deleteRegime('${r.id}','${r.name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function applyRegime(regimeId, name) {
+  const confirmed = await showConfirm(
+    (t('confirm_apply_regime')||'Apply "{0}" as your company\'s tax regime?').replace('{0}', name),
+    t('lbl_apply_regime')||'Apply Regime',
+    t('lbl_yes')||'Yes'
+  );
+  if (!confirmed) return;
+
+  const { error } = await sb.from('companies')
+    .update({ tax_regime_id: regimeId })
+    .eq('id', companyId);
+  if (error) { showToast(error.message, 'error'); return; }
+  companyData = { ...companyData, tax_regime_id: regimeId };
+  await loadRegimes();
+  showToast((t('toast_regime_applied')||'Tax regime applied: {0}').replace('{0}', name), 'success');
+}
+
+function openRegimeModal(id=null) {
+  editingRegimeId = id;
+  const r = id ? allRegimes.find(x => x.id === id) : null;
+  document.getElementById('regime-modal-title').textContent = id ? (t('title_edit_regime')||'Edit Tax Regime') : (t('title_add_regime')||'Add Tax Regime');
+  document.getElementById('rg-name').value = r?.name || '';
+  document.getElementById('rg-desc').value = r?.description || '';
+  document.getElementById('rg-vat-applicable').value = r?.vat_applicable !== false ? 'true' : 'false';
+  document.getElementById('rg-vat-rate').value = r?.vat_rate || 0;
+  document.getElementById('rg-income-type').value = r?.income_tax_type || 'none';
+  document.getElementById('rg-income-rate').value = r?.income_tax_rate || 0;
+  openModal('regime-modal');
+}
+
+async function saveRegime() {
+  const name = document.getElementById('rg-name').value.trim();
+  if (!name) { showToast(t('toast_name_required')||'Name is required', 'error'); return; }
+
+  const payload = {
+    company_id: companyId,
+    name,
+    description: document.getElementById('rg-desc').value.trim() || null,
+    vat_applicable: document.getElementById('rg-vat-applicable').value === 'true',
+    vat_rate: parseFloat(document.getElementById('rg-vat-rate').value) || 0,
+    income_tax_type: document.getElementById('rg-income-type').value,
+    income_tax_rate: parseFloat(document.getElementById('rg-income-rate').value) || 0,
+    is_active: true,
+  };
+
+  let error;
+  if (editingRegimeId) {
+    ({ error } = await sb.from('tax_regimes').update(payload).eq('id', editingRegimeId));
+  } else {
+    ({ error } = await sb.from('tax_regimes').insert(payload));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal('regime-modal');
+  await loadRegimes();
+  showToast(t('toast_saved')||'Saved ✓', 'success');
+}
+
+async function deleteRegime(id, name) {
+  // Check if this regime is active
+  if (companyData?.tax_regime_id === id) {
+    showToast(t('err_cannot_delete_active_regime')||'Cannot delete the active regime. Switch to another one first.', 'error');
+    return;
+  }
+  const confirmed = await showConfirm(
+    (t('confirm_delete_regime')||'Delete regime "{0}"?').replace('{0}', name),
+    t('confirm_delete')||'Confirm Delete',
+    t('btn_delete')||'Delete'
+  );
+  if (!confirmed) return;
+
+  // Soft delete
+  const { error } = await sb.from('tax_regimes')
+    .update({ is_active: false, deleted_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  await loadRegimes();
+  showToast(t('toast_deleted')||'Deleted ✓', 'success');
 }
 </script>
 </body>
