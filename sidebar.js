@@ -631,8 +631,11 @@
       if (company) {
         const cnEl = document.getElementById('sb-company-name');
         const cpEl = document.getElementById('sb-company-plan');
+        const upEl = document.getElementById('sb-user-plan');
+        const plan = company.plan || 'free';
         if (cnEl) cnEl.textContent = company.name;
-        if (cpEl) cpEl.textContent = company.plan || 'Free';
+        if (cpEl) cpEl.textContent = plan.toUpperCase();
+        if (upEl) upEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
         if (company.base_currency) {
           localStorage.setItem('baseCurrency', company.base_currency);
           document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: company.base_currency }));
