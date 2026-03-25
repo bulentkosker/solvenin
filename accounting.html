@@ -613,7 +613,11 @@ let deleteCallback = null;
 
 // ===== INIT =====
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
+  const [sessionRes, companiesRes] = await Promise.all([
+    sb.auth.getSession(),
+    sb.rpc('get_my_companies')
+  ]);
+  const session = sessionRes.data.session;
   if (!session) { window.location.href = '/auth.html'; return; }
 
   const user = session.user;
@@ -622,7 +626,7 @@ async function init() {
   (document.getElementById('sb-user-name')||{}).textContent = name;
 
   const savedId = localStorage.getItem('currentCompanyId');
-  const { data: myCompanies } = await sb.rpc('get_my_companies');
+  const myCompanies = companiesRes.data;
   if (!myCompanies || myCompanies.length === 0) { showToast(t('company_not_found'), 'error'); return; }
   const active = savedId ? myCompanies.find(c => c.company_id === savedId) || myCompanies.find(c => c.is_active) || myCompanies[0] : myCompanies.find(c => c.is_active) || myCompanies[0];
   companyId = active.company_id;

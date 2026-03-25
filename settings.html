@@ -800,9 +800,14 @@ function switchSection(name, el) {
 
 // ===== INIT =====
 async function init() {
-  let session = (await sb.auth.getSession()).data.session;
+  // Fetch session + companies in parallel
+  const [sessionRes, companiesRes] = await Promise.all([
+    sb.auth.getSession(),
+    sb.rpc('get_my_companies')
+  ]);
+  let session = sessionRes.data.session;
   if (!session) {
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 300));
     session = (await sb.auth.getSession()).data.session;
     if (!session) { window.location.href = 'auth.html'; return; }
   }
@@ -815,15 +820,15 @@ async function init() {
   (document.getElementById('sb-user-avatar')||{}).textContent = name[0].toUpperCase();
 
   const _savedId = localStorage.getItem('currentCompanyId');
-  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  const _myCompanies = companiesRes.data;
   if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
 
-  // Load countries + company sidebar in parallel, then the rest
-  await Promise.all([loadCompanies(), loadCountriesForModal()]);
-  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes()]);
+  // Load countries + company sidebar + all data in parallel
+  await Promise.all([loadCompanies(), loadCountriesForModal(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes()]);
+  await loadCompanyData();
 
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); }

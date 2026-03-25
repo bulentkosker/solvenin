@@ -392,9 +392,7 @@ async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'auth.html'; return; }
   currentUser = session.user;
-
-  const { data: profile } = await sb.from('profiles').select('company_id').eq('id', currentUser.id).single();
-  companyId = profile?.company_id;
+  companyId = localStorage.getItem('currentCompanyId');
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
   if (typeof setLang === 'function') setLang(savedLang);
