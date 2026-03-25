@@ -865,8 +865,9 @@ async function onCountryChange() {
 
   const countryName = _countriesList.find(c => c.country_code === newCode)?.country_name || newCode;
   const confirmed = await showConfirm(
-    (t('confirm_update_tax_rates') || 'Country changed to {country}. Update tax rates from the new country\'s defaults?').replace('{country}', countryName),
-    t('lbl_update_tax_rates') || 'Update Tax Rates?'
+    (t('confirm_update_tax_rates') || 'Load tax rates for this country? Your current tax rates will be replaced.'),
+    t('lbl_update_tax_rates') || 'Update Tax Rates?',
+    t('lbl_yes') || 'Yes'
   );
 
   // Always update country_code

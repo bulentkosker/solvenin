@@ -731,15 +731,18 @@
     }
   };
 
-  window.showConfirm = function(message, title) {
+  window.showConfirm = function(message, title, confirmLabel) {
     return new Promise((resolve) => {
       const overlay = document.getElementById('solvenin-confirm-overlay');
       const msg = document.getElementById('solvenin-confirm-msg');
       const titleEl = document.getElementById('solvenin-confirm-title');
       const okBtn = document.getElementById('solvenin-confirm-ok');
+      const cancelBtn = document.getElementById('solvenin-confirm-cancel');
       if (!overlay) { resolve(window.confirm(message)); return; }
       titleEl.textContent = title || 'Confirm';
       msg.textContent = message;
+      okBtn.textContent = confirmLabel || 'Delete';
+      if (cancelBtn) cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'Cancel';
       overlay.classList.add('open');
       window._confirmReject = () => { resolve(false); };
       okBtn.onclick = () => {
