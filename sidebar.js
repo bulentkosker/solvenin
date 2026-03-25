@@ -758,17 +758,22 @@
     const countryCode = document.getElementById('sb-new-company-country')?.value || 'US';
     try {
       const sb = window._supabase || window.supabase;
-      const { data: { user } } = await sb.auth.getUser();
+      const { data: { user: currentUser } } = await sb.auth.getUser();
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
 
       const { data: comp, error } = await sb.from('companies').insert({
-        name, slug, plan: 'free', owner_id: user.id, status: 'active', country_code: countryCode
+        name, slug, plan: 'free', owner_id: currentUser.id, status: 'active', country_code: countryCode
       }).select().single();
       if (error) throw error;
 
-      await sb.from('company_users').insert({
-        company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
+      const { error: cuError } = await sb.from('company_users').insert({
+        company_id: comp.id,
+        user_id: currentUser.id,
+        role: 'owner',
+        status: 'active',
+        joined_at: new Date().toISOString()
       });
+      if (cuError) console.error('company_users insert error:', cuError);
 
       // Copy tax rates from localization
       const { data: loc } = await sb.from('localizations')
