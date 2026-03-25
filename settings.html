@@ -1001,10 +1001,11 @@ async function replaceTaxRatesFromLocalization(countryCode) {
     return;
   }
 
-  // 3. Delete existing tax rates for this company
+  // 3. Soft-delete existing tax rates for this company (avoids FK constraint errors)
   const { error: delErr } = await sb.from('tax_rates')
-    .delete()
-    .eq('company_id', companyId);
+    .update({ is_active: false, deleted_at: new Date().toISOString() })
+    .eq('company_id', companyId)
+    .eq('is_active', true);
   if (delErr) {
     showToast('Failed to clear old tax rates: ' + delErr.message, 'error');
     return;
@@ -1448,7 +1449,7 @@ async function openDeleteWarehouse(id, name) {
 async function loadTaxes() {
   if (!companyId) return;
   const { data, error } = await sb.from('tax_rates')
-    .select('*').eq('company_id', companyId).order('name');
+    .select('*').eq('company_id', companyId).eq('is_active', true).order('name');
   if (error) { console.error(error); return; }
   allTaxes = data || [];
   renderTaxesList();
@@ -1461,16 +1462,16 @@ function renderTaxesList() {
     container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_taxes')}</div>`;
     return;
   }
-  container.innerHTML = allTaxes.map(t => `
+  container.innerHTML = allTaxes.map(tx => `
     <div class="manage-item">
       <div class="manage-item-icon">📋</div>
       <div class="manage-item-info">
-        <div class="manage-item-name">${t.name} <span style="color:var(--blue);font-weight:700">${t.rate}%</span></div>
-        ${t.description ? `<div class="manage-item-meta">${t.description}</div>` : ''}
+        <div class="manage-item-name">${tx.name} <span style="color:var(--blue);font-weight:700">${tx.rate}%</span></div>
+        ${tx.description ? `<div class="manage-item-meta">${tx.description}</div>` : ''}
       </div>
       <div class="manage-item-actions">
-        <button class="action-btn" onclick="openTaxModal('${t.id}')">✏️</button>
-        <button class="action-btn danger" onclick="openDeleteTax('${t.id}','${t.name}')">🗑️</button>
+        <button class="action-btn" onclick="openTaxModal('${tx.id}')">✏️</button>
+        <button class="action-btn danger" onclick="openDeleteTax('${tx.id}','${tx.name}')">🗑️</button>
       </div>
     </div>
   `).join('');
@@ -1478,11 +1479,11 @@ function renderTaxesList() {
 
 function openTaxModal(id=null) {
   editingTaxId = id;
-  const t = id ? allTaxes.find(x=>x.id===id) : null;
-  document.getElementById('tax-modal-title').textContent = id ? t('title_edit_tax') : t('title_add_tax');
-  document.getElementById('tax-name').value = t?.name || '';
-  document.getElementById('tax-rate').value = t?.rate || '';
-  document.getElementById('tax-desc').value = t?.description || '';
+  const tx = id ? allTaxes.find(x=>x.id===id) : null;
+  document.getElementById('tax-modal-title').textContent = id ? (t('title_edit_tax')||'Edit Tax Rate') : (t('title_add_tax')||'Add Tax Rate');
+  document.getElementById('tax-name').value = tx?.name || '';
+  document.getElementById('tax-rate').value = tx?.rate || '';
+  document.getElementById('tax-desc').value = tx?.description || '';
   openModal('tax-modal');
 }
 
