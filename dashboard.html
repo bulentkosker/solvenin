@@ -1498,7 +1498,7 @@ async function loadTicker(){
       wantCrypto.forEach(c=>{
         const cd = d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
         if(!cd) return;
-        const p = cd.usd>=1000 ? '$'+cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : '$'+cd.usd.toFixed(2);
+        const p = cd.usd>=1000 ? cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : cd.usd.toFixed(2);
         items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
       });
     }
@@ -1518,7 +1518,8 @@ function renderTicker(items){
     const chHtml = i.ch!=null
       ? `<span class="${parseFloat(i.ch)>=0?'t-up':'t-dn'}">${parseFloat(i.ch)>=0?'▲':'▼'}${Math.abs(i.ch)}%</span>` : '';
     const subHtml = i.sub ? `<span style="color:rgba(255,255,255,0.35);font-size:10px;margin-left:1px">${i.sub}</span>` : '';
-    return `<div class="ticker-item">${i.icon?'<span style="font-size:13px">'+i.icon+'</span> ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${i.val}</span>${subHtml}${chHtml}</div>`;
+    const displayVal = String(i.val).replace(/^[$€£₺₸¥₩₽]+/, '');
+    return `<div class="ticker-item">${i.icon?'<span style="font-size:13px">'+i.icon+'</span> ':''}<span class="t-sym">${i.lbl}</span><span class="t-val">${displayVal}</span>${subHtml}${chHtml}</div>`;
   }).join('');
   const track = document.getElementById('ticker-track');
   track.innerHTML = html + html;

@@ -636,6 +636,12 @@ body {
           <input type="tel" id="signup-phone" placeholder="+1 555 000 0000" autocomplete="tel">
         </div>
         <div class="field">
+          <label data-i18n="label_country">Country</label>
+          <select id="signup-country" style="width:100%;padding:10px 14px;border:1.5px solid #d1cdc4;border-radius:10px;font-size:13px;background:#fff;color:#1a1a2e;outline:none">
+            <option value="US">United States</option>
+          </select>
+        </div>
+        <div class="field">
           <label data-i18n="label_email">Email Address</label>
           <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
         </div>
@@ -734,6 +740,20 @@ const sb = createClient(
 );
 
 let selectedPlan = 'free';
+
+// ===== LOAD COUNTRIES =====
+async function loadCountries() {
+  try {
+    const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+    if (!data || !data.length) return;
+    const sel = document.getElementById('signup-country');
+    if (!sel) return;
+    sel.innerHTML = data.map(c =>
+      `<option value="${c.country_code}" ${c.country_code === 'US' ? 'selected' : ''}>${c.country_name}</option>`
+    ).join('');
+  } catch (e) { console.warn('Countries load failed', e); }
+}
+loadCountries();
 
 // ===== TRANSLATIONS =====
 const T = {
@@ -980,6 +1000,52 @@ function setLoading(btnId, loading, restoreKey) {
   }
 }
 
+const WAREHOUSE_NAMES = {
+  TR:'Ana Depo', EN:'Main Warehouse', DE:'Hauptlager', FR:'Entrepôt Principal',
+  ES:'Almacén Principal', PT:'Armazém Principal', IT:'Magazzino Principale',
+  NL:'Hoofdmagazijn', RU:'Основной склад', AR:'المستودع الرئيسي',
+  ZH:'主仓库', JA:'メイン倉庫', KO:'본 창고', KK:'Негізгі қойма', UZ:'Asosiy ombor',
+  AZ:'Əsas anbar', UK:'Основний склад', PL:'Magazyn główny', RO:'Depozit principal',
+  HU:'Főraktár', CS:'Hlavní sklad', BG:'Основен склад', HR:'Glavni skladište',
+  SR:'Главно складиште', SK:'Hlavný sklad', SL:'Glavno skladišče'
+};
+
+async function copyLocalizationData(companyId, countryCode) {
+  try {
+    // Get localization record
+    const { data: loc } = await sb.from('localizations')
+      .select('id, default_language')
+      .eq('country_code', countryCode)
+      .single();
+    if (!loc) return;
+
+    // Copy tax rates
+    const { data: taxRates } = await sb.from('localization_tax_rates')
+      .select('name, rate, description, is_default')
+      .eq('localization_id', loc.id);
+    if (taxRates && taxRates.length) {
+      await sb.from('tax_rates').insert(
+        taxRates.map(tr => ({
+          company_id: companyId,
+          name: tr.name,
+          rate: tr.rate,
+          description: tr.description,
+          is_default: tr.is_default || false
+        }))
+      );
+    }
+
+    // Create default warehouse in country's language
+    const lang = (loc.default_language || 'EN').toUpperCase();
+    const whName = WAREHOUSE_NAMES[lang] || WAREHOUSE_NAMES['EN'];
+    await sb.from('warehouses').insert({
+      company_id: companyId,
+      name: whName,
+      is_default: true
+    });
+  } catch (e) { console.warn('Localization copy failed', e); }
+}
+
 async function handleSignup() {
   const t = T[lang] || T['en'];
   const company  = document.getElementById('company').value.trim();
@@ -998,22 +1064,25 @@ async function handleSignup() {
 
   try {
     const phone = document.getElementById('signup-phone')?.value?.trim() || '';
+    const countryCode = document.getElementById('signup-country')?.value || 'US';
     const { data, error } = await sb.auth.signUp({
       email, password: pass,
-      options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone } }
+      options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone, country_code: countryCode } }
     });
     if (error) throw error;
 
     if (data.user) {
       const slug = company.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const { data: comp } = await sb.from('companies').insert({
-        name: company, slug: slug + '-' + Date.now(), plan: selectedPlan
+        name: company, slug: slug + '-' + Date.now(), plan: selectedPlan, country_code: countryCode
       }).select().single();
       if (comp) {
         await sb.from('profiles').insert({
           id: data.user.id, company_id: comp.id, full_name: fullname, role: 'owner',
           phone: phone || null
         });
+        // Copy localization tax rates for selected country
+        await copyLocalizationData(comp.id, countryCode);
       }
     }
 

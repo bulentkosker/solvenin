@@ -336,6 +336,7 @@ tr:hover .action-btns { opacity:1; }
               </div>
               <div class="form-row">
                 <div class="form-group"><label data-i18n="label_website">Website</label><input type="text" id="co-website" data-i18n-placeholder="placeholder_co_website" placeholder="https://company.com"></div>
+                <div class="form-group"><label data-i18n="label_country">Country</label><select id="co-country" onchange="onCountryChange()"><option value="">—</option></select></div>
               </div>
               <div class="form-row full">
                 <div class="form-group"><label data-i18n="label_address">Address</label><textarea id="co-address" data-i18n-placeholder="placeholder_co_address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
@@ -643,9 +644,13 @@ tr:hover .action-btns { opacity:1; }
     <h3 data-i18n="lbl_new_company">New Company</h3>
     <p data-i18n="lbl_create_company_workspace">Create a new company workspace.</p>
     <input type="text" id="new-company-name" data-i18n-placeholder="placeholder_new_company" placeholder="Company name">
+    <select id="new-company-country" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray200);border-radius:8px;font-size:13px;background:#fff;color:var(--text);outline:none;margin-bottom:12px">
+      <option value="US">United States</option>
+    </select>
+    <div id="new-company-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:8px"></div>
     <div style="display:flex;gap:8px">
       <button class="btn-primary" style="flex:1" onclick="createNewCompany()" data-i18n="btn_create">Create</button>
-      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('sb-new-company-modal').classList.remove('open')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-secondary" style="flex:1" onclick="document.getElementById('new-company-modal').style.display='none'" data-i18n="btn_cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -720,17 +725,95 @@ async function init() {
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
 await loadCompanies();
-  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes()]);
+  await Promise.all([loadCompanyData(), loadCategories(), loadWarehouses(), loadTaxes(), loadCountriesForModal()]);
 
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); }
+}
+
+// ===== COUNTRIES FOR NEW COMPANY =====
+let _countriesList = [];
+
+async function loadCountriesForModal() {
+  try {
+    const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+    if (!data || !data.length) return;
+    _countriesList = data;
+    const optionsHtml = data.map(c =>
+      `<option value="${c.country_code}">${c.country_name}</option>`
+    ).join('');
+    // Populate new-company modal select
+    const modalSel = document.getElementById('new-company-country');
+    if (modalSel) modalSel.innerHTML = optionsHtml;
+    // Populate company info form select
+    const coSel = document.getElementById('co-country');
+    if (coSel) coSel.innerHTML = '<option value="">—</option>' + optionsHtml;
+  } catch (e) { console.warn('Countries load failed', e); }
+}
+
+const WAREHOUSE_NAMES = {
+  TR:'Ana Depo', EN:'Main Warehouse', DE:'Hauptlager', FR:'Entrepôt Principal',
+  ES:'Almacén Principal', PT:'Armazém Principal', IT:'Magazzino Principale',
+  NL:'Hoofdmagazijn', RU:'Основной склад', AR:'المستودع الرئيسي',
+  ZH:'主仓库', JA:'メイン倉庫', KO:'본 창고', KK:'Негізгі қойма', UZ:'Asosiy ombor',
+  AZ:'Əsas anbar', UK:'Основний склад', PL:'Magazyn główny', RO:'Depozit principal',
+  HU:'Főraktár', CS:'Hlavní sklad', BG:'Основен склад', HR:'Glavni skladište',
+  SR:'Главно складиште', SK:'Hlavný sklad', SL:'Glavno skladišče'
+};
+
+async function createNewCompany() {
+  const name = document.getElementById('new-company-name').value.trim();
+  const errEl = document.getElementById('new-company-err');
+  const countryCode = document.getElementById('new-company-country')?.value || 'US';
+  if (!name) { errEl.textContent = t('toast_company_name_required') || 'Company name is required'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+
+  try {
+    const user = (await sb.auth.getSession()).data.session?.user;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
+    const { data: comp, error } = await sb.from('companies').insert({
+      name, slug, plan: 'pro', owner_id: user.id, status: 'active', country_code: countryCode
+    }).select().single();
+    if (error) throw error;
+
+    await sb.from('company_users').insert({
+      company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
+    });
+
+    // Copy localization tax rates
+    const { data: loc } = await sb.from('localizations')
+      .select('id, default_language')
+      .eq('country_code', countryCode)
+      .single();
+    if (loc) {
+      const { data: taxData } = await sb.from('localization_tax_rates')
+        .select('name, rate, description, is_default')
+        .eq('localization_id', loc.id);
+      if (taxData && taxData.length) {
+        await sb.from('tax_rates').insert(
+          taxData.map(tr => ({
+            company_id: comp.id, name: tr.name, rate: tr.rate,
+            description: tr.description, is_default: tr.is_default || false
+          }))
+        );
+      }
+      // Create default warehouse in country's language
+      const lang = (loc.default_language || 'EN').toUpperCase();
+      const whName = WAREHOUSE_NAMES[lang] || WAREHOUSE_NAMES['EN'];
+      await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
+    }
+
+    await sb.rpc('switch_company', { target_company_id: comp.id });
+    document.getElementById('new-company-modal').style.display = 'none';
+    window.location.reload();
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
 }
 
 // ===== COMPANY DATA =====
 async function loadCompanyData() {
   if (!companyId) return;
   const { data, error } = await sb.from('companies')
-    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies')
+    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code')
     .eq('id', companyId).single();
   if (error) { console.error(error); return; }
   companyData = data;
@@ -744,6 +827,10 @@ async function loadCompanyData() {
   document.getElementById('co-phone').value = data.phone || '';
   document.getElementById('co-website').value = data.website || '';
   document.getElementById('co-address').value = data.address || '';
+
+  // Set country
+  const coCountry = document.getElementById('co-country');
+  if (coCountry && data.country_code) coCountry.value = data.country_code;
 
   // Set base currency
   const bcs = document.getElementById('base-currency-select');
@@ -762,10 +849,66 @@ async function saveCompanyInfo() {
     phone: document.getElementById('co-phone').value.trim() || null,
     website: document.getElementById('co-website').value.trim() || null,
     address: document.getElementById('co-address').value.trim() || null,
+    country_code: document.getElementById('co-country').value || null,
   };
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
   if (error) { showToast(error.message, 'error'); return; }
+  companyData = { ...companyData, ...payload };
   showToast(t('toast_company_info_saved'), 'success');
+}
+
+// ===== COUNTRY CHANGE =====
+async function onCountryChange() {
+  const newCode = document.getElementById('co-country').value;
+  const oldCode = companyData?.country_code || '';
+  if (!newCode || newCode === oldCode) return;
+
+  const countryName = _countriesList.find(c => c.country_code === newCode)?.country_name || newCode;
+  const confirmed = await showConfirm(
+    (t('confirm_update_tax_rates') || 'Country changed to {country}. Update tax rates from the new country\'s defaults?').replace('{country}', countryName),
+    t('lbl_update_tax_rates') || 'Update Tax Rates?'
+  );
+
+  // Always update country_code
+  const { error } = await sb.from('companies').update({ country_code: newCode }).eq('id', companyId);
+  if (error) { showToast(error.message, 'error'); return; }
+  companyData = { ...companyData, country_code: newCode };
+
+  if (confirmed) {
+    await replaceTaxRatesFromLocalization(newCode);
+    showToast((t('toast_country_taxes_updated') || 'Country and tax rates updated to {0}').replace('{0}', countryName), 'success');
+  } else {
+    showToast((t('toast_country_updated') || 'Country updated to {0}').replace('{0}', countryName), 'success');
+  }
+}
+
+async function replaceTaxRatesFromLocalization(countryCode) {
+  try {
+    const { data: loc } = await sb.from('localizations')
+      .select('id')
+      .eq('country_code', countryCode)
+      .single();
+    if (!loc) return;
+
+    // Delete existing tax rates for this company
+    await sb.from('tax_rates').delete().eq('company_id', companyId);
+
+    // Copy from localization
+    const { data: taxData } = await sb.from('localization_tax_rates')
+      .select('name, rate, description, is_default')
+      .eq('localization_id', loc.id);
+    if (taxData && taxData.length) {
+      await sb.from('tax_rates').insert(
+        taxData.map(tr => ({
+          company_id: companyId, name: tr.name, rate: tr.rate,
+          description: tr.description, is_default: tr.is_default || false
+        }))
+      );
+    }
+
+    // Reload tax rates in the UI
+    if (typeof loadTaxes === 'function') await loadTaxes();
+  } catch (e) { console.error('Tax rates copy failed', e); }
 }
 
 // ===== BASE CURRENCY =====

@@ -410,8 +410,10 @@ tr:hover .row-actions{opacity:1}
           </select>
         </div>
         <div class="field">
-          <label><span data-i18n="lbl_tax_rate">Tax Rate (%)</span></label>
-          <input type="number" id="o-tax" value="0" min="0" max="100" oninput="recalcOrder()">
+          <label><span data-i18n="lbl_tax_rate">Tax Rate</span></label>
+          <select id="o-tax" onchange="recalcOrder()">
+            <option value="" data-rate="0">— Vergi Yok (0%)</option>
+          </select>
         </div>
         <div class="field">
           <label>Discount (<span id="lbl-discount-sym">$</span>)</label>
@@ -634,6 +636,7 @@ let customerQA = null;
 let _qaProductCb = null, _qaCustomerCb = null;
 let orderItems = [];
 let warehouses = [];
+let taxRates = [];
 let currentInvoiceOrder = null;
 
 // ===== INIT =====
@@ -650,7 +653,7 @@ async function init() {
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
-await Promise.all([loadCustomers(), loadProducts(), loadWarehouses()]);
+await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates()]);
   await Promise.all([loadOrders(), loadPayments()]);
   await loadCashBankAccounts();
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -684,6 +687,19 @@ function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id ||
 async function loadProducts() {
   const { data } = await sb.from('products').select('id,name,sale_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
   products = data || [];
+}
+
+async function loadTaxRates() {
+  const { data } = await sb.from('tax_rates').select('id,name,rate').eq('company_id', companyId).eq('is_active', true).order('rate');
+  taxRates = data || [];
+  populateTaxSelect();
+}
+
+function populateTaxSelect() {
+  const sel = document.getElementById('o-tax');
+  if (!sel) return;
+  sel.innerHTML = '<option value="" data-rate="0">— Vergi Yok (0%)</option>' +
+    taxRates.map(tr => `<option value="${tr.id}" data-rate="${tr.rate}">${tr.name} (${tr.rate}%)</option>`).join('');
 }
 
 async function loadPayments() {
@@ -899,6 +915,15 @@ function renderOrderItems() {
   recalcOrder();
 }
 
+function getSelectedTaxRate() {
+  const sel = document.getElementById('o-tax');
+  const opt = sel.options[sel.selectedIndex];
+  return {
+    id: sel.value || null,
+    value: parseFloat(opt?.dataset.rate || 0)
+  };
+}
+
 function recalcOrder() {
   let subtotal = 0;
   orderItems.forEach((item, i) => {
@@ -907,7 +932,7 @@ function recalcOrder() {
     const el = document.getElementById('item-total-' + i);
     if (el) el.textContent = fmt(lineTotal);
   });
-  const taxRate = parseFloat(document.getElementById('o-tax').value) || 0;
+  const taxRate = getSelectedTaxRate().value;
   const discount = parseFloat(document.getElementById('o-discount').value) || 0;
   const tax = subtotal * taxRate / 100;
   const total = subtotal + tax - discount;
@@ -924,9 +949,11 @@ async function saveOrder(statusOverride) {
   if (!validItems.length) { showToast(t('err_add_item'), 'error'); return; }
 
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price * (1-(i.disc||0)/100), 0);
-  const taxRate = parseFloat(document.getElementById('o-tax').value) || 0;
+  const selectedTax = getSelectedTaxRate();
+  const taxRateValue = selectedTax.value;
+  const taxRateId = selectedTax.id;
   const discount = parseFloat(document.getElementById('o-discount').value) || 0;
-  const taxAmt = subtotal * taxRate / 100;
+  const taxAmt = subtotal * taxRateValue / 100;
   const total = Math.max(0, subtotal + taxAmt - discount);
   const { data: { user } } = await sb.auth.getUser();
 
@@ -937,7 +964,7 @@ async function saveOrder(statusOverride) {
     status: statusOverride || document.getElementById('o-status').value,
     issue_date: document.getElementById('o-date').value,
     due_date: document.getElementById('o-duedate').value || null,
-    subtotal, tax_rate: taxRate, tax_amount: taxAmt, discount, total,
+    subtotal, tax_rate: taxRateValue, tax_rate_id: taxRateId, tax_amount: taxAmt, discount, total,
     notes: document.getElementById('o-notes').value.trim() || null,
     created_by: user.id
   };
@@ -956,7 +983,9 @@ async function saveOrder(statusOverride) {
     order_id: orderId, product_id: i.product_id || null,
     description: i.description, quantity: i.qty, unit_price: i.price,
     discount: i.disc || 0, total: i.qty * i.price * (1-(i.disc||0)/100),
-    warehouse_id: i.warehouse_id || null
+    warehouse_id: i.warehouse_id || null,
+    tax_rate_id: taxRateId || null,
+    tax_rate_value: taxRateValue || 0
   }));
   await sb.from('sales_order_items').insert(itemsPayload);
 
@@ -1001,7 +1030,7 @@ async function editOrder(id) {
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-duedate').value = order.due_date || '';
   document.getElementById('o-status').value = order.status;
-  document.getElementById('o-tax').value = order.tax_rate;
+  document.getElementById('o-tax').value = order.tax_rate_id || '';
   document.getElementById('o-discount').value = order.discount;
   document.getElementById('o-notes').value = order.notes || '';
   orderItems = (items || []).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));

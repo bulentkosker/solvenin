@@ -194,6 +194,98 @@
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
     .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
 
+    /* ── AI Button ── */
+    .ai-btn {
+      width: 100%; padding: 9px 12px; border-radius: 8px;
+      border: 1.5px solid rgba(240,165,0,0.3);
+      background: rgba(240,165,0,0.08); color: var(--sb-accent);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all .15s; text-align: left; margin-top: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ai-btn:hover { background: rgba(240,165,0,0.2); border-color: var(--sb-accent); }
+
+    /* ── AI Chat Panel ── */
+    #ai-chat-panel {
+      position: fixed; right: 16px; bottom: 16px;
+      width: 360px; height: 520px;
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06);
+      z-index: 2000; display: none; flex-direction: column;
+      overflow: hidden; font-family: 'Outfit', system-ui, sans-serif;
+      transition: opacity .2s, transform .2s;
+    }
+    #ai-chat-panel.open { display: flex; }
+    .ai-chat-header {
+      background: linear-gradient(135deg, #0d4f3c 0%, #0a2e20 100%);
+      padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .ai-chat-header-icon { font-size: 20px; }
+    .ai-chat-header-title { flex: 1; }
+    .ai-chat-header-title strong { display: block; color: #fff; font-size: 13px; font-weight: 700; }
+    .ai-chat-header-title span { font-size: 11px; color: rgba(255,255,255,0.45); }
+    .ai-chat-close {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,0.1); border: none;
+      color: rgba(255,255,255,0.7); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background .15s;
+    }
+    .ai-chat-close:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .ai-chat-messages {
+      flex: 1; overflow-y: auto; padding: 14px;
+      display: flex; flex-direction: column; gap: 10px; background: #f9f8f6;
+    }
+    .ai-msg {
+      max-width: 85%; padding: 10px 13px; border-radius: 12px;
+      font-size: 13px; line-height: 1.55; word-break: break-word;
+    }
+    .ai-msg-user {
+      background: #0d4f3c; color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+    .ai-msg-assistant {
+      background: #fff; color: #1a1a2e;
+      align-self: flex-start; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .ai-msg-system {
+      background: rgba(240,165,0,0.1); color: #8a6200;
+      border: 1px solid rgba(240,165,0,0.3); border-radius: 8px;
+      font-size: 11.5px; align-self: center; text-align: center; max-width: 90%;
+    }
+    #ai-support-container {
+      display: none; padding: 8px 14px; background: #fff8ed;
+      border-top: 1px solid #fce8b2; justify-content: center; flex-shrink: 0;
+    }
+    .ai-support-btn {
+      padding: 7px 16px; border-radius: 8px;
+      background: #f0a500; color: #fff; border: none;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .ai-support-btn:hover { background: #d4900a; }
+    .ai-chat-footer {
+      padding: 10px 12px; background: #fff;
+      border-top: 1px solid #f0ece4; flex-shrink: 0;
+    }
+    .ai-chat-footer-meta { font-size: 10px; color: #b0a898; text-align: right; margin-bottom: 6px; }
+    .ai-chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    #ai-chat-input {
+      flex: 1; padding: 9px 12px; border-radius: 10px;
+      border: 1.5px solid #e8e4dc; font-size: 13px;
+      font-family: inherit; resize: none; outline: none;
+      min-height: 38px; max-height: 120px; line-height: 1.4;
+      transition: border .15s; background: #fafaf8; overflow-y: auto;
+    }
+    #ai-chat-input:focus { border-color: #0d4f3c; box-shadow: 0 0 0 3px rgba(13,79,60,0.08); }
+    #ai-send-btn {
+      padding: 0 14px; border-radius: 10px; height: 38px;
+      background: #0d4f3c; color: #fff; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    #ai-send-btn:hover:not(:disabled) { background: #0a2e20; }
+    #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* ── New company modal ── */
     .new-company-modal {
       display: none; position: fixed; inset: 0;
@@ -448,6 +540,9 @@
             <div class="user-plan" id="sb-user-plan">Free Plan</div>
           </div>
         </div>
+        <button class="ai-btn" onclick="sidebarOpenAI()">
+          <span>🤖</span><span>AI Asistan</span>
+        </button>
       </div>
 
       <!-- New Company Modal -->
@@ -477,6 +572,9 @@
       document.body.insertBefore(sidebar, document.body.firstChild);
     }
     sidebar.innerHTML = buildHTML();
+
+    // Inject AI chat panel if not exists
+    injectAIPanel();
 
     // Inject confirm modal if not exists
     if (!document.getElementById('solvenin-confirm-overlay')) {
@@ -649,6 +747,218 @@
         resolve(true);
       };
     });
+  };
+
+  /* ── AI CHAT ─────────────────────────────────────────────── */
+  const AI_RATE_KEY      = 'ai_daily_count';
+  const AI_RATE_DATE_KEY = 'ai_daily_date';
+  const AI_MAX_DAILY     = 20;
+  const AI_SYSTEM = `Sen Solvenin ERP yazılımının AI asistanısın. Solvenin şu modüllere sahip: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muhasebe, İK & Bordro, Sevkiyat, Projeler, Bakım. Kullanıcıların sorularını Türkçe yanıtla. Yazılımla ilgili sorunları çöz, nasıl kullanılacağını anlat. Çözemediğin durumlarda support@solvenin.com adresine başvurmalarını öner.`;
+
+  let _aiApiKey   = null;
+  let _aiHistory  = [];
+  let _aiStreaming = false;
+
+  function aiRatePassed() {
+    const today = new Date().toDateString();
+    if (localStorage.getItem(AI_RATE_DATE_KEY) !== today) {
+      localStorage.setItem(AI_RATE_DATE_KEY, today);
+      localStorage.setItem(AI_RATE_KEY, '0');
+    }
+    return parseInt(localStorage.getItem(AI_RATE_KEY) || '0') < AI_MAX_DAILY;
+  }
+
+  function aiRemaining() {
+    const today = new Date().toDateString();
+    if (localStorage.getItem(AI_RATE_DATE_KEY) !== today) return AI_MAX_DAILY;
+    return AI_MAX_DAILY - parseInt(localStorage.getItem(AI_RATE_KEY) || '0');
+  }
+
+  function aiIncrRate() {
+    localStorage.setItem(AI_RATE_KEY, String(parseInt(localStorage.getItem(AI_RATE_KEY) || '0') + 1));
+  }
+
+  async function aiGetApiKey() {
+    if (_aiApiKey) return _aiApiKey;
+    try {
+      const sb = window._supabase || window.supabase;
+      if (!sb) return null;
+      const { data } = await sb.from('app_settings').select('value').eq('key', 'anthropic_api_key').single();
+      _aiApiKey = data?.value || null;
+    } catch (e) { /* not configured */ }
+    return _aiApiKey;
+  }
+
+  function aiAppend(role, text, id) {
+    const msgs = document.getElementById('ai-chat-messages');
+    if (!msgs) return null;
+    const div = document.createElement('div');
+    div.className = `ai-msg ai-msg-${role}`;
+    if (id)   div.id          = id;
+    if (text) div.textContent = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function aiUpdateRemaining() {
+    const el = document.getElementById('ai-remaining');
+    if (el) el.textContent = `${aiRemaining()}/${AI_MAX_DAILY} mesaj kaldı`;
+  }
+
+  function injectAIPanel() {
+    if (document.getElementById('ai-chat-panel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'ai-chat-panel';
+    panel.innerHTML = `
+      <div class="ai-chat-header">
+        <div class="ai-chat-header-icon">🤖</div>
+        <div class="ai-chat-header-title">
+          <strong>Solvenin AI Asistan</strong>
+          <span>Her konuda yardımcı olurum</span>
+        </div>
+        <button class="ai-chat-close" onclick="sidebarCloseAI()">✕</button>
+      </div>
+      <div class="ai-chat-messages" id="ai-chat-messages"></div>
+      <div id="ai-support-container">
+        <button class="ai-support-btn" onclick="aiOpenSupport()">📩 Destek Talebi Oluştur</button>
+      </div>
+      <div class="ai-chat-footer">
+        <div class="ai-chat-footer-meta" id="ai-remaining">${aiRemaining()}/${AI_MAX_DAILY} mesaj kaldı</div>
+        <div class="ai-chat-input-row">
+          <textarea id="ai-chat-input" placeholder="Mesajınızı yazın..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSendMessage();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+          <button id="ai-send-btn" onclick="aiSendMessage()">Gönder</button>
+        </div>
+      </div>`;
+    document.body.appendChild(panel);
+  }
+
+  window.sidebarOpenAI = function() {
+    let panel = document.getElementById('ai-chat-panel');
+    if (!panel) { injectAIPanel(); panel = document.getElementById('ai-chat-panel'); }
+    if (!panel) return;
+    panel.classList.add('open');
+    const msgs = document.getElementById('ai-chat-messages');
+    if (msgs && !msgs.children.length) {
+      aiAppend('assistant', 'Merhaba! Ben Solvenin AI Asistanıyım. Size nasıl yardımcı olabilirim?');
+    }
+    const inp = document.getElementById('ai-chat-input');
+    if (inp) inp.focus();
+  };
+
+  window.sidebarCloseAI = function() {
+    const panel = document.getElementById('ai-chat-panel');
+    if (panel) panel.classList.remove('open');
+  };
+
+  window.aiOpenSupport = function() {
+    const sub  = encodeURIComponent('Destek Talebi – ' + document.title);
+    const body = encodeURIComponent('Merhaba,\n\nAI Asistan çözüm bulamadı. Yardıma ihtiyacım var.\n\nSayfa: ' + window.location.href);
+    window.open('mailto:support@solvenin.com?subject=' + sub + '&body=' + body);
+  };
+
+  window.aiSendMessage = async function() {
+    if (_aiStreaming) return;
+    const input = document.getElementById('ai-chat-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (!aiRatePassed()) {
+      aiAppend('system', `⚠️ Günlük mesaj limitinize (${AI_MAX_DAILY}) ulaştınız. Yarın tekrar deneyiniz.`);
+      return;
+    }
+
+    const apiKey = await aiGetApiKey();
+    if (!apiKey) {
+      aiAppend('system', '⚠️ Anthropic API anahtarı bulunamadı. Ayarlar > Uygulama Ayarları bölümünden ekleyin.');
+      return;
+    }
+
+    input.value = '';
+    input.style.height = 'auto';
+    aiAppend('user', text);
+    _aiHistory.push({ role: 'user', content: text });
+    aiIncrRate();
+    aiUpdateRemaining();
+
+    const sendBtn = document.getElementById('ai-send-btn');
+    _aiStreaming    = true;
+    input.disabled  = true;
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
+
+    const msgId  = 'ai-msg-' + Date.now();
+    const bubble = aiAppend('assistant', '', msgId);
+
+    const pageCtx = `Kullanıcı şu an "${document.title}" sayfasında (${window.location.pathname}).`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-allow-browser': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          stream: true,
+          system: AI_SYSTEM + '\n\n' + pageCtx,
+          messages: _aiHistory
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || 'HTTP ' + resp.status);
+      }
+
+      const reader  = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText  = '';
+      const msgs    = document.getElementById('ai-chat-messages');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const ev = JSON.parse(raw);
+            if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+              fullText += ev.delta.text;
+              const el = document.getElementById(msgId);
+              if (el) { el.textContent = fullText; if (msgs) msgs.scrollTop = msgs.scrollHeight; }
+            }
+          } catch (_) {}
+        }
+      }
+
+      _aiHistory.push({ role: 'assistant', content: fullText });
+
+      // Show support button if AI can't resolve
+      if (/support@solvenin\.com|çözemiyorum|bilemiyorum|emin değilim/i.test(fullText)) {
+        const sc = document.getElementById('ai-support-container');
+        if (sc) sc.style.display = 'flex';
+      }
+
+    } catch (e) {
+      const el = document.getElementById(msgId);
+      if (el) el.textContent = '⚠️ Hata: ' + e.message;
+    }
+
+    _aiStreaming     = false;
+    input.disabled   = false;
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Gönder'; }
+    input.focus();
+    aiUpdateRemaining();
   };
 
   /* ── LANGUAGE CHANGE — re-render preserving open state ───── */
