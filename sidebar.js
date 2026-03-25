@@ -304,7 +304,11 @@
       border: 1.5px solid #e8e4dc; font-size: 14px; margin-bottom: 16px;
       outline: none; transition: border .15s;
     }
-    .new-company-box input:focus { border-color: #0d4f3c; box-shadow: 0 0 0 3px rgba(13,79,60,0.1); }
+    .new-company-box input:focus, .new-company-box select:focus { border-color: #0d4f3c; box-shadow: 0 0 0 3px rgba(13,79,60,0.1); }
+    .new-company-box select {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #e0dcd7; border-radius: 10px;
+      font-size: 14px; margin-bottom: 14px; background: #fff; color: #1a1a2e; outline: none;
+    }
     .new-company-box .btn-row { display: flex; gap: 10px; justify-content: flex-end; }
     .new-company-box .btn-cancel {
       padding: 8px 18px; border-radius: 8px; border: 1.5px solid #e8e4dc;
@@ -551,6 +555,7 @@
           <h3>New Company</h3>
           <p>Create a new company to manage separately.</p>
           <input type="text" id="sb-new-company-name" placeholder="Company name..." />
+          <select id="sb-new-company-country"><option value="">Loading...</option></select>
           <div class="btn-row">
             <button class="btn-cancel" onclick="sidebarCloseNewCompany()">Cancel</button>
             <button class="btn-create" onclick="sidebarCreateCompany()">Create</button>
@@ -693,11 +698,51 @@
     }
   };
 
-  window.sidebarOpenNewCompany = function() {
+  // Ensure showToast is available globally (some pages like dashboard don't define it)
+  if (!window.showToast) {
+    window.showToast = function(msg, type) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;';
+        document.body.appendChild(container);
+      }
+      const t = document.createElement('div');
+      t.style.cssText = 'padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.2);max-width:360px;pointer-events:auto;transition:opacity .3s ease;background:' +
+        (type==='error'?'#ef4444':type==='warning'?'#f59e0b':'#10b981');
+      t.textContent = msg;
+      container.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    };
+  }
+
+  const SIDEBAR_WAREHOUSE_NAMES = {
+    TR:'Ana Depo', EN:'Main Warehouse', DE:'Hauptlager', FR:'Entrepôt Principal',
+    ES:'Almacén Principal', PT:'Armazém Principal', IT:'Magazzino Principale',
+    NL:'Hoofdmagazijn', RU:'Основной склад', AR:'المستودع الرئيسي',
+    ZH:'主仓库', JA:'メイン倉庫', KO:'본 창고', KK:'Негізгі қойма', UZ:'Asosiy ombor',
+    AZ:'Əsas anbar', UK:'Основний склад', PL:'Magazyn główny', RO:'Depozit principal',
+    HU:'Főraktár', CS:'Hlavní sklad', BG:'Основен склад', HR:'Glavni skladište',
+    SR:'Главно складиште', SK:'Hlavný sklad', SL:'Glavno skladišče'
+  };
+
+  window.sidebarOpenNewCompany = async function() {
     const modal = document.getElementById('sb-new-company-modal');
     if (modal) modal.classList.add('open');
     const menu = document.getElementById('sb-company-menu');
     if (menu) menu.style.display = 'none';
+    // Load countries into dropdown
+    const sel = document.getElementById('sb-new-company-country');
+    if (sel && sel.options.length <= 1) {
+      try {
+        const sb = window._supabase || window.supabase;
+        const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+        if (data && data.length) {
+          sel.innerHTML = data.map(c => `<option value="${c.country_code}">${c.country_name}</option>`).join('');
+        }
+      } catch (e) { console.warn('Failed to load countries', e); }
+    }
   };
 
   window.sidebarCloseNewCompany = function() {
@@ -706,28 +751,53 @@
   };
 
   window.sidebarCreateCompany = async function() {
+    const toast = window.showToast || function(m) { console.warn(m); };
     const nameInput = document.getElementById('sb-new-company-name');
     const name = nameInput ? nameInput.value.trim() : '';
-    if (!name) return;
+    if (!name) { toast('Company name is required', 'error'); return; }
+    const countryCode = document.getElementById('sb-new-company-country')?.value || 'US';
     try {
       const sb = window._supabase || window.supabase;
       const { data: { user } } = await sb.auth.getUser();
-      const { data, error } = await sb.from('companies').insert({
-        name,
-        owner_id: user.id,
-        plan: 'free'
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+
+      const { data: comp, error } = await sb.from('companies').insert({
+        name, slug, plan: 'free', owner_id: user.id, status: 'active', country_code: countryCode
       }).select().single();
       if (error) throw error;
+
       await sb.from('company_users').insert({
-        company_id: data.id,
-        user_id: user.id,
-        role: 'owner',
-        status: 'active'
+        company_id: comp.id, user_id: user.id, role: 'owner', status: 'active', joined_at: new Date().toISOString()
       });
-      localStorage.setItem('currentCompanyId', data.id);
+
+      // Copy tax rates from localization
+      const { data: loc } = await sb.from('localizations')
+        .select('id, default_language')
+        .eq('country_code', countryCode).single();
+      if (loc) {
+        const { data: taxData } = await sb.from('localization_tax_rates')
+          .select('name, rate, description, is_default')
+          .eq('localization_id', loc.id);
+        if (taxData && taxData.length) {
+          await sb.from('tax_rates').insert(
+            taxData.map(tr => ({
+              company_id: comp.id, name: tr.name, rate: tr.rate,
+              description: tr.description, is_default: tr.is_default || false
+            }))
+          );
+        }
+        // Create default warehouse
+        const lang = (loc.default_language || 'EN').toUpperCase();
+        const whName = SIDEBAR_WAREHOUSE_NAMES[lang] || SIDEBAR_WAREHOUSE_NAMES['EN'];
+        await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
+      }
+
+      localStorage.setItem('currentCompanyId', comp.id);
+      toast('Company created!', 'success');
+      sidebarCloseNewCompany();
       window.location.reload();
     } catch (e) {
-      alert('Error: ' + e.message);
+      toast('Error: ' + e.message, 'error');
     }
   };
 
