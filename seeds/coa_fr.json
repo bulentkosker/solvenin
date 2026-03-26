@@ -1,0 +1,695 @@
+[
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "1",
+    "account_name_local": "Capitaux",
+    "account_name_en": "Capital and Reserves",
+    "account_type": "equity",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "101",
+    "account_name_local": "Capital",
+    "account_name_en": "Share Capital",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "106",
+    "account_name_local": "Réserves",
+    "account_name_en": "Reserves",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "110",
+    "account_name_local": "Report à nouveau",
+    "account_name_en": "Retained Earnings",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "120",
+    "account_name_local": "Résultat de l'exercice",
+    "account_name_en": "Net Income for the Year",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "164",
+    "account_name_local": "Emprunts auprès des établissements de crédit",
+    "account_name_en": "Bank Loans",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "165",
+    "account_name_local": "Dépôts et cautionnements reçus",
+    "account_name_en": "Deposits and Guarantees Received",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "2",
+    "account_name_local": "Immobilisations",
+    "account_name_en": "Fixed Assets",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "205",
+    "account_name_local": "Concessions brevets licences",
+    "account_name_en": "Concessions, Patents, Licenses",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "208",
+    "account_name_local": "Autres immobilisations incorporelles",
+    "account_name_en": "Other Intangible Assets",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "211",
+    "account_name_local": "Terrains",
+    "account_name_en": "Land",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "213",
+    "account_name_local": "Constructions",
+    "account_name_en": "Buildings",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "215",
+    "account_name_local": "Matériel industriel",
+    "account_name_en": "Industrial Equipment",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "218",
+    "account_name_local": "Autres immobilisations corporelles",
+    "account_name_en": "Other Tangible Assets",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "261",
+    "account_name_local": "Titres de participation",
+    "account_name_en": "Equity Investments",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "280",
+    "account_name_local": "Amortissements des immobilisations corporelles",
+    "account_name_en": "Accumulated Depreciation of Tangible Assets",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "3",
+    "account_name_local": "Stocks",
+    "account_name_en": "Inventories",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "310",
+    "account_name_local": "Matières premières",
+    "account_name_en": "Raw Materials",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "320",
+    "account_name_local": "Autres approvisionnements",
+    "account_name_en": "Other Supplies",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "330",
+    "account_name_local": "En-cours de production",
+    "account_name_en": "Work in Progress",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "350",
+    "account_name_local": "Stocks de produits",
+    "account_name_en": "Finished Goods",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "370",
+    "account_name_local": "Stocks de marchandises",
+    "account_name_en": "Merchandise Inventory",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "391",
+    "account_name_local": "Dépréciations des matières",
+    "account_name_en": "Impairment of Raw Materials",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "4",
+    "account_name_local": "Tiers",
+    "account_name_en": "Third Parties",
+    "account_type": "liability",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "401",
+    "account_name_local": "Fournisseurs",
+    "account_name_en": "Suppliers",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "404",
+    "account_name_local": "Fournisseurs d'immobilisations",
+    "account_name_en": "Fixed Asset Suppliers",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "408",
+    "account_name_local": "Fournisseurs factures non parvenues",
+    "account_name_en": "Suppliers - Invoices Not Received",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "411",
+    "account_name_local": "Clients",
+    "account_name_en": "Customers",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "413",
+    "account_name_local": "Clients effets à recevoir",
+    "account_name_en": "Notes Receivable",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "416",
+    "account_name_local": "Clients douteux",
+    "account_name_en": "Doubtful Customers",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "419",
+    "account_name_local": "Clients créditeurs",
+    "account_name_en": "Customer Advances",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "421",
+    "account_name_local": "Personnel rémunérations dues",
+    "account_name_en": "Employee Remuneration Payable",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "431",
+    "account_name_local": "Sécurité sociale",
+    "account_name_en": "Social Security",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "441",
+    "account_name_local": "État subventions à recevoir",
+    "account_name_en": "Government Grants Receivable",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "444",
+    "account_name_local": "État impôts sur les bénéfices",
+    "account_name_en": "Corporate Income Tax",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "445",
+    "account_name_local": "TVA",
+    "account_name_en": "VAT",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "455",
+    "account_name_local": "Associés comptes courants",
+    "account_name_en": "Partners Current Accounts",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "481",
+    "account_name_local": "Charges à répartir",
+    "account_name_en": "Deferred Charges",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "5",
+    "account_name_local": "Financiers",
+    "account_name_en": "Financial Accounts",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "512",
+    "account_name_local": "Banques",
+    "account_name_en": "Banks",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "514",
+    "account_name_local": "Chèques postaux",
+    "account_name_en": "Postal Checks",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "530",
+    "account_name_local": "Actions",
+    "account_name_en": "Shares",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "540",
+    "account_name_local": "Valeurs mobilières de placement",
+    "account_name_en": "Short-term Investments",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "570",
+    "account_name_local": "Caisse",
+    "account_name_en": "Cash",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "6",
+    "account_name_local": "Charges",
+    "account_name_en": "Expenses",
+    "account_type": "expense",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "601",
+    "account_name_local": "Achats de matières premières",
+    "account_name_en": "Raw Material Purchases",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "607",
+    "account_name_local": "Achats de marchandises",
+    "account_name_en": "Merchandise Purchases",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "611",
+    "account_name_local": "Sous-traitance",
+    "account_name_en": "Subcontracting",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "613",
+    "account_name_local": "Locations",
+    "account_name_en": "Rent",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "615",
+    "account_name_local": "Entretien et réparations",
+    "account_name_en": "Maintenance and Repairs",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "616",
+    "account_name_local": "Primes d'assurance",
+    "account_name_en": "Insurance Premiums",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "621",
+    "account_name_local": "Personnel extérieur",
+    "account_name_en": "External Staff",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "622",
+    "account_name_local": "Rémunérations d'intermédiaires",
+    "account_name_en": "Intermediary Fees",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "623",
+    "account_name_local": "Publicité",
+    "account_name_en": "Advertising",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "624",
+    "account_name_local": "Transports",
+    "account_name_en": "Transport",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "625",
+    "account_name_local": "Déplacements et réceptions",
+    "account_name_en": "Travel and Entertainment",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "626",
+    "account_name_local": "Frais postaux et télécommunications",
+    "account_name_en": "Postal and Telecommunications",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "627",
+    "account_name_local": "Services bancaires",
+    "account_name_en": "Banking Services",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "631",
+    "account_name_local": "Impôts et taxes",
+    "account_name_en": "Taxes and Duties",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "641",
+    "account_name_local": "Rémunérations du personnel",
+    "account_name_en": "Employee Wages",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "645",
+    "account_name_local": "Charges de sécurité sociale",
+    "account_name_en": "Social Security Charges",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "651",
+    "account_name_local": "Redevances pour concessions",
+    "account_name_en": "Royalties for Concessions",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "661",
+    "account_name_local": "Charges d'intérêts",
+    "account_name_en": "Interest Expense",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "671",
+    "account_name_local": "Charges exceptionnelles",
+    "account_name_en": "Exceptional Charges",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "681",
+    "account_name_local": "Dotations aux amortissements",
+    "account_name_en": "Depreciation Expense",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "7",
+    "account_name_local": "Produits",
+    "account_name_en": "Revenue",
+    "account_type": "revenue",
+    "level": 1
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "701",
+    "account_name_local": "Ventes de produits finis",
+    "account_name_en": "Sales of Finished Goods",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "706",
+    "account_name_local": "Prestations de services",
+    "account_name_en": "Service Revenue",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "707",
+    "account_name_local": "Ventes de marchandises",
+    "account_name_en": "Merchandise Sales",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "708",
+    "account_name_local": "Produits activités annexes",
+    "account_name_en": "Ancillary Revenue",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "740",
+    "account_name_local": "Subventions d'exploitation",
+    "account_name_en": "Operating Grants",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "751",
+    "account_name_local": "Redevances pour concessions",
+    "account_name_en": "Royalty Income",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "761",
+    "account_name_local": "Produits de participations",
+    "account_name_en": "Income from Equity Investments",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "762",
+    "account_name_local": "Produits des autres immobilisations financières",
+    "account_name_en": "Income from Other Financial Assets",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "764",
+    "account_name_local": "Revenus des valeurs mobilières",
+    "account_name_en": "Income from Marketable Securities",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "771",
+    "account_name_local": "Produits exceptionnels",
+    "account_name_en": "Exceptional Income",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "FR",
+    "is_mandatory": true,
+    "account_code": "781",
+    "account_name_local": "Reprises sur amortissements",
+    "account_name_en": "Reversal of Depreciation",
+    "account_type": "revenue",
+    "level": 2
+  }
+]

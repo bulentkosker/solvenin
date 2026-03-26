@@ -1,0 +1,41 @@
+[
+  {"account_code": "1000", "account_name_local": "Cash at Bank", "account_name_en": "Cash at Bank", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "1100", "account_name_local": "Trade Debtors", "account_name_en": "Trade Debtors", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1200", "account_name_local": "Stock", "account_name_en": "Stock", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1300", "account_name_local": "Prepayments", "account_name_en": "Prepayments", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1400", "account_name_local": "Fixed Assets", "account_name_en": "Fixed Assets", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1500", "account_name_local": "Accumulated Depreciation", "account_name_en": "Accumulated Depreciation", "account_type": "asset", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "2000", "account_name_local": "Trade Creditors", "account_name_en": "Trade Creditors", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "2100", "account_name_local": "Bank Loans", "account_name_en": "Bank Loans", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2200", "account_name_local": "VAT Liability", "account_name_en": "VAT Liability", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2300", "account_name_local": "PAYE/NI Payable", "account_name_en": "PAYE/NI Payable", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2400", "account_name_local": "Corporation Tax Payable", "account_name_en": "Corporation Tax Payable", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2500", "account_name_local": "Deferred Income", "account_name_en": "Deferred Income", "account_type": "liability", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "3000", "account_name_local": "Share Capital", "account_name_en": "Share Capital", "account_type": "equity", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "3100", "account_name_local": "Retained Earnings", "account_name_en": "Retained Earnings", "account_type": "equity", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "3200", "account_name_local": "Profit and Loss Account", "account_name_en": "Profit and Loss Account", "account_type": "equity", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "4000", "account_name_local": "Sales", "account_name_en": "Sales", "account_type": "revenue", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "4100", "account_name_local": "Other Income", "account_name_en": "Other Income", "account_type": "revenue", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "4200", "account_name_local": "Interest Received", "account_name_en": "Interest Received", "account_type": "revenue", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "5000", "account_name_local": "Cost of Goods Sold", "account_name_en": "Cost of Goods Sold", "account_type": "cost", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "5100", "account_name_local": "Direct Wages", "account_name_en": "Direct Wages", "account_type": "cost", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "6000", "account_name_local": "Wages and Salaries", "account_name_en": "Wages and Salaries", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "6100", "account_name_local": "Rent and Rates", "account_name_en": "Rent and Rates", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6200", "account_name_local": "Light and Heat", "account_name_en": "Light and Heat", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6300", "account_name_local": "Telephone", "account_name_en": "Telephone", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6400", "account_name_local": "Postage and Stationery", "account_name_en": "Postage and Stationery", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6500", "account_name_local": "Motor Expenses", "account_name_en": "Motor Expenses", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6600", "account_name_local": "Travel and Subsistence", "account_name_en": "Travel and Subsistence", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6700", "account_name_local": "Advertising", "account_name_en": "Advertising", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6800", "account_name_local": "Entertainment", "account_name_en": "Entertainment", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6900", "account_name_local": "Depreciation", "account_name_en": "Depreciation", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7000", "account_name_local": "Bank Charges", "account_name_en": "Bank Charges", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7100", "account_name_local": "Professional Fees", "account_name_en": "Professional Fees", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7200", "account_name_local": "Insurance", "account_name_en": "Insurance", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7300", "account_name_local": "Sundry Expenses", "account_name_en": "Sundry Expenses", "account_type": "expense", "country_code": "GB", "is_mandatory": false, "level": 2, "parent_code": null}
+]

@@ -1,0 +1,41 @@
+[
+  {"account_code": "1100", "account_name_local": "Cash and Cash Equivalents", "account_name_en": "Cash and Cash Equivalents", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "1200", "account_name_local": "Trade Receivables", "account_name_en": "Trade Receivables", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1300", "account_name_local": "Inventories", "account_name_en": "Inventories", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1400", "account_name_local": "Prepaid Expenses", "account_name_en": "Prepaid Expenses", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "1500", "account_name_local": "Other Current Assets", "account_name_en": "Other Current Assets", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "2100", "account_name_local": "Property Plant and Equipment", "account_name_en": "Property Plant and Equipment", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "2200", "account_name_local": "Accumulated Depreciation", "account_name_en": "Accumulated Depreciation", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2300", "account_name_local": "Intangible Assets", "account_name_en": "Intangible Assets", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2400", "account_name_local": "Investments", "account_name_en": "Investments", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "2500", "account_name_local": "Other Non-current Assets", "account_name_en": "Other Non-current Assets", "account_type": "asset", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "3100", "account_name_local": "Trade Payables", "account_name_en": "Trade Payables", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "3200", "account_name_local": "Short-term Borrowings", "account_name_en": "Short-term Borrowings", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "3300", "account_name_local": "Tax Liabilities", "account_name_en": "Tax Liabilities", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "3400", "account_name_local": "Deferred Revenue", "account_name_en": "Deferred Revenue", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "3500", "account_name_local": "Other Current Liabilities", "account_name_en": "Other Current Liabilities", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "4100", "account_name_local": "Long-term Borrowings", "account_name_en": "Long-term Borrowings", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "4200", "account_name_local": "Deferred Tax Liability", "account_name_en": "Deferred Tax Liability", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "4300", "account_name_local": "Other Non-current Liabilities", "account_name_en": "Other Non-current Liabilities", "account_type": "liability", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "5100", "account_name_local": "Share Capital", "account_name_en": "Share Capital", "account_type": "equity", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "5200", "account_name_local": "Retained Earnings", "account_name_en": "Retained Earnings", "account_type": "equity", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "5300", "account_name_local": "Other Reserves", "account_name_en": "Other Reserves", "account_type": "equity", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "6100", "account_name_local": "Revenue from Sales", "account_name_en": "Revenue from Sales", "account_type": "revenue", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "6200", "account_name_local": "Service Revenue", "account_name_en": "Service Revenue", "account_type": "revenue", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6300", "account_name_local": "Other Income", "account_name_en": "Other Income", "account_type": "revenue", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "6400", "account_name_local": "Finance Income", "account_name_en": "Finance Income", "account_type": "revenue", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+
+  {"account_code": "7100", "account_name_local": "Cost of Goods Sold", "account_name_en": "Cost of Goods Sold", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 1, "parent_code": null},
+  {"account_code": "7200", "account_name_local": "Employee Benefits Expense", "account_name_en": "Employee Benefits Expense", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7300", "account_name_local": "Depreciation", "account_name_en": "Depreciation", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7400", "account_name_local": "Rent Expense", "account_name_en": "Rent Expense", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7500", "account_name_local": "Marketing Expense", "account_name_en": "Marketing Expense", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7600", "account_name_local": "Finance Costs", "account_name_en": "Finance Costs", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7700", "account_name_local": "Tax Expense", "account_name_en": "Tax Expense", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null},
+  {"account_code": "7800", "account_name_local": "Other Expenses", "account_name_en": "Other Expenses", "account_type": "expense", "country_code": "IFRS", "is_mandatory": false, "level": 2, "parent_code": null}
+]

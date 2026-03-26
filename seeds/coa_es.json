@@ -1,0 +1,569 @@
+[
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "1",
+    "account_name_local": "Financiación básica",
+    "account_name_en": "Basic Financing",
+    "account_type": "equity",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "100",
+    "account_name_local": "Capital social",
+    "account_name_en": "Share Capital",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "112",
+    "account_name_local": "Reserva legal",
+    "account_name_en": "Legal Reserve",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "120",
+    "account_name_local": "Remanente",
+    "account_name_en": "Retained Earnings",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "129",
+    "account_name_local": "Resultado del ejercicio",
+    "account_name_en": "Net Income for the Year",
+    "account_type": "equity",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "170",
+    "account_name_local": "Deudas a largo plazo con entidades de crédito",
+    "account_name_en": "Long-term Bank Loans",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "2",
+    "account_name_local": "Inmovilizado",
+    "account_name_en": "Fixed Assets",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "210",
+    "account_name_local": "Terrenos y bienes naturales",
+    "account_name_en": "Land and Natural Resources",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "211",
+    "account_name_local": "Construcciones",
+    "account_name_en": "Buildings",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "213",
+    "account_name_local": "Maquinaria",
+    "account_name_en": "Machinery",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "214",
+    "account_name_local": "Utillaje",
+    "account_name_en": "Tools",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "216",
+    "account_name_local": "Mobiliario",
+    "account_name_en": "Furniture",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "217",
+    "account_name_local": "Equipos procesos información",
+    "account_name_en": "IT Equipment",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "218",
+    "account_name_local": "Elementos de transporte",
+    "account_name_en": "Vehicles",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "280",
+    "account_name_local": "Amortización acumulada",
+    "account_name_en": "Accumulated Depreciation",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "3",
+    "account_name_local": "Existencias",
+    "account_name_en": "Inventories",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "300",
+    "account_name_local": "Materias primas",
+    "account_name_en": "Raw Materials",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "310",
+    "account_name_local": "Productos en curso",
+    "account_name_en": "Work in Progress",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "350",
+    "account_name_local": "Productos terminados",
+    "account_name_en": "Finished Goods",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "4",
+    "account_name_local": "Acreedores y deudores",
+    "account_name_en": "Creditors and Debtors",
+    "account_type": "liability",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "400",
+    "account_name_local": "Proveedores",
+    "account_name_en": "Suppliers",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "410",
+    "account_name_local": "Acreedores varios",
+    "account_name_en": "Sundry Creditors",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "430",
+    "account_name_local": "Clientes",
+    "account_name_en": "Customers",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "431",
+    "account_name_local": "Efectos comerciales a cobrar",
+    "account_name_en": "Notes Receivable",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "436",
+    "account_name_local": "Clientes de dudoso cobro",
+    "account_name_en": "Doubtful Customers",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "438",
+    "account_name_local": "Anticipos de clientes",
+    "account_name_en": "Customer Advances",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "460",
+    "account_name_local": "Anticipos de remuneraciones",
+    "account_name_en": "Salary Advances",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "465",
+    "account_name_local": "Remuneraciones pendientes de pago",
+    "account_name_en": "Wages Payable",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "470",
+    "account_name_local": "Hacienda pública deudora",
+    "account_name_en": "Tax Authority Receivable",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "472",
+    "account_name_local": "HP IVA soportado",
+    "account_name_en": "Input VAT",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "475",
+    "account_name_local": "Hacienda pública acreedora",
+    "account_name_en": "Tax Authority Payable",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "477",
+    "account_name_local": "HP IVA repercutido",
+    "account_name_en": "Output VAT",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "5",
+    "account_name_local": "Cuentas financieras",
+    "account_name_en": "Financial Accounts",
+    "account_type": "asset",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "520",
+    "account_name_local": "Deudas corto plazo con entidades de crédito",
+    "account_name_en": "Short-term Bank Loans",
+    "account_type": "liability",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "553",
+    "account_name_local": "Cuentas corrientes con socios",
+    "account_name_en": "Current Accounts with Partners",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "570",
+    "account_name_local": "Caja euros",
+    "account_name_en": "Cash in Euros",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "572",
+    "account_name_local": "Bancos e instituciones de crédito",
+    "account_name_en": "Banks",
+    "account_type": "asset",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "6",
+    "account_name_local": "Compras y gastos",
+    "account_name_en": "Purchases and Expenses",
+    "account_type": "expense",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "600",
+    "account_name_local": "Compras de mercaderías",
+    "account_name_en": "Merchandise Purchases",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "601",
+    "account_name_local": "Compras de materias primas",
+    "account_name_en": "Raw Material Purchases",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "621",
+    "account_name_local": "Arrendamientos y cánones",
+    "account_name_en": "Rent and Royalties",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "622",
+    "account_name_local": "Reparaciones y conservación",
+    "account_name_en": "Repairs and Maintenance",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "623",
+    "account_name_local": "Servicios profesionales independientes",
+    "account_name_en": "Professional Services",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "624",
+    "account_name_local": "Transportes",
+    "account_name_en": "Transport",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "625",
+    "account_name_local": "Primas de seguros",
+    "account_name_en": "Insurance Premiums",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "626",
+    "account_name_local": "Servicios bancarios",
+    "account_name_en": "Banking Services",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "628",
+    "account_name_local": "Suministros",
+    "account_name_en": "Utilities",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "629",
+    "account_name_local": "Otros servicios",
+    "account_name_en": "Other Services",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "640",
+    "account_name_local": "Sueldos y salarios",
+    "account_name_en": "Wages and Salaries",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "642",
+    "account_name_local": "Seguridad social a cargo de la empresa",
+    "account_name_en": "Employer Social Security",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "650",
+    "account_name_local": "Pérdidas de créditos comerciales",
+    "account_name_en": "Bad Debt Losses",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "662",
+    "account_name_local": "Intereses de deudas",
+    "account_name_en": "Interest Expense",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "681",
+    "account_name_local": "Amortización del inmovilizado material",
+    "account_name_en": "Depreciation of Tangible Assets",
+    "account_type": "expense",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "7",
+    "account_name_local": "Ventas e ingresos",
+    "account_name_en": "Sales and Revenue",
+    "account_type": "revenue",
+    "level": 1
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "700",
+    "account_name_local": "Ventas de mercaderías",
+    "account_name_en": "Merchandise Sales",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "701",
+    "account_name_local": "Ventas de productos terminados",
+    "account_name_en": "Sales of Finished Goods",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "705",
+    "account_name_local": "Prestaciones de servicios",
+    "account_name_en": "Service Revenue",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "740",
+    "account_name_local": "Subvenciones",
+    "account_name_en": "Grants",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "751",
+    "account_name_local": "Resultados de operaciones en común",
+    "account_name_en": "Income from Joint Operations",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "760",
+    "account_name_local": "Ingresos de participaciones",
+    "account_name_en": "Income from Equity Investments",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "762",
+    "account_name_local": "Ingresos de créditos",
+    "account_name_en": "Interest Income",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "769",
+    "account_name_local": "Otros ingresos financieros",
+    "account_name_en": "Other Financial Income",
+    "account_type": "revenue",
+    "level": 2
+  },
+  {
+    "country_code": "ES",
+    "is_mandatory": true,
+    "account_code": "771",
+    "account_name_local": "Beneficios procedentes del inmovilizado material",
+    "account_name_en": "Gains on Disposal of Tangible Assets",
+    "account_type": "revenue",
+    "level": 2
+  }
+]

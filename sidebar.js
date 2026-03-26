@@ -870,6 +870,25 @@
         ALL_MODULES.map(m => ({ company_id: comp.id, module: m, is_active: true }))
       );
 
+      // Load chart of accounts from templates
+      const { data: coaTemplates } = await sb.from('chart_of_accounts_templates')
+        .select('account_code, account_name_local, account_name_en, account_type, parent_code, level, is_mandatory')
+        .eq('country_code', countryCode)
+        .eq('is_mandatory', true);
+      if (coaTemplates && coaTemplates.length) {
+        const BATCH = 200;
+        for (let i = 0; i < coaTemplates.length; i += BATCH) {
+          await sb.from('chart_of_accounts').insert(
+            coaTemplates.slice(i, i + BATCH).map(t => ({
+              company_id: comp.id, code: t.account_code,
+              name: t.account_name_en, name_local: t.account_name_local,
+              type: t.account_type, parent_code: t.parent_code,
+              level: t.level, country_code: countryCode, is_system: true
+            }))
+          );
+        }
+      }
+
       localStorage.setItem('currentCompanyId', comp.id);
       toast('Company created!', 'success');
       sidebarCloseNewCompany();

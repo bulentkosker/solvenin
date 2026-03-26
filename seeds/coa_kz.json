@@ -1,0 +1,1142 @@
+[
+  {
+    "country_code": "KZ",
+    "account_code": "1000",
+    "account_name_local": "Краткосрочные активы",
+    "account_name_en": "Current Assets",
+    "account_type": "asset",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1010",
+    "account_name_local": "Касса (тенге)",
+    "account_name_en": "Cash on hand (KZT)",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1020",
+    "account_name_local": "Касса (иностранная валюта)",
+    "account_name_en": "Cash on hand (foreign currency)",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1030",
+    "account_name_local": "Текущий банковский счёт",
+    "account_name_en": "Current bank account",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1040",
+    "account_name_local": "Карточный счёт",
+    "account_name_en": "Card account",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1050",
+    "account_name_local": "Прочие денежные средства",
+    "account_name_en": "Other cash and cash equivalents",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1100",
+    "account_name_local": "Краткосрочные финансовые инвестиции",
+    "account_name_en": "Short-term financial investments",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1200",
+    "account_name_local": "Краткосрочная дебиторская задолженность",
+    "account_name_en": "Short-term receivables",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1210",
+    "account_name_local": "Торговая дебиторская задолженность",
+    "account_name_en": "Trade receivables",
+    "account_type": "asset",
+    "parent_code": "1200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1220",
+    "account_name_local": "Задолженность связанных сторон",
+    "account_name_en": "Receivables from related parties",
+    "account_type": "asset",
+    "parent_code": "1200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1230",
+    "account_name_local": "Задолженность работников",
+    "account_name_en": "Receivables from employees",
+    "account_type": "asset",
+    "parent_code": "1200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1290",
+    "account_name_local": "Прочая краткосрочная дебиторская задолженность",
+    "account_name_en": "Other short-term receivables",
+    "account_type": "asset",
+    "parent_code": "1200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1300",
+    "account_name_local": "Запасы",
+    "account_name_en": "Inventories",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1310",
+    "account_name_local": "Сырьё и материалы",
+    "account_name_en": "Raw materials and supplies",
+    "account_type": "asset",
+    "parent_code": "1300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1320",
+    "account_name_local": "Полуфабрикаты",
+    "account_name_en": "Semi-finished goods",
+    "account_type": "asset",
+    "parent_code": "1300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1330",
+    "account_name_local": "Готовая продукция",
+    "account_name_en": "Finished goods",
+    "account_type": "asset",
+    "parent_code": "1300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1340",
+    "account_name_local": "Товары",
+    "account_name_en": "Merchandise",
+    "account_type": "asset",
+    "parent_code": "1300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1350",
+    "account_name_local": "Прочие запасы",
+    "account_name_en": "Other inventories",
+    "account_type": "asset",
+    "parent_code": "1300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1400",
+    "account_name_local": "Текущие налоговые активы",
+    "account_name_en": "Current tax assets",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1410",
+    "account_name_local": "НДС к возмещению",
+    "account_name_en": "VAT receivable",
+    "account_type": "asset",
+    "parent_code": "1400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1420",
+    "account_name_local": "Авансовые платежи по корпоративному подоходному налогу",
+    "account_name_en": "Corporate income tax prepayment",
+    "account_type": "asset",
+    "parent_code": "1400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1500",
+    "account_name_local": "Прочие краткосрочные активы",
+    "account_name_en": "Other current assets",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1510",
+    "account_name_local": "Расходы будущих периодов",
+    "account_name_en": "Prepaid expenses",
+    "account_type": "asset",
+    "parent_code": "1500",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1520",
+    "account_name_local": "Выданные авансы",
+    "account_name_en": "Advances paid",
+    "account_type": "asset",
+    "parent_code": "1500",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "1600",
+    "account_name_local": "Активы, предназначенные для продажи",
+    "account_name_en": "Assets held for disposal",
+    "account_type": "asset",
+    "parent_code": "1000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2000",
+    "account_name_local": "Долгосрочные активы",
+    "account_name_en": "Non-current Assets",
+    "account_type": "asset",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2100",
+    "account_name_local": "Долгосрочные финансовые инвестиции",
+    "account_name_en": "Long-term financial investments",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2200",
+    "account_name_local": "Долгосрочная дебиторская задолженность",
+    "account_name_en": "Long-term receivables",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2300",
+    "account_name_local": "Инвестиции в ассоциированные организации",
+    "account_name_en": "Investments in associates",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2400",
+    "account_name_local": "Основные средства",
+    "account_name_en": "Property, plant and equipment",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2410",
+    "account_name_local": "Земельные участки",
+    "account_name_en": "Land",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2420",
+    "account_name_local": "Здания и сооружения",
+    "account_name_en": "Buildings",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2430",
+    "account_name_local": "Машины и оборудование",
+    "account_name_en": "Machinery and equipment",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2440",
+    "account_name_local": "Транспортные средства",
+    "account_name_en": "Vehicles",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2450",
+    "account_name_local": "Офисное оборудование",
+    "account_name_en": "Office equipment",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2460",
+    "account_name_local": "Прочие основные средства",
+    "account_name_en": "Other property, plant and equipment",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2470",
+    "account_name_local": "Незавершённое строительство",
+    "account_name_en": "Construction in progress",
+    "account_type": "asset",
+    "parent_code": "2400",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2500",
+    "account_name_local": "Накопленная амортизация (−)",
+    "account_name_en": "Accumulated depreciation (−)",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2600",
+    "account_name_local": "Нематериальные активы",
+    "account_name_en": "Intangible assets",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2610",
+    "account_name_local": "Программное обеспечение",
+    "account_name_en": "Software",
+    "account_type": "asset",
+    "parent_code": "2600",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2620",
+    "account_name_local": "Патенты и лицензии",
+    "account_name_en": "Patents and licences",
+    "account_type": "asset",
+    "parent_code": "2600",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2630",
+    "account_name_local": "Прочие нематериальные активы",
+    "account_name_en": "Other intangible assets",
+    "account_type": "asset",
+    "parent_code": "2600",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2700",
+    "account_name_local": "Накопленная амортизация нематериальных активов (−)",
+    "account_name_en": "Accumulated amortisation (−)",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2800",
+    "account_name_local": "Отложенный налоговый актив",
+    "account_name_en": "Deferred tax asset",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "2900",
+    "account_name_local": "Прочие долгосрочные активы",
+    "account_name_en": "Other non-current assets",
+    "account_type": "asset",
+    "parent_code": "2000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3000",
+    "account_name_local": "Краткосрочные обязательства",
+    "account_name_en": "Current Liabilities",
+    "account_type": "liability",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3010",
+    "account_name_local": "Краткосрочные банковские кредиты",
+    "account_name_en": "Short-term bank loans",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3020",
+    "account_name_local": "Краткосрочные займы",
+    "account_name_en": "Short-term borrowings",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3100",
+    "account_name_local": "Торговая кредиторская задолженность",
+    "account_name_en": "Trade payables",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3110",
+    "account_name_local": "Задолженность поставщикам",
+    "account_name_en": "Accounts payable to suppliers",
+    "account_type": "liability",
+    "parent_code": "3100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3120",
+    "account_name_local": "Задолженность связанным сторонам",
+    "account_name_en": "Payables to related parties",
+    "account_type": "liability",
+    "parent_code": "3100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3200",
+    "account_name_local": "Задолженность по оплате труда",
+    "account_name_en": "Employee-related payables",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3210",
+    "account_name_local": "Задолженность по заработной плате",
+    "account_name_en": "Wages payable",
+    "account_type": "liability",
+    "parent_code": "3200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3220",
+    "account_name_local": "Отчисления на социальное страхование",
+    "account_name_en": "Social security contributions",
+    "account_type": "liability",
+    "parent_code": "3200",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3300",
+    "account_name_local": "Налоговые обязательства",
+    "account_name_en": "Tax liabilities",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3310",
+    "account_name_local": "НДС к уплате",
+    "account_name_en": "VAT payable",
+    "account_type": "liability",
+    "parent_code": "3300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3320",
+    "account_name_local": "Индивидуальный подоходный налог у источника",
+    "account_name_en": "Income tax withholding",
+    "account_type": "liability",
+    "parent_code": "3300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3330",
+    "account_name_local": "Корпоративный подоходный налог",
+    "account_name_en": "Corporate income tax",
+    "account_type": "liability",
+    "parent_code": "3300",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3400",
+    "account_name_local": "Полученные авансы",
+    "account_name_en": "Advances received",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3500",
+    "account_name_local": "Прочие краткосрочные обязательства",
+    "account_name_en": "Other current liabilities",
+    "account_type": "liability",
+    "parent_code": "3000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3510",
+    "account_name_local": "Доходы будущих периодов",
+    "account_name_en": "Deferred revenue",
+    "account_type": "liability",
+    "parent_code": "3500",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "3520",
+    "account_name_local": "Начисленные расходы",
+    "account_name_en": "Accrued expenses",
+    "account_type": "liability",
+    "parent_code": "3500",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4000",
+    "account_name_local": "Долгосрочные обязательства",
+    "account_name_en": "Non-current Liabilities",
+    "account_type": "liability",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4010",
+    "account_name_local": "Долгосрочные банковские кредиты",
+    "account_name_en": "Long-term bank loans",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4020",
+    "account_name_local": "Долгосрочные займы",
+    "account_name_en": "Long-term borrowings",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4100",
+    "account_name_local": "Долгосрочная торговая кредиторская задолженность",
+    "account_name_en": "Long-term trade payables",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4200",
+    "account_name_local": "Отложенное налоговое обязательство",
+    "account_name_en": "Deferred tax liability",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4300",
+    "account_name_local": "Резерв по выходным пособиям",
+    "account_name_en": "Employee termination benefit provisions",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "4400",
+    "account_name_local": "Прочие долгосрочные обязательства",
+    "account_name_en": "Other non-current liabilities",
+    "account_type": "liability",
+    "parent_code": "4000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5000",
+    "account_name_local": "Собственный капитал",
+    "account_name_en": "Equity",
+    "account_type": "equity",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5010",
+    "account_name_local": "Уставный капитал",
+    "account_name_en": "Share capital",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5020",
+    "account_name_local": "Неоплаченный капитал (−)",
+    "account_name_en": "Unpaid capital (−)",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5100",
+    "account_name_local": "Резервный капитал",
+    "account_name_en": "Capital reserves",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5200",
+    "account_name_local": "Резерв переоценки",
+    "account_name_en": "Revaluation reserve",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5300",
+    "account_name_local": "Курсовые разницы при пересчёте",
+    "account_name_en": "Foreign currency translation differences",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5400",
+    "account_name_local": "Нераспределённая прибыль прошлых лет",
+    "account_name_en": "Retained earnings from prior years",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5500",
+    "account_name_local": "Непокрытый убыток прошлых лет (−)",
+    "account_name_en": "Accumulated losses from prior years (−)",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "5600",
+    "account_name_local": "Чистая прибыль (убыток) отчётного периода",
+    "account_name_en": "Net profit (loss) for the period",
+    "account_type": "equity",
+    "parent_code": "5000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6000",
+    "account_name_local": "Доходы",
+    "account_name_en": "Revenue",
+    "account_type": "revenue",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6010",
+    "account_name_local": "Доходы от реализации товаров",
+    "account_name_en": "Revenue from sale of goods",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6020",
+    "account_name_local": "Доходы от оказания услуг",
+    "account_name_en": "Revenue from services",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6030",
+    "account_name_local": "Прочие операционные доходы",
+    "account_name_en": "Other operating income",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6100",
+    "account_name_local": "Доходы по процентам",
+    "account_name_en": "Interest income",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6110",
+    "account_name_local": "Доходы по дивидендам",
+    "account_name_en": "Dividend income",
+    "account_type": "revenue",
+    "parent_code": "6100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6120",
+    "account_name_local": "Доходы от аренды",
+    "account_name_en": "Rental income",
+    "account_type": "revenue",
+    "parent_code": "6100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6200",
+    "account_name_local": "Доходы от выбытия основных средств",
+    "account_name_en": "Gain on disposal of PPE",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6300",
+    "account_name_local": "Доходы по курсовой разнице",
+    "account_name_en": "Foreign exchange gains",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "6400",
+    "account_name_local": "Прочие доходы",
+    "account_name_en": "Other income",
+    "account_type": "revenue",
+    "parent_code": "6000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7000",
+    "account_name_local": "Расходы",
+    "account_name_en": "Expenses",
+    "account_type": "expense",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7010",
+    "account_name_local": "Себестоимость реализованных товаров",
+    "account_name_en": "Cost of goods sold",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7020",
+    "account_name_local": "Себестоимость оказанных услуг",
+    "account_name_en": "Cost of services rendered",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7100",
+    "account_name_local": "Расходы на оплату труда",
+    "account_name_en": "Employee benefit expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7110",
+    "account_name_local": "Заработная плата",
+    "account_name_en": "Salaries and wages",
+    "account_type": "expense",
+    "parent_code": "7100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7120",
+    "account_name_local": "Расходы на социальное страхование",
+    "account_name_en": "Social security expenses",
+    "account_type": "expense",
+    "parent_code": "7100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7130",
+    "account_name_local": "Прочие расходы по оплате труда",
+    "account_name_en": "Other employee expenses",
+    "account_type": "expense",
+    "parent_code": "7100",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7200",
+    "account_name_local": "Расходы по амортизации",
+    "account_name_en": "Depreciation and amortisation expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7300",
+    "account_name_local": "Расходы по аренде",
+    "account_name_en": "Rental expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7400",
+    "account_name_local": "Расходы по реализации",
+    "account_name_en": "Marketing and selling expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7500",
+    "account_name_local": "Общие и административные расходы",
+    "account_name_en": "General and administrative expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7600",
+    "account_name_local": "Расходы на финансирование",
+    "account_name_en": "Finance costs",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7610",
+    "account_name_local": "Расходы по процентам",
+    "account_name_en": "Interest expense",
+    "account_type": "expense",
+    "parent_code": "7600",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7620",
+    "account_name_local": "Банковские комиссии",
+    "account_name_en": "Bank commissions",
+    "account_type": "expense",
+    "parent_code": "7600",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7700",
+    "account_name_local": "Расходы по налогам",
+    "account_name_en": "Tax expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7800",
+    "account_name_local": "Убытки по курсовой разнице",
+    "account_name_en": "Foreign exchange losses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "7900",
+    "account_name_local": "Прочие расходы",
+    "account_name_en": "Other expenses",
+    "account_type": "expense",
+    "parent_code": "7000",
+    "level": 2,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "8000",
+    "account_name_local": "Затраты на производство",
+    "account_name_en": "Production Costs",
+    "account_type": "cost",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "8010",
+    "account_name_local": "Использование сырья и материалов",
+    "account_name_en": "Raw materials and supplies used",
+    "account_type": "cost",
+    "parent_code": "8000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "8020",
+    "account_name_local": "Прямые затраты на оплату труда",
+    "account_name_en": "Direct labour costs",
+    "account_type": "cost",
+    "parent_code": "8000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "8030",
+    "account_name_local": "Общепроизводственные расходы",
+    "account_name_en": "Manufacturing overhead",
+    "account_type": "cost",
+    "parent_code": "8000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "8040",
+    "account_name_local": "Потери от брака",
+    "account_name_en": "Spoilage and waste",
+    "account_type": "cost",
+    "parent_code": "8000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "9000",
+    "account_name_local": "Забалансовые счета",
+    "account_name_en": "Off-balance Sheet Accounts",
+    "account_type": "asset",
+    "parent_code": null,
+    "level": 1,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "9010",
+    "account_name_local": "Арендованные основные средства",
+    "account_name_en": "Leased fixed assets",
+    "account_type": "asset",
+    "parent_code": "9000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "9020",
+    "account_name_local": "Обеспечения и гарантии",
+    "account_name_en": "Collateral and guarantees",
+    "account_type": "asset",
+    "parent_code": "9000",
+    "level": 3,
+    "is_mandatory": true
+  },
+  {
+    "country_code": "KZ",
+    "account_code": "9030",
+    "account_name_local": "Условные обязательства",
+    "account_name_en": "Contingent liabilities",
+    "account_type": "asset",
+    "parent_code": "9000",
+    "level": 3,
+    "is_mandatory": true
+  }
+]
