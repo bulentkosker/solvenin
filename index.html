@@ -532,64 +532,10 @@ footer{background:var(--emerald-dark);border-top:1px solid rgba(255,255,255,0.06
     <div class="toggle-wrap" style="margin-top:32px">
       <span id="toggle-monthly-label" data-i18n="toggle_monthly" style="font-size:14px;font-weight:600;color:var(--gray-dark)">Monthly</span>
       <div class="toggle-track" onclick="toggleBilling()"><div id="toggle-thumb"></div></div>
-      <span style="font-size:14px;font-weight:600;color:var(--gray-mid)"><span data-i18n="toggle_yearly">Yearly</span> <span data-i18n="toggle_save" style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px">Save 20%</span></span>
+      <span style="font-size:14px;font-weight:600;color:var(--gray-mid)"><span data-i18n="toggle_yearly">Yearly</span> <span data-i18n="toggle_save" style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:4px">2 months free</span></span>
     </div>
-    <div class="user-ctrl">
-      <span data-i18n="users_label" style="font-size:14px;color:var(--gray-dark);font-weight:500">Users:</span>
-      <button class="user-ctrl-btn" onclick="changeUsers(-1)">−</button>
-      <span id="user-count" style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--text);min-width:32px;text-align:center">1</span>
-      <button class="user-ctrl-btn" onclick="changeUsers(1)">+</button>
-    </div>
-    <div class="pricing-grid">
-      <div class="price-card reveal">
-        <div class="price-plan" data-i18n="plan1">Free</div>
-        <div class="price-amount">$0<sub data-i18n="per_user">/user/mo</sub></div>
-        <div class="price-desc" data-i18n="plan1d">Forever free. No credit card required.</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><span class="check">✓</span> <span data-i18n="pf1_1">1 user</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf1_2">Basic modules</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf1_3">100 records/month</span></li>
-          <li><span class="cross">–</span> <span data-i18n="pf1_4">PDF invoices</span></li>
-          <li><span class="cross">–</span> <span data-i18n="pf1_5">API access</span></li>
-        </ul>
-        <button class="btn-plan btn-plan-outline" onclick="window.location.href='/auth.html'" data-i18n="plan_start">Get Started Free</button>
-      </div>
-      <div class="price-card reveal">
-        <div class="price-plan" data-i18n="plan2">Standard</div>
-        <div class="price-amount"><sup>$</sup><span id="std-price">7.20</span><sub data-i18n="per_user">/user/mo</sub></div>
-        <div id="std-total" style="font-size:12px;color:var(--gray-mid);margin-top:4px;margin-bottom:8px">$7.20/mo · 1 user</div>
-        <div class="price-desc" data-i18n="plan2d">All modules for growing teams.</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><span class="check">✓</span> <span data-i18n="pf2_1">Unlimited users</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf2_2">All modules</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf2_3">PDF invoices</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf2_4">Priority support</span></li>
-          <li><span class="cross">–</span> <span data-i18n="pf2_5">API access</span></li>
-        </ul>
-        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:12px">✓ <span data-i18n="trial">7-day free trial</span></div>
-        <button class="btn-plan btn-plan-outline" onclick="startCheckout('standard')" data-i18n="plan_trial">Start Free Trial</button>
-      </div>
-      <div class="price-card popular reveal">
-        <div class="popular-badge" data-i18n="popular">Most Popular</div>
-        <div class="price-plan" data-i18n="plan3">Professional</div>
-        <div class="price-amount"><sup>$</sup><span id="pro-price">10.80</span><sub data-i18n="per_user">/user/mo</sub></div>
-        <div id="pro-total" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;margin-bottom:8px">$10.80/mo · 1 user</div>
-        <div class="price-desc" data-i18n="plan3d">Multi-company + API access.</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><span class="check">✓</span> <span data-i18n="pf3_1">Everything in Standard</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf3_2">Multi-company</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf3_3">API & Webhooks</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf3_4">Custom integrations</span></li>
-          <li><span class="check">✓</span> <span data-i18n="pf3_5">Dedicated support</span></li>
-        </ul>
-        <div style="font-size:11px;color:#86efac;font-weight:600;margin-bottom:12px">✓ <span data-i18n="trial">7-day free trial</span></div>
-        <button class="btn-plan btn-plan-gold" onclick="startCheckout('professional')" data-i18n="plan_trial">Start Free Trial</button>
-      </div>
-    </div>
-    <p data-i18n="pricing_note2" style="text-align:center;font-size:13px;color:var(--gray-mid);margin-top:24px">✓ All plans include hosting, updates &amp; support &nbsp;·&nbsp; Annual billing saves 20% &nbsp;·&nbsp; Cancel anytime</p>
+    <div class="pricing-grid" id="pricing-grid"></div>
+    <p data-i18n="pricing_note2" style="text-align:center;font-size:13px;color:var(--gray-mid);margin-top:24px">✓ All plans include hosting, updates &amp; support &nbsp;·&nbsp; Cancel anytime</p>
   </div>
 </div>
 
@@ -743,14 +689,15 @@ const T = {
     s8:"E-Commerce", s8d:"Orders, warehouse, shipping",
     pri_tag:"Pricing", pri_title:"Simple, transparent pricing",
     pri_sub:"Pay per user. No hidden fees. Cancel anytime. Start free forever.",
-    plan1:"Free", plan2:"Standard", plan3:"Professional",
-    per_user:"/user/mo", popular:"Most Popular", trial:"7-day free trial",
-    plan1d:"Forever free. No credit card required.", plan2d:"All modules for growing teams.", plan3d:"Multi-company + API access.",
-    pf1_1:"1 user", pf1_2:"Basic modules", pf1_3:"100 records/month", pf1_4:"PDF invoices", pf1_5:"API access",
-    pf2_1:"Unlimited users", pf2_2:"All modules", pf2_3:"PDF invoices", pf2_4:"Priority support", pf2_5:"API access",
-    pf3_1:"Everything in Standard", pf3_2:"Multi-company", pf3_3:"API & Webhooks", pf3_4:"Custom integrations", pf3_5:"Dedicated support",
-    plan_start:"Get Started Free", plan_trial:"Start Free Trial",
-    pricing_note:"✓ All plans include hosting, updates & support. Annual billing saves 20%.",
+    plan_free:"Free", plan_standard:"Standard", plan_professional:"Professional",
+    per_user:"/user/mo", most_popular:"Most Popular",
+    sub_feat_all_modules:"All modules", sub_feat_30_invoices:"30 invoices/month (sales + purchases)",
+    sub_feat_unlimited_invoices:"Unlimited invoices", sub_feat_email_support:"Email support",
+    sub_feat_priority:"Priority support", sub_feat_multi_company:"Multi-company",
+    sub_free_forever:"Free forever", sub_7day_trial:"7-day free trial",
+    btn_get_started_free:"Get Started Free", btn_start_trial:"Start Free Trial",
+    toggle_save:"2 months free",
+    pricing_note2:"✓ All plans include hosting, updates & support · Cancel anytime",
     test_tag:"Testimonials", test_title:"Trusted by businesses worldwide",
     test_sub:"See what our customers are saying about Solvenin.",
     t1:'"We switched from a complex ERP and Solvenin was up and running in one day. The inventory module alone saved us hours every week."',
@@ -760,9 +707,9 @@ const T = {
     t3:'"Finally an ERP that doesn\'t require a consultant to set up. Our hotel team was fully onboarded in under 2 hours."',
     t3r:"Hotel Director, Desert Rose — UAE",
     faq_tag:"FAQ", faq_title:"Frequently asked questions",
-    q1:"Is the free plan really free forever?", a1:"Yes. No credit card required. Our free plan includes 1 user, 1 module, and up to 100 records per month — forever.",
+    q1:"Is the free plan really free forever?", a1:"Yes. No credit card required. Our free plan includes all modules with up to 30 invoices per month — forever.",
     q2:"Can I use Solvenin in my language?", a2:"Yes. Solvenin supports 10+ languages including English, Turkish, German, French, Spanish, Arabic, Chinese, Russian, Portuguese, and Japanese.",
-    q3:"How does per-user pricing work?", a3:"You pay only for active users. If you have 3 users on the Professional plan, you pay $9 × 3 = $27/month.",
+    q3:"How does per-user pricing work?", a3:"You pay only for active users. Standard is $8.99/user/mo, Professional is $12.99/user/mo. Save with yearly billing.",
     q4:"Can I switch between plans?", a4:"Absolutely. You can upgrade, downgrade, or cancel at any time.",
     q5:"Is my data secure?", a5:"Yes. All data is encrypted in transit and at rest. Each company's data is fully isolated.",
     cta_title:"Ready to solve your business?", cta_sub:"Join thousands of businesses already using Solvenin. Start free today.",
@@ -820,16 +767,15 @@ const T = {
     s8:"E-Ticaret", s8d:"Sipariş, depo, kargo",
     pri_tag:"Fiyatlar", pri_title:"Basit ve şeffaf fiyatlandırma",
     pri_sub:"Kullanıcı başına ödeme. Gizli ücret yok. İstediğiniz zaman iptal edin.",
-    plan1:"Ücretsiz", plan2:"Standart", plan3:"Profesyonel",
-    per_user:"/kullanıcı/ay", popular:"En Popüler",
-    plan1d:"Sonsuza kadar ücretsiz. 1 kullanıcı, 1 modül.", plan2d:"Küçük ekipler için.",
-    plan3d:"Büyüyen işletmeler için tam erişim.", plan4d:"Büyük ekipler için.",
-    pf1_1:"1 kullanıcı", pf1_2:"1 modül", pf1_3:"Ayda 100 kayıt", pf1_4:"PDF fatura", pf1_5:"Gelişmiş raporlar",
-    pf2_1:"5 kullanıcıya kadar", pf2_2:"3 modül", pf2_3:"Sınırsız kayıt", pf2_4:"PDF fatura", pf2_5:"Gelişmiş raporlar",
-    pf3_1:"Sınırsız kullanıcı", pf3_2:"Tüm modüller", pf3_3:"Gelişmiş raporlar", pf3_4:"API erişimi", pf3_5:"Öncelikli destek",
-    pf4_1:"Pro'daki her şey", pf4_2:"Özel modüller", pf4_3:"Çoklu şirket", pf4_4:"SLA garantisi", pf4_5:"Özel destek",
-    plan_start:"Ücretsiz Başla", plan_trial:"Ücretsiz Dene",
-    pricing_note:"✓ Tüm planlara hosting, güncellemeler ve destek dahildir. Yıllık ödemede 2 ay bedava.",
+    plan_free:"Ücretsiz", plan_standard:"Standart", plan_professional:"Profesyonel",
+    per_user:"/kullanıcı/ay", most_popular:"En Popüler",
+    sub_feat_all_modules:"Tüm modüller", sub_feat_30_invoices:"Aylık 30 fatura (alış + satış)",
+    sub_feat_unlimited_invoices:"Sınırsız fatura", sub_feat_email_support:"E-posta desteği",
+    sub_feat_priority:"Öncelikli destek", sub_feat_multi_company:"Çoklu şirket",
+    sub_free_forever:"Sonsuza kadar ücretsiz", sub_7day_trial:"7 gün ücretsiz deneme",
+    btn_get_started_free:"Ücretsiz Başla", btn_start_trial:"Ücretsiz Denemeyi Başlat",
+    toggle_save:"2 ay bedava",
+    pricing_note2:"✓ Tüm planlara hosting, güncellemeler ve destek dahildir · İstediğiniz zaman iptal edin",
     test_tag:"Yorumlar", test_title:"Dünya genelinde işletmeler tarafından güveniliyor",
     test_sub:"Müşterilerimizin Solvenin hakkında söylediklerine bakın.",
     t1:'"Karmaşık bir ERP\'den geçtik ve Solvenin bir günde hazırdı. Sadece envanter modülü bile haftada saatlerimizi kurtardı."',
@@ -1655,17 +1601,44 @@ setInterval(() => { if (window.innerWidth < 900) carouselNext(); }, 5000);
   setLang(detected);
 })();
 
-// PADDLE PRICING
-const PRICES = {
-  standard:     { monthly: 'pri_01kjt6tatgje4tr2tv0j52vsqm', yearly: 'pri_01kjt6mad6d2bhzx76cg5wzzq7' },
-  professional: { monthly: 'pri_01kjt6zyccvgemm31haf8eh3bs', yearly: 'pri_01kjt6y789xqsep4twg6gzvgnf' }
-};
-const RATES = {
-  standard:     { monthly: 7.20, yearly: 6.00 },
-  professional: { monthly: 10.80, yearly: 9.00 }
-};
+// PRICING
+const PLAN_DATA = [
+  { key:'free', name:'Free', price:0, yearly:0,
+    features:[{t:'All modules',ok:true},{t:'30 invoices/month',ok:true},{t:'Email support',ok:true},{t:'Multi-company',ok:false},{t:'Priority support',ok:false}],
+    btn:'Get Started Free', cls:'btn-plan-outline', sub:'Free forever' },
+  { key:'standard', name:'Standard', price:8.99, yearly:89.90,
+    features:[{t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},{t:'Priority support',ok:true},{t:'Multi-company',ok:false}],
+    btn:'Start Free Trial', cls:'btn-plan-outline', sub:'7-day free trial' },
+  { key:'professional', name:'Professional', price:12.99, yearly:129.90, badge:true,
+    features:[{t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},{t:'Priority support',ok:true},{t:'Multi-company',ok:true}],
+    btn:'Start Free Trial', cls:'btn-plan-gold', sub:'7-day free trial' }
+];
 let billingCycle = 'monthly';
-let userCount = 1;
+
+function renderPricingCards() {
+  const yr = billingCycle === 'yearly';
+  const _t = window.T && window.T[localStorage.getItem('solvenin_lang')||'en'] || {};
+  const grid = document.getElementById('pricing-grid');
+  if (!grid) return;
+  grid.innerHTML = PLAN_DATA.map(p => {
+    const price = p.key==='free' ? '$0' : (yr ? '$'+(p.yearly/12).toFixed(2) : '$'+p.price.toFixed(2));
+    const perLine = p.key==='free' ? (_t.sub_free_forever||'Free forever') : (yr ? '$'+p.yearly.toFixed(2)+'/user/yr' : 'per user / month');
+    const feats = p.features.map(f => {
+      const label = _t['sub_feat_'+f.t.toLowerCase().replace(/[^a-z]/g,'_')] || f.t;
+      return `<li><span class="${f.ok?'check':'cross'}">${f.ok?'✓':'–'}</span> <span>${label}</span></li>`;
+    }).join('');
+    return `<div class="price-card${p.badge?' popular':''} reveal">
+      ${p.badge?`<div class="popular-badge">${_t.most_popular||'Most Popular'}</div>`:''}
+      <div class="price-plan">${_t['plan_'+p.key] || p.name}</div>
+      <div class="price-amount">${p.key!=='free'?'<sup>$</sup><span>'+price.replace('$','')+'</span>':price}<sub>/user/mo</sub></div>
+      <div style="font-size:12px;color:var(--gray-mid);margin-top:4px;margin-bottom:8px">${perLine}</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">${feats}</ul>
+      <div style="font-size:11px;color:${p.badge?'#86efac':'#10b981'};font-weight:600;margin-bottom:12px">✓ ${_t['sub_'+p.sub.toLowerCase().replace(/[^a-z]/g,'_')] || p.sub}</div>
+      <button class="${p.cls} btn-plan" onclick="window.location.href='/auth.html'">${_t['btn_'+p.key==='free'?'get_started_free':'start_trial'] || p.btn}</button>
+    </div>`;
+  }).join('');
+}
 
 function toggleBilling() {
   billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly';
@@ -1678,33 +1651,9 @@ function toggleBilling() {
     if (thumb) thumb.style.transform = 'translateX(0)';
     if (ml) ml.style.color = 'var(--gray-dark)';
   }
-  updatePrices();
+  renderPricingCards();
 }
-function changeUsers(delta) {
-  userCount = Math.max(1, userCount + delta);
-  const el = document.getElementById('user-count');
-  if (el) el.textContent = userCount;
-  updatePrices();
-}
-function updatePrices() {
-  const sr = RATES.standard[billingCycle];
-  const pr = RATES.professional[billingCycle];
-  const s1 = document.getElementById('std-price');
-  const p1 = document.getElementById('pro-price');
-  const s2 = document.getElementById('std-total');
-  const p2 = document.getElementById('pro-total');
-  if (s1) s1.textContent = sr.toFixed(2);
-  if (p1) p1.textContent = pr.toFixed(2);
-  if (s2) s2.textContent = '$'+(sr*userCount).toFixed(2)+'/mo · '+userCount+' user'+(userCount>1?'s':'');
-  if (p2) p2.textContent = '$'+(pr*userCount).toFixed(2)+'/mo · '+userCount+' user'+(userCount>1?'s':'');
-}
-function startCheckout(plan) {
-  if (typeof Paddle === 'undefined') { alert('Payment loading, please try again.'); return; }
-  Paddle.Checkout.open({
-    items: [{ priceId: PRICES[plan][billingCycle], quantity: userCount }],
-    successUrl: 'https://solvenin.com/dashboard.html'
-  });
-}
+renderPricingCards();
 </script>
 </body>
 </html>

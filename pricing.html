@@ -82,84 +82,11 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:var(--gray800);li
   <p>Pay per user. No hidden fees. Start free, upgrade when you're ready.</p>
   <div class="toggle-wrap">
     <button class="toggle-btn active" id="btn-monthly" onclick="setBilling('monthly')">Monthly</button>
-    <button class="toggle-btn" id="btn-yearly" onclick="setBilling('yearly')">Yearly <span class="save-badge">Save 20%</span></button>
+    <button class="toggle-btn" id="btn-yearly" onclick="setBilling('yearly')">Yearly <span class="save-badge">2 months free</span></button>
   </div>
 </div>
 
-<div class="plans">
-
-  <!-- FREE -->
-  <div class="plan">
-    <div class="plan-name">Free</div>
-    <div class="plan-desc">Forever free. No card required.</div>
-    <div class="plan-price">$0</div>
-    <div class="plan-per">forever</div>
-    <a href="/auth.html" class="plan-btn outline">Get started</a>
-    <div class="features-title">Includes</div>
-    <div class="feature"><span class="check">✓</span> 1 user</div>
-    <div class="feature"><span class="check">✓</span> 1 company</div>
-    <div class="feature"><span class="check">✓</span> Inventory module</div>
-    <div class="feature"><span class="check">✓</span> Sales module</div>
-    <div class="feature"><span class="check">✓</span> 100 records per module</div>
-    <div class="feature"><span class="cross">✗</span> Purchasing</div>
-    <div class="feature"><span class="cross">✗</span> Cash & Bank</div>
-    <div class="feature"><span class="cross">✗</span> Accounting</div>
-    <div class="feature"><span class="cross">✗</span> API access</div>
-  </div>
-
-  <!-- STARTER -->
-  <div class="plan">
-    <div class="plan-name">Starter</div>
-    <div class="plan-desc">All modules for growing teams.</div>
-    <div class="plan-price" id="price-starter">$9<span>/mo</span></div>
-    <div class="plan-per" id="per-starter">per user / month</div>
-    <a href="/auth.html" class="plan-btn outline">Start free trial</a>
-    <div class="features-title">Everything in Free, plus</div>
-    <div class="feature"><span class="check">✓</span> Unlimited users</div>
-    <div class="feature"><span class="check">✓</span> All modules unlocked</div>
-    <div class="feature"><span class="check">✓</span> Unlimited records</div>
-    <div class="feature"><span class="check">✓</span> Purchasing & Suppliers</div>
-    <div class="feature"><span class="check">✓</span> Cash & Bank management</div>
-    <div class="feature"><span class="check">✓</span> Accounting & Reports</div>
-    <div class="feature"><span class="check">✓</span> Email support</div>
-    <div class="feature"><span class="cross">✗</span> Multi-company</div>
-    <div class="feature"><span class="cross">✗</span> API access</div>
-  </div>
-
-  <!-- PROFESSIONAL -->
-  <div class="plan popular">
-    <div class="popular-badge">⭐ Most Popular</div>
-    <div class="plan-name">Professional</div>
-    <div class="plan-desc">Multi-company + API access.</div>
-    <div class="plan-price" id="price-pro">$19<span>/mo</span></div>
-    <div class="plan-per" id="per-pro">per user / month</div>
-    <a href="/auth.html" class="plan-btn primary">Start free trial</a>
-    <div class="features-title">Everything in Starter, plus</div>
-    <div class="feature"><span class="check">✓</span> Multi-company management</div>
-    <div class="feature"><span class="check">✓</span> API access</div>
-    <div class="feature"><span class="check">✓</span> Advanced reporting</div>
-    <div class="feature"><span class="check">✓</span> Priority support</div>
-    <div class="feature"><span class="check">✓</span> Custom categories & warehouses</div>
-    <div class="feature"><span class="check">✓</span> Data export (CSV, PDF)</div>
-  </div>
-
-  <!-- ENTERPRISE -->
-  <div class="plan">
-    <div class="plan-name">Enterprise</div>
-    <div class="plan-desc">Custom solutions for large teams.</div>
-    <div class="plan-price">Custom</div>
-    <div class="plan-per">contact us for pricing</div>
-    <a href="mailto:sales@solvenin.com" class="plan-btn dark">Contact sales</a>
-    <div class="features-title">Everything in Professional, plus</div>
-    <div class="feature"><span class="check">✓</span> Unlimited companies</div>
-    <div class="feature"><span class="check">✓</span> Dedicated support manager</div>
-    <div class="feature"><span class="check">✓</span> Custom integrations</div>
-    <div class="feature"><span class="check">✓</span> SLA guarantee</div>
-    <div class="feature"><span class="check">✓</span> On-boarding & training</div>
-    <div class="feature"><span class="check">✓</span> Custom contract & billing</div>
-  </div>
-
-</div>
+<div class="plans" id="plan-cards"></div>
 
 <!-- FAQ -->
 <div class="section">
@@ -167,12 +94,12 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:var(--gray800);li
 
   <details class="faq">
     <summary>Is the Free plan really free forever?</summary>
-    <p>Yes. The Free plan has no time limit and requires no credit card. You can use Solvenin's core inventory and sales features at no cost, forever.</p>
+    <p>Yes. The Free plan has no time limit and requires no credit card. You get all modules with up to 30 invoices per month, forever.</p>
   </details>
 
   <details class="faq">
     <summary>Can I change plans at any time?</summary>
-    <p>Yes. You can upgrade or downgrade your plan at any time from your account settings. Upgrades take effect immediately; downgrades apply at the start of the next billing cycle.</p>
+    <p>Yes. Upgrade or downgrade from your account settings. Upgrades take effect immediately; downgrades apply at the start of the next billing cycle.</p>
   </details>
 
   <details class="faq">
@@ -182,22 +109,17 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:var(--gray800);li
 
   <details class="faq">
     <summary>Do you offer a refund?</summary>
-    <p>Yes. We offer a 14-day money-back guarantee on all paid plans. If you're not satisfied, contact us within 14 days of your purchase for a full refund. See our <a href="/refund.html">Refund Policy</a> for details.</p>
+    <p>Yes. We offer a 14-day money-back guarantee on all paid plans. See our <a href="/refund.html">Refund Policy</a> for details.</p>
   </details>
 
   <details class="faq">
     <summary>How does per-user pricing work?</summary>
-    <p>You pay for each active user in your account. You can add or remove users at any time; billing adjusts automatically at your next renewal.</p>
+    <p>You pay for each active user in your account. Add or remove users at any time; billing adjusts automatically.</p>
   </details>
 
   <details class="faq">
     <summary>Is my data secure?</summary>
-    <p>Yes. All data is encrypted at rest (AES-256) and in transit (TLS). Each company's data is fully isolated using Row Level Security. See our <a href="/privacy.html">Privacy Policy</a> for more.</p>
-  </details>
-
-  <details class="faq">
-    <summary>Do you support multiple languages?</summary>
-    <p>Yes. Solvenin supports 10 languages: English, Turkish, German, French, Spanish, Arabic, Chinese, Russian, Portuguese, and Japanese.</p>
+    <p>Yes. All data is encrypted at rest and in transit. Each company's data is fully isolated using Row Level Security.</p>
   </details>
 
 </div>
@@ -221,20 +143,56 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:var(--gray800);li
 
 <script>
 let billing = 'monthly';
-const prices = {
-  starter: { monthly: '$9', yearly: '$7' },
-  pro:     { monthly: '$19', yearly: '$15' },
-};
+const PLANS = [
+  { key:'free', name:'Free', price:0, yearly:0,
+    desc:'Free forever. No card required.',
+    features:[
+      {t:'All modules',ok:true},{t:'30 invoices/month',ok:true},{t:'Email support',ok:true},
+      {t:'Multi-company',ok:false},{t:'Priority support',ok:false}
+    ],
+    btn:'Get Started Free', btnCls:'outline', sub:'Free forever' },
+  { key:'standard', name:'Standard', price:8.99, yearly:89.90,
+    desc:'Everything you need to grow.',
+    features:[
+      {t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},
+      {t:'Priority support',ok:true},{t:'Multi-company',ok:false}
+    ],
+    btn:'Start Free Trial', btnCls:'outline', sub:'7-day free trial' },
+  { key:'professional', name:'Professional', price:12.99, yearly:129.90, badge:'Most Popular',
+    desc:'Multi-company management.',
+    features:[
+      {t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},
+      {t:'Priority support',ok:true},{t:'Multi-company',ok:true}
+    ],
+    btn:'Start Free Trial', btnCls:'primary', sub:'7-day free trial' }
+];
+
+function renderPlans() {
+  const yr = billing === 'yearly';
+  document.getElementById('plan-cards').innerHTML = PLANS.map(p => {
+    const price = p.key === 'free' ? '$0' : (yr ? '$'+(p.yearly/12).toFixed(2) : '$'+p.price.toFixed(2));
+    const yearlyLine = yr && p.key !== 'free' ? `<div class="plan-per">$${p.yearly.toFixed(2)}/user/year</div>` : `<div class="plan-per">${p.key==='free'?'forever':'per user / month'}</div>`;
+    return `<div class="plan${p.badge?' popular':''}">
+      ${p.badge?`<div class="popular-badge">⭐ ${p.badge}</div>`:''}
+      <div class="plan-name">${p.name}</div>
+      <div class="plan-desc">${p.desc}</div>
+      <div class="plan-price">${price}${p.key!=='free'?'<span>/mo</span>':''}</div>
+      ${yearlyLine}
+      <a href="/auth.html" class="plan-btn ${p.btnCls}">${p.btn}</a>
+      <div style="font-size:11px;color:#22c55e;font-weight:600;margin-bottom:14px">✓ ${p.sub}</div>
+      <div class="features-title">Includes</div>
+      ${p.features.map(f=>`<div class="feature"><span class="${f.ok?'check':'cross'}">${f.ok?'✓':'✗'}</span> ${f.t}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
 
 function setBilling(type) {
   billing = type;
   document.getElementById('btn-monthly').classList.toggle('active', type === 'monthly');
   document.getElementById('btn-yearly').classList.toggle('active', type === 'yearly');
-  document.getElementById('price-starter').innerHTML = prices.starter[type] + '<span>/mo</span>';
-  document.getElementById('per-starter').textContent = type === 'yearly' ? 'per user / month, billed yearly' : 'per user / month';
-  document.getElementById('price-pro').innerHTML = prices.pro[type] + '<span>/mo</span>';
-  document.getElementById('per-pro').textContent = type === 'yearly' ? 'per user / month, billed yearly' : 'per user / month';
+  renderPlans();
 }
+renderPlans();
 </script>
 </body>
 </html>
