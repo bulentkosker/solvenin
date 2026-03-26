@@ -192,6 +192,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--gray80
 .btn-select-plan.upgrade:hover { background: #1a56db; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
 .btn-select-plan.downgrade { background: var(--gray100); color: var(--gray500); }
 .btn-select-plan.downgrade:hover { background: var(--gray200); }
+.billing-toggle { display:flex; background:var(--gray100); border-radius:10px; padding:3px; gap:2px; }
+.billing-opt { padding:7px 14px; border-radius:8px; border:none; background:transparent; font-size:12px; font-weight:600; color:var(--gray500); cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.billing-opt.active { background:#fff; color:var(--gray800); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.save-badge { background:#ecfdf5; color:#16a34a; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; }
+.plan-option-features li.x::before { content:'✗'; color:var(--gray300); }
+.plan-option-features li.x { color:var(--gray300); }
 
 /* ===== INVOICE TABLE ===== */
 .invoice-table { width: 100%; border-collapse: collapse; }
@@ -405,76 +411,20 @@ function setLang(lang) {
       </div>
     </div>
 
-    <!-- ADD/REMOVE USERS -->
-    <div class="card fade-up fade-up-2" id="user-management-card" style="margin-bottom:24px">
-      <div class="card-title" data-i18n="sub_manage_users">Manage Users</div>
-      <div class="card-sub">Add or remove users from your subscription. Changes are prorated automatically.</div>
-      <div class="user-selector">
-        <div class="user-selector-label">
-          <div style="font-weight:600;color:var(--gray800);margin-bottom:2px">Number of Users</div>
-          <div style="font-size:11px;color:var(--gray400)" id="user-prorate-info">Current: 1 user · $7.20/mo</div>
-        </div>
-        <div class="user-count-ctrl">
-          <button class="user-count-btn" onclick="changeSubUsers(-1)">−</button>
-          <span class="user-count-num" id="sub-user-count">1</span>
-          <button class="user-count-btn" onclick="changeSubUsers(1)">+</button>
-        </div>
-      </div>
-      <button style="background:var(--blue);color:#fff;border:none;padding:11px 24px;border-radius:10px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#1a56db'" onmouseout="this.style.background='var(--blue)'" onclick="updateUsers()">Update Users →</button>
-    </div>
-
     <!-- PLAN COMPARISON -->
     <div class="card fade-up fade-up-2" id="plans-section">
-      <div class="card-title" data-i18n="sub_change_plan">Change Plan</div>
-      <div class="card-sub">Switch between plans at any time. Upgrades take effect immediately, downgrades at next billing.</div>
-      <div class="plan-cards-row">
-
-        <!-- FREE -->
-        <div class="plan-option" id="opt-free">
-          <div class="plan-option-badge" style="display:none"></div>
-          <div class="plan-option-name">Free</div>
-          <div class="plan-option-price">$0 <span>/user/mo</span></div>
-          <ul class="plan-option-features">
-            <li data-i18n="feat_1_user">1 user</li>
-            <li data-i18n="feat_basic_modules">Basic modules</li>
-            <li data-i18n="feat_100_records">100 records/month</li>
-            <li class="no">PDF invoices</li>
-            <li class="no">API access</li>
-          </ul>
-          <button class="btn-select-plan downgrade" onclick="selectPlan('free')">Downgrade to Free</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div class="card-title" data-i18n="sub_change_plan">Change Plan</div>
+          <div class="card-sub" style="margin-bottom:0" data-i18n="sub_change_plan_sub">Choose the plan that fits your business</div>
         </div>
-
-        <!-- STANDARD -->
-        <div class="plan-option" id="opt-standard">
-          <div class="plan-option-badge" style="display:none"></div>
-          <div class="plan-option-name">Standard</div>
-          <div class="plan-option-price">$7.20 <span>/user/mo</span></div>
-          <ul class="plan-option-features">
-            <li>Unlimited users</li>
-            <li>All modules</li>
-            <li>PDF invoices</li>
-            <li>Priority support</li>
-            <li class="no">API access</li>
-          </ul>
-          <button class="btn-select-plan current-plan">Current Plan</button>
+        <!-- Billing toggle -->
+        <div class="billing-toggle" id="billing-toggle">
+          <button class="billing-opt active" data-cycle="monthly" onclick="setBillingCycle('monthly')" data-i18n="cycle_monthly">Monthly</button>
+          <button class="billing-opt" data-cycle="yearly" onclick="setBillingCycle('yearly')"><span data-i18n="cycle_yearly">Yearly</span> <span class="save-badge" data-i18n="save_2_months">2 months free</span></button>
         </div>
-
-        <!-- PROFESSIONAL -->
-        <div class="plan-option" id="opt-professional">
-          <div class="plan-option-badge" style="display:none"></div>
-          <div class="plan-option-name">Professional</div>
-          <div class="plan-option-price">$10.80 <span>/user/mo</span></div>
-          <ul class="plan-option-features">
-            <li>Everything in Standard</li>
-            <li>Multi-company</li>
-            <li>API & Webhooks</li>
-            <li>Custom integrations</li>
-            <li>Dedicated support</li>
-          </ul>
-          <button class="btn-select-plan upgrade" onclick="selectPlan('professional')">Upgrade →</button>
-        </div>
-
       </div>
+      <div class="plan-cards-row" id="plan-cards-container"></div>
     </div>
 
     <!-- INVOICE HISTORY -->
@@ -508,13 +458,10 @@ function setLang(lang) {
     <div class="modal-title" data-i18n="modal_cancel_title">Cancel Subscription?</div>
     <div class="modal-sub" data-i18n="modal_cancel_sub">Your subscription will remain active until the end of the current billing period. After that, you'll be moved to the Free Plan.</div>
     <div style="background:var(--red-light);border-radius:12px;padding:14px 16px;margin-bottom:4px">
-      <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px">You will lose access to:</div>
-      <div style="font-size:12px;color:#dc2626;line-height:1.8">
-        • All modules (only 1 remains on Free)<br>
-        • Unlimited records (limit drops to 100/month)<br>
-        • PDF invoice generation<br>
-        • Priority support
-      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px" data-i18n="modal_cancel_lose">You will lose access to:</div>
+      <div style="font-size:12px;color:#dc2626;line-height:1.8" data-i18n="modal_cancel_list">• Unlimited invoices (limit drops to 30/month)
+• Priority support
+• Multi-company (Professional only)</div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeCancelModal()" data-i18n="btn_keep">Keep Subscription</button>
@@ -623,123 +570,126 @@ async function loadSubscription() {
 }
 
 function renderSubscription() {
-  const plans = {
-    free:         { get name() { return t('plan_free'); },         price: 0,     unit: '',         features: [t('feat_1_user'), t('feat_basic_modules'), t('feat_100_records')] },
-    standard:     { get name() { return t('plan_standard'); },     price: 7.20,  unit: '/user/mo', features: [t('feat_unlimited_users'), t('feat_all_modules'), t('feat_pdf'), t('feat_priority_support')] },
-    professional: { get name() { return t('plan_professional'); }, price: 10.80, unit: '/user/mo', features: [t('feat_everything_standard'), t('feat_multi_company'), t('feat_api')] }
-  };
+  const isYearly = billingCycle === 'yearly';
 
-  const plan = plans[currentPlan];
-  const totalPrice = plan.price * subUserCount;
-  const nextDate = new Date(); nextDate.setMonth(nextDate.getMonth() + 1);
-  const nextStr = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const sinceStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const planDefs = [
+    {
+      key: 'free', name: t('plan_free') || 'Free',
+      price: 0, yearlyPrice: 0,
+      features: [
+        { text: t('sub_feat_all_modules') || 'All modules', ok: true },
+        { text: (t('sub_feat_30_invoices') || '30 invoices/month'), ok: true },
+        { text: t('sub_feat_email_support') || 'Email support', ok: true },
+        { text: t('sub_feat_multi_company') || 'Multi-company', ok: false },
+        { text: t('sub_feat_priority') || 'Priority support', ok: false },
+      ],
+      btn: { text: t('btn_get_started_free') || 'Get Started Free', cls: 'downgrade' },
+      badge: null, subtitle: t('sub_free_forever') || 'Free forever',
+    },
+    {
+      key: 'standard', name: t('plan_standard') || 'Standard',
+      price: 8.99, yearlyPrice: 89.90,
+      features: [
+        { text: t('sub_feat_all_modules') || 'All modules', ok: true },
+        { text: t('sub_feat_unlimited_invoices') || 'Unlimited invoices', ok: true },
+        { text: t('sub_feat_email_support') || 'Email support', ok: true },
+        { text: t('sub_feat_priority') || 'Priority support', ok: true },
+        { text: t('sub_feat_multi_company') || 'Multi-company', ok: false },
+      ],
+      btn: { text: t('btn_start_trial') || 'Start Free Trial', cls: 'upgrade' },
+      badge: null, subtitle: t('sub_7day_trial') || '7-day free trial',
+    },
+    {
+      key: 'professional', name: t('plan_professional') || 'Professional',
+      price: 12.99, yearlyPrice: 129.90,
+      features: [
+        { text: t('sub_feat_all_modules') || 'All modules', ok: true },
+        { text: t('sub_feat_unlimited_invoices') || 'Unlimited invoices', ok: true },
+        { text: t('sub_feat_email_support') || 'Email support', ok: true },
+        { text: t('sub_feat_priority') || 'Priority support', ok: true },
+        { text: t('sub_feat_multi_company') || 'Multi-company', ok: true },
+      ],
+      btn: { text: t('btn_start_trial') || 'Start Free Trial', cls: 'upgrade' },
+      badge: t('most_popular') || 'Most Popular', subtitle: t('sub_7day_trial') || '7-day free trial',
+    }
+  ];
 
   const g = id => document.getElementById(id);
+  const activePlan = planDefs.find(p => p.key === currentPlan) || planDefs[0];
+  const isFree = currentPlan === 'free';
 
   // Hero
-  if (g('current-plan-name')) g('current-plan-name').textContent = plan.name;
-  if (g('current-plan-price')) g('current-plan-price').textContent = currentPlan === 'free' ? '$0' : '$' + plan.price.toFixed(2);
-  if (g('current-plan-unit')) g('current-plan-unit').textContent = plan.unit;
-  if (g('current-plan-cycle')) g('current-plan-cycle').textContent = currentPlan === 'free'
-    ? t('no_active_sub')
-    : `${t('billed')} ${billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly')} · ${subUserCount} ${t('users_label')} · ${t('next_billing_short')}: ${nextStr}`;
+  const displayPrice = isFree ? 0 : (isYearly ? (activePlan.yearlyPrice / 12) : activePlan.price);
+  if (g('current-plan-name')) g('current-plan-name').textContent = activePlan.name;
+  if (g('current-plan-price')) g('current-plan-price').textContent = isFree ? '$0' : '$' + displayPrice.toFixed(2);
+  if (g('current-plan-unit')) g('current-plan-unit').textContent = isFree ? '' : '/user/mo';
+  if (g('current-plan-cycle')) g('current-plan-cycle').textContent = isFree ? (t('no_active_sub') || 'No active subscription') : `${t('billed') || 'Billed'} ${isYearly ? (t('date_yearly') || 'yearly') : (t('date_monthly') || 'monthly')}`;
 
-  // Show/hide elements based on plan
-  const isFree = currentPlan === 'free';
+  // Show/hide
   if (g('upgrade-banner')) g('upgrade-banner').style.display = isFree ? 'flex' : 'none';
-  if (g('user-management-card')) g('user-management-card').style.display = isFree ? 'none' : 'block';
   const btnCancel = document.querySelector('.btn-cancel');
   if (btnCancel) btnCancel.style.display = isFree ? 'none' : 'block';
 
-  // Details
-  if (g('detail-plan')) g('detail-plan').textContent = plan.name;
-  if (g('detail-cycle')) g('detail-cycle').textContent = isFree ? '—' : (billingCycle === 'monthly' ? t('date_monthly') : t('date_yearly'));
-  if (g('detail-users')) g('detail-users').textContent = isFree ? `${realUserCount || 1} ${t('user_singular')}` : `${realUserCount || subUserCount} ${t('users_label')}`;
-  if (g('detail-amount')) g('detail-amount').textContent = isFree ? '$0.00' : `$${totalPrice.toFixed(2)}/mo`;
-  if (g('detail-next')) g('detail-next').textContent = isFree ? '—' : nextStr;
-  if (g('detail-since')) g('detail-since').textContent = sinceStr;
+  // Details card
+  if (g('detail-plan')) g('detail-plan').textContent = activePlan.name;
+  if (g('detail-cycle')) g('detail-cycle').textContent = isFree ? '—' : (isYearly ? (t('date_yearly') || 'Yearly') : (t('date_monthly') || 'Monthly'));
+  if (g('detail-users')) g('detail-users').textContent = `${realUserCount || 1} ${t('user_singular') || 'user'}`;
+  if (g('detail-amount')) g('detail-amount').textContent = isFree ? '$0' : `$${displayPrice.toFixed(2)}/mo`;
 
-  // User plan label in sidebar
-  if (g('user-plan-label')) g('user-plan-label').textContent = plan.name;
-
-  // User management
-  if (g('sub-user-count')) g('sub-user-count').textContent = subUserCount;
-  if (g('user-prorate-info')) g('user-prorate-info').textContent =
-    `${t('current')}: ${subUserCount} ${t('users_label')} · $${totalPrice.toFixed(2)}/mo`;
-
-  // Usage — real data from DB
-  const FREE_RECORD_LIMIT = 100;
-  const FREE_USER_LIMIT = 1;
+  // Usage
+  const FREE_INVOICE_LIMIT = 30;
   const recBar = g('usage-records-bar');
-  const userBar = g('usage-users-bar');
-  if (recBar) recBar.classList.remove('warning');
-  if (userBar) userBar.classList.remove('full');
   if (isFree) {
-    const recPct = Math.min(100, Math.round(realRecordCount / FREE_RECORD_LIMIT * 100));
-    if (g('usage-records-text')) g('usage-records-text').textContent = `${realRecordCount} / ${FREE_RECORD_LIMIT}`;
-    if (recBar) { recBar.style.width = Math.max(2, recPct) + '%'; if (recPct >= 80) recBar.classList.add('warning'); }
-    if (g('usage-users-text')) g('usage-users-text').textContent = `${realUserCount} / ${FREE_USER_LIMIT}`;
-    if (userBar) { userBar.style.width = (realUserCount >= FREE_USER_LIMIT ? 100 : Math.round(realUserCount / FREE_USER_LIMIT * 100)) + '%'; if (realUserCount >= FREE_USER_LIMIT) userBar.classList.add('full'); }
+    if (g('usage-records-text')) g('usage-records-text').textContent = `${realRecordCount} / ${FREE_INVOICE_LIMIT}`;
+    if (recBar) { const pct = Math.min(100, Math.round(realRecordCount / FREE_INVOICE_LIMIT * 100)); recBar.style.width = Math.max(2, pct) + '%'; recBar.className = 'usage-fill' + (pct >= 80 ? ' warning' : ''); }
   } else {
-    if (g('usage-records-text')) g('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + t('unlimited');
-    if (recBar) recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 5000 * 100))) + '%';
-    if (g('usage-users-text')) g('usage-users-text').textContent = `${realUserCount} / ${t('unlimited')}`;
-    if (userBar) userBar.style.width = Math.max(2, Math.min(80, realUserCount * 8)) + '%';
+    if (g('usage-records-text')) g('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + (t('unlimited') || '∞');
+    if (recBar) { recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 500 * 100))) + '%'; recBar.className = 'usage-fill'; }
   }
 
-  // Plan comparison cards — buttons disabled until Paddle is live
-  ['free', 'standard', 'professional'].forEach(p => {
-    const el = document.getElementById(`opt-${p}`);
-    if (!el) return;
-    const badge = el.querySelector('.plan-option-badge');
-    const btn = el.querySelector('.btn-select-plan');
-    if (p === currentPlan) {
-      el.className = 'plan-option current';
-      if (badge) { badge.className = 'plan-option-badge current-badge'; badge.textContent = t('current_plan'); badge.style.display = ''; }
-      btn.className = 'btn-select-plan current-plan';
-      btn.textContent = t('current_plan');
-      btn.onclick = null;
-      btn.disabled = false;
-      btn.style.cssText = '';
-    } else {
-      el.className = p === 'professional' ? 'plan-option recommended' : 'plan-option';
-      if (badge) {
-        if (p === 'professional') {
-          badge.className = 'plan-option-badge'; badge.textContent = t('recommended'); badge.style.display = '';
-        } else {
-          badge.style.display = 'none'; badge.textContent = '';
-        }
-      }
-      btn.className = 'btn-select-plan downgrade';
-      btn.textContent = 'Yakında';
-      btn.disabled = true;
-      btn.onclick = null;
-      btn.style.cssText = 'opacity:0.5;cursor:not-allowed;background:var(--gray100);color:var(--gray400);border:none;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;width:100%;margin-top:auto';
-    }
+  // Billing toggle state
+  document.querySelectorAll('.billing-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.cycle === billingCycle);
   });
+
+  // Plan cards
+  const container = g('plan-cards-container');
+  if (container) {
+    container.innerHTML = planDefs.map(p => {
+      const isCurrent = p.key === currentPlan;
+      const showPrice = p.key === 'free' ? '$0' : (isYearly ? '$' + (p.yearlyPrice / 12).toFixed(2) : '$' + p.price.toFixed(2));
+      const yearlyTotal = isYearly && p.key !== 'free' ? `<div style="font-size:11px;color:var(--gray400);margin-top:2px">$${p.yearlyPrice.toFixed(2)}/yr</div>` : '';
+      const badgeHtml = p.badge ? `<div class="plan-option-badge">${p.badge}</div>` : (isCurrent ? `<div class="plan-option-badge current-badge">${t('current_plan') || 'Current Plan'}</div>` : '');
+      const cls = isCurrent ? 'plan-option current' : (p.key === 'professional' ? 'plan-option recommended' : 'plan-option');
+
+      let btnHtml;
+      if (isCurrent) {
+        btnHtml = `<button class="btn-select-plan current-plan">${t('current_plan') || 'Current Plan'}</button>`;
+      } else {
+        btnHtml = `<button class="btn-select-plan ${p.btn.cls}" onclick="selectPlan('${p.key}')">${p.btn.text}</button>`;
+      }
+
+      return `<div class="${cls}">
+        ${badgeHtml}
+        <div class="plan-option-name">${p.name}</div>
+        <div class="plan-option-price">${showPrice} ${p.key !== 'free' ? '<span>/user/mo</span>' : ''}</div>
+        ${yearlyTotal}
+        <div style="font-size:11px;color:var(--green);margin:6px 0 10px;font-weight:600">${p.subtitle}</div>
+        <ul class="plan-option-features">
+          ${p.features.map(f => `<li class="${f.ok ? '' : 'x'}">${f.text}</li>`).join('')}
+        </ul>
+        ${btnHtml}
+      </div>`;
+    }).join('');
+  }
+}
+
+function setBillingCycle(cycle) {
+  billingCycle = cycle;
+  renderSubscription();
 }
 
 // ===== ACTIONS =====
-function changeSubUsers(delta) {
-  subUserCount = Math.max(1, subUserCount + delta);
-  document.getElementById('sub-user-count').textContent = subUserCount;
-  const rates = { standard: 7.20, professional: 10.80 };
-  const rate = rates[currentPlan] || 0;
-  const total = (rate * subUserCount).toFixed(2);
-  document.getElementById('user-prorate-info').textContent =
-    `Current: ${subUserCount} user${subUserCount > 1 ? 's' : ''} · $${total}/mo`;
-}
-
-function updateUsers() {
-  showToast(t('toast_opening_portal'), 'info');
-  // In production: call Paddle API to update subscription quantity
-  setTimeout(() => {
-    renderSubscription();
-    showToast(`Updated to ${subUserCount} user${subUserCount > 1 ? 's' : ''}!`, 'success');
-  }, 1500);
-}
-
 function selectPlan(plan) {
   if (plan === 'free') { openCancelModal(); return; }
   const priceId = PRICES[plan]?.monthly;
