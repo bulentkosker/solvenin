@@ -1102,9 +1102,10 @@ function closeDeleteCompanyModal() {
   document.getElementById('delete-company-modal').classList.remove('open');
 }
 function checkDeleteConfirm() {
-  const input = document.getElementById('delete-confirm-input').value.trim();
-  const expected = companyData?.name || '';
-  document.getElementById('btn-confirm-delete').disabled = (input !== expected);
+  const input = document.getElementById('delete-confirm-input').value.trim().toLowerCase();
+  const expected = (companyData?.name || '').trim().toLowerCase();
+  const match = input.length > 0 && input === expected;
+  document.getElementById('btn-confirm-delete').disabled = !match;
 }
 
 async function executeDeleteCompany() {
