@@ -771,7 +771,7 @@ function renderCOA() {
       const balClass = bal > 0 ? 'positive' : bal < 0 ? 'negative' : 'zero';
       return `<div class="coa-account-row">
         <span class="acc-code">${acc.code}</span>
-        <span class="acc-name">${acc.name}${acc.name_local ? ` <span style="color:var(--gray400);font-size:11px">(${acc.name_local})</span>` : ''}</span>
+        <span class="acc-name">${(function(){const lang=(localStorage.getItem('solvenin_lang')||'en').toLowerCase();const primary=lang==='tr'&&acc.name_local?acc.name_local:acc.name;const secondary=lang==='tr'?acc.name:acc.name_local;return primary+(secondary&&secondary!==primary?` <span style="color:var(--gray400);font-size:11px">(${secondary})</span>`:'');})()}</span>
         <span style="font-size:11px;color:var(--gray400)">${acc.subtype?.replace(/_/g,' ')||''}</span>
         <span class="acc-balance ${balClass}">${fmtAmt(Math.abs(bal))}</span>
         <div class="row-actions" style="justify-content:flex-end">
