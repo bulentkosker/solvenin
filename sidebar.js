@@ -320,6 +320,8 @@
       font-weight: 600; cursor: pointer; transition: background .15s;
     }
     .new-company-box .btn-create:hover { background: #0a2e20; }
+    .new-company-box .btn-create:disabled { opacity:.6; cursor:not-allowed; }
+    @keyframes spin { to { transform:rotate(360deg); } }
   `;
 
   /* ── CURRENCY ────────────────────────────────────────────── */
@@ -558,7 +560,7 @@
           <select id="sb-new-company-country"><option value="">Loading...</option></select>
           <div class="btn-row">
             <button class="btn-cancel" onclick="sidebarCloseNewCompany()">Cancel</button>
-            <button class="btn-create" onclick="sidebarCreateCompany()">Create</button>
+            <button class="btn-create" id="sb-btn-create-company" onclick="sidebarCreateCompany()">Create</button>
           </div>
         </div>
       </div>`;
@@ -824,6 +826,15 @@
     const name = nameInput ? nameInput.value.trim() : '';
     if (!name) { toast('Company name is required', 'error'); return; }
     const countryCode = document.getElementById('sb-new-company-country')?.value || 'US';
+
+    // Lock UI
+    const btn = document.getElementById('sb-btn-create-company');
+    const countrySel = document.getElementById('sb-new-company-country');
+    const origText = btn ? btn.textContent : 'Create';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle"></span> Creating...'; }
+    if (nameInput) nameInput.disabled = true;
+    if (countrySel) countrySel.disabled = true;
+
     try {
       const sb = window._supabase || window.supabase;
       const { data: { user: currentUser } } = await sb.auth.getUser();
@@ -909,11 +920,15 @@
       }
 
       localStorage.setItem('currentCompanyId', comp.id);
+      if (btn) btn.innerHTML = '✓ Company created!';
       toast('Company created!', 'success');
-      sidebarCloseNewCompany();
-      window.location.reload();
+      setTimeout(() => { sidebarCloseNewCompany(); window.location.reload(); }, 1500);
     } catch (e) {
       toast('Error: ' + e.message, 'error');
+      // Unlock UI on error
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+      if (nameInput) nameInput.disabled = false;
+      if (countrySel) countrySel.disabled = false;
     }
   };
 

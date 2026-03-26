@@ -196,6 +196,7 @@ tr:hover .action-btns { opacity:1; }
 .toast { padding:14px 20px; border-radius:12px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.2); animation:slideUp .3s ease; max-width:360px; pointer-events:auto; transition:opacity .3s ease, transform .3s ease; }
 .toast.fade-out { opacity:0; transform:translateY(8px); }
 @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin { to { transform:rotate(360deg); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .fade-up { animation:fadeUp .4s ease both; }
 .fade-up-1 { animation-delay:.05s; }
@@ -773,7 +774,7 @@ tr:hover .action-btns { opacity:1; }
     </select>
     <div id="new-company-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:8px"></div>
     <div style="display:flex;gap:8px">
-      <button class="btn-primary" style="flex:1" onclick="createNewCompany()" data-i18n="btn_create">Create</button>
+      <button class="btn-primary" style="flex:1" id="btn-create-company" onclick="createNewCompany()" data-i18n="btn_create">Create</button>
       <button class="btn-secondary" style="flex:1" onclick="document.getElementById('new-company-modal').style.display='none'" data-i18n="btn_cancel">Cancel</button>
     </div>
   </div>
@@ -901,6 +902,15 @@ async function createNewCompany() {
   if (!name) { errEl.textContent = t('toast_company_name_required') || 'Company name is required'; errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
 
+  // Lock UI
+  const btn = document.getElementById('btn-create-company');
+  const nameInput = document.getElementById('new-company-name');
+  const countrySel = document.getElementById('new-company-country');
+  const origText = btn ? btn.textContent : 'Create';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle"></span> ' + (t('creating') || 'Creating...'); }
+  if (nameInput) nameInput.disabled = true;
+  if (countrySel) countrySel.disabled = true;
+
   try {
     const user = (await sb.auth.getSession()).data.session?.user;
     const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
@@ -975,9 +985,16 @@ async function createNewCompany() {
     }
 
     await sb.rpc('switch_company', { target_company_id: comp.id });
-    document.getElementById('new-company-modal').style.display = 'none';
-    window.location.reload();
-  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+    if (btn) btn.innerHTML = '✓ ' + (t('toast_company_created') || 'Company created!');
+    showToast(t('toast_company_created') || 'Company created!', 'success');
+    setTimeout(() => { document.getElementById('new-company-modal').style.display = 'none'; window.location.reload(); }, 1500);
+  } catch (e) {
+    errEl.textContent = e.message; errEl.style.display = 'block';
+    // Unlock UI on error
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+    if (nameInput) nameInput.disabled = false;
+    if (countrySel) countrySel.disabled = false;
+  }
 }
 
 // ===== COMPANY DATA =====
