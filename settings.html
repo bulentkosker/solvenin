@@ -178,6 +178,19 @@ tr:hover .action-btns { opacity:1; }
 .empty-state h3 { font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--gray600); margin-bottom:8px; }
 .empty-state p { font-size:13px; margin-bottom:20px; }
 
+/* MODULE TOGGLE */
+.module-row { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--gray100); }
+.module-row:last-child { border-bottom:none; }
+.module-info { display:flex; align-items:center; gap:12px; }
+.module-icon { font-size:22px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--gray50); border-radius:10px; }
+.module-name { font-size:14px; font-weight:600; color:var(--gray800); }
+.module-toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+.module-toggle input { opacity:0; width:0; height:0; position:absolute; }
+.module-toggle .track { position:absolute; inset:0; border-radius:12px; background:var(--gray200); transition:background .2s; cursor:pointer; }
+.module-toggle input:checked + .track { background:#10b981; }
+.module-toggle .thumb { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .2s; pointer-events:none; }
+.module-toggle input:checked ~ .thumb { transform:translateX(20px); }
+
 /* TOAST */
 #toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column-reverse; gap:8px; pointer-events:none; }
 .toast { padding:14px 20px; border-radius:12px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.2); animation:slideUp .3s ease; max-width:360px; pointer-events:auto; transition:opacity .3s ease, transform .3s ease; }
@@ -315,6 +328,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></button>
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
         <button class="settings-nav-item" onclick="switchSection('tax-regime', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="nav_tax_regime">Tax Regime</span></button>
+        <button class="settings-nav-item" onclick="switchSection('modules', this)"><span class="settings-nav-icon">🧩</span> <span data-i18n="nav_modules">Modules</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -565,6 +579,19 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
         </div>
+
+      <!-- ===== MODULES ===== -->
+      <div class="settings-section" id="section-modules">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="modules_title">Module Management</div>
+              <div class="settings-card-desc" data-i18n="modules_desc">Enable or disable modules for your company.</div>
+            </div>
+          </div>
+          <div class="settings-card-body" id="modules-list" style="display:flex;flex-direction:column;gap:0"></div>
+        </div>
+      </div>
 
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
@@ -827,7 +854,7 @@ async function init() {
   localStorage.setItem('currentCompanyId', companyId);
 
   // Load countries + company sidebar + all data in parallel
-  await Promise.all([loadCompanies(), loadCountriesForModal(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes()]);
+  await Promise.all([loadCompanies(), loadCountriesForModal(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules()]);
   await loadCompanyData();
 
   const ls = document.getElementById('loading-screen');
@@ -1707,6 +1734,65 @@ async function hardDeleteRecord(type, id, label) {
   if (error) { showToast(error.message, 'error'); return; }
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
   await loadRecycleBin();
+}
+
+// ===== MODULES =====
+const MODULE_DEFS = [
+  { key:'inventory',   icon:'📦', i18n:'mod_inventory' },
+  { key:'sales',       icon:'💰', i18n:'mod_sales' },
+  { key:'purchasing',  icon:'🛒', i18n:'mod_purchasing' },
+  { key:'production',  icon:'🏭', i18n:'mod_production' },
+  { key:'accounting',  icon:'📒', i18n:'mod_accounting' },
+  { key:'hr',          icon:'👥', i18n:'mod_hr' },
+  { key:'shipping',    icon:'🚚', i18n:'mod_shipping' },
+  { key:'projects',    icon:'📅', i18n:'mod_projects' },
+  { key:'maintenance', icon:'🔧', i18n:'mod_maintenance' },
+  { key:'cash_bank',   icon:'💳', i18n:'mod_cash_bank' },
+];
+
+async function loadModules() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('company_modules')
+    .select('module, is_active')
+    .eq('company_id', companyId);
+  if (error) { console.error('loadModules error:', error); return; }
+
+  const moduleMap = {};
+  (data || []).forEach(m => moduleMap[m.module] = m.is_active);
+
+  const _t = window.t || (k => k);
+  const container = document.getElementById('modules-list');
+  if (!container) return;
+
+  container.innerHTML = MODULE_DEFS.map(mod => {
+    const active = moduleMap[mod.key] !== undefined ? moduleMap[mod.key] : true;
+    return `
+      <div class="module-row">
+        <div class="module-info">
+          <div class="module-icon">${mod.icon}</div>
+          <div class="module-name" data-i18n="${mod.i18n}">${_t(mod.i18n)}</div>
+        </div>
+        <label class="module-toggle">
+          <input type="checkbox" ${active ? 'checked' : ''} onchange="toggleModule('${mod.key}', this.checked)">
+          <span class="track"></span>
+          <span class="thumb"></span>
+        </label>
+      </div>`;
+  }).join('');
+}
+
+async function toggleModule(moduleKey, isActive) {
+  if (!companyId) return;
+  const { error } = await sb.from('company_modules')
+    .upsert({ company_id: companyId, module: moduleKey, is_active: isActive, updated_at: new Date().toISOString() },
+      { onConflict: 'company_id,module' });
+  if (error) {
+    console.error('toggleModule error:', error);
+    showToast('Error: ' + error.message, 'error');
+    return;
+  }
+  const _t = window.t || (k => k);
+  showToast(isActive ? _t('toast_module_enabled') : _t('toast_module_disabled'), 'success');
 }
 
 // ===== TAX REGIMES =====

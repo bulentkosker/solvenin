@@ -2189,6 +2189,11 @@ const T = window.T = {
     lbl_apply_regime:'Apply Regime', confirm_apply_regime:'Apply "{0}" as your company\'s tax regime?',
     toast_regime_applied:'Tax regime applied: {0}',
     confirm_delete_regime:'Delete regime "{0}"?', err_cannot_delete_active_regime:'Cannot delete the active regime. Switch to another first.',
+    nav_modules:'Modules', modules_title:'Module Management', modules_desc:'Enable or disable modules for your company.',
+    mod_inventory:'Inventory', mod_sales:'Sales', mod_purchasing:'Purchasing', mod_production:'Production',
+    mod_accounting:'Accounting', mod_hr:'HR & Payroll', mod_shipping:'Shipping', mod_projects:'Projects',
+    mod_maintenance:'Maintenance', mod_cash_bank:'Cash & Bank',
+    toast_module_enabled:'Module enabled', toast_module_disabled:'Module disabled',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -2987,6 +2992,11 @@ const T = window.T = {
     lbl_apply_regime:'Rejimi Uygula', confirm_apply_regime:'"{0}" vergi rejimini şirketinize uygulamak istiyor musunuz?',
     toast_regime_applied:'Vergi rejimi uygulandı: {0}',
     confirm_delete_regime:'"{0}" rejimini silmek istiyor musunuz?', err_cannot_delete_active_regime:'Aktif rejim silinemez. Önce başka bir rejime geçin.',
+    nav_modules:'Modüller', modules_title:'Modül Yönetimi', modules_desc:'Şirketiniz için modülleri etkinleştirin veya devre dışı bırakın.',
+    mod_inventory:'Stok', mod_sales:'Satışlar', mod_purchasing:'Satın Alma', mod_production:'Üretim',
+    mod_accounting:'Muhasebe', mod_hr:'İK & Bordro', mod_shipping:'Sevkiyat', mod_projects:'Projeler',
+    mod_maintenance:'Bakım', mod_cash_bank:'Kasa & Banka',
+    toast_module_enabled:'Modül etkinleştirildi', toast_module_disabled:'Modül devre dışı bırakıldı',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',

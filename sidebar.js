@@ -645,9 +645,74 @@
       const { data: companies } = await sb.rpc('get_my_companies');
       if (companies) renderCompanyMenu(companies, companyId);
 
+      // Module visibility
+      const { data: modules } = await sb.from('company_modules')
+        .select('module, is_active')
+        .eq('company_id', companyId);
+      if (modules) applyModuleVisibility(modules);
+
     } catch (e) {
       console.error('Sidebar data error:', e);
     }
+  }
+
+  const MODULE_NAV_MAP = {
+    inventory:   ['nav_inventory'],
+    sales:       ['nav_sales'],
+    purchasing:  ['nav_purchasing'],
+    production:  ['nav_production'],
+    accounting:  ['nav_accounting'],
+    hr:          ['nav_hr'],
+    shipping:    ['nav_shipping'],
+    projects:    ['nav_projects'],
+    maintenance: ['nav_maintenance'],
+    cash_bank:   ['nav_cashbank'],
+  };
+
+  function applyModuleVisibility(modules) {
+    const disabledKeys = new Set();
+    modules.forEach(m => {
+      if (!m.is_active && MODULE_NAV_MAP[m.module]) {
+        MODULE_NAV_MAP[m.module].forEach(k => disabledKeys.add(k));
+      }
+    });
+    if (disabledKeys.size === 0) return;
+
+    // Hide accordion parents + their children containers
+    document.querySelectorAll('.nav-parent[data-key]').forEach(el => {
+      if (disabledKeys.has(el.dataset.key)) {
+        el.style.display = 'none';
+        const children = el.nextElementSibling;
+        if (children && children.classList.contains('nav-children')) {
+          children.style.display = 'none';
+        }
+      }
+    });
+
+    // Hide standalone nav-items by matching href
+    const NAV_KEY_HREF = {
+      nav_production: 'production.html', nav_shipping: 'shipping.html',
+      nav_projects: 'projects.html', nav_maintenance: 'maintenance.html',
+    };
+    document.querySelectorAll('a.nav-item').forEach(el => {
+      const href = el.getAttribute('href') || '';
+      for (const [navKey, page] of Object.entries(NAV_KEY_HREF)) {
+        if (disabledKeys.has(navKey) && href.includes(page)) {
+          el.style.display = 'none';
+        }
+      }
+    });
+
+    // Hide child items inside accordion (accounting, cashbank under Finance)
+    const CHILD_HREF_MAP = { nav_cashbank: 'cashbank.html', nav_accounting: 'accounting.html' };
+    document.querySelectorAll('.nav-child').forEach(el => {
+      const href = el.getAttribute('href') || '';
+      for (const [navKey, page] of Object.entries(CHILD_HREF_MAP)) {
+        if (disabledKeys.has(navKey) && href.includes(page)) {
+          el.style.display = 'none';
+        }
+      }
+    });
   }
 
   function renderCompanyMenu(companies, currentId) {
@@ -799,6 +864,12 @@
         const whName = SIDEBAR_WAREHOUSE_NAMES[lang] || SIDEBAR_WAREHOUSE_NAMES['EN'];
         await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
       }
+      // Insert default modules (all active)
+      const ALL_MODULES = ['inventory','sales','purchasing','production','accounting','hr','shipping','projects','maintenance','cash_bank'];
+      await sb.from('company_modules').insert(
+        ALL_MODULES.map(m => ({ company_id: comp.id, module: m, is_active: true }))
+      );
+
       localStorage.setItem('currentCompanyId', comp.id);
       toast('Company created!', 'success');
       sidebarCloseNewCompany();
