@@ -2194,6 +2194,8 @@ const T = window.T = {
     mod_accounting:'Accounting', mod_hr:'HR & Payroll', mod_shipping:'Shipping', mod_projects:'Projects',
     mod_maintenance:'Maintenance', mod_cash_bank:'Cash & Bank',
     toast_module_enabled:'Module enabled', toast_module_disabled:'Module disabled',
+    btn_load_coa:'Load Standard Plan', confirm_load_coa:'Load standard chart of accounts for {0}?',
+    btn_load_tax_tpl:'Load from Template', confirm_load_tax_tpl:'Load standard tax rates for {0}?',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -2997,6 +2999,8 @@ const T = window.T = {
     mod_accounting:'Muhasebe', mod_hr:'İK & Bordro', mod_shipping:'Sevkiyat', mod_projects:'Projeler',
     mod_maintenance:'Bakım', mod_cash_bank:'Kasa & Banka',
     toast_module_enabled:'Modül etkinleştirildi', toast_module_disabled:'Modül devre dışı bırakıldı',
+    btn_load_coa:'Standart Plan Yükle', confirm_load_coa:'{0} için standart hesap planı yüklensin mi?',
+    btn_load_tax_tpl:'Şablondan Yükle', confirm_load_tax_tpl:'{0} için standart vergi oranları yüklensin mi?',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',

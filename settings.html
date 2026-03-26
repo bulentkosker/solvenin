@@ -532,7 +532,10 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title" data-i18n="tab_tax_rates">Tax Rates</div><div class="settings-card-desc" data-i18n="desc_tax_rates">Define tax rates for invoices</div></div>
-              <button class="btn-primary" onclick="openTaxModal()"><span data-i18n="btn_add_tax">+ Add Tax Rate</span></button>
+              <div style="display:flex;gap:8px">
+                <button class="btn-primary" style="font-size:12px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;background:var(--gray100);color:var(--gray700);font-weight:600" onclick="loadTaxFromTemplates()" id="btn-load-taxes" style="display:none" data-i18n="btn_load_tax_tpl">📥 Load from Template</button>
+                <button class="btn-primary" onclick="openTaxModal()"><span data-i18n="btn_add_tax">+ Add Tax Rate</span></button>
+              </div>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="taxes-list" class="manage-list"></div>
@@ -915,6 +918,7 @@ async function createNewCompany() {
       .select('id, default_language')
       .eq('country_code', countryCode)
       .single();
+    let taxLoaded = false;
     if (loc) {
       const { data: taxData } = await sb.from('localization_tax_rates')
         .select('name, rate, description, is_default')
@@ -926,11 +930,29 @@ async function createNewCompany() {
             description: tr.description, is_default: tr.is_default || false
           }))
         );
+        taxLoaded = true;
       }
       // Create default warehouse in country's language
       const lang = (loc.default_language || 'EN').toUpperCase();
       const whName = WAREHOUSE_NAMES[lang] || WAREHOUSE_NAMES['EN'];
       await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
+    }
+    // Fallback: load from tax_rates_templates
+    if (!taxLoaded) {
+      const { data: tplTax } = await sb.from('tax_rates_templates')
+        .select('tax_name, tax_name_local, rate, tax_type, is_default, is_mandatory')
+        .eq('country_code', countryCode);
+      if (tplTax && tplTax.length) {
+        const mandatory = tplTax.filter(t => t.is_mandatory);
+        if (mandatory.length) {
+          await sb.from('tax_rates').insert(
+            mandatory.map(t => ({
+              company_id: comp.id, name: t.tax_name_local || t.tax_name,
+              rate: t.rate, is_default: t.is_default || false
+            }))
+          );
+        }
+      }
     }
 
     // Load chart of accounts from templates
@@ -1508,6 +1530,33 @@ async function loadTaxes() {
   if (error) { console.error(error); return; }
   allTaxes = data || [];
   renderTaxesList();
+}
+
+async function loadTaxFromTemplates() {
+  const cc = companyData?.country_code;
+  if (!cc) { showToast('Set country first in Company settings', 'error'); return; }
+
+  const ok = await window.showConfirm(
+    (t('confirm_load_tax_tpl') || 'Load standard tax rates for {0}?').replace('{0}', cc),
+    t('btn_load_tax_tpl') || 'Load Tax Rates',
+    t('btn_confirm') || 'Load'
+  );
+  if (!ok) return;
+
+  const { data: tplTax } = await sb.from('tax_rates_templates')
+    .select('tax_name, tax_name_local, rate, tax_type, is_default')
+    .eq('country_code', cc);
+  if (!tplTax || !tplTax.length) { showToast('No tax templates for ' + cc, 'error'); return; }
+
+  for (const t of tplTax) {
+    await sb.from('tax_rates').upsert({
+      company_id: companyId, name: t.tax_name_local || t.tax_name,
+      rate: t.rate, is_default: t.is_default || false, is_active: true
+    }, { onConflict: 'company_id,name' });
+  }
+
+  showToast(tplTax.length + ' tax rates loaded!', 'success');
+  await loadTaxes();
 }
 
 function renderTaxesList() {

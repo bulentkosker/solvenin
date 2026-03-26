@@ -843,10 +843,11 @@
       });
       if (cuError) console.error('company_users insert error:', cuError);
 
-      // Copy tax rates from localization
+      // Copy tax rates from localization or templates
       const { data: loc } = await sb.from('localizations')
         .select('id, default_language')
         .eq('country_code', countryCode).single();
+      let taxLoaded = false;
       if (loc) {
         const { data: taxData } = await sb.from('localization_tax_rates')
           .select('name, rate, description, is_default')
@@ -858,11 +859,29 @@
               description: tr.description, is_default: tr.is_default || false
             }))
           );
+          taxLoaded = true;
         }
         // Create default warehouse
         const lang = (loc.default_language || 'EN').toUpperCase();
         const whName = SIDEBAR_WAREHOUSE_NAMES[lang] || SIDEBAR_WAREHOUSE_NAMES['EN'];
         await sb.from('warehouses').insert({ company_id: comp.id, name: whName, is_default: true });
+      }
+      // Fallback: load from tax_rates_templates if localization had no tax data
+      if (!taxLoaded) {
+        const { data: tplTax } = await sb.from('tax_rates_templates')
+          .select('tax_name, tax_name_local, rate, tax_type, is_default, is_mandatory')
+          .eq('country_code', countryCode);
+        if (tplTax && tplTax.length) {
+          const mandatory = tplTax.filter(t => t.is_mandatory);
+          if (mandatory.length) {
+            await sb.from('tax_rates').insert(
+              mandatory.map(t => ({
+                company_id: comp.id, name: t.tax_name_local || t.tax_name,
+                rate: t.rate, is_default: t.is_default || false
+              }))
+            );
+          }
+        }
       }
       // Insert default modules (all active)
       const ALL_MODULES = ['inventory','sales','purchasing','production','accounting','hr','shipping','projects','maintenance','cash_bank'];
