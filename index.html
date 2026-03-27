@@ -1604,14 +1604,14 @@ setInterval(() => { if (window.innerWidth < 900) carouselNext(); }, 5000);
 // PRICING
 const PLAN_DATA = [
   { key:'free', name:'Free', price:0, yearly:0,
-    features:[{t:'All modules',ok:true},{t:'30 invoices/month',ok:true},{t:'Email support',ok:true},{t:'Multi-company',ok:false},{t:'Priority support',ok:false}],
-    btn:'Get Started Free', cls:'btn-plan-outline', sub:'Free forever' },
+    features:[{k:'sub_feat_all_modules',t:'All modules',ok:true},{k:'sub_feat_30_invoices',t:'30 invoices/month',ok:true},{k:'sub_feat_email_support',t:'Email support',ok:true},{k:'sub_feat_multi_company',t:'Multi-company',ok:false},{k:'sub_feat_priority',t:'Priority support',ok:false}],
+    btnKey:'btn_get_started_free', btn:'Get Started Free', cls:'btn-plan-outline', subKey:'sub_free_forever', sub:'Free forever' },
   { key:'standard', name:'Standard', price:8.99, yearly:89.90,
-    features:[{t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},{t:'Priority support',ok:true},{t:'Multi-company',ok:false}],
-    btn:'Start Free Trial', cls:'btn-plan-outline', sub:'7-day free trial' },
+    features:[{k:'sub_feat_all_modules',t:'All modules',ok:true},{k:'sub_feat_unlimited_invoices',t:'Unlimited invoices',ok:true},{k:'sub_feat_email_support',t:'Email support',ok:true},{k:'sub_feat_priority',t:'Priority support',ok:true},{k:'sub_feat_multi_company',t:'Multi-company',ok:false}],
+    btnKey:'btn_start_trial', btn:'Start Free Trial', cls:'btn-plan-outline', subKey:'sub_7day_trial', sub:'7-day free trial' },
   { key:'professional', name:'Professional', price:12.99, yearly:129.90, badge:true,
-    features:[{t:'All modules',ok:true},{t:'Unlimited invoices',ok:true},{t:'Email support',ok:true},{t:'Priority support',ok:true},{t:'Multi-company',ok:true}],
-    btn:'Start Free Trial', cls:'btn-plan-gold', sub:'7-day free trial' }
+    features:[{k:'sub_feat_all_modules',t:'All modules',ok:true},{k:'sub_feat_unlimited_invoices',t:'Unlimited invoices',ok:true},{k:'sub_feat_email_support',t:'Email support',ok:true},{k:'sub_feat_priority',t:'Priority support',ok:true},{k:'sub_feat_multi_company',t:'Multi-company',ok:true}],
+    btnKey:'btn_start_trial', btn:'Start Free Trial', cls:'btn-plan-gold', subKey:'sub_7day_trial', sub:'7-day free trial' }
 ];
 let billingCycle = 'monthly';
 
@@ -1624,18 +1624,18 @@ function renderPricingCards() {
     const price = p.key==='free' ? '$0' : (yr ? '$'+(p.yearly/12).toFixed(2) : '$'+p.price.toFixed(2));
     const perLine = p.key==='free' ? (_t.sub_free_forever||'Free forever') : (yr ? '$'+p.yearly.toFixed(2)+'/user/yr' : 'per user / month');
     const feats = p.features.map(f => {
-      const label = _t['sub_feat_'+f.t.toLowerCase().replace(/[^a-z]/g,'_')] || f.t;
+      const label = _t[f.k] || f.t;
       return `<li><span class="${f.ok?'check':'cross'}">${f.ok?'✓':'–'}</span> <span>${label}</span></li>`;
     }).join('');
     return `<div class="price-card${p.badge?' popular':''} reveal">
       ${p.badge?`<div class="popular-badge">${_t.most_popular||'Most Popular'}</div>`:''}
       <div class="price-plan">${_t['plan_'+p.key] || p.name}</div>
-      <div class="price-amount">${p.key!=='free'?'<sup>$</sup><span>'+price.replace('$','')+'</span>':price}<sub>/user/mo</sub></div>
+      <div class="price-amount">${p.key!=='free'?'<sup>$</sup><span>'+price.replace('$','')+'</span>':price}<sub>${p.key!=='free'?'/user/mo':''}</sub></div>
       <div style="font-size:12px;color:var(--gray-mid);margin-top:4px;margin-bottom:8px">${perLine}</div>
       <div class="price-divider"></div>
       <ul class="price-features">${feats}</ul>
-      <div style="font-size:11px;color:${p.badge?'#86efac':'#10b981'};font-weight:600;margin-bottom:12px">✓ ${_t['sub_'+p.sub.toLowerCase().replace(/[^a-z]/g,'_')] || p.sub}</div>
-      <button class="${p.cls} btn-plan" onclick="window.location.href='/auth.html'">${_t['btn_'+p.key==='free'?'get_started_free':'start_trial'] || p.btn}</button>
+      <div style="font-size:11px;color:${p.badge?'#86efac':'#10b981'};font-weight:600;margin-bottom:12px">✓ ${_t[p.subKey] || p.sub}</div>
+      <button class="${p.cls} btn-plan" onclick="window.location.href='/auth.html'">${_t[p.btnKey] || p.btn}</button>
     </div>`;
   }).join('');
 }
