@@ -1652,8 +1652,11 @@ function toggleBilling() {
     if (ml) ml.style.color = 'var(--gray-dark)';
   }
   renderPricingCards();
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
 }
 renderPricingCards();
+// Re-observe dynamically added .reveal elements (pricing cards)
+document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
 </script>
 </body>
 </html>
