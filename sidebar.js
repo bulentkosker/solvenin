@@ -610,7 +610,7 @@
   async function loadSidebarData() {
     try {
       const sb = window._supabase || window.supabase;
-      if (!sb) return;
+      if (!sb || !sb.auth) return;
 
       const { data: { user } } = await sb.auth.getUser();
       if (!user) return;

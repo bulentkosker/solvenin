@@ -1184,7 +1184,6 @@ async function executeDeleteCompany() {
     else console.log('[delete] All tables cleaned successfully');
 
     const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
-    const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
 
     if (remaining.length > 0) {
       // Switch to another company
