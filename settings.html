@@ -1215,55 +1215,47 @@ async function onCountryChange() {
 }
 
 async function replaceTaxRatesFromLocalization(countryCode) {
-  // 1. Find localization record for this country
-  const { data: loc, error: locErr } = await sb.from('localizations')
-    .select('id')
-    .eq('country_code', countryCode)
-    .single();
-  if (locErr || !loc) {
-    showToast('Localization not found for ' + countryCode, 'error');
-    return;
+  // 1. Fetch new rates from localization_tax_rates, fallback to tax_rates_templates
+  let newRates = [];
+  const { data: loc } = await sb.from('localizations').select('id').eq('country_code', countryCode).single();
+  if (loc) {
+    const { data } = await sb.from('localization_tax_rates').select('name, rate, description, is_default').eq('localization_id', loc.id);
+    if (data && data.length) newRates = data.map(r => ({ name: r.name, rate: r.rate, description: r.description || null, is_default: r.is_default || false }));
+  }
+  if (!newRates.length) {
+    const { data: tpl } = await sb.from('tax_rates_templates').select('tax_name, tax_name_local, rate, is_default').eq('country_code', countryCode);
+    if (tpl && tpl.length) newRates = tpl.map(r => ({ name: r.tax_name_local || r.tax_name, rate: r.rate, description: null, is_default: r.is_default || false }));
+  }
+  if (!newRates.length) { showToast('No tax rates defined for ' + countryCode, 'warning'); return; }
+
+  // 2. Get existing tax rates for this company
+  const { data: existing } = await sb.from('tax_rates').select('id, name').eq('company_id', companyId);
+
+  // 3. Check which existing rates are used in transactions
+  const usedIds = new Set();
+  if (existing && existing.length) {
+    const allIds = existing.map(e => e.id);
+    for (const tbl of ['invoices', 'sales_orders', 'purchase_orders', 'sales_order_items', 'purchase_order_items']) {
+      const { data: refs } = await sb.from(tbl).select('tax_rate_id').eq('company_id', companyId).in('tax_rate_id', allIds);
+      if (refs) refs.forEach(r => { if (r.tax_rate_id) usedIds.add(r.tax_rate_id); });
+    }
   }
 
-  // 2. Fetch tax rates from localization template
-  const { data: taxData, error: fetchErr } = await sb.from('localization_tax_rates')
-    .select('name, rate, description, is_default')
-    .eq('localization_id', loc.id);
-  if (fetchErr) {
-    showToast('Failed to load tax templates: ' + fetchErr.message, 'error');
-    return;
-  }
-  if (!taxData || !taxData.length) {
-    showToast('No tax rates defined for this country', 'warning');
-    return;
+  // 4. Delete unused rates, deactivate used ones
+  if (existing && existing.length) {
+    const unused = existing.filter(e => !usedIds.has(e.id)).map(e => e.id);
+    const used = existing.filter(e => usedIds.has(e.id)).map(e => e.id);
+    if (unused.length) await sb.from('tax_rates').delete().in('id', unused);
+    if (used.length) await sb.from('tax_rates').update({ is_active: false }).in('id', used);
   }
 
-  // 3. Deactivate existing tax rates for this company
-  const { error: delErr } = await sb.from('tax_rates')
-    .update({ is_active: false })
-    .eq('company_id', companyId)
-    .eq('is_active', true);
-  if (delErr) {
-    showToast('Failed to clear old tax rates: ' + delErr.message, 'error');
-    return;
-  }
-
-  // 4. Insert new tax rates from localization
-  const { error: insErr } = await sb.from('tax_rates').insert(
-    taxData.map(tr => ({
-      company_id: companyId,
-      name: tr.name,
-      rate: tr.rate,
-      description: tr.description || null,
-      is_default: tr.is_default || false
-    }))
+  // 5. Insert new rates (upsert to avoid duplicates)
+  await sb.from('tax_rates').upsert(
+    newRates.map(r => ({ company_id: companyId, name: r.name, rate: r.rate, description: r.description, is_default: r.is_default, is_active: true })),
+    { onConflict: 'company_id,name' }
   );
-  if (insErr) {
-    showToast('Failed to insert tax rates: ' + insErr.message, 'error');
-    return;
-  }
 
-  // 5. Reload UI
+  // 6. Reload UI
   if (typeof loadTaxes === 'function') await loadTaxes();
 }
 
