@@ -1147,12 +1147,23 @@ async function executeDeleteCompany() {
     // Delete company itself
     await sb.from('companies').delete().eq('id', id);
 
-    localStorage.removeItem('currentCompanyId');
-    showToast(t('toast_company_deleted') || 'Company deleted successfully', 'success');
-    setTimeout(async () => {
-      await sb.auth.signOut();
-      window.location.href = 'auth.html';
-    }, 1500);
+    // Check for other companies
+    const { data: otherCompanies } = await sb.rpc('get_my_companies');
+    const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
+
+    if (remaining.length > 0) {
+      // Switch to another company
+      const next = remaining[0];
+      localStorage.setItem('currentCompanyId', next.company_id);
+      try { await sb.rpc('switch_company', { p_company_id: next.company_id }); } catch(e) {}
+      showToast((t('toast_company_deleted_switched') || 'Company deleted. Switched to {0}').replace('{0}', next.company_name), 'success');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+    } else {
+      // No companies left — prompt to create one
+      localStorage.removeItem('currentCompanyId');
+      showToast(t('toast_company_deleted_create') || 'Company deleted. Please create a new one.', 'success');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+    }
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
     btn.disabled = false;

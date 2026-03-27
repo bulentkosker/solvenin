@@ -2210,6 +2210,8 @@ const T = window.T = {
     delete_company_warn_title:'This action cannot be undone', delete_company_warn_body:'All company data — orders, invoices, products, customers, chart of accounts, tax rates, and users — will be permanently deleted.',
     delete_company_confirm_label:'Type the company name to confirm:', btn_confirm_delete:'Yes, permanently delete',
     toast_company_deleted:'Company deleted successfully',
+    toast_company_deleted_switched:'Company deleted. Switched to {0}',
+    toast_company_deleted_create:'Company deleted. Please create a new one.',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3029,6 +3031,8 @@ const T = window.T = {
     delete_company_warn_title:'Bu işlem geri alınamaz', delete_company_warn_body:'Tüm şirket verileri — siparişler, faturalar, ürünler, müşteriler, hesap planı, vergi oranları ve kullanıcılar — kalıcı olarak silinecek.',
     delete_company_confirm_label:'Onaylamak için şirket adını yazın:', btn_confirm_delete:'Evet, kalıcı olarak sil',
     toast_company_deleted:'Şirket başarıyla silindi',
+    toast_company_deleted_switched:'Şirket silindi. {0} şirketine geçildi',
+    toast_company_deleted_create:'Şirketiniz silindi. Lütfen yeni bir şirket oluşturun.',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
