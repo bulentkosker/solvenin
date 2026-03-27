@@ -1116,39 +1116,74 @@ async function executeDeleteCompany() {
 
   try {
     const id = companyId;
+    const errors = [];
 
-    // Delete in FK-safe order
+    async function delFrom(table, filter, filterVal) {
+      console.log(`[delete] Deleting from ${table}...`);
+      const q = filter === 'in' ? sb.from(table).delete().in(filterVal.col, filterVal.ids) : sb.from(table).delete().eq(filter, filterVal);
+      const { error, count } = await q;
+      if (error) { console.error(`[delete] FAILED ${table}:`, error.message); errors.push(`${table}: ${error.message}`); }
+      else console.log(`[delete] OK ${table}`);
+      return error;
+    }
+
+    // 1. Child items (FK to parent orders/invoices, not directly to company)
     const childTables = [
-      { table:'sales_order_items', fk:'order_id', via:'sales_orders' },
-      { table:'purchase_order_items', fk:'order_id', via:'purchase_orders' },
-      { table:'invoice_items', fk:'invoice_id', via:'invoices' },
+      { items:'sales_order_items', fk:'order_id', parent:'sales_orders' },
+      { items:'purchase_order_items', fk:'order_id', parent:'purchase_orders' },
+      { items:'invoice_items', fk:'invoice_id', parent:'invoices' },
     ];
     for (const ct of childTables) {
-      const { data: parents } = await sb.from(ct.via).select('id').eq('company_id', id);
+      const { data: parents } = await sb.from(ct.parent).select('id').eq('company_id', id);
       if (parents && parents.length) {
+        console.log(`[delete] Found ${parents.length} ${ct.parent}, deleting ${ct.items}...`);
         const ids = parents.map(p => p.id);
         for (let i = 0; i < ids.length; i += 50) {
-          await sb.from(ct.table).delete().in(ct.fk, ids.slice(i, i + 50));
+          await delFrom(ct.items, 'in', { col: ct.fk, ids: ids.slice(i, i + 50) });
         }
       }
     }
 
-    const directTables = [
-      'sales_orders', 'purchase_orders', 'invoices', 'payments',
-      'journal_entries', 'journal_entry_lines',
-      'stock_movements', 'products', 'customers', 'suppliers',
-      'chart_of_accounts', 'tax_rates', 'warehouses', 'categories',
-      'company_modules', 'company_users',
-    ];
-    for (const tbl of directTables) {
-      await sb.from(tbl).delete().eq('company_id', id);
+    // 2. Journal entry lines (FK to journal_entries, not company)
+    const { data: entries } = await sb.from('journal_entries').select('id').eq('company_id', id);
+    if (entries && entries.length) {
+      console.log(`[delete] Found ${entries.length} journal_entries, deleting lines...`);
+      const entryIds = entries.map(e => e.id);
+      for (let i = 0; i < entryIds.length; i += 50) {
+        await delFrom('journal_entry_lines', 'in', { col: 'entry_id', ids: entryIds.slice(i, i + 50) });
+      }
     }
 
-    // Delete company itself
-    await sb.from('companies').delete().eq('id', id);
+    // 3. Direct company_id tables (FK-safe order: children first)
+    const directTables = [
+      'sales_orders', 'purchase_orders', 'invoices', 'payments',
+      'journal_entries',
+      'stock_movements', 'products', 'customers', 'suppliers',
+      'chart_of_accounts', 'tax_rates', 'warehouses', 'categories',
+      'company_modules',
+    ];
+    for (const tbl of directTables) {
+      await delFrom(tbl, 'company_id', id);
+    }
 
-    // Check for other companies
+    // 4. Get remaining companies BEFORE deleting company_users (RLS depends on it)
     const { data: otherCompanies } = await sb.rpc('get_my_companies');
+
+    // 5. Delete company_users (must be before companies, after RPC call)
+    await delFrom('company_users', 'company_id', id);
+
+    // 6. Delete company itself
+    const compErr = await delFrom('companies', 'id', id);
+    if (compErr) {
+      showToast('Failed to delete company: ' + compErr.message, 'error');
+      btn.disabled = false; btn.textContent = origText;
+      return;
+    }
+
+    if (errors.length) console.warn('[delete] Completed with errors:', errors);
+    else console.log('[delete] All tables cleaned successfully');
+
+    const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
     const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
 
     if (remaining.length > 0) {
