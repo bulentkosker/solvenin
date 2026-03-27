@@ -148,11 +148,12 @@
     .company-plan { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .5px; }
     .company-chevron { color: rgba(255,255,255,0.4); font-size: 13px; flex-shrink: 0; }
     .company-menu {
-      margin: 0 0 6px; border-radius: 10px;
+      position: fixed; bottom: auto; left: 10px;
+      width: 200px; border-radius: 10px;
       background: #fff;
       border: 1px solid #e8e4dc;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      overflow: hidden; z-index: 9999;
     }
     .company-menu-item {
       display: flex; align-items: center; gap: 10px;
@@ -753,7 +754,18 @@
 
   window.sidebarToggleCompanyMenu = function() {
     const menu = document.getElementById('sb-company-menu');
-    if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    if (!menu) return;
+    const isOpen = menu.style.display !== 'none';
+    if (isOpen) { menu.style.display = 'none'; return; }
+    // Position above the company switcher
+    const switcher = document.getElementById('company-switcher');
+    if (switcher) {
+      const rect = switcher.getBoundingClientRect();
+      menu.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+      menu.style.left = rect.left + 'px';
+      menu.style.width = rect.width + 'px';
+    }
+    menu.style.display = 'block';
   };
 
   window.sidebarSwitchCompany = async function(id) {
