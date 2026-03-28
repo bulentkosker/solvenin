@@ -16,8 +16,9 @@
     }
     .sidebar {
       width: var(--sidebar-w); background: var(--sb-bg);
-      min-height: 100vh; position: fixed; top: 0; left: 0;
+      height: 100vh; position: fixed; top: 0; left: 0;
       display: flex; flex-direction: column; z-index: 50;
+      overflow: hidden;
     }
     .sidebar-logo {
       padding: 18px 14px 14px;
@@ -129,7 +130,7 @@
     #solvenin-confirm-ok:hover { background:#dc2626; }
 
     /* ── Sidebar footer ── */
-    .sidebar-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
     .company-switcher {
       display: flex; align-items: center; gap: 8px;
       padding: 7px 8px; margin: 0 0 4px;
