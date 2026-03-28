@@ -2168,20 +2168,30 @@ async function loadUsers() {
   if (navBtn) navBtn.style.display = isAdmin ? '' : 'none';
   if (!isAdmin) return;
 
-  // Load team members
+  // Load team members with profile info
   const { data: members } = await sb.from('company_users')
     .select('user_id, role, status, joined_at')
     .eq('company_id', companyId);
+  // Fetch profiles for display names
+  const profileMap = {};
+  if (members && members.length) {
+    const uids = members.map(m => m.user_id);
+    const { data: profiles } = await sb.from('profiles').select('id, full_name').in('id', uids);
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
+  }
   const listEl = document.getElementById('team-members-list');
   if (listEl && members) {
     listEl.innerHTML = members.map(m => {
       const isOwner = m.role === 'owner';
       const isSelf = m.user_id === currentUser.id;
+      const profile = profileMap[m.user_id];
+      const displayName = profile?.full_name || (isSelf ? (currentUser.email || currentUser.user_metadata?.full_name) : null) || m.user_id.slice(0,8) + '...';
+      const initials = displayName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
       return `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:50%;background:var(--gray100);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gray500)">${(m.user_id||'?').slice(0,2).toUpperCase()}</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(13,79,60,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d4f3c">${initials}</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--gray800)">${m.user_id.slice(0,8)}...</div>
+            <div style="font-size:13px;font-weight:600;color:var(--gray800)">${displayName}${isSelf?' <span style="font-size:10px;color:var(--gray400)">(you)</span>':''}</div>
             <div style="font-size:11px;color:var(--gray400)">${m.role} · ${m.status}</div>
           </div>
         </div>
@@ -2268,7 +2278,9 @@ async function removeUser(userId) {
 // Permission Modal
 async function openPermModal(userId, role) {
   _permUserId = userId;
-  document.getElementById('perm-user-info').textContent = `User: ${userId.slice(0,8)}... · Role: ${role}`;
+  const { data: _pProfile } = await sb.from('profiles').select('full_name').eq('id', userId).maybeSingle();
+  const _pName = _pProfile?.full_name || userId.slice(0,8) + '...';
+  document.getElementById('perm-user-info').textContent = `${_pName} · ${role}`;
   const { data: perms } = await sb.from('user_permissions')
     .select('module, can_view, can_create, can_edit, can_delete')
     .eq('company_id', companyId).eq('user_id', userId);
