@@ -1052,12 +1052,12 @@ async function handleSignup() {
   const fullname = document.getElementById('fullname').value.trim();
   const pass     = document.getElementById('signup-pass').value;
 
-  const isInvite = window._inviteToken && company === '__invite__';
+  const isInvite = !!window._inviteToken;
   const email = isInvite ? (window._inviteEmail || '') : document.getElementById('signup-email').value.trim();
 
-  if ((!company && !isInvite) || !fullname || !email || !pass) {
-    showMsg('msg-signup', 'error', isInvite && !email ? 'Invitation email not loaded. Please refresh.' : t.err_fill); return;
-  }
+  if (!fullname || !pass) { showMsg('msg-signup', 'error', t.err_fill); return; }
+  if (!isInvite && !company) { showMsg('msg-signup', 'error', t.err_fill); return; }
+  if (!email) { showMsg('msg-signup', 'error', isInvite ? 'Invitation email not loaded. Please refresh.' : t.err_fill); return; }
   if (pass.length < 8) {
     showMsg('msg-signup', 'error', t.err_pass); return;
   }
@@ -1070,17 +1070,27 @@ async function handleSignup() {
 
     if (isInvite) {
       // Invite registration — only create auth user, NO company
-      const redirectUrl = window.location.origin + '/join.html?token=' + window._inviteToken;
+      const joinUrl = window.location.origin + '/join.html?token=' + window._inviteToken;
       const { data, error } = await sb.auth.signUp({
         email, password: pass,
         options: {
           data: { full_name: fullname, phone },
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: joinUrl
         }
       });
       if (error) throw error;
+      console.log('[auth] invite signUp result:', data);
 
-      // Show confirmation screen with invite-specific message
+      // Check if user is immediately confirmed (auto-confirm enabled)
+      const session = data.session;
+      if (session) {
+        // Auto-confirmed — redirect to join page immediately
+        console.log('[auth] auto-confirmed, redirecting to join...');
+        window.location.href = joinUrl;
+        return;
+      }
+
+      // Email confirmation required — show message
       document.getElementById('form-signup').classList.add('hidden');
       const successEl = document.getElementById('success-screen');
       if (successEl) {
@@ -1168,6 +1178,9 @@ async function handleGoogle() {
 async function checkOnboarding() {
   const params = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
+
+  // Skip onboarding if this is an invite flow
+  if (params.get('token')) return;
 
   if (hash && hash.includes('access_token')) {
     await new Promise(r => setTimeout(r, 1000));
