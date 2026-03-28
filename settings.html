@@ -336,6 +336,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
         <button class="settings-nav-item" onclick="switchSection('tax-regime', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="nav_tax_regime">Tax Regime</span></button>
         <button class="settings-nav-item" onclick="switchSection('modules', this)"><span class="settings-nav-icon">🧩</span> <span data-i18n="nav_modules">Modules</span></button>
+        <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -644,6 +645,91 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- ===== USERS ===== -->
+      <div class="settings-section" id="section-users">
+        <!-- Invite Form -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="users_invite_title">Invite User</div>
+              <div class="settings-card-desc" data-i18n="users_invite_desc">Send an invitation link to add a user to your company.</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group"><label data-i18n="lbl_email">Email</label><input type="email" id="invite-email" placeholder="user@example.com"></div>
+              <div class="form-group"><label data-i18n="lbl_role">Role</label>
+                <select id="invite-role">
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="employee" selected>Employee</option>
+                  <option value="accountant">Accountant</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="sendInvitation()" data-i18n="btn_send_invite">Send Invitation</button>
+            <div id="invite-link-box" style="display:none;margin-top:14px;padding:12px;background:var(--gray50);border-radius:10px;font-size:12px;word-break:break-all">
+              <div style="font-weight:600;margin-bottom:4px" data-i18n="invite_link_label">Invitation link (copy and share):</div>
+              <div id="invite-link-url" style="color:var(--blue);user-select:all"></div>
+              <button style="margin-top:8px;padding:5px 12px;border:1px solid var(--gray200);border-radius:8px;background:#fff;font-size:12px;font-weight:600;cursor:pointer" onclick="copyInviteLink()" data-i18n="btn_copy_link">Copy Link</button>
+            </div>
+          </div>
+        </div>
+        <!-- Pending Invitations -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="users_pending_title">Pending Invitations</div>
+            </div>
+          </div>
+          <div class="settings-card-body" style="padding:0 24px">
+            <div id="pending-invitations-list" class="manage-list"></div>
+          </div>
+        </div>
+        <!-- Current Users -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="users_current_title">Team Members</div>
+            </div>
+          </div>
+          <div class="settings-card-body" style="padding:0 24px">
+            <div id="team-members-list" class="manage-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permissions Modal -->
+      <div class="modal-overlay" id="permissions-modal">
+        <div class="modal" style="max-width:720px">
+          <div class="modal-header">
+            <span class="modal-title">🔐 <span data-i18n="perm_modal_title">User Permissions</span></span>
+            <button class="modal-close" onclick="closePermModal()">✕</button>
+          </div>
+          <div class="modal-body" style="padding:16px 24px">
+            <div style="margin-bottom:12px;font-size:13px;color:var(--gray500)" id="perm-user-info"></div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr style="background:var(--gray50)">
+                    <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500);text-transform:uppercase" data-i18n="perm_module">Module</th>
+                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_view">View</th>
+                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_create">Create</th>
+                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_edit">Edit</th>
+                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_delete_perm">Delete</th>
+                  </tr>
+                </thead>
+                <tbody id="perm-matrix-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-outline" onclick="closePermModal()" data-i18n="btn_cancel">Cancel</button>
+            <button class="btn-primary" onclick="savePermissions()" data-i18n="btn_save">Save</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -870,6 +956,7 @@ function closeModal(id) { document.getElementById(id)?.classList.remove('open');
 
 function switchSection(name, el) {
   if (name === 'recycle') loadRecycleBin();
+  if (name === 'users') loadUsers();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
@@ -918,7 +1005,7 @@ async function init() {
     console.time('[settings] all data');
     await Promise.all([
       loadCompanies(), loadCountriesForModal(), loadCompanyData(),
-      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules()
+      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules(), loadUsers()
     ]);
     console.timeEnd('[settings] all data');
 
@@ -2064,6 +2151,162 @@ async function toggleModule(moduleKey, isActive) {
   }
   const _t = window.t || (k => k);
   showToast(isActive ? _t('toast_module_enabled') : _t('toast_module_disabled'), 'success');
+}
+
+// ===== USERS & PERMISSIONS =====
+const ALL_MODULES = ['inventory','sales','purchasing','production','accounting','hr','shipping','projects','maintenance','cash_bank'];
+const MODULE_LABELS = { inventory:'Inventory', sales:'Sales', purchasing:'Purchasing', production:'Production', accounting:'Accounting', hr:'HR', shipping:'Shipping', projects:'Projects', maintenance:'Maintenance', cash_bank:'Cash & Bank' };
+let _permUserId = null;
+
+async function loadUsers() {
+  if (!companyId) return;
+  // Check if current user is owner/admin
+  const { data: myRole } = await sb.from('company_users')
+    .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single();
+  const isAdmin = myRole && (myRole.role === 'owner' || myRole.role === 'admin');
+  const navBtn = document.getElementById('nav-users');
+  if (navBtn) navBtn.style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) return;
+
+  // Load team members
+  const { data: members } = await sb.from('company_users')
+    .select('user_id, role, status, joined_at')
+    .eq('company_id', companyId);
+  const listEl = document.getElementById('team-members-list');
+  if (listEl && members) {
+    listEl.innerHTML = members.map(m => {
+      const isOwner = m.role === 'owner';
+      const isSelf = m.user_id === currentUser.id;
+      return `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--gray100);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gray500)">${(m.user_id||'?').slice(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--gray800)">${m.user_id.slice(0,8)}...</div>
+            <div style="font-size:11px;color:var(--gray400)">${m.role} · ${m.status}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <select style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px" ${isOwner?'disabled':''} onchange="changeUserRole('${m.user_id}',this.value)">
+            ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
+          </select>
+          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="openPermModal('${m.user_id}','${m.role}')">🔐</button>
+          ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
+        </div>
+      </div>`;
+    }).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)">No members</div>';
+  }
+
+  // Load pending invitations
+  const { data: invites } = await sb.from('user_invitations')
+    .select('id, email, role, token, invited_at, status')
+    .eq('company_id', companyId)
+    .eq('status', 'pending')
+    .order('invited_at', { ascending: false });
+  const invEl = document.getElementById('pending-invitations-list');
+  if (invEl) {
+    invEl.innerHTML = (invites||[]).map(inv => `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
+      <div>
+        <div style="font-size:13px;font-weight:600">${inv.email}</div>
+        <div style="font-size:11px;color:var(--gray400)">${inv.role} · ${new Date(inv.invited_at).toLocaleDateString()}</div>
+      </div>
+      <button style="padding:4px 10px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="cancelInvitation('${inv.id}')">Cancel</button>
+    </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)" data-i18n="no_pending">No pending invitations</div>';
+  }
+}
+
+async function sendInvitation() {
+  const email = document.getElementById('invite-email').value.trim();
+  const role = document.getElementById('invite-role').value;
+  if (!email) { showToast('Email is required', 'error'); return; }
+  const token = crypto.randomUUID();
+  const { error } = await sb.from('user_invitations').insert({
+    company_id: companyId, email, role, token, invited_by: currentUser.id
+  });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  const link = `${window.location.origin}/join.html?token=${token}`;
+  document.getElementById('invite-link-url').textContent = link;
+  document.getElementById('invite-link-box').style.display = 'block';
+  document.getElementById('invite-email').value = '';
+  showToast(t('toast_invite_sent') || 'Invitation sent!', 'success');
+  await loadUsers();
+}
+
+function copyInviteLink() {
+  const url = document.getElementById('invite-link-url').textContent;
+  navigator.clipboard.writeText(url);
+  showToast(t('toast_link_copied') || 'Link copied!', 'success');
+}
+
+async function cancelInvitation(id) {
+  await sb.from('user_invitations').update({ status: 'cancelled' }).eq('id', id);
+  showToast('Invitation cancelled', 'success');
+  await loadUsers();
+}
+
+async function changeUserRole(userId, newRole) {
+  await sb.from('company_users').update({ role: newRole }).eq('company_id', companyId).eq('user_id', userId);
+  // Reset permissions to role defaults
+  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', userId);
+  const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: newRole });
+  if (defaults && defaults.length) {
+    await sb.from('user_permissions').insert(
+      defaults.map(d => ({ company_id: companyId, user_id: userId, module: d.module, can_view: d.can_view, can_create: d.can_create, can_edit: d.can_edit, can_delete: d.can_delete }))
+    );
+  }
+  showToast('Role updated', 'success');
+  await loadUsers();
+}
+
+async function removeUser(userId) {
+  if (!confirm(t('confirm_remove_user') || 'Remove this user from the company?')) return;
+  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', userId);
+  await sb.from('company_users').delete().eq('company_id', companyId).eq('user_id', userId);
+  showToast('User removed', 'success');
+  await loadUsers();
+}
+
+// Permission Modal
+async function openPermModal(userId, role) {
+  _permUserId = userId;
+  document.getElementById('perm-user-info').textContent = `User: ${userId.slice(0,8)}... · Role: ${role}`;
+  const { data: perms } = await sb.from('user_permissions')
+    .select('module, can_view, can_create, can_edit, can_delete')
+    .eq('company_id', companyId).eq('user_id', userId);
+  const permMap = {};
+  (perms || []).forEach(p => permMap[p.module] = p);
+
+  const _t = window.t || (k => MODULE_LABELS[k] || k);
+  document.getElementById('perm-matrix-body').innerHTML = ALL_MODULES.map(mod => {
+    const p = permMap[mod] || { can_view: true, can_create: false, can_edit: false, can_delete: false };
+    const cb = (field, val) => `<td style="padding:8px 12px;text-align:center"><input type="checkbox" data-mod="${mod}" data-field="${field}" ${val?'checked':''}></td>`;
+    return `<tr style="border-bottom:1px solid var(--gray100)">
+      <td style="padding:8px 12px;font-weight:600">${_t('mod_'+mod) || MODULE_LABELS[mod]}</td>
+      ${cb('can_view',p.can_view)}${cb('can_create',p.can_create)}${cb('can_edit',p.can_edit)}${cb('can_delete',p.can_delete)}
+    </tr>`;
+  }).join('');
+
+  document.getElementById('permissions-modal').classList.add('open');
+}
+
+function closePermModal() {
+  document.getElementById('permissions-modal').classList.remove('open');
+  _permUserId = null;
+}
+
+async function savePermissions() {
+  if (!_permUserId) return;
+  const rows = [];
+  document.querySelectorAll('#perm-matrix-body input[type=checkbox]').forEach(cb => {
+    const mod = cb.dataset.mod;
+    const field = cb.dataset.field;
+    let row = rows.find(r => r.module === mod);
+    if (!row) { row = { company_id: companyId, user_id: _permUserId, module: mod, can_view: false, can_create: false, can_edit: false, can_delete: false }; rows.push(row); }
+    row[field] = cb.checked;
+  });
+  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', _permUserId);
+  if (rows.length) await sb.from('user_permissions').insert(rows);
+  showToast(t('toast_perms_saved') || 'Permissions saved', 'success');
+  closePermModal();
 }
 
 // ===== TAX REGIMES =====

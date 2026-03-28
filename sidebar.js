@@ -649,11 +649,23 @@
       const { data: companies } = await sb.rpc('get_my_companies');
       if (companies) renderCompanyMenu(companies, companyId);
 
-      // Module visibility
+      // Module visibility (company-level)
       const { data: modules } = await sb.from('company_modules')
         .select('module, is_active')
         .eq('company_id', companyId);
       if (modules) applyModuleVisibility(modules);
+
+      // User permission visibility (user-level)
+      if (typeof window.loadAllPermissions === 'function') {
+        const permMap = await window.loadAllPermissions();
+        if (permMap && Object.keys(permMap).length > 0) {
+          const noViewModules = [];
+          for (const [mod, p] of Object.entries(permMap)) {
+            if (!p.can_view) noViewModules.push({ module: mod, is_active: false });
+          }
+          if (noViewModules.length) applyModuleVisibility(noViewModules);
+        }
+      }
 
     } catch (e) {
       console.error('Sidebar data error:', e);
