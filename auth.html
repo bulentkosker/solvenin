@@ -1050,12 +1050,13 @@ async function handleSignup() {
   const t = T[lang] || T['en'];
   const company  = document.getElementById('company').value.trim();
   const fullname = document.getElementById('fullname').value.trim();
-  const email    = document.getElementById('signup-email').value.trim();
   const pass     = document.getElementById('signup-pass').value;
 
   const isInvite = window._inviteToken && company === '__invite__';
+  const email = isInvite ? (window._inviteEmail || '') : document.getElementById('signup-email').value.trim();
+
   if ((!company && !isInvite) || !fullname || !email || !pass) {
-    showMsg('msg-signup', 'error', t.err_fill); return;
+    showMsg('msg-signup', 'error', isInvite && !email ? 'Invitation email not loaded. Please refresh.' : t.err_fill); return;
   }
   if (pass.length < 8) {
     showMsg('msg-signup', 'error', t.err_pass); return;
@@ -1215,21 +1216,44 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (inviteToken) {
     window._inviteToken = inviteToken;
+    window._inviteEmail = null;
 
-    // Hide company name field for invite registrations
+    // Fetch invitation email from Supabase
+    (async () => {
+      try {
+        const { data: inv } = await sb.from('user_invitations')
+          .select('email, role, company_id')
+          .eq('token', inviteToken).maybeSingle();
+        if (inv) {
+          window._inviteEmail = inv.email;
+          // Fetch company name for banner
+          const { data: comp } = await sb.from('companies').select('name').eq('id', inv.company_id).maybeSingle();
+          const compName = comp?.name || '';
+          const bannerEl = document.getElementById('invite-banner');
+          if (bannerEl) bannerEl.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'Registering via invitation.') + (compName ? ` <strong>${compName}</strong> — ${inv.role}` : '');
+        }
+      } catch (e) { console.warn('[auth] invite lookup failed:', e); }
+    })();
+
+    // Hide: company, email, country fields
+    ['company', 'signup-email', 'signup-country'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const wrapper = el.closest('.field');
+        if (wrapper) wrapper.style.display = 'none';
+      }
+    });
+    // Set placeholder values so validation passes
     const companyField = document.getElementById('company');
-    if (companyField) {
-      const fieldWrapper = companyField.closest('.field');
-      if (fieldWrapper) fieldWrapper.style.display = 'none';
-      companyField.value = '__invite__'; // placeholder so validation passes
-    }
+    if (companyField) companyField.value = '__invite__';
 
     // Show invite banner
     const signupForm = document.getElementById('form-signup');
     if (signupForm) {
       const banner = document.createElement('div');
+      banner.id = 'invite-banner';
       banner.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#065f46;font-weight:500';
-      banner.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'You are registering with an invitation. No company setup needed.');
+      banner.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'Registering via invitation...');
       signupForm.insertBefore(banner, signupForm.firstChild);
     }
 
