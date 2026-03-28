@@ -352,6 +352,7 @@ function showToast(msg, type = 'success') {
 let invitation = null;
 let company = null;
 let currentUser = null;
+let token = null;
 
 // ── Render helpers ──
 const card = document.getElementById('card');
@@ -530,76 +531,83 @@ async function declineInvitation() {
 async function init() {
   document.getElementById('loading-text').textContent = t('loading');
 
-  // Read token from URL
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-
-  if (!token) {
+  // Safety timeout — never stay on loading forever
+  const loadingTimeout = setTimeout(() => {
+    console.warn('[join] loading timeout — 5s elapsed');
     renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
-    return;
-  }
+  }, 5000);
 
-  // Look up invitation
-  const { data: inv, error: invErr } = await sb.from('user_invitations')
-    .select('id, email, role, token, invited_at, status, company_id')
-    .eq('token', token)
-    .maybeSingle();
+  try {
+    // Read token from URL
+    const params = new URLSearchParams(window.location.search);
+    token = params.get('token');
+    console.log('[join] token from URL:', token);
 
-  if (invErr) console.error('[join] invitation lookup error:', invErr);
-  if (invErr || !inv) {
-    console.log('[join] token:', token, '| result:', inv, '| error:', invErr);
-    renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
-    return;
-  }
-
-  invitation = inv;
-
-  // Check status
-  if (inv.status === 'accepted') {
-    renderError('warning', '&#x2705;', 'accepted_title', 'accepted_msg');
-    return;
-  }
-  if (inv.status === 'cancelled') {
-    renderError('error', '&#x1f6ab;', 'cancelled_title', 'cancelled_msg');
-    return;
-  }
-  if (inv.status === 'expired') {
-    renderError('warning', '&#x23f3;', 'expired_title', 'expired_msg');
-    return;
-  }
-
-  // Check expiry (7 days from invited_at)
-  if (inv.invited_at) {
-    const invitedDate = new Date(inv.invited_at);
-    const now = new Date();
-    const diffDays = (now - invitedDate) / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) {
-      await sb.from('user_invitations').update({ status: 'expired' }).eq('id', inv.id);
-      renderError('warning', '&#x23f3;', 'expired_title', 'expired_msg');
+    if (!token) {
+      renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
       return;
     }
-  }
 
-  // Fetch company info
-  const { data: comp } = await sb.from('companies')
-    .select('id, name')
-    .eq('id', inv.company_id)
-    .single();
+    // Look up invitation
+    console.log('[join] fetching invitation...');
+    const { data: inv, error: invErr } = await sb.from('user_invitations')
+      .select('id, email, role, token, invited_at, status, company_id')
+      .eq('token', token)
+      .maybeSingle();
+    console.log('[join] invitation result:', inv, '| error:', invErr);
 
-  if (!comp) {
+    if (invErr || !inv) {
+      renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
+      return;
+    }
+
+    invitation = inv;
+
+    // Check status
+    if (inv.status === 'accepted') { renderError('warning', '&#x2705;', 'accepted_title', 'accepted_msg'); return; }
+    if (inv.status === 'cancelled') { renderError('error', '&#x1f6ab;', 'cancelled_title', 'cancelled_msg'); return; }
+    if (inv.status === 'expired') { renderError('warning', '&#x23f3;', 'expired_title', 'expired_msg'); return; }
+
+    // Check expiry (7 days)
+    if (inv.invited_at) {
+      const diffDays = (Date.now() - new Date(inv.invited_at).getTime()) / 86400000;
+      if (diffDays > 7) {
+        await sb.from('user_invitations').update({ status: 'expired' }).eq('id', inv.id);
+        renderError('warning', '&#x23f3;', 'expired_title', 'expired_msg');
+        return;
+      }
+    }
+
+    // Fetch company info
+    console.log('[join] fetching company:', inv.company_id);
+    const { data: comp, error: compErr } = await sb.from('companies')
+      .select('id, name')
+      .eq('id', inv.company_id)
+      .maybeSingle();
+    console.log('[join] company result:', comp, '| error:', compErr);
+
+    if (!comp) {
+      renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
+      return;
+    }
+    company = comp;
+
+    // Check auth state
+    console.log('[join] checking auth...');
+    const { data: { session } } = await sb.auth.getSession();
+    console.log('[join] auth session:', session ? 'logged in as ' + session.user.email : 'not logged in');
+
+    if (session) {
+      currentUser = session.user;
+      renderInviteAccept();
+    } else {
+      renderInviteAuth();
+    }
+  } catch (e) {
+    console.error('[join] init error:', e);
     renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
-    return;
-  }
-
-  company = comp;
-
-  // Check auth state
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    renderInviteAccept();
-  } else {
-    renderInviteAuth();
+  } finally {
+    clearTimeout(loadingTimeout);
   }
 }
 
