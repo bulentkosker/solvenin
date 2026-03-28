@@ -269,8 +269,8 @@ body {
 
 <script>
 const SUPABASE_URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYWtqZHpwZGl6amJ6dmJ0Y2xkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODQxNTcsImV4cCI6MjA1ODE2MDE1N30.gFR9RBkg7Hp5P_R8VR8MKi-7GxZ2cFsj89DQ93x_a5w';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const SUPABASE_KEY = 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── i18n ──
 const T = {
@@ -545,7 +545,9 @@ async function init() {
     .eq('token', token)
     .maybeSingle();
 
+  if (invErr) console.error('[join] invitation lookup error:', invErr);
   if (invErr || !inv) {
+    console.log('[join] token:', token, '| result:', inv, '| error:', invErr);
     renderError('error', '&#x26d4;', 'invalid_title', 'invalid_msg');
     return;
   }
