@@ -599,9 +599,36 @@ async function init() {
 
     if (session) {
       currentUser = session.user;
-      renderInviteAccept();
+      // Check if coming back from email confirmation (auto-accept)
+      const urlHash = window.location.hash;
+      if (urlHash && urlHash.includes('access_token')) {
+        console.log('[join] detected email confirmation redirect, auto-accepting...');
+        renderInviteAccept();
+        // Auto-click accept after short delay for UI to render
+        setTimeout(() => {
+          const acceptBtn = document.getElementById('btn-accept');
+          if (acceptBtn) acceptBtn.click();
+        }, 500);
+      } else {
+        renderInviteAccept();
+      }
     } else {
-      renderInviteAuth();
+      // Check for access_token in hash (Supabase email confirmation)
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        console.log('[join] access_token in hash, waiting for session...');
+        await new Promise(r => setTimeout(r, 1500));
+        const { data: { session: s2 } } = await sb.auth.getSession();
+        if (s2) {
+          currentUser = s2.user;
+          renderInviteAccept();
+          setTimeout(() => { const b = document.getElementById('btn-accept'); if (b) b.click(); }, 500);
+        } else {
+          renderInviteAuth();
+        }
+      } else {
+        renderInviteAuth();
+      }
     }
   } catch (e) {
     console.error('[join] init error:', e);

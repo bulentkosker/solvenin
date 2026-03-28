@@ -1067,6 +1067,32 @@ async function handleSignup() {
   try {
     const phone = document.getElementById('signup-phone')?.value?.trim() || '';
     const countryCode = document.getElementById('signup-country')?.value || 'US';
+
+    if (isInvite) {
+      // Invite registration — only create auth user, NO company
+      const redirectUrl = window.location.origin + '/join.html?token=' + window._inviteToken;
+      const { data, error } = await sb.auth.signUp({
+        email, password: pass,
+        options: {
+          data: { full_name: fullname, phone },
+          emailRedirectTo: redirectUrl
+        }
+      });
+      if (error) throw error;
+
+      // Show confirmation screen with invite-specific message
+      document.getElementById('form-signup').classList.add('hidden');
+      const successEl = document.getElementById('success-screen');
+      if (successEl) {
+        successEl.style.display = 'block';
+        const msgEl = successEl.querySelector('[data-i18n="signup_success_sub"]') || successEl.querySelector('p');
+        if (msgEl) msgEl.textContent = T[lang]?.invite_confirm_email || 'Check your email to confirm your account. You will be redirected to accept the invitation.';
+      }
+      document.getElementById('alt-action').style.display = 'none';
+      return;
+    }
+
+    // Normal registration — create company
     const { data, error } = await sb.auth.signUp({
       email, password: pass,
       options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone, country_code: countryCode } }
@@ -1074,13 +1100,6 @@ async function handleSignup() {
     if (error) throw error;
 
     if (data.user) {
-      if (isInvite) {
-        // Invite registration — skip company creation, redirect to join page
-        await sb.from('profiles').upsert({ id: data.user.id, full_name: fullname, phone: phone || null }, { onConflict: 'id' });
-        window.location.href = 'join.html?token=' + window._inviteToken;
-        return;
-      }
-
       const slug = company.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const { data: comp } = await sb.from('companies').insert({
         name: company, slug: slug + '-' + Date.now(), plan: selectedPlan, country_code: countryCode
@@ -1090,7 +1109,6 @@ async function handleSignup() {
           id: data.user.id, company_id: comp.id, full_name: fullname, role: 'owner',
           phone: phone || null
         });
-        // Copy localization tax rates for selected country
         await copyLocalizationData(comp.id, countryCode);
       }
     }
