@@ -388,9 +388,9 @@ function renderInviteAuth() {
     </div>
     <div class="card-subtitle" style="margin-bottom:20px">${t('login_prompt')}</div>
     <div class="btn-group">
-      <a href="auth.html?redirect=${returnUrl}#login" class="btn btn-primary">${t('btn_login')}</a>
+      <a href="auth.html?token=${token}&mode=login" class="btn btn-primary">${t('btn_login')}</a>
       <div class="divider">${t('or')}</div>
-      <a href="auth.html?redirect=${returnUrl}#register" class="btn btn-secondary">${t('btn_register')}</a>
+      <a href="auth.html?token=${token}&mode=register" class="btn btn-secondary">${t('btn_register')}</a>
     </div>`;
 }
 

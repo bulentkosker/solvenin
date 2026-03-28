@@ -1053,7 +1053,8 @@ async function handleSignup() {
   const email    = document.getElementById('signup-email').value.trim();
   const pass     = document.getElementById('signup-pass').value;
 
-  if (!company || !fullname || !email || !pass) {
+  const isInvite = window._inviteToken && company === '__invite__';
+  if ((!company && !isInvite) || !fullname || !email || !pass) {
     showMsg('msg-signup', 'error', t.err_fill); return;
   }
   if (pass.length < 8) {
@@ -1072,6 +1073,13 @@ async function handleSignup() {
     if (error) throw error;
 
     if (data.user) {
+      if (isInvite) {
+        // Invite registration — skip company creation, redirect to join page
+        await sb.from('profiles').upsert({ id: data.user.id, full_name: fullname, phone: phone || null }, { onConflict: 'id' });
+        window.location.href = 'join.html?token=' + window._inviteToken;
+        return;
+      }
+
       const slug = company.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const { data: comp } = await sb.from('companies').insert({
         name: company, slug: slug + '-' + Date.now(), plan: selectedPlan, country_code: countryCode
@@ -1108,7 +1116,11 @@ async function handleLogin() {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
-    window.location.href = '/dashboard.html';
+    if (window._inviteToken) {
+      window.location.href = 'join.html?token=' + window._inviteToken;
+    } else {
+      window.location.href = '/dashboard.html';
+    }
   } catch (err) {
     showMsg('msg-login', 'error', t.err_login);
     setLoading('btn-login', false, 'btn_login');
@@ -1193,7 +1205,41 @@ async function saveOnboarding() {
   setLang(detected);
 })();
 
-window.addEventListener('DOMContentLoaded', () => { checkOnboarding(); });
+window.addEventListener('DOMContentLoaded', () => {
+  checkOnboarding();
+
+  // Handle invite token from join.html
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get('token');
+  const mode = params.get('mode');
+
+  if (inviteToken) {
+    window._inviteToken = inviteToken;
+
+    // Hide company name field for invite registrations
+    const companyField = document.getElementById('company');
+    if (companyField) {
+      const fieldWrapper = companyField.closest('.field');
+      if (fieldWrapper) fieldWrapper.style.display = 'none';
+      companyField.value = '__invite__'; // placeholder so validation passes
+    }
+
+    // Show invite banner
+    const signupForm = document.getElementById('form-signup');
+    if (signupForm) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#065f46;font-weight:500';
+      banner.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'You are registering with an invitation. No company setup needed.');
+      signupForm.insertBefore(banner, signupForm.firstChild);
+    }
+
+    // Switch to correct tab
+    if (mode === 'register') {
+      const regTab = document.querySelector('[onclick*="signup"], [onclick*="register"]');
+      if (regTab) regTab.click();
+    }
+  }
+});
 </script>
 </body>
 </html>
