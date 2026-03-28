@@ -879,8 +879,10 @@ function switchSection(name, el) {
 // ===== INIT =====
 async function init() {
   const hideLoading = () => { const ls = document.getElementById('loading-screen'); if (ls) { ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',200); } };
+  console.time('[settings] total init');
 
   try {
+    console.time('[settings] auth + companies');
     const [sessionRes, companiesRes] = await Promise.all([
       sb.auth.getSession(),
       sb.rpc('get_my_companies')
@@ -894,6 +896,7 @@ async function init() {
     const user = session.user;
     if (!user) { window.location.href = 'auth.html'; return; }
     currentUser = user;
+    console.timeEnd('[settings] auth + companies');
 
     const name = user.user_metadata?.full_name || user.email.split('@')[0];
     (document.getElementById('sb-user-name')||{}).textContent = name;
@@ -911,13 +914,25 @@ async function init() {
     companyId = _active.company_id;
     localStorage.setItem('currentCompanyId', companyId);
 
-    await Promise.all([loadCompanies(), loadCountriesForModal(), loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules()]);
-    await loadCompanyData();
+    // All data in one Promise.all — including loadCompanyData
+    console.time('[settings] all data');
+    await Promise.all([
+      loadCompanies(), loadCountriesForModal(), loadCompanyData(),
+      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules()
+    ]);
+    console.timeEnd('[settings] all data');
+
+    // Set country dropdown after both countries and company data are loaded
+    if (companyData?.country_code) {
+      const coCountry = document.getElementById('co-country');
+      if (coCountry) coCountry.value = companyData.country_code;
+    }
   } catch (e) {
     console.error('init() error:', e);
     showToast('Error loading settings: ' + e.message, 'error');
   }
 
+  console.timeEnd('[settings] total init');
   hideLoading();
 }
 
@@ -1055,7 +1070,8 @@ async function createNewCompany() {
 
 // ===== COMPANY DATA =====
 async function loadCompanyData() {
-  if (!companyId) return;
+  console.time('[settings] loadCompanyData');
+  if (!companyId) { console.timeEnd('[settings] loadCompanyData'); return; }
   const { data, error } = await sb.from('companies')
     .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id')
     .eq('id', companyId).single();
@@ -1088,6 +1104,7 @@ async function loadCompanyData() {
     .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single();
   const dz = document.getElementById('danger-zone');
   if (dz) dz.style.display = cuRow?.role === 'owner' ? '' : 'none';
+  console.timeEnd('[settings] loadCompanyData');
 }
 
 // ===== DELETE COMPANY =====
