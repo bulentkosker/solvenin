@@ -1052,8 +1052,13 @@ async function handleSignup() {
   const fullname = document.getElementById('fullname').value.trim();
   const pass     = document.getElementById('signup-pass').value;
 
-  const isInvite = !!window._inviteToken;
+  // Token-based invite detection — check both window var AND URL param
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+  const isInvite = !!(window._inviteToken || urlToken);
+  if (isInvite && !window._inviteToken) window._inviteToken = urlToken;
   const email = isInvite ? (window._inviteEmail || '') : document.getElementById('signup-email').value.trim();
+
+  console.log('[auth] handleSignup — isInvite:', isInvite, 'token:', window._inviteToken, 'email:', email);
 
   if (!fullname || !pass) { showMsg('msg-signup', 'error', t.err_fill); return; }
   if (!isInvite && !company) { showMsg('msg-signup', 'error', t.err_fill); return; }
@@ -1070,6 +1075,9 @@ async function handleSignup() {
 
     if (isInvite) {
       // Invite registration — only create auth user, NO company
+      console.log('[auth] INVITE PATH — skipping company creation');
+      // Save token to localStorage in case email redirect loses it
+      localStorage.setItem('_pendingInviteToken', window._inviteToken);
       const joinUrl = window.location.origin + '/join.html?token=' + window._inviteToken;
       const { data, error } = await sb.auth.signUp({
         email, password: pass,
@@ -1103,6 +1111,7 @@ async function handleSignup() {
     }
 
     // Normal registration — create company
+    console.log('[auth] NORMAL PATH — creating company:', company);
     const { data, error } = await sb.auth.signUp({
       email, password: pass,
       options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone, country_code: countryCode } }
@@ -1145,8 +1154,10 @@ async function handleLogin() {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
-    if (window._inviteToken) {
-      window.location.href = 'join.html?token=' + window._inviteToken;
+    const loginToken = window._inviteToken || localStorage.getItem('_pendingInviteToken');
+    if (loginToken) {
+      localStorage.removeItem('_pendingInviteToken');
+      window.location.href = 'join.html?token=' + loginToken;
     } else {
       window.location.href = '/dashboard.html';
     }
@@ -1181,6 +1192,19 @@ async function checkOnboarding() {
 
   // Skip onboarding if this is an invite flow
   if (params.get('token')) return;
+
+  // Check for pending invite token (saved during invite signup)
+  const pendingToken = localStorage.getItem('_pendingInviteToken');
+  if (pendingToken) {
+    console.log('[auth] found pending invite token, redirecting to join...');
+    localStorage.removeItem('_pendingInviteToken');
+    // Wait for session to be ready after email confirmation
+    if (hash && hash.includes('access_token')) {
+      await new Promise(r => setTimeout(r, 1500));
+    }
+    window.location.href = 'join.html?token=' + pendingToken;
+    return;
+  }
 
   if (hash && hash.includes('access_token')) {
     await new Promise(r => setTimeout(r, 1000));
@@ -1245,8 +1269,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const inviteToken = params.get('token');
   const mode = params.get('mode');
 
-  if (inviteToken) {
-    window._inviteToken = inviteToken;
+  // Also check localStorage for token (email confirmation redirect may lose URL param)
+  const storedToken = localStorage.getItem('_pendingInviteToken');
+  const effectiveToken = inviteToken || storedToken;
+
+  if (effectiveToken) {
+    window._inviteToken = effectiveToken;
     window._inviteEmail = null;
 
     // Fetch invitation email from Supabase
@@ -1254,7 +1282,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try {
         const { data: inv } = await sb.from('user_invitations')
           .select('email, role, company_id')
-          .eq('token', inviteToken).maybeSingle();
+          .eq('token', effectiveToken).maybeSingle();
         if (inv) {
           window._inviteEmail = inv.email;
           // Fetch company name for banner
