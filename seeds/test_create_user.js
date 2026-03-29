@@ -1,8 +1,9 @@
+require('dotenv').config();
 /**
  * Test create-user flow
  *
  * Usage:
- *   SUPABASE_SERVICE_KEY=your_key node seeds/test_create_user.js
+ *   node seeds/test_create_user.js
  *
  * Steps:
  *   1. Delete existing test user (if any)

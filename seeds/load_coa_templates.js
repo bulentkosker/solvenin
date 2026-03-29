@@ -1,11 +1,11 @@
+require('dotenv').config();
 /**
  * Load COA Templates into Supabase
  *
  * Usage:
- *   # 1) Load seed JSONs into chart_of_accounts_templates
- *   SUPABASE_SERVICE_KEY=your_key node seeds/load_coa_templates.js
+ *   node seeds/load_coa_templates.js
  *
- *   # 2) Also load templates into a specific company's chart_of_accounts
+ *   # Also load templates into a specific company's chart_of_accounts
  *   SUPABASE_SERVICE_KEY=your_key node seeds/load_coa_templates.js --load-company COMPANY_ID --country TR
  */
 
