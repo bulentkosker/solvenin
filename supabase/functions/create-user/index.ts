@@ -16,12 +16,15 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Verify the calling user is owner/admin
-    const authHeader = req.headers.get('Authorization')!
-    const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
-    const { data: { user: caller } } = await anonClient.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (!caller) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // Verify caller from Authorization header JWT
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user: caller }, error: authErr } = await supabase.auth.getUser(token)
+    if (authErr || !caller) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const { email, password, full_name, company_id, role } = await req.json()
@@ -36,7 +39,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Only owner/admin can add users' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Create user with admin API (auto-confirm)
+    // Create user with admin API (auto-confirm email)
     const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -54,12 +57,12 @@ serve(async (req) => {
       company_id, user_id: userId, role, status: 'active', joined_at: new Date().toISOString()
     })
 
-    // Add profile
+    // Add profile with must_change_password flag
     await supabase.from('profiles').upsert({
       id: userId, full_name, company_id, must_change_password: true
     }, { onConflict: 'id' })
 
-    // Add default permissions
+    // Add default permissions based on role
     const { data: defaults } = await supabase.rpc('get_default_permissions', { p_role: role })
     if (defaults && defaults.length) {
       await supabase.from('user_permissions').insert(
