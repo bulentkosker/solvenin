@@ -460,6 +460,11 @@ async function acceptInvitation() {
       return;
     }
 
+    // Update invitation status FIRST (before company_users insert,
+    // because after insert the user's role may not have UPDATE permission on invitations)
+    await sb.from('user_invitations').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', invitation.id);
+    console.log('[join] invitation status updated to accepted');
+
     // Insert into company_users
     const { error: insertErr } = await sb.from('company_users').insert({
       company_id: invitation.company_id,
@@ -469,6 +474,7 @@ async function acceptInvitation() {
       joined_at: new Date().toISOString()
     });
     if (insertErr) throw insertErr;
+    console.log('[join] company_users inserted');
 
     // Load default permissions
     const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: invitation.role });
@@ -484,10 +490,8 @@ async function acceptInvitation() {
           can_delete: d.can_delete
         }))
       );
+      console.log('[join] permissions inserted:', defaults.length);
     }
-
-    // Update invitation status
-    await sb.from('user_invitations').update({ status: 'accepted' }).eq('id', invitation.id);
 
     // Set active company
     localStorage.setItem('currentCompanyId', invitation.company_id);
