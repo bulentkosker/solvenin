@@ -1048,7 +1048,7 @@ async function copyLocalizationData(companyId, countryCode) {
 
 function showChangePasswordScreen(userId) {
   const t = T[lang] || T['en'];
-  const container = document.querySelector('.auth-card') || document.querySelector('.card');
+  const container = document.querySelector('.auth-right');
   container.innerHTML = `
     <div style="text-align:center;padding:32px">
       <div style="font-size:36px;margin-bottom:12px">🔐</div>
