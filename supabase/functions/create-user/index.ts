@@ -40,11 +40,12 @@ serve(async (req) => {
     }
 
     // Create user with admin API (auto-confirm email)
+    // skip_company_creation flag tells any DB trigger to NOT create a company
     const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name }
+      user_metadata: { full_name, skip_company_creation: true, added_to_company: company_id }
     })
     if (createErr) {
       return new Response(JSON.stringify({ error: createErr.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
