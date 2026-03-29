@@ -27,26 +27,30 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const { email, password, full_name, company_id, role } = await req.json()
+    const body = await req.json()
+    const { email, password, full_name, company_id, role } = body
+    console.log('[create-user] email:', email, 'password length:', password?.length, 'role:', role, 'company_id:', company_id)
+
     if (!email || !password || !full_name || !company_id || !role) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'Missing required fields', received: { email: !!email, password: !!password, full_name: !!full_name, company_id: !!company_id, role: !!role } }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // Check caller is owner/admin of this company
-    const { data: callerRole } = await supabase.from('company_users')
+    const { data: callerRole, error: roleErr } = await supabase.from('company_users')
       .select('role').eq('company_id', company_id).eq('user_id', caller.id).single()
+    console.log('[create-user] caller role:', callerRole, 'error:', roleErr)
     if (!callerRole || !['owner', 'admin'].includes(callerRole.role)) {
       return new Response(JSON.stringify({ error: 'Only owner/admin can add users' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // Create user with admin API (auto-confirm email)
-    // skip_company_creation flag tells any DB trigger to NOT create a company
     const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { full_name, skip_company_creation: true, added_to_company: company_id }
     })
+    console.log('[create-user] createUser result:', newUser?.user?.id, 'error:', createErr)
     if (createErr) {
       return new Response(JSON.stringify({ error: createErr.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
@@ -54,17 +58,20 @@ serve(async (req) => {
     const userId = newUser.user.id
 
     // Add to company_users
-    await supabase.from('company_users').insert({
+    const { error: cuErr } = await supabase.from('company_users').insert({
       company_id, user_id: userId, role, status: 'active', joined_at: new Date().toISOString()
     })
+    console.log('[create-user] company_users insert:', cuErr ? cuErr.message : 'OK')
 
     // Add profile with must_change_password flag
-    await supabase.from('profiles').upsert({
+    const { error: profErr } = await supabase.from('profiles').upsert({
       id: userId, full_name, company_id, must_change_password: true
     }, { onConflict: 'id' })
+    console.log('[create-user] profiles upsert:', profErr ? profErr.message : 'OK')
 
     // Add default permissions based on role
-    const { data: defaults } = await supabase.rpc('get_default_permissions', { p_role: role })
+    const { data: defaults, error: permErr } = await supabase.rpc('get_default_permissions', { p_role: role })
+    console.log('[create-user] permissions:', defaults?.length || 0, 'error:', permErr)
     if (defaults && defaults.length) {
       await supabase.from('user_permissions').insert(
         defaults.map((d: any) => ({
@@ -74,7 +81,7 @@ serve(async (req) => {
       )
     }
 
-    return new Response(JSON.stringify({ success: true, user_id: userId }), {
+    return new Response(JSON.stringify({ success: true, user_id: userId, email, company_id }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
