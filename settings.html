@@ -2228,6 +2228,8 @@ async function sendInvitation() {
   const email = document.getElementById('invite-email').value.trim();
   const role = document.getElementById('invite-role').value;
   if (!email) { showToast('Email is required', 'error'); return; }
+  // Remove existing invitation for same company+email
+  await sb.from('user_invitations').delete().eq('company_id', companyId).eq('email', email);
   const token = crypto.randomUUID();
   const { error } = await sb.from('user_invitations').insert({
     company_id: companyId, email, role, token, invited_by: currentUser.id
@@ -2248,7 +2250,7 @@ function copyInviteLink() {
 }
 
 async function cancelInvitation(id) {
-  await sb.from('user_invitations').update({ status: 'cancelled' }).eq('id', id);
+  await sb.from('user_invitations').delete().eq('id', id);
   showToast('Invitation cancelled', 'success');
   await loadUsers();
 }
