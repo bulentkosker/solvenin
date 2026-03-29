@@ -59,13 +59,31 @@ serve(async (req) => {
 
     const userId = newUser.user.id
 
-    // Add to company_users
-    const { error: cuErr } = await supabase.from('company_users').insert({
-      company_id, user_id: userId, role, status: 'active', joined_at: new Date().toISOString()
-    })
-    console.log('[create-user] company_users insert:', cuErr ? cuErr.message : 'OK')
+    // Clean up auto-created company from DB trigger (if any)
+    // The trigger creates a company + company_users row we don't want
+    const { data: autoCompanies } = await supabase.from('company_users')
+      .select('company_id').eq('user_id', userId).neq('company_id', company_id)
+    if (autoCompanies && autoCompanies.length > 0) {
+      console.log('[create-user] cleaning up', autoCompanies.length, 'trigger-created companies')
+      for (const ac of autoCompanies) {
+        await supabase.from('company_users').delete().eq('company_id', ac.company_id).eq('user_id', userId)
+        await supabase.from('company_modules').delete().eq('company_id', ac.company_id)
+        await supabase.from('tax_rates').delete().eq('company_id', ac.company_id)
+        await supabase.from('profiles').update({ company_id: null }).eq('company_id', ac.company_id)
+        await supabase.from('companies').delete().eq('id', ac.company_id)
+      }
+    }
 
-    // Add profile with must_change_password flag
+    // Remove any trigger-created company_users for this user (wrong company)
+    await supabase.from('company_users').delete().eq('user_id', userId).neq('company_id', company_id)
+
+    // Add to correct company
+    const { error: cuErr } = await supabase.from('company_users').upsert({
+      company_id, user_id: userId, role, status: 'active', joined_at: new Date().toISOString()
+    }, { onConflict: 'company_id,user_id' })
+    console.log('[create-user] company_users upsert:', cuErr ? cuErr.message : 'OK')
+
+    // Update profile to correct company
     const { error: profErr } = await supabase.from('profiles').upsert({
       id: userId, full_name, company_id, must_change_password: true
     }, { onConflict: 'id' })
