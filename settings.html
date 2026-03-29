@@ -980,6 +980,14 @@ async function init() {
     const _savedId = localStorage.getItem('currentCompanyId');
     const _myCompanies = companiesRes.data;
     if (!_myCompanies || _myCompanies.length === 0) {
+      // Double-check: maybe RPC missed it, try direct query
+      const { data: directCheck } = await sb.from('company_users').select('company_id').eq('user_id', currentUser.id).limit(1);
+      if (directCheck && directCheck.length > 0) {
+        // User has a company but RPC didn't return it — reload
+        localStorage.setItem('currentCompanyId', directCheck[0].company_id);
+        window.location.reload();
+        return;
+      }
       hideLoading();
       showToast('No companies found. Create one to get started.', 'warning');
       if (typeof sidebarOpenNewCompany === 'function') sidebarOpenNewCompany();
