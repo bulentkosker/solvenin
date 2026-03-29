@@ -647,19 +647,23 @@ tr:hover .action-btns { opacity:1; }
 
       <!-- ===== USERS ===== -->
       <div class="settings-section" id="section-users">
-        <!-- Invite Form -->
+        <!-- Add User Form -->
         <div class="settings-card">
           <div class="settings-card-head">
             <div>
-              <div class="settings-card-title" data-i18n="users_invite_title">Invite User</div>
-              <div class="settings-card-desc" data-i18n="users_invite_desc">Send an invitation link to add a user to your company.</div>
+              <div class="settings-card-title" data-i18n="users_add_title">Add User</div>
+              <div class="settings-card-desc" data-i18n="users_add_desc">Create a new user account for your company.</div>
             </div>
           </div>
           <div class="settings-card-body">
             <div class="form-row">
-              <div class="form-group"><label data-i18n="lbl_email">Email</label><input type="email" id="invite-email" placeholder="user@example.com"></div>
+              <div class="form-group"><label data-i18n="lbl_fullname">Full Name</label><input type="text" id="add-user-name" placeholder="John Doe"></div>
+              <div class="form-group"><label data-i18n="lbl_email">Email</label><input type="email" id="add-user-email" placeholder="user@example.com"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label data-i18n="lbl_password">Password</label><input type="password" id="add-user-pass" placeholder="Min 8 characters" minlength="8"></div>
               <div class="form-group"><label data-i18n="lbl_role">Role</label>
-                <select id="invite-role">
+                <select id="add-user-role">
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
                   <option value="employee" selected>Employee</option>
@@ -667,23 +671,7 @@ tr:hover .action-btns { opacity:1; }
                 </select>
               </div>
             </div>
-            <button class="btn-primary" onclick="sendInvitation()" data-i18n="btn_send_invite">Send Invitation</button>
-            <div id="invite-link-box" style="display:none;margin-top:14px;padding:12px;background:var(--gray50);border-radius:10px;font-size:12px;word-break:break-all">
-              <div style="font-weight:600;margin-bottom:4px" data-i18n="invite_link_label">Invitation link (copy and share):</div>
-              <div id="invite-link-url" style="color:var(--blue);user-select:all"></div>
-              <button style="margin-top:8px;padding:5px 12px;border:1px solid var(--gray200);border-radius:8px;background:#fff;font-size:12px;font-weight:600;cursor:pointer" onclick="copyInviteLink()" data-i18n="btn_copy_link">Copy Link</button>
-            </div>
-          </div>
-        </div>
-        <!-- Pending Invitations -->
-        <div class="settings-card">
-          <div class="settings-card-head">
-            <div>
-              <div class="settings-card-title" data-i18n="users_pending_title">Pending Invitations</div>
-            </div>
-          </div>
-          <div class="settings-card-body" style="padding:0 24px">
-            <div id="pending-invitations-list" class="manage-list"></div>
+            <button class="btn-primary" id="btn-add-user" onclick="addUser()" data-i18n="btn_add_user">Add User</button>
           </div>
         </div>
         <!-- Current Users -->
@@ -2206,53 +2194,41 @@ async function loadUsers() {
     }).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)">No members</div>';
   }
 
-  // Load pending invitations
-  const { data: invites } = await sb.from('user_invitations')
-    .select('id, email, role, token, invited_at, status')
-    .eq('company_id', companyId)
-    .eq('status', 'pending')
-    .order('invited_at', { ascending: false });
-  const invEl = document.getElementById('pending-invitations-list');
-  if (invEl) {
-    invEl.innerHTML = (invites||[]).map(inv => `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
-      <div>
-        <div style="font-size:13px;font-weight:600">${inv.email}</div>
-        <div style="font-size:11px;color:var(--gray400)">${inv.role} · ${new Date(inv.invited_at).toLocaleDateString()}</div>
-      </div>
-      <button style="padding:4px 10px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="cancelInvitation('${inv.id}')">Cancel</button>
-    </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)" data-i18n="no_pending">No pending invitations</div>';
+}
+
+async function addUser() {
+  const name = document.getElementById('add-user-name').value.trim();
+  const email = document.getElementById('add-user-email').value.trim();
+  const pass = document.getElementById('add-user-pass').value;
+  const role = document.getElementById('add-user-role').value;
+  if (!name || !email || !pass) { showToast(t('err_fill_all') || 'Fill all fields', 'error'); return; }
+  if (pass.length < 8) { showToast(t('err_pass_min') || 'Password must be at least 8 characters', 'error'); return; }
+
+  const btn = document.getElementById('btn-add-user');
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    // Call edge function to create user (requires service key)
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch('https://jaakjdzpdizjbzvbtcld.supabase.co/functions/v1/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ email, password: pass, full_name: name, company_id: companyId, role })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to create user');
+
+    showToast(t('toast_user_added') || 'User added successfully', 'success');
+    document.getElementById('add-user-name').value = '';
+    document.getElementById('add-user-email').value = '';
+    document.getElementById('add-user-pass').value = '';
+    await loadUsers();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = origText;
   }
-}
-
-async function sendInvitation() {
-  const email = document.getElementById('invite-email').value.trim();
-  const role = document.getElementById('invite-role').value;
-  if (!email) { showToast('Email is required', 'error'); return; }
-  // Remove existing invitation for same company+email
-  await sb.from('user_invitations').delete().eq('company_id', companyId).eq('email', email);
-  const token = crypto.randomUUID();
-  const { error } = await sb.from('user_invitations').insert({
-    company_id: companyId, email, role, token, invited_by: currentUser.id
-  });
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
-  const link = `${window.location.origin}/join.html?token=${token}`;
-  document.getElementById('invite-link-url').textContent = link;
-  document.getElementById('invite-link-box').style.display = 'block';
-  document.getElementById('invite-email').value = '';
-  showToast(t('toast_invite_sent') || 'Invitation sent!', 'success');
-  await loadUsers();
-}
-
-function copyInviteLink() {
-  const url = document.getElementById('invite-link-url').textContent;
-  navigator.clipboard.writeText(url);
-  showToast(t('toast_link_copied') || 'Link copied!', 'success');
-}
-
-async function cancelInvitation(id) {
-  await sb.from('user_invitations').delete().eq('id', id);
-  showToast('Invitation cancelled', 'success');
-  await loadUsers();
 }
 
 async function changeUserRole(userId, newRole) {

@@ -1046,23 +1046,58 @@ async function copyLocalizationData(companyId, countryCode) {
   } catch (e) { console.warn('Localization copy failed', e); }
 }
 
+function showChangePasswordScreen(userId) {
+  const t = T[lang] || T['en'];
+  const container = document.querySelector('.auth-card') || document.querySelector('.card');
+  container.innerHTML = `
+    <div style="text-align:center;padding:32px">
+      <div style="font-size:36px;margin-bottom:12px">🔐</div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:6px">${t.change_pass_title || 'Change Your Password'}</h2>
+      <p style="font-size:13px;color:#64748b;margin-bottom:24px">${t.change_pass_desc || 'Your account was created by an administrator. Please set a new password.'}</p>
+      <div style="max-width:320px;margin:0 auto;text-align:left">
+        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">${t.new_password || 'New Password'}</label>
+        <input type="password" id="new-pass" placeholder="Min 8 characters" minlength="8" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:12px;outline:none">
+        <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">${t.confirm_password || 'Confirm Password'}</label>
+        <input type="password" id="confirm-pass" placeholder="Repeat password" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:16px;outline:none">
+        <div id="change-pass-msg" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:12px"></div>
+        <button onclick="submitChangePassword('${userId}')" style="width:100%;padding:12px;background:#0d4f3c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t.btn_change_pass || 'Change Password'}</button>
+      </div>
+    </div>
+  `;
+}
+
+async function submitChangePassword(userId) {
+  const newPass = document.getElementById('new-pass').value;
+  const confirmPass = document.getElementById('confirm-pass').value;
+  const msgEl = document.getElementById('change-pass-msg');
+
+  if (!newPass || newPass.length < 8) {
+    msgEl.style.display = 'block'; msgEl.style.background = '#fef2f2'; msgEl.style.color = '#dc2626';
+    msgEl.textContent = 'Password must be at least 8 characters'; return;
+  }
+  if (newPass !== confirmPass) {
+    msgEl.style.display = 'block'; msgEl.style.background = '#fef2f2'; msgEl.style.color = '#dc2626';
+    msgEl.textContent = 'Passwords do not match'; return;
+  }
+
+  const { error } = await sb.auth.updateUser({ password: newPass });
+  if (error) {
+    msgEl.style.display = 'block'; msgEl.style.background = '#fef2f2'; msgEl.style.color = '#dc2626';
+    msgEl.textContent = error.message; return;
+  }
+
+  await sb.from('profiles').update({ must_change_password: false }).eq('id', userId);
+  window.location.href = '/dashboard.html';
+}
+
 async function handleSignup() {
   const t = T[lang] || T['en'];
   const company  = document.getElementById('company').value.trim();
   const fullname = document.getElementById('fullname').value.trim();
   const pass     = document.getElementById('signup-pass').value;
+  const email    = document.getElementById('signup-email').value.trim();
 
-  // Token-based invite detection — check both window var AND URL param
-  const urlToken = new URLSearchParams(window.location.search).get('token');
-  const isInvite = !!(window._inviteToken || urlToken);
-  if (isInvite && !window._inviteToken) window._inviteToken = urlToken;
-  const email = isInvite ? (window._inviteEmail || '') : document.getElementById('signup-email').value.trim();
-
-  console.log('[auth] handleSignup — isInvite:', isInvite, 'token:', window._inviteToken, 'email:', email);
-
-  if (!fullname || !pass) { showMsg('msg-signup', 'error', t.err_fill); return; }
-  if (!isInvite && !company) { showMsg('msg-signup', 'error', t.err_fill); return; }
-  if (!email) { showMsg('msg-signup', 'error', isInvite ? 'Invitation email not loaded. Please refresh.' : t.err_fill); return; }
+  if (!fullname || !pass || !company || !email) { showMsg('msg-signup', 'error', t.err_fill); return; }
   if (pass.length < 8) {
     showMsg('msg-signup', 'error', t.err_pass); return;
   }
@@ -1072,46 +1107,6 @@ async function handleSignup() {
   try {
     const phone = document.getElementById('signup-phone')?.value?.trim() || '';
     const countryCode = document.getElementById('signup-country')?.value || 'US';
-
-    if (isInvite) {
-      // Invite registration — only create auth user, NO company
-      console.log('[auth] INVITE PATH — skipping company creation');
-      // Save token to localStorage in case email redirect loses it
-      localStorage.setItem('_pendingInviteToken', window._inviteToken);
-      const joinUrl = window.location.origin + '/join.html?token=' + window._inviteToken;
-      const { data, error } = await sb.auth.signUp({
-        email, password: pass,
-        options: {
-          data: { full_name: fullname, phone },
-          emailRedirectTo: joinUrl
-        }
-      });
-      if (error) throw error;
-      console.log('[auth] invite signUp result:', data);
-
-      // Check if user is immediately confirmed (auto-confirm enabled)
-      const session = data.session;
-      if (session) {
-        // Auto-confirmed — redirect to join page immediately
-        console.log('[auth] auto-confirmed, redirecting to join...');
-        window.location.href = joinUrl;
-        return;
-      }
-
-      // Email confirmation required — show message
-      document.getElementById('form-signup').classList.add('hidden');
-      const successEl = document.getElementById('success-screen');
-      if (successEl) {
-        successEl.style.display = 'block';
-        const msgEl = successEl.querySelector('[data-i18n="signup_success_sub"]') || successEl.querySelector('p');
-        if (msgEl) msgEl.textContent = T[lang]?.invite_confirm_email || 'Check your email to confirm your account. You will be redirected to accept the invitation.';
-      }
-      document.getElementById('alt-action').style.display = 'none';
-      return;
-    }
-
-    // Normal registration — create company
-    console.log('[auth] NORMAL PATH — creating company:', company);
     const { data, error } = await sb.auth.signUp({
       email, password: pass,
       options: { data: { full_name: fullname, company_name: company, plan: selectedPlan, phone, country_code: countryCode } }
@@ -1154,13 +1149,15 @@ async function handleLogin() {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
-    const loginToken = window._inviteToken || localStorage.getItem('_pendingInviteToken');
-    if (loginToken) {
-      localStorage.removeItem('_pendingInviteToken');
-      window.location.href = 'join.html?token=' + loginToken;
-    } else {
-      window.location.href = '/dashboard.html';
+
+    // Check if user must change password (added by admin)
+    const { data: profile } = await sb.from('profiles').select('must_change_password').eq('id', data.user.id).maybeSingle();
+    if (profile?.must_change_password) {
+      showChangePasswordScreen(data.user.id);
+      return;
     }
+
+    window.location.href = '/dashboard.html';
   } catch (err) {
     showMsg('msg-login', 'error', t.err_login);
     setLoading('btn-login', false, 'btn_login');
@@ -1189,22 +1186,6 @@ async function handleGoogle() {
 async function checkOnboarding() {
   const params = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
-
-  // Skip onboarding if this is an invite flow
-  if (params.get('token')) return;
-
-  // Check for pending invite token (saved during invite signup)
-  const pendingToken = localStorage.getItem('_pendingInviteToken');
-  if (pendingToken) {
-    console.log('[auth] found pending invite token, redirecting to join...');
-    localStorage.removeItem('_pendingInviteToken');
-    // Wait for session to be ready after email confirmation
-    if (hash && hash.includes('access_token')) {
-      await new Promise(r => setTimeout(r, 1500));
-    }
-    window.location.href = 'join.html?token=' + pendingToken;
-    return;
-  }
 
   if (hash && hash.includes('access_token')) {
     await new Promise(r => setTimeout(r, 1000));
@@ -1261,68 +1242,7 @@ async function saveOnboarding() {
   setLang(detected);
 })();
 
-window.addEventListener('DOMContentLoaded', () => {
-  checkOnboarding();
-
-  // Handle invite token from join.html
-  const params = new URLSearchParams(window.location.search);
-  const inviteToken = params.get('token');
-  const mode = params.get('mode');
-
-  // Also check localStorage for token (email confirmation redirect may lose URL param)
-  const storedToken = localStorage.getItem('_pendingInviteToken');
-  const effectiveToken = inviteToken || storedToken;
-
-  if (effectiveToken) {
-    window._inviteToken = effectiveToken;
-    window._inviteEmail = null;
-
-    // Fetch invitation email from Supabase
-    (async () => {
-      try {
-        const { data: inv } = await sb.from('user_invitations')
-          .select('email, role, company_id')
-          .eq('token', effectiveToken).maybeSingle();
-        if (inv) {
-          window._inviteEmail = inv.email;
-          // Fetch company name for banner
-          const { data: comp } = await sb.from('companies').select('name').eq('id', inv.company_id).maybeSingle();
-          const compName = comp?.name || '';
-          const bannerEl = document.getElementById('invite-banner');
-          if (bannerEl) bannerEl.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'Registering via invitation.') + (compName ? ` <strong>${compName}</strong> — ${inv.role}` : '');
-        }
-      } catch (e) { console.warn('[auth] invite lookup failed:', e); }
-    })();
-
-    // Hide: company, email, country fields
-    ['company', 'signup-email', 'signup-country'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        const wrapper = el.closest('.field');
-        if (wrapper) wrapper.style.display = 'none';
-      }
-    });
-    // Set placeholder values so validation passes
-    const companyField = document.getElementById('company');
-    if (companyField) companyField.value = '__invite__';
-
-    // Show invite banner
-    const signupForm = document.getElementById('form-signup');
-    if (signupForm) {
-      const banner = document.createElement('div');
-      banner.id = 'invite-banner';
-      banner.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#065f46;font-weight:500';
-      banner.innerHTML = '✉️ ' + (T[lang]?.invite_register_banner || 'Registering via invitation...');
-      signupForm.insertBefore(banner, signupForm.firstChild);
-    }
-
-    // Switch to correct tab
-    if (mode === 'register') {
-      const regTab = document.querySelector('[onclick*="signup"], [onclick*="register"]');
-      if (regTab) regTab.click();
-    }
-  }
-});
+window.addEventListener('DOMContentLoaded', () => { checkOnboarding(); });
 </script>
 </body>
 </html>
