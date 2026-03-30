@@ -389,7 +389,7 @@ function setLang(lang) {
         <div class="usage-item">
           <div class="usage-header">
             <span class="usage-label" data-i18n="usage_users">Active Users</span>
-            <span class="usage-count" id="usage-users-text">1 / Unlimited</span>
+            <span class="usage-count" id="usage-users-text">—</span>
           </div>
           <div class="usage-bar"><div class="usage-fill" id="usage-users-bar" style="width:10%"></div></div>
         </div>
@@ -712,6 +712,11 @@ function renderSubscription() {
     if (g('usage-records-text')) g('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + (t('unlimited') || '∞');
     if (recBar) { recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 500 * 100))) + '%'; recBar.className = 'usage-fill'; }
   }
+
+  // Active users usage
+  if (g('usage-users-text')) g('usage-users-text').textContent = `${realUserCount || 1} / ${t('unlimited') || '∞'}`;
+  const usrBar = g('usage-users-bar');
+  if (usrBar) { usrBar.style.width = Math.max(5, Math.min(90, (realUserCount || 1) * 10)) + '%'; }
 
   // Billing toggle state
   document.querySelectorAll('.billing-opt').forEach(b => {
