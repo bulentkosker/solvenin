@@ -626,26 +626,29 @@
       const companyId = localStorage.getItem('currentCompanyId');
       if (!companyId) return;
 
-      const { data: company } = await sb
-        .from('companies')
-        .select('name, plan, base_currency')
-        .eq('id', companyId)
-        .single();
+      // Fetch company info and user plan in parallel
+      const [compRes, profileRes] = await Promise.all([
+        sb.from('companies').select('name, base_currency').eq('id', companyId).single(),
+        sb.from('profiles').select('plan').eq('id', user.id).single()
+      ]);
+
+      const company = compRes.data;
+      const userPlan = profileRes.data?.plan || 'free';
+      const plan = userPlan === 'pro' ? 'professional' : userPlan;
 
       if (company) {
         const cnEl = document.getElementById('sb-company-name');
-        const cpEl = document.getElementById('sb-company-plan');
-        const upEl = document.getElementById('sb-user-plan');
-        let plan = company.plan || 'free';
-        if (plan === 'pro') plan = 'professional';
         if (cnEl) cnEl.textContent = company.name;
-        if (cpEl) cpEl.textContent = plan.toUpperCase();
-        if (upEl) upEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
         if (company.base_currency) {
           localStorage.setItem('baseCurrency', company.base_currency);
           document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: company.base_currency }));
         }
       }
+
+      const cpEl = document.getElementById('sb-company-plan');
+      const upEl = document.getElementById('sb-user-plan');
+      if (cpEl) cpEl.textContent = plan.toUpperCase();
+      if (upEl) upEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
 
       const { data: companies } = await sb.rpc('get_my_companies');
       if (companies) renderCompanyMenu(companies, companyId);
