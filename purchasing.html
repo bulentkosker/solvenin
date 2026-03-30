@@ -890,7 +890,7 @@ async function saveOrder() {
     const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
     if (!prof?.plan || prof.plan === 'free') {
       const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
-      if (cnt >= 30) {
+      if (cnt >= 4) { // TODO: test limiti, 30'a geri al
         showInvoiceLimitModal();
         return;
       }
