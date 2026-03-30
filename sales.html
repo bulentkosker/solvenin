@@ -1590,16 +1590,16 @@ function showInvoiceLimitModal() {
     m = document.createElement('div');
     m.className = 'modal-overlay';
     m.id = 'invoice-limit-modal';
-    m.innerHTML = `<div class="modal" style="max-width:420px">
-      <div class="modal-head">
-        <span class="modal-title" data-i18n="limit_title">${t('limit_title') || 'Fatura Limitine Ulaşıldı'}</span>
-        <button class="modal-close" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')">✕</button>
+    m.innerHTML = `<div class="modal" style="max-width:420px;position:relative">
+      <button class="modal-close" style="position:absolute;top:16px;right:16px;z-index:1" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')">✕</button>
+      <div style="padding:24px 24px 0">
+        <div class="modal-title">${t('limit_title') || 'Fatura Limitine Ulaşıldı'}</div>
       </div>
-      <div style="padding:20px 24px">
-        <p style="font-size:14px;color:var(--gray600);margin:0 0 16px" data-i18n="limit_msg">${t('limit_msg') || 'Bu ay 30 fatura limitine ulaştınız. Sınırsız fatura için planınızı yükseltin.'}</p>
+      <div style="padding:12px 24px 24px">
+        <p style="font-size:14px;color:var(--gray600);margin:0 0 16px">${t('limit_msg') || 'Bu ay 30 fatura limitine ulaştınız. Sınırsız fatura için planınızı yükseltin.'}</p>
         <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn-outline" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')" data-i18n="btn_cancel">${t('btn_cancel') || 'İptal'}</button>
-          <button class="btn-primary" onclick="window.location.href='subscription.html'" data-i18n="btn_upgrade">${t('btn_upgrade') || 'Planı Yükselt'}</button>
+          <button class="btn-outline" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')">${t('btn_cancel') || 'İptal'}</button>
+          <button class="btn-primary" onclick="window.location.href='subscription.html'">${t('btn_upgrade') || 'Planı Yükselt'}</button>
         </div>
       </div>
     </div>`;
