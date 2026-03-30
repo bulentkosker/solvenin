@@ -2250,7 +2250,7 @@ async function loadUsers() {
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
           <button style="padding:4px 8px;border:1px solid #0d4f3c;border-radius:6px;font-size:11px;background:#fff;color:#0d4f3c;cursor:pointer;font-weight:500" onclick="openPermModal('${m.user_id}','${m.role}')">${t('btn_permissions') || 'İzinler'}</button>
-          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:var(--gray500)" onclick="openAddCompanyModal('${m.user_id}')">+ ${t('btn_add_company') || 'Şirket Ekle'}</button>
+          ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:var(--gray500)" onclick="openAddCompanyModal('${m.user_id}')">+ ${t('btn_add_company') || 'Şirket Ekle'}</button>` : ''}
           ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
         </div>
       </div>`;
