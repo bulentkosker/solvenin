@@ -722,7 +722,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="modal-overlay" id="add-company-modal">
         <div class="modal" style="max-width:420px">
           <div class="modal-header">
-            <span class="modal-title" data-i18n="btn_add_company_to_user">Kullanıcıya Şirket Ekle</span>
+            <span class="modal-title" data-i18n="btn_add_company">Şirket Ekle</span>
             <button class="modal-close" onclick="closeAddCompanyModal()">✕</button>
           </div>
           <div class="modal-body" style="padding:16px 24px">
@@ -992,6 +992,7 @@ function closeModal(id) { document.getElementById(id)?.classList.remove('open');
 function switchSection(name, el) {
   if (name === 'recycle') loadRecycleBin();
   if (name === 'users') loadUsers();
+  if (name === 'currency') loadExchangeRates();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
@@ -1202,10 +1203,18 @@ async function createNewCompany() {
 async function loadCompanyData() {
   console.time('[settings] loadCompanyData');
   if (!companyId) { console.timeEnd('[settings] loadCompanyData'); return; }
-  const { data, error } = await sb.from('companies')
-    .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id')
-    .eq('id', companyId).single();
-  if (error) { console.error(error); return; }
+
+  // Fetch company data and danger-zone role check in parallel
+  const [compRes, cuRes] = await Promise.all([
+    sb.from('companies')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id')
+      .eq('id', companyId).single(),
+    sb.from('company_users')
+      .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
+  ]);
+
+  if (compRes.error) { console.error(compRes.error); console.timeEnd('[settings] loadCompanyData'); return; }
+  const data = compRes.data;
   companyData = data;
   baseCurrency = data.base_currency || 'USD';
   activeCurrencies = data.active_currencies || [baseCurrency];
@@ -1227,13 +1236,10 @@ async function loadCompanyData() {
   if (bcs) bcs.value = baseCurrency;
 
   renderActiveCurrencies();
-  await loadExchangeRates();
 
   // Show danger zone only for owners
-  const { data: cuRow } = await sb.from('company_users')
-    .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single();
   const dz = document.getElementById('danger-zone');
-  if (dz) dz.style.display = cuRow?.role === 'owner' ? '' : 'none';
+  if (dz) dz.style.display = cuRes.data?.role === 'owner' ? '' : 'none';
   console.timeEnd('[settings] loadCompanyData');
 }
 
