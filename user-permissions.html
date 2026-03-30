@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İzin Yönetimi — Solvenin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<style>
+:root {
+  --navy: #0a0f1e; --navy2: #1e3a5f; --blue: #60a5fa; --blue-light: #eff6ff;
+  --sky: #93c5fd; --white: #ffffff; --bg: #f5f7fb; --gray50: #f8fafc;
+  --gray100: #f1f5f9; --gray200: #e2e8f0; --gray300: #cbd5e1; --gray400: #94a3b8;
+  --gray500: #64748b; --gray600: #475569; --gray800: #1e293b;
+  --green: #10b981; --green-light: #ecfdf5; --red: #ef4444; --red-light: #fef2f2;
+  --orange: #f59e0b; --orange-light: #fffbeb; --purple: #8b5cf6; --purple-light: #f5f3ff;
+  --sidebar-w: 220px; --topbar-h: 64px;
+  --font-display: 'Outfit', sans-serif; --font-body: 'DM Sans', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:14px; }
+body { font-family:var(--font-body); background:var(--bg); color:var(--gray800); min-height:100vh; display:flex; }
+
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { height:var(--topbar-h); background:var(--white); border-bottom:1px solid var(--gray200); display:flex; align-items:center; padding:0 28px; gap:16px; position:sticky; top:0; z-index:40; box-shadow:var(--shadow-sm); }
+.topbar-title { font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--gray800); }
+.content { padding:28px; flex:1; max-width:900px; }
+
+.back-btn { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--gray500); text-decoration:none; margin-bottom:20px; cursor:pointer; }
+.back-btn:hover { color:var(--gray800); }
+
+.page-title { font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--gray800); margin-bottom:24px; }
+
+.card { background:var(--white); border-radius:16px; border:1px solid var(--gray200); overflow:hidden; margin-bottom:20px; }
+.card-head { padding:20px 24px 16px; border-bottom:1px solid var(--gray100); }
+.card-title { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--gray800); }
+.card-desc { font-size:12px; color:var(--gray400); margin-top:2px; }
+
+.perm-table { width:100%; border-collapse:collapse; font-size:13px; }
+.perm-table th { padding:10px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--gray500); text-transform:uppercase; letter-spacing:.3px; background:var(--gray50); }
+.perm-table th.center { text-align:center; }
+.perm-table td { padding:10px 16px; border-bottom:1px solid var(--gray100); }
+.perm-table td.center { text-align:center; }
+.perm-table tr:last-child td { border-bottom:none; }
+.perm-table input[type="checkbox"] { width:16px; height:16px; accent-color:#0d4f3c; cursor:pointer; }
+.perm-table select { padding:4px 8px; border:1px solid var(--gray200); border-radius:6px; font-size:12px; font-family:var(--font-body); }
+.perm-table select:disabled { opacity:.4; cursor:not-allowed; }
+.perm-table .company-name { font-weight:600; color:var(--gray800); }
+
+.btn-primary { background:#0d4f3c; color:#fff; border:none; padding:10px 24px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font-body); }
+.btn-primary:hover { background:#0a3f30; }
+.btn-outline { background:var(--white); color:var(--gray600); border:1px solid var(--gray200); padding:10px 24px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font-body); }
+.btn-outline:hover { background:var(--gray50); }
+.btn-sm { padding:6px 14px; font-size:12px; border-radius:8px; }
+
+.btn-link { background:none; border:none; color:#0d4f3c; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-body); }
+.btn-link:hover { text-decoration:underline; }
+
+.actions-bar { display:flex; gap:10px; justify-content:flex-end; padding:16px 24px; border-top:1px solid var(--gray100); }
+
+.toast { position:fixed; bottom:24px; right:24px; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; color:#fff; z-index:9999; opacity:0; transform:translateY(10px); transition:all .3s; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.success { background:#0d4f3c; }
+.toast.error { background:#dc2626; }
+
+#loading-screen { position:fixed; inset:0; background:#0a0f1e; display:flex; align-items:center; justify-content:center; z-index:9000; transition:opacity .3s; }
+.loading-logo { font-family:var(--font-display); font-size:32px; font-weight:800; color:#fff; letter-spacing:-1px; }
+.loading-logo span { color:var(--sky); }
+</style>
+<script src="sidebar.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🔐 <span data-i18n="perm_page_title" id="topbar-title-text">İzin Yönetimi</span></div>
+  </div>
+  <div class="content">
+    <a class="back-btn" id="back-btn" href="settings.html">← <span data-i18n="btn_back">Geri</span></a>
+    <div class="page-title" id="page-title"></div>
+
+    <!-- COMPANY ACCESS VIEW -->
+    <div id="view-companies" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title" data-i18n="perm_company_access">Şirket Erişimleri</div>
+          <div class="card-desc" data-i18n="perm_company_access_desc">Kullanıcının erişebildiği şirketleri ve rollerini yönetin.</div>
+        </div>
+        <table class="perm-table">
+          <thead>
+            <tr>
+              <th data-i18n="perm_access">Erişim</th>
+              <th data-i18n="lbl_company">Şirket</th>
+              <th data-i18n="lbl_role">Rol</th>
+              <th data-i18n="perm_modules">Modüller</th>
+            </tr>
+          </thead>
+          <tbody id="company-access-body"></tbody>
+        </table>
+        <div class="actions-bar">
+          <button class="btn-primary" onclick="saveCompanyAccess()" data-i18n="btn_save">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE PERMISSIONS VIEW -->
+    <div id="view-modules" style="display:none">
+      <div class="card">
+        <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="card-title" data-i18n="perm_module_perms">Modül İzinleri</div>
+            <div class="card-desc" id="module-company-info"></div>
+          </div>
+          <button class="btn-outline btn-sm" onclick="loadRoleDefaults()" data-i18n="btn_load_defaults">Rol Varsayılanlarını Yükle</button>
+        </div>
+        <table class="perm-table">
+          <thead>
+            <tr>
+              <th data-i18n="perm_module">Modül</th>
+              <th class="center" data-i18n="perm_view">Gör</th>
+              <th class="center" data-i18n="perm_create">Ekle</th>
+              <th class="center" data-i18n="perm_edit">Düzenle</th>
+              <th class="center" data-i18n="perm_delete_perm">Sil</th>
+            </tr>
+          </thead>
+          <tbody id="module-perms-body"></tbody>
+        </table>
+        <div class="actions-bar">
+          <button class="btn-primary" onclick="saveModulePerms()" data-i18n="btn_save">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co', 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+const ALL_MODULES = ['inventory','sales','purchasing','production','accounting','hr','shipping','projects','maintenance','cash_bank'];
+const MODULE_I18N = { inventory:'mod_inventory', sales:'mod_sales', purchasing:'mod_purchasing', production:'mod_production', accounting:'mod_accounting', hr:'mod_hr', shipping:'mod_shipping', projects:'mod_projects', maintenance:'mod_maintenance', cash_bank:'mod_cash_bank' };
+const MODULE_FALLBACK = { inventory:'Stok', sales:'Satışlar', purchasing:'Satın Alma', production:'Üretim', accounting:'Muhasebe', hr:'İK & Bordro', shipping:'Sevkiyat', projects:'Projeler', maintenance:'Bakım', cash_bank:'Kasa & Banka' };
+
+let currentUser = null;
+let targetUserId = null;
+let targetCompanyId = null;
+let targetUserName = '';
+let targetUserRole = '';
+let myCompanies = [];
+let originalAccess = {};  // snapshot for diff on save
+
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || 'success');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===== INIT =====
+async function init() {
+  const hideLoading = () => { const ls = document.getElementById('loading-screen'); if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); } };
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+
+  const params = new URLSearchParams(window.location.search);
+  targetUserId = params.get('user');
+  targetCompanyId = params.get('company');
+
+  if (!targetUserId) { window.location.href = 'settings.html'; return; }
+
+  // Check admin access
+  const { data: companies } = await sb.rpc('get_my_companies');
+  myCompanies = (companies || []).filter(c => c.role === 'owner' || c.role === 'admin');
+  if (!myCompanies.length) { window.location.href = 'settings.html'; return; }
+
+  // Get target user's name
+  const { data: profile } = await sb.from('profiles').select('full_name').eq('id', targetUserId).maybeSingle();
+  targetUserName = profile?.full_name || targetUserId.slice(0, 8) + '...';
+
+  if (targetCompanyId) {
+    await initModuleView();
+  } else {
+    await initCompanyView();
+  }
+
+  applyTranslations();
+  hideLoading();
+}
+
+// ===== COMPANY ACCESS VIEW =====
+async function initCompanyView() {
+  document.getElementById('view-companies').style.display = '';
+  document.getElementById('view-modules').style.display = 'none';
+  document.getElementById('page-title').textContent = `${targetUserName} — ${t('perm_page_title') || 'İzin Yönetimi'}`;
+  document.getElementById('back-btn').href = 'settings.html';
+
+  // Get user's current company memberships
+  const { data: userCompanies } = await sb.from('company_users')
+    .select('company_id, role').eq('user_id', targetUserId);
+  const ucMap = {};
+  (userCompanies || []).forEach(uc => { ucMap[uc.company_id] = uc.role; });
+
+  // Store original state for diff
+  originalAccess = {};
+  myCompanies.forEach(c => {
+    const role = ucMap[c.company_id] || null;
+    originalAccess[c.company_id] = { hasAccess: !!role, role: role || 'employee' };
+  });
+
+  renderCompanyTable(ucMap);
+}
+
+function renderCompanyTable(ucMap) {
+  const tbody = document.getElementById('company-access-body');
+  tbody.innerHTML = myCompanies.map(c => {
+    const hasAccess = !!ucMap[c.company_id];
+    const role = ucMap[c.company_id] || 'employee';
+    const roles = ['admin','manager','employee','accountant'];
+    return `<tr data-company="${c.company_id}">
+      <td class="center"><input type="checkbox" class="access-cb" data-cid="${c.company_id}" ${hasAccess ? 'checked' : ''} onchange="toggleCompanyRow('${c.company_id}', this.checked)"></td>
+      <td class="company-name">${c.company_name}</td>
+      <td><select class="role-select" data-cid="${c.company_id}" ${hasAccess ? '' : 'disabled'}>
+        ${roles.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
+      </select></td>
+      <td>${hasAccess ? `<a class="btn-link" href="user-permissions.html?user=${targetUserId}&company=${c.company_id}">${t('perm_modules_link') || 'Modüller →'}</a>` : '<span style="color:var(--gray300)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleCompanyRow(companyId, checked) {
+  const row = document.querySelector(`tr[data-company="${companyId}"]`);
+  const select = row.querySelector('.role-select');
+  const modCell = row.querySelector('td:last-child');
+  select.disabled = !checked;
+  modCell.innerHTML = checked
+    ? `<a class="btn-link" href="user-permissions.html?user=${targetUserId}&company=${companyId}">${t('perm_modules_link') || 'Modüller →'}</a>`
+    : '<span style="color:var(--gray300)">—</span>';
+}
+
+async function saveCompanyAccess() {
+  const rows = document.querySelectorAll('#company-access-body tr');
+  const errors = [];
+
+  for (const row of rows) {
+    const cid = row.dataset.company;
+    const cb = row.querySelector('.access-cb');
+    const select = row.querySelector('.role-select');
+    const nowAccess = cb.checked;
+    const nowRole = select.value;
+    const orig = originalAccess[cid];
+
+    // No change
+    if (nowAccess === orig.hasAccess && (!nowAccess || nowRole === orig.role)) continue;
+
+    try {
+      if (!orig.hasAccess && nowAccess) {
+        // ADD: insert company_users + default permissions
+        const { error } = await sb.from('company_users').insert({
+          company_id: cid, user_id: targetUserId, role: nowRole, status: 'active'
+        });
+        if (error) throw error;
+        const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: nowRole });
+        if (defaults && defaults.length) {
+          await sb.from('user_permissions').insert(
+            defaults.map(d => ({ company_id: cid, user_id: targetUserId, module: d.module, can_view: d.can_view, can_create: d.can_create, can_edit: d.can_edit, can_delete: d.can_delete }))
+          );
+        }
+      } else if (orig.hasAccess && !nowAccess) {
+        // REMOVE: delete permissions + company_users
+        await sb.from('user_permissions').delete().eq('company_id', cid).eq('user_id', targetUserId);
+        await sb.from('company_users').delete().eq('company_id', cid).eq('user_id', targetUserId);
+      } else if (orig.hasAccess && nowAccess && nowRole !== orig.role) {
+        // ROLE CHANGE: update role + reset permissions
+        await sb.from('company_users').update({ role: nowRole }).eq('company_id', cid).eq('user_id', targetUserId);
+        await sb.from('user_permissions').delete().eq('company_id', cid).eq('user_id', targetUserId);
+        const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: nowRole });
+        if (defaults && defaults.length) {
+          await sb.from('user_permissions').insert(
+            defaults.map(d => ({ company_id: cid, user_id: targetUserId, module: d.module, can_view: d.can_view, can_create: d.can_create, can_edit: d.can_edit, can_delete: d.can_delete }))
+          );
+        }
+      }
+    } catch (e) {
+      errors.push(`${cid}: ${e.message}`);
+    }
+  }
+
+  if (errors.length) {
+    showToast('Error: ' + errors.join(', '), 'error');
+  } else {
+    showToast(t('toast_perms_saved') || 'İzinler kaydedildi', 'success');
+    // Refresh original state
+    await initCompanyView();
+  }
+}
+
+// ===== MODULE PERMISSIONS VIEW =====
+async function initModuleView() {
+  document.getElementById('view-companies').style.display = 'none';
+  document.getElementById('view-modules').style.display = '';
+  document.getElementById('back-btn').href = `user-permissions.html?user=${targetUserId}`;
+
+  // Get company name
+  const company = myCompanies.find(c => c.company_id === targetCompanyId);
+  const companyName = company?.company_name || targetCompanyId.slice(0, 8) + '...';
+
+  document.getElementById('page-title').textContent = `${targetUserName} — ${companyName}`;
+  document.getElementById('module-company-info').textContent = `${t('perm_module_perms_desc') || 'Modül bazlı erişim izinleri'}`;
+
+  // Get user's role in this company
+  const { data: cu } = await sb.from('company_users')
+    .select('role').eq('company_id', targetCompanyId).eq('user_id', targetUserId).maybeSingle();
+  targetUserRole = cu?.role || 'employee';
+
+  // Get current permissions
+  const { data: perms } = await sb.from('user_permissions')
+    .select('module, can_view, can_create, can_edit, can_delete')
+    .eq('company_id', targetCompanyId).eq('user_id', targetUserId);
+  const permMap = {};
+  (perms || []).forEach(p => { permMap[p.module] = p; });
+
+  renderModuleTable(permMap);
+}
+
+function renderModuleTable(permMap) {
+  const tbody = document.getElementById('module-perms-body');
+  tbody.innerHTML = ALL_MODULES.map(mod => {
+    const p = permMap[mod] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
+    const label = t(MODULE_I18N[mod]) || MODULE_FALLBACK[mod];
+    const cb = (field, val) => `<td class="center"><input type="checkbox" data-mod="${mod}" data-field="${field}" ${val ? 'checked' : ''}></td>`;
+    return `<tr>
+      <td style="font-weight:600">${label}</td>
+      ${cb('can_view', p.can_view)}${cb('can_create', p.can_create)}${cb('can_edit', p.can_edit)}${cb('can_delete', p.can_delete)}
+    </tr>`;
+  }).join('');
+}
+
+async function loadRoleDefaults() {
+  const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: targetUserRole });
+  if (!defaults || !defaults.length) return;
+  const defMap = {};
+  defaults.forEach(d => { defMap[d.module] = d; });
+  renderModuleTable(defMap);
+  showToast(t('toast_defaults_loaded') || 'Varsayılanlar yüklendi', 'success');
+}
+
+async function saveModulePerms() {
+  const rows = [];
+  document.querySelectorAll('#module-perms-body input[type=checkbox]').forEach(cb => {
+    const mod = cb.dataset.mod;
+    const field = cb.dataset.field;
+    let row = rows.find(r => r.module === mod);
+    if (!row) { row = { company_id: targetCompanyId, user_id: targetUserId, module: mod, can_view: false, can_create: false, can_edit: false, can_delete: false }; rows.push(row); }
+    row[field] = cb.checked;
+  });
+  await sb.from('user_permissions').delete().eq('company_id', targetCompanyId).eq('user_id', targetUserId);
+  if (rows.length) await sb.from('user_permissions').insert(rows);
+  showToast(t('toast_perms_saved') || 'İzinler kaydedildi', 'success');
+}
+
+// ===== BOOT =====
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+document.addEventListener('langChanged', () => { applyTranslations(); });
+</script>
+</body>
+</html>

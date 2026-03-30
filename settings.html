@@ -687,66 +687,7 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
-      <!-- Permissions Modal -->
-      <div class="modal-overlay" id="permissions-modal">
-        <div class="modal" style="max-width:720px">
-          <div class="modal-header">
-            <span class="modal-title">🔐 <span data-i18n="perm_modal_title">User Permissions</span></span>
-            <button class="modal-close" onclick="closePermModal()">✕</button>
-          </div>
-          <div class="modal-body" style="padding:16px 24px">
-            <div style="margin-bottom:12px;font-size:13px;color:var(--gray500)" id="perm-user-info"></div>
-            <div style="overflow-x:auto">
-              <table style="width:100%;border-collapse:collapse;font-size:13px">
-                <thead>
-                  <tr style="background:var(--gray50)">
-                    <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500);text-transform:uppercase" data-i18n="perm_module">Module</th>
-                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_view">View</th>
-                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_create">Create</th>
-                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_edit">Edit</th>
-                    <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:var(--gray500)" data-i18n="perm_delete_perm">Delete</th>
-                  </tr>
-                </thead>
-                <tbody id="perm-matrix-body"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-outline" onclick="closePermModal()" data-i18n="btn_cancel">Cancel</button>
-            <button class="btn-primary" onclick="savePermissions()" data-i18n="btn_save">Save</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Add Company to User Modal -->
-      <div class="modal-overlay" id="add-company-modal">
-        <div class="modal" style="max-width:480px">
-          <div class="modal-header">
-            <span class="modal-title" data-i18n="btn_add_company_to_user">Kullanıcıya Şirket Ekle</span>
-            <button class="modal-close" onclick="closeAddCompanyModal()">✕</button>
-          </div>
-          <div class="modal-body" style="padding:16px 24px">
-            <div style="margin-bottom:12px;font-size:13px;color:var(--gray500)" id="add-company-user-info"></div>
-            <div class="form-group" style="margin-bottom:12px">
-              <label data-i18n="lbl_company">Şirket</label>
-              <select id="add-company-select" style="width:100%"></select>
-            </div>
-            <div class="form-group">
-              <label data-i18n="lbl_role">Rol</label>
-              <select id="add-company-role" style="width:100%">
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="employee" selected>Employee</option>
-                <option value="accountant">Accountant</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-outline" onclick="closeAddCompanyModal()" data-i18n="btn_cancel">İptal</button>
-            <button class="btn-primary" onclick="saveAddCompany()" data-i18n="btn_save">Kaydet</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Remove User Confirm Modal -->
       <div class="modal-overlay" id="remove-user-modal">
@@ -2205,7 +2146,7 @@ async function toggleModule(moduleKey, isActive) {
 // ===== USERS & PERMISSIONS =====
 const ALL_MODULES = ['inventory','sales','purchasing','production','accounting','hr','shipping','projects','maintenance','cash_bank'];
 const MODULE_LABELS = { inventory:'Inventory', sales:'Sales', purchasing:'Purchasing', production:'Production', accounting:'Accounting', hr:'HR', shipping:'Shipping', projects:'Projects', maintenance:'Maintenance', cash_bank:'Cash & Bank' };
-let _permUserId = null;
+
 
 async function loadUsers() {
   if (!companyId) return;
@@ -2249,8 +2190,7 @@ async function loadUsers() {
           <select style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px" ${isOwner?'disabled':''} onchange="changeUserRole('${m.user_id}',this.value)">
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
-          <button style="padding:4px 8px;border:1px solid #0d4f3c;border-radius:6px;font-size:11px;background:#fff;color:#0d4f3c;cursor:pointer;font-weight:500" onclick="openPermModal('${m.user_id}','${m.role}')">${t('btn_permissions') || 'İzinler'}</button>
-          ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:var(--gray500)" onclick="openAddCompanyModal('${m.user_id}')">+ ${t('btn_add_company') || 'Şirket Ekle'}</button>` : ''}
+          ${!isOwner&&!isSelf ? `<a href="user-permissions.html?user=${m.user_id}" style="padding:4px 8px;border:1px solid #0d4f3c;border-radius:6px;font-size:11px;background:#fff;color:#0d4f3c;cursor:pointer;font-weight:500;text-decoration:none;display:inline-block">${t('btn_permissions') || 'İzinler'}</a>` : ''}
           ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
         </div>
       </div>`;
@@ -2329,115 +2269,6 @@ async function confirmRemoveUser() {
   showToast(t('toast_user_removed') || 'Kullanıcı çıkarıldı', 'success');
   closeRemoveUserModal();
   await loadUsers();
-}
-
-// Add Company to User
-let _addCompanyUserId = null;
-
-async function openAddCompanyModal(userId) {
-  _addCompanyUserId = userId;
-  const modal = document.getElementById('add-company-modal');
-  const select = document.getElementById('add-company-select');
-  const info = document.getElementById('add-company-user-info');
-
-  // Get user display name
-  const { data: profile } = await sb.from('profiles').select('full_name').eq('id', userId).maybeSingle();
-  info.textContent = profile?.full_name || userId.slice(0,8) + '...';
-
-  // Get companies user already belongs to
-  const { data: userCompanies } = await sb.from('company_users').select('company_id').eq('user_id', userId);
-  const existingIds = (userCompanies || []).map(c => c.company_id);
-
-  // Filter: owner's companies minus user's existing companies
-  const available = _myCompanies.filter(c => !existingIds.includes(c.company_id));
-
-  if (!available.length) {
-    select.innerHTML = `<option value="">${t('no_available_companies') || 'Eklenebilecek şirket yok'}</option>`;
-  } else {
-    select.innerHTML = available.map(c => `<option value="${c.company_id}">${c.company_name}</option>`).join('');
-  }
-
-  modal.classList.add('open');
-}
-
-function closeAddCompanyModal() {
-  document.getElementById('add-company-modal').classList.remove('open');
-  _addCompanyUserId = null;
-}
-
-async function saveAddCompany() {
-  if (!_addCompanyUserId) return;
-  const targetCompanyId = document.getElementById('add-company-select').value;
-  const role = document.getElementById('add-company-role').value;
-  if (!targetCompanyId) { showToast(t('no_available_companies') || 'No company selected', 'error'); return; }
-
-  try {
-    // Insert into company_users
-    const { error: cuErr } = await sb.from('company_users').insert({
-      company_id: targetCompanyId, user_id: _addCompanyUserId, role, status: 'active'
-    });
-    if (cuErr) throw cuErr;
-
-    // Insert default permissions for the role
-    const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: role });
-    if (defaults && defaults.length) {
-      await sb.from('user_permissions').insert(
-        defaults.map(d => ({ company_id: targetCompanyId, user_id: _addCompanyUserId, module: d.module, can_view: d.can_view, can_create: d.can_create, can_edit: d.can_edit, can_delete: d.can_delete }))
-      );
-    }
-
-    showToast(t('toast_company_added') || 'Kullanıcı şirkete eklendi', 'success');
-    closeAddCompanyModal();
-    await loadUsers();
-  } catch (e) {
-    showToast('Error: ' + e.message, 'error');
-  }
-}
-
-// Permission Modal
-async function openPermModal(userId, role) {
-  _permUserId = userId;
-  const { data: _pProfile } = await sb.from('profiles').select('full_name').eq('id', userId).maybeSingle();
-  const _pName = _pProfile?.full_name || userId.slice(0,8) + '...';
-  document.getElementById('perm-user-info').textContent = `${_pName} · ${role}`;
-  const { data: perms } = await sb.from('user_permissions')
-    .select('module, can_view, can_create, can_edit, can_delete')
-    .eq('company_id', companyId).eq('user_id', userId);
-  const permMap = {};
-  (perms || []).forEach(p => permMap[p.module] = p);
-
-  const _t = window.t || (k => MODULE_LABELS[k] || k);
-  document.getElementById('perm-matrix-body').innerHTML = ALL_MODULES.map(mod => {
-    const p = permMap[mod] || { can_view: true, can_create: false, can_edit: false, can_delete: false };
-    const cb = (field, val) => `<td style="padding:8px 12px;text-align:center"><input type="checkbox" data-mod="${mod}" data-field="${field}" ${val?'checked':''}></td>`;
-    return `<tr style="border-bottom:1px solid var(--gray100)">
-      <td style="padding:8px 12px;font-weight:600">${_t('mod_'+mod) || MODULE_LABELS[mod]}</td>
-      ${cb('can_view',p.can_view)}${cb('can_create',p.can_create)}${cb('can_edit',p.can_edit)}${cb('can_delete',p.can_delete)}
-    </tr>`;
-  }).join('');
-
-  document.getElementById('permissions-modal').classList.add('open');
-}
-
-function closePermModal() {
-  document.getElementById('permissions-modal').classList.remove('open');
-  _permUserId = null;
-}
-
-async function savePermissions() {
-  if (!_permUserId) return;
-  const rows = [];
-  document.querySelectorAll('#perm-matrix-body input[type=checkbox]').forEach(cb => {
-    const mod = cb.dataset.mod;
-    const field = cb.dataset.field;
-    let row = rows.find(r => r.module === mod);
-    if (!row) { row = { company_id: companyId, user_id: _permUserId, module: mod, can_view: false, can_create: false, can_edit: false, can_delete: false }; rows.push(row); }
-    row[field] = cb.checked;
-  });
-  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', _permUserId);
-  if (rows.length) await sb.from('user_permissions').insert(rows);
-  showToast(t('toast_perms_saved') || 'Permissions saved', 'success');
-  closePermModal();
 }
 
 // ===== TAX REGIMES =====
