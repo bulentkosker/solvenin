@@ -885,6 +885,18 @@ async function saveOrder() {
   const validItems = orderItems.filter(i => i.qty > 0 && (i.product_id || i.description));
   if (!validItems.length) { showToast(t('toast_add_item'), 'error'); return; }
 
+  // Free plan invoice limit check (only on new orders)
+  if (!editingOrderId) {
+    const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
+    if (!prof?.plan || prof.plan === 'free') {
+      const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
+      if (cnt >= 30) {
+        showInvoiceLimitModal();
+        return;
+      }
+    }
+  }
+
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price, 0);
   const selectedTax = getSelectedTaxRate();
   const taxRateValue = selectedTax.value;
@@ -1240,6 +1252,30 @@ document.addEventListener('currencyLoaded', function() {
   const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
   document.querySelectorAll('#lbl-discount-sym').forEach(el => el.textContent = sym);
 });
+
+function showInvoiceLimitModal() {
+  let m = document.getElementById('invoice-limit-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.className = 'modal-overlay';
+    m.id = 'invoice-limit-modal';
+    m.innerHTML = `<div class="modal" style="max-width:420px">
+      <div class="modal-head">
+        <span class="modal-title" data-i18n="limit_title">${t('limit_title') || 'Fatura Limitine Ulaşıldı'}</span>
+        <button class="modal-close" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')">✕</button>
+      </div>
+      <div style="padding:20px 24px">
+        <p style="font-size:14px;color:var(--gray600);margin:0 0 16px" data-i18n="limit_msg">${t('limit_msg') || 'Bu ay 30 fatura limitine ulaştınız. Sınırsız fatura için planınızı yükseltin.'}</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn-outline" onclick="document.getElementById('invoice-limit-modal').classList.remove('open')" data-i18n="btn_cancel">${t('btn_cancel') || 'İptal'}</button>
+          <button class="btn-primary" onclick="window.location.href='subscription.html'" data-i18n="btn_upgrade">${t('btn_upgrade') || 'Planı Yükselt'}</button>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+  }
+  m.classList.add('open');
+}
 </script>
 </body>
 </html>

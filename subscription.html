@@ -157,6 +157,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--gray80
 .usage-bar { height: 6px; background: var(--gray100); border-radius: 99px; overflow: hidden; }
 .usage-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--sky)); transition: width 1s ease; }
 .usage-fill.warning { background: linear-gradient(90deg, var(--orange), #fbbf24); }
+.usage-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
 .usage-fill.full { background: linear-gradient(90deg, var(--red), #f87171); }
 
 /* ===== PLAN COMPARISON ===== */
@@ -381,8 +382,8 @@ function setLang(lang) {
         <div class="card-sub" data-i18n="sub_usage_sub">Your resource consumption</div>
         <div class="usage-item">
           <div class="usage-header">
-            <span class="usage-label" data-i18n="usage_records">Records Created</span>
-            <span class="usage-count" id="usage-records-text">Unlimited</span>
+            <span class="usage-label" data-i18n="usage_invoices">Oluşturulan Faturalar</span>
+            <span class="usage-count" id="usage-records-text">—</span>
           </div>
           <div class="usage-bar"><div class="usage-fill" id="usage-records-bar" style="width:35%"></div></div>
         </div>
@@ -563,26 +564,20 @@ async function loadSubscription() {
 
     console.log('[subscription] currentPlan:', currentPlan, 'interval:', planInterval, 'userId:', currentUser.id);
 
-    // Fetch record count + active user count in parallel
-    const recordFetches = [];
+    // Fetch active user count + monthly invoice count in parallel
+    const fetches = [
+      sb.rpc('get_active_user_count', { owner_uid: currentUser.id })
+    ];
     if (companyId) {
-      const tables = ['products', 'customers', 'suppliers', 'sales_orders', 'purchase_orders'];
-      recordFetches.push(
-        ...tables.map(tbl => sb.from(tbl).select('id', { count: 'exact', head: true })
-          .eq('company_id', companyId).eq('is_active', true))
-      );
+      fetches.push(sb.rpc('get_monthly_invoice_count', { p_company_id: companyId }));
     }
 
-    const [userCountRes, ...recordResults] = await Promise.all([
-      sb.rpc('get_active_user_count', { owner_uid: currentUser.id }),
-      ...recordFetches
-    ]);
+    const [userCountRes, invoiceCountRes] = await Promise.all(fetches);
 
-    console.log('[subscription] get_active_user_count result:', userCountRes.data, 'error:', userCountRes.error);
+    console.log('[subscription] user_count:', userCountRes.data, userCountRes.error, 'invoice_count:', invoiceCountRes?.data, invoiceCountRes?.error);
 
-    // If RPC fails (function not yet created), fallback to company_users count
-    if (userCountRes.error || userCountRes.data === null || userCountRes.data === 0) {
-      console.warn('[subscription] get_active_user_count returned 0 or error, falling back to company_users count');
+    // User count with fallback
+    if (userCountRes.error || !userCountRes.data) {
       if (companyId) {
         const { count } = await sb.from('company_users')
           .select('id', { count: 'exact', head: true })
@@ -596,9 +591,19 @@ async function loadSubscription() {
     }
     subUserCount = realUserCount || 1;
 
-    // Sum record counts
-    if (companyId) {
-      realRecordCount = recordResults.reduce((sum, r) => sum + (r.count || 0), 0);
+    // Monthly invoice count with fallback
+    if (invoiceCountRes?.error || invoiceCountRes?.data === null) {
+      // Fallback: count manually
+      if (companyId) {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        const [s, p] = await Promise.all([
+          sb.from('sales_orders').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true).gte('created_at', monthStart),
+          sb.from('purchase_orders').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true).gte('created_at', monthStart)
+        ]);
+        realRecordCount = (s.count || 0) + (p.count || 0);
+      }
+    } else {
+      realRecordCount = invoiceCountRes.data || 0;
     }
   } catch(e) {
     console.error('loadSubscription:', e);
@@ -702,12 +707,16 @@ function renderSubscription() {
     if (g('detail-next')) g('detail-next').textContent = next.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
   }
 
-  // Usage
+  // Usage — monthly invoices
   const FREE_INVOICE_LIMIT = 30;
   const recBar = g('usage-records-bar');
   if (isFree) {
     if (g('usage-records-text')) g('usage-records-text').textContent = `${realRecordCount} / ${FREE_INVOICE_LIMIT}`;
-    if (recBar) { const pct = Math.min(100, Math.round(realRecordCount / FREE_INVOICE_LIMIT * 100)); recBar.style.width = Math.max(2, pct) + '%'; recBar.className = 'usage-fill' + (pct >= 80 ? ' warning' : ''); }
+    if (recBar) {
+      const pct = Math.min(100, Math.round(realRecordCount / FREE_INVOICE_LIMIT * 100));
+      recBar.style.width = Math.max(2, pct) + '%';
+      recBar.className = 'usage-fill' + (pct >= 100 ? ' danger' : pct >= 80 ? ' warning' : '');
+    }
   } else {
     if (g('usage-records-text')) g('usage-records-text').textContent = realRecordCount.toLocaleString() + ' / ' + (t('unlimited') || '∞');
     if (recBar) { recBar.style.width = Math.max(2, Math.min(90, Math.round(realRecordCount / 500 * 100))) + '%'; recBar.className = 'usage-fill'; }
