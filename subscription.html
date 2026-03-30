@@ -323,14 +323,14 @@ function setLang(lang) {
       <div class="plan-hero-left">
         <div class="plan-badge" id="plan-status-badge">
           <div class="plan-badge-dot"></div>
-          <span id="plan-status-text">Active</span>
+          <span id="plan-status-text">—</span>
         </div>
-        <div class="plan-name" id="current-plan-name">Standard</div>
+        <div class="plan-name" id="current-plan-name">—</div>
         <div class="plan-price-row">
-          <div class="plan-price" id="current-plan-price">$7.20</div>
-          <div class="plan-price-sub" id="current-plan-unit">/user/mo</div>
+          <div class="plan-price" id="current-plan-price">—</div>
+          <div class="plan-price-sub" id="current-plan-unit"></div>
         </div>
-        <div class="plan-cycle" id="current-plan-cycle">Billed monthly · 1 user · Next billing: Jan 4, 2026</div>
+        <div class="plan-cycle" id="current-plan-cycle">—</div>
       </div>
       <div class="plan-hero-right">
         <button class="btn-manage" onclick="openPortal()" data-i18n="btn_manage_payment">Manage Payment →</button>
@@ -347,31 +347,31 @@ function setLang(lang) {
         <div class="card-sub" data-i18n="sub_details_sub">Your current plan information</div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_plan">Plan</span>
-          <span class="info-value" id="detail-plan">Standard</span>
+          <span class="info-value" id="detail-plan">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_billing_cycle">Billing Cycle</span>
-          <span class="info-value" id="detail-cycle">Monthly</span>
+          <span class="info-value" id="detail-cycle">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_users">Users</span>
-          <span class="info-value" id="detail-users">1 user</span>
+          <span class="info-value" id="detail-users">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_amount">Amount</span>
-          <span class="info-value" id="detail-amount">$7.20/mo</span>
+          <span class="info-value" id="detail-amount">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_sub_status">Status</span>
-          <span class="info-value green" id="detail-status">Active</span>
+          <span class="info-value green" id="detail-status">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_next_billing">Next Billing</span>
-          <span class="info-value" id="detail-next">Jan 4, 2026</span>
+          <span class="info-value" id="detail-next">—</span>
         </div>
         <div class="info-row">
           <span class="info-label" data-i18n="label_member_since">Member Since</span>
-          <span class="info-value" id="detail-since">Dec 4, 2025</span>
+          <span class="info-value" id="detail-since">—</span>
         </div>
       </div>
 
@@ -544,7 +544,9 @@ async function loadSubscription() {
     console.log('[subscription] company_users query result:', cu);
     if (cu?.company_id) {
       companyId = cu.company_id;
-      currentPlan = cu.companies?.plan || 'free';
+      let rawPlan = cu.companies?.plan || 'free';
+      if (rawPlan === 'pro') rawPlan = 'professional';
+      currentPlan = rawPlan;
       companyCreatedAt = cu.companies?.created_at || null;
     }
     console.log('[subscription] currentPlan:', currentPlan);

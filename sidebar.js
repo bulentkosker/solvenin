@@ -636,7 +636,8 @@
         const cnEl = document.getElementById('sb-company-name');
         const cpEl = document.getElementById('sb-company-plan');
         const upEl = document.getElementById('sb-user-plan');
-        const plan = company.plan || 'free';
+        let plan = company.plan || 'free';
+        if (plan === 'pro') plan = 'professional';
         if (cnEl) cnEl.textContent = company.name;
         if (cpEl) cpEl.textContent = plan.toUpperCase();
         if (upEl) upEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
