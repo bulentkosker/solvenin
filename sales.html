@@ -131,6 +131,13 @@ tr:hover .row-actions{opacity:1}
 .items-table .num-input{min-width:90px;text-align:right}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
+.back-link:hover{color:var(--gray800)}
+#order-form-view .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#order-form-view .field label{font-size:12px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px}
+#order-form-view .field input,#order-form-view .field select,#order-form-view .field textarea{width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;background:var(--white)}
+#order-form-view .field input:focus,#order-form-view .field select:focus{border-color:var(--blue)}
+#order-form-view .field.full{grid-column:1/-1}
+#order-form-view textarea{min-height:60px;resize:vertical}
 .item-total{font-weight:700;color:var(--gray800);text-align:right;padding:7px 10px}
 
 /* ORDER SUMMARY */
@@ -250,7 +257,7 @@ input[type=number]{-moz-appearance:textfield}
     </div>
   </header>
 
-  <div class="content">
+  <div class="content" id="list-view">
     <div class="page-header">
       <div style="flex:1;min-width:0">
         <h1>💰 <span data-i18n="page_sales">Sales & Invoicing</span></h1>
@@ -374,92 +381,97 @@ input[type=number]{-moz-appearance:textfield}
       </div>
     </div>
   </div>
-</div>
 
-<!-- ORDER MODAL -->
-<div class="modal-overlay" id="order-modal">
-  <div class="modal" style="max-width:780px">
-    <div class="modal-header">
-      <div class="modal-title" id="order-modal-title"><span data-i18n="title_new_order"></span></div>
-      <button class="modal-close" onclick="closeModal('order-modal')">✕</button>
+<!-- ORDER FULL PAGE VIEW -->
+<div id="order-form-view" style="display:none">
+  <div class="content" style="max-width:860px;margin:0 auto;padding-top:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <a class="back-link" onclick="closeOrderForm()" style="cursor:pointer;font-size:13px;color:var(--gray500);text-decoration:none">← <span data-i18n="btn_back">Geri</span></a>
+      <div class="modal-title" id="order-modal-title" style="flex:1"><span data-i18n="title_new_order"></span></div>
     </div>
-    <div class="modal-body">
-      <div class="form-grid" style="margin-bottom:20px">
-        <div class="field">
-          <label><span data-i18n="col_customer">Customer *</span></label>
-          <div id="o-customer-qa"></div>
-          <input type="hidden" id="o-customer">
-        </div>
-        <div class="field">
-          <label><span data-i18n="lbl_order_no">Order Number</span></label>
-          <input type="text" id="o-number" placeholder="Auto-generated">
-        </div>
-        <div class="field">
-          <label><span data-i18n="lbl_issue_date">Issue Date</span></label>
-          <input type="date" id="o-date">
-        </div>
-        <div class="field">
-          <label><span data-i18n="lbl_due_date"><span data-i18n="col_due_date">Due Date</span></span></label>
-          <input type="date" id="o-duedate">
-        </div>
-        <div class="field">
-          <label><span data-i18n="col_status">Status</span></label>
-          <select id="o-status">
-            <option value="draft" data-i18n="status_draft">Draft</option>
-            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-            <option value="shipped" data-i18n="status_shipped">Shipped</option>
-            <option value="delivered" data-i18n="status_delivered">Delivered</option>
-            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
-          </select>
-        </div>
-        <div class="field">
-          <label><span data-i18n="lbl_tax_rate">Tax Rate</span></label>
-          <select id="o-tax" onchange="recalcOrder()">
-            <option value="" data-rate="0">— Vergi Yok (0%)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Discount (<span id="lbl-discount-sym">$</span>)</label>
-          <input type="text" id="o-discount" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()">
-        </div>
+
+    <div class="form-grid" style="margin-bottom:20px">
+      <div class="field">
+        <label><span data-i18n="col_customer">Customer *</span></label>
+        <div id="o-customer-qa"></div>
+        <input type="hidden" id="o-customer">
       </div>
-
-      <!-- ITEMS -->
-      <div style="font-size:12px;font-weight:700;color:var(--gray500);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Order Items</div>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th style="width:35%"><span data-i18n="col_prod_desc">Product / Description</span></th>
-            <th style="width:12%"><span data-i18n="col_qty">Qty</span></th>
-            <th style="width:15%"><span data-i18n="col_unit_price">Unit Price</span></th>
-            <th style="width:10%"><span data-i18n="col_disc_pct">Disc%</span></th>
-            <th style="width:15%"><span data-i18n="col_total">Total</span></th>
-            <th style="width:5%"></th>
-          </tr>
-        </thead>
-        <tbody id="order-items"></tbody>
-      </table>
-      <button class="btn btn-outline btn-sm" onclick="addOrderItem()" style="margin-bottom:20px"><span data-i18n="btn_add_line">+ Add Line</span></button>
-
-      <!-- SUMMARY -->
-      <div class="order-summary">
-        <div class="summary-row"><span class="label"><span data-i18n="lbl_subtotal">Subtotal</span></span><span class="val" id="sum-subtotal"><span class="zero-amt">—</span></span></div>
-        <div class="summary-row"><span class="label"><span data-i18n="lbl_tax">Tax</span></span><span class="val" id="sum-tax"><span class="zero-amt">—</span></span></div>
-        <div class="summary-row"><span class="label"><span data-i18n="lbl_discount">Discount</span></span><span class="val" id="sum-discount"><span class="zero-amt">—</span></span></div>
-        <div class="summary-row total"><span>Total</span><span id="sum-total"><span class="zero-amt">—</span></span></div>
+      <div class="field">
+        <label><span data-i18n="lbl_order_no">Order Number</span></label>
+        <input type="text" id="o-number" placeholder="Auto-generated">
       </div>
-
-      <div class="field full" style="margin-top:16px">
-        <label><span data-i18n="label_notes">Notes</span></label>
-        <textarea id="o-notes" placeholder="Payment terms, delivery notes..."></textarea>
+      <div class="field">
+        <label><span data-i18n="lbl_issue_date">Issue Date</span></label>
+        <input type="date" id="o-date">
+      </div>
+      <div class="field">
+        <label><span data-i18n="col_due_date">Due Date</span></label>
+        <input type="date" id="o-duedate">
+      </div>
+      <div class="field">
+        <label><span data-i18n="col_status">Status</span></label>
+        <select id="o-status">
+          <option value="draft" data-i18n="status_draft">Draft</option>
+          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+          <option value="shipped" data-i18n="status_shipped">Shipped</option>
+          <option value="delivered" data-i18n="status_delivered">Delivered</option>
+          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="field">
+        <label><span data-i18n="lbl_tax_rate">Tax Rate</span></label>
+        <select id="o-tax" onchange="recalcOrder()">
+          <option value="" data-rate="0">— Vergi Yok (0%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Discount (<span id="lbl-discount-sym">$</span>)</label>
+        <input type="text" id="o-discount" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()">
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('order-modal')">Cancel</button>
+
+    <!-- ITEMS -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--gray500);letter-spacing:1px;text-transform:uppercase">Order Items</div>
+      <button class="btn btn-outline btn-sm" onclick="toggleDescCol()" id="btn-toggle-desc" style="font-size:10px;padding:3px 8px">${t('btn_show_desc') || 'Açıklama +'}</button>
+    </div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:30%"><span data-i18n="col_product">Ürün</span></th>
+          <th class="desc-col" style="display:none;width:20%"><span data-i18n="col_description">Açıklama</span></th>
+          <th style="width:12%"><span data-i18n="col_qty">Qty</span></th>
+          <th style="width:15%"><span data-i18n="col_unit_price">Unit Price</span></th>
+          <th style="width:10%"><span data-i18n="col_disc_pct">Disc%</span></th>
+          <th style="width:10%"><span data-i18n="col_warehouse">Depo</span></th>
+          <th style="width:12%"><span data-i18n="col_total">Total</span></th>
+          <th style="width:3%"></th>
+        </tr>
+      </thead>
+      <tbody id="order-items"></tbody>
+    </table>
+    <button class="btn btn-outline btn-sm" onclick="addOrderItem()" style="margin-bottom:20px"><span data-i18n="btn_add_line">+ Add Line</span></button>
+
+    <!-- SUMMARY -->
+    <div class="order-summary">
+      <div class="summary-row"><span class="label"><span data-i18n="lbl_subtotal">Subtotal</span></span><span class="val" id="sum-subtotal"><span class="zero-amt">—</span></span></div>
+      <div class="summary-row"><span class="label"><span data-i18n="lbl_tax">Tax</span></span><span class="val" id="sum-tax"><span class="zero-amt">—</span></span></div>
+      <div class="summary-row"><span class="label"><span data-i18n="lbl_discount">Discount</span></span><span class="val" id="sum-discount"><span class="zero-amt">—</span></span></div>
+      <div class="summary-row total"><span>Total</span><span id="sum-total"><span class="zero-amt">—</span></span></div>
+    </div>
+
+    <div class="field full" style="margin-top:16px">
+      <label><span data-i18n="label_notes">Notes</span></label>
+      <textarea id="o-notes" placeholder="Payment terms, delivery notes..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-bottom:40px">
+      <button class="btn btn-outline" onclick="closeOrderForm()">Cancel</button>
       <button class="btn btn-outline" onclick="saveOrder('draft')"><span data-i18n="btn_save_draft">Save as Draft</span></button>
       <button class="btn btn-primary" onclick="saveOrder('confirmed')"><span data-i18n="btn_confirm_order">Confirm Order</span></button>
     </div>
   </div>
+</div>
 </div>
 
 <!-- CUSTOMER MODAL -->
@@ -667,6 +679,11 @@ await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRat
   else applyTranslations();
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
+
+  // Handle URL params: ?action=new or ?action=edit&id=XXX
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('action') === 'new') { openOrderModal(); }
+  else if (params.get('action') === 'edit' && params.get('id')) { editOrder(params.get('id')); }
 }
 
 // ===== LOAD =====
@@ -851,7 +868,27 @@ function updateCustomerSelects() {
   }
 }
 
-// ===== ORDER MODAL =====
+// ===== ORDER FORM (FULL PAGE) =====
+let _descVisible = false;
+
+function showOrderFormView() {
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('order-form-view').style.display = '';
+  history.replaceState(null, '', editingOrderId ? `sales.html?action=edit&id=${editingOrderId}` : 'sales.html?action=new');
+}
+
+function closeOrderForm() {
+  document.getElementById('order-form-view').style.display = 'none';
+  document.getElementById('list-view').style.display = '';
+  history.replaceState(null, '', 'sales.html');
+}
+
+function toggleDescCol() {
+  _descVisible = !_descVisible;
+  document.querySelectorAll('.desc-col').forEach(el => el.style.display = _descVisible ? '' : 'none');
+  document.getElementById('btn-toggle-desc').textContent = _descVisible ? (t('btn_hide_desc') || 'Açıklama −') : (t('btn_show_desc') || 'Açıklama +');
+}
+
 function openOrderModal() {
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_order');
@@ -865,10 +902,10 @@ function openOrderModal() {
   document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '';
   document.getElementById('o-notes').value = '';
-  orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:defaultWarehouseId() }];
+  orderItems = [{ product_id:'', description:'', qty:0, price:0, disc:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
   updateCustomerSelects();
-  openModal('order-modal');
+  showOrderFormView();
 }
 
 function addOrderItem() {
@@ -915,16 +952,34 @@ function fmtInput(el) {
 function numFocus(el) { if (parseNum(el.value) === 0) el.value = ''; }
 function numBlur(el) { const n = parseNum(el.value); el.value = n ? fmtNum(n) : ''; }
 
+// Enter/Tab navigation between item columns
+function itemKeyNav(e, row, col) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (col === 'qty') {
+    const next = document.querySelector(`input[data-row="${row}"][data-col="price"]`);
+    if (next) next.focus();
+  } else if (col === 'price') {
+    // Add new row and focus its product selector
+    addOrderItem();
+    setTimeout(() => {
+      const newRow = document.querySelector(`tr[data-row="${orderItems.length - 1}"] .qa-wrap input`);
+      if (newRow) newRow.focus();
+    }, 100);
+  }
+}
+
 function renderOrderItems() {
   const tbody = document.getElementById('order-items');
-  tbody.innerHTML = orderItems.map((item, i) => `<tr>
+  const dsp = _descVisible ? '' : 'display:none';
+  tbody.innerHTML = orderItems.map((item, i) => `<tr data-row="${i}">
     <td>
-      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="margin-bottom:4px;min-width:160px"></div>
-      <input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="Description" oninput="orderItems[${i}].description=this.value;recalcOrder()">
+      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="min-width:140px"></div>
     </td>
-    <td><input type="text" class="num-input" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()"></td>
-    <td><input type="text" class="num-input" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()"></td>
-    <td><input type="text" class="num-input" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="min-width:60px"></td>
+    <td class="desc-col" style="${dsp}"><input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="${t('col_description')||'Açıklama'}" oninput="orderItems[${i}].description=this.value"></td>
+    <td><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')"></td>
+    <td><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')"></td>
+    <td><input type="text" class="num-input" data-col="disc" data-row="${i}" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="min-width:60px"></td>
     <td>
       <select onchange="orderItems[${i}].warehouse_id=this.value" style="min-width:90px;font-size:11px">
         <option value="">Depo</option>
@@ -946,6 +1001,8 @@ function renderOrderItems() {
         orderItems[idx].price = parseFloat(p?._price || 0);
         orderItems[idx].description = p?.name || '';
         recalcOrder();
+        // Auto-focus qty
+        setTimeout(() => { const q = document.querySelector(`input[data-row="${idx}"][data-col="qty"]`); if (q) q.focus(); }, 50);
       },
       onAdd(query) { openQAProductModal(query, (prod) => { orderItems[idx].product_id = prod.id; orderItems[idx].price = prod.sale_price || 0; orderItems[idx].description = prod.name; recalcOrder(); renderOrderItems(); }); },
       addLabel(q) { return `+ "${q}" ${t('lbl_product_add_new') || 'ürün ekle'}`; },
@@ -1065,7 +1122,7 @@ async function saveOrder(statusOverride) {
   }
 
   showToast(editingOrderId ? t('order_updated') : t('order_created'), 'success');
-  closeModal('order-modal');
+  closeOrderForm();
   await loadOrders();
 }
 
@@ -1088,7 +1145,7 @@ async function editOrder(id) {
   if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' }];
   updateCustomerSelects();
   renderOrderItems();
-  openModal('order-modal');
+  showOrderFormView();
 }
 
 async function deleteOrder(id) {
