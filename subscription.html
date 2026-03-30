@@ -495,6 +495,7 @@ let currentPlan = 'free'; // free / standard / professional
 let billingCycle = 'monthly';
 let subUserCount = 1;
 let companyId = null;
+let companyCreatedAt = null;
 let realRecordCount = 0;
 let realUserCount = 0;
 
@@ -544,6 +545,7 @@ async function loadSubscription() {
     if (cu?.company_id) {
       companyId = cu.company_id;
       currentPlan = cu.companies?.plan || 'free';
+      companyCreatedAt = cu.companies?.created_at || null;
     }
     console.log('[subscription] currentPlan:', currentPlan);
 
@@ -623,7 +625,15 @@ function renderSubscription() {
   if (g('current-plan-name')) g('current-plan-name').textContent = activePlan.name;
   if (g('current-plan-price')) g('current-plan-price').textContent = isFree ? '$0' : '$' + displayPrice.toFixed(2);
   if (g('current-plan-unit')) g('current-plan-unit').textContent = isFree ? '' : '/user/mo';
-  if (g('current-plan-cycle')) g('current-plan-cycle').textContent = isFree ? (t('no_active_sub') || 'No active subscription') : `${t('billed') || 'Billed'} ${isYearly ? (t('date_yearly') || 'yearly') : (t('date_monthly') || 'monthly')}`;
+  if (g('current-plan-cycle')) {
+    if (isFree) {
+      g('current-plan-cycle').textContent = t('no_active_sub') || 'No active subscription';
+    } else {
+      const cycleLabel = isYearly ? (t('date_yearly') || 'yearly') : (t('date_monthly') || 'monthly');
+      const userLabel = `${realUserCount || 1} ${t('user_singular') || 'user'}`;
+      g('current-plan-cycle').textContent = `${t('billed') || 'Billed'} ${cycleLabel} · ${userLabel}`;
+    }
+  }
 
   // Show/hide
   if (g('upgrade-banner')) g('upgrade-banner').style.display = isFree ? 'flex' : 'none';
@@ -635,6 +645,26 @@ function renderSubscription() {
   if (g('detail-cycle')) g('detail-cycle').textContent = isFree ? '—' : (isYearly ? (t('date_yearly') || 'Yearly') : (t('date_monthly') || 'Monthly'));
   if (g('detail-users')) g('detail-users').textContent = `${realUserCount || 1} ${t('user_singular') || 'user'}`;
   if (g('detail-amount')) g('detail-amount').textContent = isFree ? '$0' : `$${displayPrice.toFixed(2)}/mo`;
+
+  // Status, next billing, member since
+  if (g('detail-status')) g('detail-status').textContent = isFree ? (t('plan_free') || 'Free') : (t('status_active') || 'Active');
+  if (g('plan-status-text')) g('plan-status-text').textContent = isFree ? (t('plan_free') || 'Free') : (t('status_active') || 'Active');
+
+  if (companyCreatedAt) {
+    const since = new Date(companyCreatedAt);
+    if (g('detail-since')) g('detail-since').textContent = since.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  } else {
+    if (g('detail-since')) g('detail-since').textContent = '—';
+  }
+
+  if (isFree) {
+    if (g('detail-next')) g('detail-next').textContent = '—';
+  } else {
+    // Estimate next billing: next month from today (actual date comes from Paddle)
+    const next = new Date();
+    if (isYearly) { next.setFullYear(next.getFullYear() + 1); } else { next.setMonth(next.getMonth() + 1); }
+    if (g('detail-next')) g('detail-next').textContent = next.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
 
   // Usage
   const FREE_INVOICE_LIMIT = 30;
@@ -821,7 +851,7 @@ function renderCompanyMenu() {
       <div class="c-role">${c.role}</div>
     </div>`).join('');
   const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
+  const canAdd = active && active.plan === 'professional' && active.role === 'owner';
   footer.innerHTML = canAdd
     ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;

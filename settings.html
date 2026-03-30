@@ -718,6 +718,36 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- Add Company to User Modal -->
+      <div class="modal-overlay" id="add-company-modal">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header">
+            <span class="modal-title" data-i18n="btn_add_company_to_user">Kullanıcıya Şirket Ekle</span>
+            <button class="modal-close" onclick="closeAddCompanyModal()">✕</button>
+          </div>
+          <div class="modal-body" style="padding:16px 24px">
+            <div style="margin-bottom:12px;font-size:13px;color:var(--gray500)" id="add-company-user-info"></div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label data-i18n="lbl_company">Şirket</label>
+              <select id="add-company-select" style="width:100%"></select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lbl_role">Rol</label>
+              <select id="add-company-role" style="width:100%">
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="employee" selected>Employee</option>
+                <option value="accountant">Accountant</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-outline" onclick="closeAddCompanyModal()" data-i18n="btn_cancel">İptal</button>
+            <button class="btn-primary" onclick="saveAddCompany()" data-i18n="btn_save">Kaydet</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -1069,7 +1099,7 @@ async function createNewCompany() {
     const user = (await sb.auth.getSession()).data.session?.user;
     const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
     const { data: comp, error } = await sb.from('companies').insert({
-      name, slug, plan: 'pro', owner_id: user.id, status: 'active', country_code: countryCode
+      name, slug, plan: 'professional', owner_id: user.id, status: 'active', country_code: countryCode
     }).select().single();
     if (error) throw error;
 
@@ -1952,7 +1982,7 @@ function renderCompanyMenu() {
 
   // Show "Add company" only for pro+ owners
   const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && ['pro','enterprise'].includes(active.plan) && active.role === 'owner';
+  const canAdd = active && active.plan === 'professional' && active.role === 'owner';
   footer.innerHTML = canAdd
     ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">${t('lbl_upgrade_multi_company')}</button>`;
@@ -2157,8 +2187,9 @@ let _permUserId = null;
 async function loadUsers() {
   if (!companyId) return;
   // Check if current user is owner/admin
-  const { data: myRole } = await sb.from('company_users')
+  const { data: myRole, error: roleErr } = await sb.from('company_users')
     .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single();
+  if (roleErr) console.error('loadUsers: could not fetch role', roleErr);
   const isAdmin = myRole && (myRole.role === 'owner' || myRole.role === 'admin');
   const navBtn = document.getElementById('nav-users');
   if (navBtn) navBtn.style.display = isAdmin ? '' : 'none';
@@ -2195,7 +2226,8 @@ async function loadUsers() {
           <select style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px" ${isOwner?'disabled':''} onchange="changeUserRole('${m.user_id}',this.value)">
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
-          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="openPermModal('${m.user_id}','${m.role}')">🔐</button>
+          <button style="padding:4px 8px;border:1px solid #0d4f3c;border-radius:6px;font-size:11px;background:#fff;color:#0d4f3c;cursor:pointer;font-weight:500" onclick="openPermModal('${m.user_id}','${m.role}')">${t('btn_permissions') || 'İzinler'}</button>
+          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:var(--gray500)" onclick="openAddCompanyModal('${m.user_id}')">+ ${t('btn_add_company') || 'Şirket Ekle'}</button>
           ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
         </div>
       </div>`;
@@ -2259,6 +2291,69 @@ async function removeUser(userId) {
   await sb.from('company_users').delete().eq('company_id', companyId).eq('user_id', userId);
   showToast('User removed', 'success');
   await loadUsers();
+}
+
+// Add Company to User
+let _addCompanyUserId = null;
+
+async function openAddCompanyModal(userId) {
+  _addCompanyUserId = userId;
+  const modal = document.getElementById('add-company-modal');
+  const select = document.getElementById('add-company-select');
+  const info = document.getElementById('add-company-user-info');
+
+  // Get user display name
+  const { data: profile } = await sb.from('profiles').select('full_name').eq('id', userId).maybeSingle();
+  info.textContent = profile?.full_name || userId.slice(0,8) + '...';
+
+  // Get companies user already belongs to
+  const { data: userCompanies } = await sb.from('company_users').select('company_id').eq('user_id', userId);
+  const existingIds = (userCompanies || []).map(c => c.company_id);
+
+  // Filter: owner's companies minus user's existing companies
+  const available = _myCompanies.filter(c => !existingIds.includes(c.company_id));
+
+  if (!available.length) {
+    select.innerHTML = `<option value="">${t('no_available_companies') || 'Eklenebilecek şirket yok'}</option>`;
+  } else {
+    select.innerHTML = available.map(c => `<option value="${c.company_id}">${c.company_name}</option>`).join('');
+  }
+
+  modal.classList.add('active');
+}
+
+function closeAddCompanyModal() {
+  document.getElementById('add-company-modal').classList.remove('active');
+  _addCompanyUserId = null;
+}
+
+async function saveAddCompany() {
+  if (!_addCompanyUserId) return;
+  const targetCompanyId = document.getElementById('add-company-select').value;
+  const role = document.getElementById('add-company-role').value;
+  if (!targetCompanyId) { showToast(t('no_available_companies') || 'No company selected', 'error'); return; }
+
+  try {
+    // Insert into company_users
+    const { error: cuErr } = await sb.from('company_users').insert({
+      company_id: targetCompanyId, user_id: _addCompanyUserId, role, status: 'active'
+    });
+    if (cuErr) throw cuErr;
+
+    // Insert default permissions for the role
+    const { data: defaults } = await sb.rpc('get_default_permissions', { p_role: role });
+    if (defaults && defaults.length) {
+      await sb.from('user_permissions').insert(
+        defaults.map(d => ({ company_id: targetCompanyId, user_id: _addCompanyUserId, module: d.module, can_view: d.can_view, can_create: d.can_create, can_edit: d.can_edit, can_delete: d.can_delete }))
+      );
+    }
+
+    showToast(t('toast_company_added') || 'Kullanıcı şirkete eklendi', 'success');
+    closeAddCompanyModal();
+    await loadUsers();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 // Permission Modal

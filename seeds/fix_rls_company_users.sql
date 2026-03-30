@@ -3,20 +3,31 @@
 -- Run in Supabase SQL Editor
 -- ============================================================
 
--- Drop existing restrictive SELECT policy
+-- Step 1: Create a SECURITY DEFINER function to avoid
+-- self-referencing RLS circular dependency.
+-- This function runs with the definer's privileges,
+-- bypassing RLS on company_users for the subquery.
+CREATE OR REPLACE FUNCTION get_my_company_ids()
+RETURNS SETOF uuid
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT company_id FROM company_users WHERE user_id = auth.uid();
+$$;
+
+-- Step 2: Fix company_users SELECT policy
 DROP POLICY IF EXISTS "Users can view own company members" ON company_users;
 DROP POLICY IF EXISTS "company_users_select" ON company_users;
 
--- Allow users to see ALL members of companies they belong to
 CREATE POLICY "Users can view own company members"
   ON company_users FOR SELECT
   USING (
-    company_id IN (
-      SELECT company_id FROM company_users WHERE user_id = auth.uid()
-    )
+    company_id IN (SELECT get_my_company_ids())
   );
 
--- Also fix profiles RLS — allow reading profiles of same-company users
+-- Step 3: Fix profiles RLS — allow reading profiles of same-company users
 DROP POLICY IF EXISTS "Users can view same company profiles" ON profiles;
 
 CREATE POLICY "Users can view same company profiles"
@@ -24,8 +35,7 @@ CREATE POLICY "Users can view same company profiles"
   USING (
     id = auth.uid()
     OR id IN (
-      SELECT cu2.user_id FROM company_users cu1
-      JOIN company_users cu2 ON cu1.company_id = cu2.company_id
-      WHERE cu1.user_id = auth.uid()
+      SELECT cu.user_id FROM company_users cu
+      WHERE cu.company_id IN (SELECT get_my_company_ids())
     )
   );
