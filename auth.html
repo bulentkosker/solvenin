@@ -1151,18 +1151,15 @@ async function handleLogin() {
     if (error) throw error;
 
     // Check if user must change password (added by admin)
-    const { data: profile } = await sb.from('profiles').select('must_change_password, company_id').eq('id', data.user.id).maybeSingle();
+    const { data: profile } = await sb.from('profiles').select('must_change_password').eq('id', data.user.id).maybeSingle();
+
+    // Always resolve company from company_users (single source of truth)
+    const { data: cu } = await sb.from('company_users').select('company_id').eq('user_id', data.user.id).limit(1).maybeSingle();
+    if (cu) localStorage.setItem('currentCompanyId', cu.company_id);
+
     if (profile?.must_change_password) {
-      // Set company from profile so dashboard works after password change
-      if (profile.company_id) localStorage.setItem('currentCompanyId', profile.company_id);
       showChangePasswordScreen(data.user.id);
       return;
-    }
-
-    // Ensure company is set for admin-added users
-    if (!localStorage.getItem('currentCompanyId')) {
-      const { data: cu } = await sb.from('company_users').select('company_id').eq('user_id', data.user.id).limit(1).maybeSingle();
-      if (cu) localStorage.setItem('currentCompanyId', cu.company_id);
     }
 
     window.location.href = '/dashboard.html';
