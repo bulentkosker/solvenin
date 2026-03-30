@@ -748,6 +748,23 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- Remove User Confirm Modal -->
+      <div class="modal-overlay" id="remove-user-modal">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header">
+            <span class="modal-title" data-i18n="confirm_remove_title">Kullanıcıyı Çıkar</span>
+            <button class="modal-close" onclick="closeRemoveUserModal()">✕</button>
+          </div>
+          <div class="modal-body" style="padding:20px 24px">
+            <p style="font-size:14px;color:var(--gray700);margin:0" id="remove-user-msg"></p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-outline" onclick="closeRemoveUserModal()" data-i18n="btn_cancel">İptal</button>
+            <button class="btn-primary" style="background:#dc2626;border-color:#dc2626" onclick="confirmRemoveUser()" data-i18n="btn_confirm_remove">Evet, Çıkar</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -2285,11 +2302,26 @@ async function changeUserRole(userId, newRole) {
   await loadUsers();
 }
 
-async function removeUser(userId) {
-  if (!confirm(t('confirm_remove_user') || 'Remove this user from the company?')) return;
-  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', userId);
-  await sb.from('company_users').delete().eq('company_id', companyId).eq('user_id', userId);
-  showToast('User removed', 'success');
+let _removeUserId = null;
+
+function removeUser(userId) {
+  _removeUserId = userId;
+  const msg = document.getElementById('remove-user-msg');
+  if (msg) msg.textContent = t('confirm_remove_user') || 'Bu kullanıcıyı şirketten çıkarmak istediğinizden emin misiniz?';
+  document.getElementById('remove-user-modal')?.classList.add('open');
+}
+
+function closeRemoveUserModal() {
+  document.getElementById('remove-user-modal')?.classList.remove('open');
+  _removeUserId = null;
+}
+
+async function confirmRemoveUser() {
+  if (!_removeUserId) return;
+  await sb.from('user_permissions').delete().eq('company_id', companyId).eq('user_id', _removeUserId);
+  await sb.from('company_users').delete().eq('company_id', companyId).eq('user_id', _removeUserId);
+  showToast(t('toast_user_removed') || 'Kullanıcı çıkarıldı', 'success');
+  closeRemoveUserModal();
   await loadUsers();
 }
 
@@ -2319,11 +2351,11 @@ async function openAddCompanyModal(userId) {
     select.innerHTML = available.map(c => `<option value="${c.company_id}">${c.company_name}</option>`).join('');
   }
 
-  modal.classList.add('active');
+  modal.classList.add('open');
 }
 
 function closeAddCompanyModal() {
-  document.getElementById('add-company-modal').classList.remove('active');
+  document.getElementById('add-company-modal').classList.remove('open');
   _addCompanyUserId = null;
 }
 
