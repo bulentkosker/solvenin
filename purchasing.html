@@ -913,7 +913,7 @@ async function saveOrder() {
     status,
     issue_date: document.getElementById('o-date').value,
     expected_date: document.getElementById('o-expected').value || null,
-    subtotal, tax_rate: taxRateValue, tax_rate_id: taxRateId, tax_amount: taxAmt, discount, total,
+    subtotal, tax_rate: taxRateValue, tax_amount: taxAmt, discount, total,
     notes: document.getElementById('o-notes').value.trim()||null,
     created_by: user.id
   };
@@ -982,7 +982,10 @@ async function editOrder(id) {
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-expected').value = order.expected_date||'';
   document.getElementById('o-status').value = order.status;
-  document.getElementById('o-tax').value = order.tax_rate_id || '';
+  // Match tax dropdown by rate value (tax_rate_id not in purchase_orders table)
+  const taxSel = document.getElementById('o-tax');
+  const matchOpt = [...taxSel.options].find(o => parseFloat(o.dataset.rate) === order.tax_rate);
+  taxSel.value = matchOpt ? matchOpt.value : '';
   document.getElementById('o-discount').value = order.discount;
   document.getElementById('o-notes').value = order.notes||'';
   orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));
