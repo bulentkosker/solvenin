@@ -561,29 +561,44 @@ async function loadSubscription() {
       companyId = cuRes.data.company_id;
     }
 
-    console.log('[subscription] currentPlan:', currentPlan, 'interval:', planInterval);
+    console.log('[subscription] currentPlan:', currentPlan, 'interval:', planInterval, 'userId:', currentUser.id);
 
     // Fetch record count + active user count in parallel
-    const fetches = [];
+    const recordFetches = [];
     if (companyId) {
       const tables = ['products', 'customers', 'suppliers', 'sales_orders', 'purchase_orders'];
-      fetches.push(
+      recordFetches.push(
         ...tables.map(tbl => sb.from(tbl).select('id', { count: 'exact', head: true })
           .eq('company_id', companyId).eq('is_active', true))
       );
     }
-    fetches.push(sb.rpc('get_active_user_count', { owner_uid: currentUser.id }));
 
-    const results = await Promise.all(fetches);
+    const [userCountRes, ...recordResults] = await Promise.all([
+      sb.rpc('get_active_user_count', { owner_uid: currentUser.id }),
+      ...recordFetches
+    ]);
 
-    // Last result is active user count
-    const userCountResult = results.pop();
-    realUserCount = userCountResult.data || 1;
+    console.log('[subscription] get_active_user_count result:', userCountRes.data, 'error:', userCountRes.error);
+
+    // If RPC fails (function not yet created), fallback to company_users count
+    if (userCountRes.error || userCountRes.data === null || userCountRes.data === 0) {
+      console.warn('[subscription] get_active_user_count returned 0 or error, falling back to company_users count');
+      if (companyId) {
+        const { count } = await sb.from('company_users')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId);
+        realUserCount = count || 1;
+      } else {
+        realUserCount = 1;
+      }
+    } else {
+      realUserCount = userCountRes.data;
+    }
     subUserCount = realUserCount || 1;
 
     // Sum record counts
     if (companyId) {
-      realRecordCount = results.reduce((sum, r) => sum + (r.count || 0), 0);
+      realRecordCount = recordResults.reduce((sum, r) => sum + (r.count || 0), 0);
     }
   } catch(e) {
     console.error('loadSubscription:', e);
