@@ -139,8 +139,8 @@ tr:hover .row-actions{opacity:1}
 .items-table{width:100%;border-collapse:collapse;margin-bottom:12px}
 .items-table th{font-size:11px;font-weight:600;color:var(--gray400);letter-spacing:.5px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--gray200);text-align:left}
 .items-table td{padding:6px 6px;vertical-align:middle}
-.items-table input,.items-table select{background:var(--gray50);border:1px solid var(--gray200);border-radius:7px;padding:7px 10px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;width:100%}
-.items-table input:focus,.items-table select:focus{background:#fff;border-color:var(--blue)}
+.items-table input,.items-table select{background:#fff;border:1px solid var(--gray200);border-radius:7px;padding:7px 10px;font-family:var(--font-body);font-size:13px;color:var(--gray800);outline:none;width:100%}
+.items-table input:focus,.items-table select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(59,130,246,.08)}
 .items-table .num-input{min-width:90px;text-align:right}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
@@ -802,6 +802,19 @@ function filterSuppliers() {
 // ===== ORDER FORM (FULL PAGE) =====
 let _descVisible = false;
 
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const formVisible = document.getElementById('order-form-view')?.style.display !== 'none';
+  if (!formVisible) return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveOrder(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addOrderItem(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+    e.preventDefault(); if (orderItems.length > 1) { removeOrderItem(orderItems.length - 1); }
+  }
+  else if (e.key === 'Escape' && !document.querySelector('.qa-panel.qa-open')) { closeOrderForm(); }
+});
+
 function showOrderFormView() {
   document.getElementById('list-view').style.display = 'none';
   document.getElementById('order-form-view').style.display = '';
@@ -840,13 +853,13 @@ function openOrderModal() {
 }
 
 function addOrderItem() {
-  orderItems.push({ product_id:'', description:'', qty:1, price:0, warehouse_id:defaultWarehouseId() });
+  orderItems.push({ product_id:'', description:'', qty:0, price:0, warehouse_id:defaultWarehouseId() });
   renderOrderItems();
 }
 
 function removeOrderItem(i) {
   orderItems.splice(i,1);
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, warehouse_id:defaultWarehouseId() }];
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:0, price:0, warehouse_id:defaultWarehouseId() }];
   renderOrderItems();
 }
 
@@ -1067,7 +1080,7 @@ async function editOrder(id) {
   document.getElementById('o-discount').value = order.discount ? fmtNum(order.discount) : '';
   document.getElementById('o-notes').value = order.notes||'';
   orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));
-  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:1, price:0, disc:0, warehouse_id:'' }];
+  if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:0, price:0, disc:0, warehouse_id:'' }];
   updateSupplierSelects();
   renderOrderItems();
   showOrderFormView();

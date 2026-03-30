@@ -31,7 +31,7 @@ window.QA = (function () {
         padding:8px 12px; font-size:13px; color:var(--gray700,#334155);
         cursor:pointer; transition:background .1s; user-select:none;
       }
-      .qa-opt:hover { background:var(--gray50,#f8fafc); }
+      .qa-opt:hover, .qa-opt.qa-hl { background:var(--gray50,#f8fafc); }
       .qa-opt.qa-selected { background:var(--blue-light,#eff6ff); color:var(--blue,#3b82f6); font-weight:600; }
       .qa-opt.qa-add-opt { color:var(--blue,#3b82f6); font-weight:600; border-top:1px solid var(--gray100,#f1f5f9); }
       .qa-opt.qa-add-opt:hover { background:var(--blue-light,#eff6ff); }
@@ -123,7 +123,28 @@ window.QA = (function () {
       if (!isOpen) { panel.classList.add('qa-open'); isOpen = true; }
     });
     input.addEventListener('keydown', e => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') { close(); return; }
+      if (!isOpen) return;
+      const opts_list = panel.querySelectorAll('.qa-opt:not(.qa-empty)');
+      if (!opts_list.length) return;
+      let idx = [...opts_list].findIndex(o => o.classList.contains('qa-hl'));
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        idx = idx < opts_list.length - 1 ? idx + 1 : 0;
+        opts_list.forEach(o => o.classList.remove('qa-hl'));
+        opts_list[idx].classList.add('qa-hl');
+        opts_list[idx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        idx = idx > 0 ? idx - 1 : opts_list.length - 1;
+        opts_list.forEach(o => o.classList.remove('qa-hl'));
+        opts_list[idx].classList.add('qa-hl');
+        opts_list[idx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const hl = panel.querySelector('.qa-opt.qa-hl');
+        if (hl) hl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      }
     });
     input.addEventListener('blur', () => {
       // Delay so panel click can fire first
