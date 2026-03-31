@@ -287,27 +287,26 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
 
     <!-- TABS -->
     <div class="tabs-row">
-      <button class="tab-btn active" onclick="setTab(this,'orders')" data-i18n="tab_purchase_orders"><span data-i18n="lbl_purchase_orders">Purchase Orders</span></button>
-      <button class="tab-btn" onclick="setTab(this,'suppliers')" data-i18n="tab_suppliers"><span data-i18n="btn_suppliers">Suppliers</span></button>
+      <button class="tab-btn active" id="tab-btn-orders" onclick="setTab(this,'orders')"><span data-i18n="tab_orders">Siparişler</span></button>
+      <button class="tab-btn" id="tab-btn-invoices" onclick="setTab(this,'invoices')"><span data-i18n="tab_invoices">Faturalar</span></button>
+      <button class="tab-btn" onclick="setTab(this,'suppliers')"><span data-i18n="btn_suppliers">Tedarikçiler</span></button>
     </div>
 
-    <!-- ORDERS TAB -->
+    <!-- ORDERS TAB (draft + confirmed) -->
     <div id="tab-orders">
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="order-search" placeholder="Search orders..." data-i18n-ph="search_orders" oninput="filterOrders()">
+          <input type="text" id="order-search" placeholder="" data-i18n-placeholder="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="">All Status</option>
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="sent" data-i18n="status_sent">Sent</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="received" data-i18n="status_received">Received</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="" data-i18n="all_status">Tüm Durum</option>
+          <option value="draft" data-i18n="status_draft">Taslak</option>
+          <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
+          <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
         <select class="filter-select" id="filter-supplier" onchange="filterOrders()">
-          <option value="">All Suppliers</option>
+          <option value="" data-i18n="lbl_all_suppliers">Tüm Tedarikçiler</option>
         </select>
       </div>
       <div class="table-card">
@@ -327,6 +326,38 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
             <tbody id="orders-tbody">
               <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🛒</div><h3>No purchase orders yet</h3><p>Create your first purchase order.</p><button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button></div></td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICES TAB (invoiced + paid) -->
+    <div id="tab-invoices" style="display:none">
+      <div class="filters-row">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="invoice-search" placeholder="" data-i18n-placeholder="search_invoices" oninput="filterInvoices()">
+        </div>
+        <select class="filter-select" id="filter-inv-status" onchange="filterInvoices()">
+          <option value="" data-i18n="all_status">Tüm Durum</option>
+          <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
+          <option value="paid" data-i18n="status_paid">Ödendi</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><span data-i18n="col_po_number">Sipariş No</span></th>
+                <th><span data-i18n="col_supplier">Tedarikçi</span></th>
+                <th><span data-i18n="col_date">Tarih</span></th>
+                <th><span data-i18n="col_total">Toplam</span></th>
+                <th><span data-i18n="col_status">Durum</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="invoices-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -385,11 +416,11 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <div class="field">
         <label data-i18n="col_status">Status</label>
         <select id="o-status">
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="sent" data-i18n="status_sent">Sent to Supplier</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="received" data-i18n="status_received">Received</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="draft" data-i18n="status_draft">Taslak</option>
+          <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
+          <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
+          <option value="paid" data-i18n="status_paid">Ödendi</option>
+          <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
       </div>
       <div class="field">
@@ -598,7 +629,7 @@ let supplierQA = null;
 let _qaProductCb = null;
 let orderItems = [];
 
-const statusBadge = { draft:'badge-gray', sent:'badge-blue', confirmed:'badge-purple', received:'badge-green', cancelled:'badge-red' };
+const statusBadge = { draft:'badge-gray', confirmed:'badge-blue', invoiced:'badge-purple', paid:'badge-green', cancelled:'badge-red' };
 const statusLabel = {};
 function getStatusLabels() {
   return { draft:t('status_draft'), sent:t('status_sent'), confirmed:t('status_confirmed'), received:t('status_received'), cancelled:t('status_cancelled') };
@@ -630,6 +661,11 @@ await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRat
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
 
   const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  if (view === 'invoices') {
+    const btn = document.getElementById('tab-btn-invoices');
+    if (btn) setTab(btn, 'invoices');
+  }
   if (params.get('action') === 'new') { openOrderModal(); }
   else if (params.get('action') === 'edit' && params.get('id')) { editOrder(params.get('id')); }
 }
@@ -684,19 +720,45 @@ function renderOrders(list) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🛒</div><h3>${t('no_po_found')}</h3><p>${t('no_po_sub')}</p><button class="btn btn-primary" onclick="openOrderModal()">${t('btn_new_po')}</button></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = list.map(o => `<tr>
+  tbody.innerHTML = list.map(o => {
+    let flowBtn = '';
+    if (o.status === 'draft') flowBtn = `<button class="btn btn-sm btn-outline" onclick="updateOrderStatus('${o.id}','confirmed')">${t('btn_confirm')||'Onayla'}</button>`;
+    else if (o.status === 'confirmed') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','invoiced')">${t('btn_invoice')||'Faturalandır'}</button>`;
+    return `<tr>
     <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
     <td><strong>${o.suppliers?.name||'—'}</strong></td>
     <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
-    <td style="color:${o.expected_date && new Date(o.expected_date) < new Date() && o.status !== 'received' ? 'var(--red)' : 'var(--gray500)'}">${o.expected_date||'—'}</td>
+    <td style="color:var(--gray500)">${o.expected_date||'—'}</td>
     <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
     <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
+    <td>${flowBtn}</td>
     <td><div class="row-actions">
-      ${o.status !== 'received' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
+      ${o.status === 'confirmed' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
       <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>
       <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>
     </div></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
+}
+
+function renderInvoices(list) {
+  const tbody = document.getElementById('invoices-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧾</div><h3>${t('no_invoices')||'Henüz fatura yok'}</h3></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(o => {
+    let flowBtn = '';
+    if (o.status === 'invoiced') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
+    return `<tr>
+      <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
+      <td><strong>${o.suppliers?.name||'—'}</strong></td>
+      <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
+      <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
+      <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
+      <td>${flowBtn}</td>
+    </tr>`;
+  }).join('');
 }
 
 function renderSuppliers(list) {
@@ -783,11 +845,40 @@ function filterOrders() {
   const q = document.getElementById('order-search').value.toLowerCase();
   const status = document.getElementById('filter-status').value;
   const suppId = document.getElementById('filter-supplier').value;
-  renderOrders(orders.filter(o =>
-    (!q || o.order_number.toLowerCase().includes(q) || (o.suppliers?.name||'').toLowerCase().includes(q)) &&
-    (!status || o.status === status) &&
-    (!suppId || o.supplier_id === suppId)
-  ));
+  renderOrders(orders.filter(o => {
+    if (!['draft','confirmed','cancelled'].includes(o.status)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.suppliers?.name||'').toLowerCase().includes(q)) return false;
+    if (status && o.status !== status) return false;
+    if (suppId && o.supplier_id !== suppId) return false;
+    return true;
+  }));
+}
+
+function filterInvoices() {
+  const q = (document.getElementById('invoice-search')?.value || '').toLowerCase();
+  const status = document.getElementById('filter-inv-status')?.value || '';
+  renderInvoices(orders.filter(o => {
+    if (!['invoiced','paid'].includes(o.status)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.suppliers?.name||'').toLowerCase().includes(q)) return false;
+    if (status && o.status !== status) return false;
+    return true;
+  }));
+}
+
+async function updateOrderStatus(id, newStatus) {
+  if (newStatus === 'invoiced') {
+    const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
+    if (!prof?.plan || prof.plan === 'free') {
+      const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
+      if (cnt >= 30) { showInvoiceLimitModal(); return; }
+    }
+  }
+  const { error } = await sb.from('purchase_orders').update({ status: newStatus }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_status_updated') || 'Durum güncellendi', 'success');
+  await loadOrders();
+  filterOrders();
+  filterInvoices();
 }
 
 function filterSuppliers() {
@@ -942,17 +1033,6 @@ async function saveOrder() {
   const validItems = orderItems.filter(i => i.qty > 0 && (i.product_id || i.description));
   if (!validItems.length) { showToast(t('toast_add_item'), 'error'); return; }
 
-  // Free plan invoice limit check (only on new orders)
-  if (!editingOrderId) {
-    const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
-    if (!prof?.plan || prof.plan === 'free') {
-      const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
-      if (cnt >= 4) { // TODO: test limiti, 30'a geri al
-        showInvoiceLimitModal();
-        return;
-      }
-    }
-  }
 
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price, 0);
   const selectedTax = getSelectedTaxRate();
@@ -1208,8 +1288,12 @@ async function deleteSupplier(id) {
 function setTab(btn,tab) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('tab-orders').style.display = tab==='orders'?'block':'none';
-  document.getElementById('tab-suppliers').style.display = tab==='suppliers'?'block':'none';
+  ['orders','invoices','suppliers'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab === 'invoices') filterInvoices();
+  if (tab === 'orders') filterOrders();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

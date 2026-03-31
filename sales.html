@@ -294,28 +294,26 @@ tr:hover .row-actions{opacity:1}
 
     <!-- TABS -->
     <div class="tabs-row">
-      <button class="tab-btn active" onclick="setTab(this,'orders')"><span data-i18n="tab_orders"><span data-i18n="tab_orders">Orders & Invoices</span></span></button>
-      <button class="tab-btn" onclick="setTab(this,'customers')"><span data-i18n="tab_customers">Customers</span></button>
-      <button class="tab-btn" onclick="setTab(this,'payments')"><span data-i18n="tab_payments"><span data-i18n="tab_payments">Payments</span></span></button>
+      <button class="tab-btn active" id="tab-btn-orders" onclick="setTab(this,'orders')"><span data-i18n="tab_orders">Siparişler</span></button>
+      <button class="tab-btn" id="tab-btn-invoices" onclick="setTab(this,'invoices')"><span data-i18n="tab_invoices">Faturalar</span></button>
+      <button class="tab-btn" onclick="setTab(this,'payments')"><span data-i18n="tab_payments">Ödemeler</span></button>
     </div>
 
-    <!-- ORDERS TAB -->
+    <!-- ORDERS TAB (draft + confirmed) -->
     <div id="tab-orders">
       <div class="filters-row">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="order-search" placeholder=""  data-i18n-placeholder="search_orders" oninput="filterOrders()">
+          <input type="text" id="order-search" placeholder="" data-i18n-placeholder="search_orders" oninput="filterOrders()">
         </div>
         <select class="filter-select" id="filter-status" onchange="filterOrders()">
-          <option value="" data-i18n="all_status">All Status</option>
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="shipped" data-i18n="status_shipped">Shipped</option>
-          <option value="delivered" data-i18n="status_delivered">Delivered</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="" data-i18n="all_status">Tüm Durum</option>
+          <option value="draft" data-i18n="status_draft">Taslak</option>
+          <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
+          <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
         <select class="filter-select" id="filter-customer" onchange="filterOrders()">
-          <option value="" data-i18n="lbl_all_customers">All Customers</option>
+          <option value="" data-i18n="lbl_all_customers">Tüm Müşteriler</option>
         </select>
       </div>
       <div class="table-card">
@@ -336,6 +334,40 @@ tr:hover .row-actions{opacity:1}
             <tbody id="orders-tbody">
               <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3><span data-i18n="no_orders_found">No orders yet</span></h3><p><span data-i18n="no_orders_sub">Create your first order to get started.</span></p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICES TAB (invoiced + paid + overdue) -->
+    <div id="tab-invoices" style="display:none">
+      <div class="filters-row">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="invoice-search" placeholder="" data-i18n-placeholder="search_invoices" oninput="filterInvoices()">
+        </div>
+        <select class="filter-select" id="filter-inv-status" onchange="filterInvoices()">
+          <option value="" data-i18n="all_status">Tüm Durum</option>
+          <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
+          <option value="paid" data-i18n="status_paid">Ödendi</option>
+          <option value="overdue" data-i18n="status_overdue">Gecikmiş</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><span data-i18n="col_invoice_no">Fatura No</span></th>
+                <th><span data-i18n="col_customer">Müşteri</span></th>
+                <th><span data-i18n="col_date">Tarih</span></th>
+                <th><span data-i18n="col_due_date">Vade</span></th>
+                <th><span data-i18n="col_total">Toplam</span></th>
+                <th><span data-i18n="col_status">Durum</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="invoices-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -410,11 +442,11 @@ tr:hover .row-actions{opacity:1}
       <div class="field">
         <label><span data-i18n="col_status">Status</span></label>
         <select id="o-status">
-          <option value="draft" data-i18n="status_draft">Draft</option>
-          <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
-          <option value="shipped" data-i18n="status_shipped">Shipped</option>
-          <option value="delivered" data-i18n="status_delivered">Delivered</option>
-          <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          <option value="draft" data-i18n="status_draft">Taslak</option>
+          <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
+          <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
+          <option value="paid" data-i18n="status_paid">Ödendi</option>
+          <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
       </div>
       <div class="field">
@@ -675,10 +707,16 @@ await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRat
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
 
-  // Handle URL params: ?action=new or ?action=edit&id=XXX
+  // Handle URL params
   const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  if (view === 'invoices') {
+    const btn = document.getElementById('tab-btn-invoices');
+    if (btn) setTab(btn, 'invoices');
+  }
   if (params.get('action') === 'new') { openOrderModal(); }
   else if (params.get('action') === 'edit' && params.get('id')) { editOrder(params.get('id')); }
+  refreshStatusLabels();
 }
 
 // ===== LOAD =====
@@ -727,8 +765,11 @@ async function loadPayments() {
 }
 
 // ===== RENDER ORDERS =====
-const statusBadge = { draft:'badge-gray', confirmed:'badge-blue', shipped:'badge-orange', delivered:'badge-green', cancelled:'badge-red' };
-const statusLabel = { draft:'Draft', confirmed:'Confirmed', shipped:'Shipped', delivered:'Delivered', cancelled:'Cancelled' };
+const statusBadge = { draft:'badge-gray', confirmed:'badge-blue', invoiced:'badge-purple', paid:'badge-green', overdue:'badge-red', cancelled:'badge-red' };
+const statusLabel = {};
+function refreshStatusLabels() {
+  Object.assign(statusLabel, { draft:t('status_draft')||'Taslak', confirmed:t('status_confirmed')||'Onaylandı', invoiced:t('status_invoiced')||'Faturalandı', paid:t('status_paid')||'Ödendi', overdue:t('status_overdue')||'Gecikmiş', cancelled:t('status_cancelled')||'İptal' });
+}
 
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
@@ -736,25 +777,51 @@ function renderOrders(list) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_orders_found')||'No orders found'}</h3><p>${t('no_orders_sub')||'Create your first order.'}</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
     return;
   }
-  const paidOrders = new Set(payments.map(p => p.order_id));
+  refreshStatusLabels();
   tbody.innerHTML = list.map(o => {
-    const isPaid = paidOrders.has(o.id);
-    const paidAmt = payments.filter(p => p.order_id === o.id).reduce((s,p) => s + parseFloat(p.amount), 0);
-    const remaining = parseFloat(o.total) - paidAmt;
-    const payBadge = isPaid || remaining <= 0 ? '<span class="badge badge-green">Paid</span>' : paidAmt > 0 ? `<span class="badge badge-orange">Partial</span>` : '<span class="badge badge-red">Unpaid</span>';
+    // Flow action button
+    let flowBtn = '';
+    if (o.status === 'draft') flowBtn = `<button class="btn btn-sm btn-outline" onclick="updateOrderStatus('${o.id}','confirmed')">${t('btn_confirm')||'Onayla'}</button>`;
+    else if (o.status === 'confirmed') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','invoiced')">${t('btn_invoice')||'Faturalandır'}</button>`;
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
       <td><strong>${o.customers?.name || '—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date || '—'}</td>
-      <td style="color:${o.due_date && new Date(o.due_date) < new Date() && remaining > 0 ? 'var(--red)' : 'var(--gray500)'}">${o.due_date || '—'}</td>
+      <td style="color:var(--gray500)">${o.due_date || '—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${statusLabel[o.status]||o.status}</span></td>
-      <td>${payBadge}</td>
+      <td>${flowBtn}</td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="Invoice">🧾</button>
-        <button class="btn btn-sm btn-success btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)-paidAmt}')" title="Record Payment">💳</button>
         <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>
         <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderInvoices(list) {
+  const tbody = document.getElementById('invoices-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧾</div><h3>${t('no_invoices')||'Henüz fatura yok'}</h3></div></td></tr>`;
+    return;
+  }
+  refreshStatusLabels();
+  tbody.innerHTML = list.map(o => {
+    const isOverdue = o.status === 'invoiced' && o.due_date && new Date(o.due_date) < new Date();
+    const displayStatus = isOverdue ? 'overdue' : o.status;
+    let flowBtn = '';
+    if (o.status === 'invoiced' || isOverdue) flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
+    return `<tr style="${isOverdue ? 'background:#fef2f2' : ''}">
+      <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
+      <td><strong>${o.customers?.name || '—'}</strong></td>
+      <td style="color:var(--gray500)">${o.issue_date || '—'}</td>
+      <td style="color:${isOverdue ? 'var(--red);font-weight:700' : 'var(--gray500)'}">${o.due_date || '—'}</td>
+      <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
+      <td><span class="badge ${statusBadge[displayStatus]||'badge-gray'}">${statusLabel[displayStatus]||displayStatus}</span></td>
+      <td><div class="row-actions">
+        ${flowBtn}
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="PDF">🧾</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Payment">💳</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -829,11 +896,29 @@ function filterOrders() {
   const q = document.getElementById('order-search').value.toLowerCase();
   const status = document.getElementById('filter-status').value;
   const custId = document.getElementById('filter-customer').value;
-  renderOrders(orders.filter(o =>
-    (!q || o.order_number.toLowerCase().includes(q) || (o.customers?.name||'').toLowerCase().includes(q)) &&
-    (!status || o.status === status) &&
-    (!custId || o.customer_id === custId)
-  ));
+  renderOrders(orders.filter(o => {
+    if (!['draft','confirmed','cancelled'].includes(o.status)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.customers?.name||'').toLowerCase().includes(q)) return false;
+    if (status && o.status !== status) return false;
+    if (custId && o.customer_id !== custId) return false;
+    return true;
+  }));
+}
+
+function filterInvoices() {
+  const q = (document.getElementById('invoice-search')?.value || '').toLowerCase();
+  const status = document.getElementById('filter-inv-status')?.value || '';
+  renderInvoices(orders.filter(o => {
+    if (!['invoiced','paid','overdue'].includes(o.status)) {
+      // Also show invoiced with overdue due_date
+      if (o.status === 'invoiced' && o.due_date && new Date(o.due_date) < new Date()) { /* include */ }
+      else if (!['invoiced','paid'].includes(o.status)) return false;
+    }
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.customers?.name||'').toLowerCase().includes(q)) return false;
+    if (status === 'overdue') { return o.status === 'invoiced' && o.due_date && new Date(o.due_date) < new Date(); }
+    if (status && o.status !== status) return false;
+    return true;
+  }));
 }
 
 function filterCustomers() {
@@ -1022,18 +1107,6 @@ async function saveOrder() {
   if (!customerId) { showToast(t('err_select_customer'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && i.price >= 0 && (i.product_id || i.description));
   if (!validItems.length) { showToast(t('err_add_item'), 'error'); return; }
-
-  // Free plan invoice limit check (only on new orders)
-  if (!editingOrderId) {
-    const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
-    if (!prof?.plan || prof.plan === 'free') {
-      const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
-      if (cnt >= 4) { // TODO: test limiti, 30'a geri al
-        showInvoiceLimitModal();
-        return;
-      }
-    }
-  }
 
   const subtotal = validItems.reduce((s,i) => s + i.qty * i.price * (1-(i.disc||0)/100), 0);
   const selectedTax = getSelectedTaxRate();
@@ -1445,7 +1518,31 @@ function onPayMethodChange() {
 function setTab(btn, tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['orders','customers','payments'].forEach(t => document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none');
+  ['orders','invoices','payments'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab === 'invoices') filterInvoices();
+  if (tab === 'orders') filterOrders();
+}
+
+async function updateOrderStatus(id, newStatus) {
+  // Invoice limit check when creating invoice
+  if (newStatus === 'invoiced') {
+    const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
+    if (!prof?.plan || prof.plan === 'free') {
+      const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
+      if (cnt >= 30) { showInvoiceLimitModal(); return; }
+    }
+  }
+  const { error } = await sb.from('sales_orders').update({ status: newStatus }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_status_updated') || 'Durum güncellendi', 'success');
+  await loadOrders();
+  await loadPayments();
+  filterOrders();
+  filterInvoices();
+  updateStats();
 }
 
 // ===== HELPERS =====

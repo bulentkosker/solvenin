@@ -378,14 +378,16 @@
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
           children: [
-            { key: 'nav_sales_orders', href: 'sales.html' },
-            { key: 'nav_payments',     href: 'sales.html#payments' },
+            { key: 'nav_sales_orders',   href: 'sales.html?view=orders' },
+            { key: 'nav_sales_invoices', href: 'sales.html?view=invoices' },
+            { key: 'nav_payments',       href: 'sales.html#payments' },
           ]
         },
         {
           icon: '🛒', key: 'nav_purchasing', href: 'purchasing.html',
           children: [
-            { key: 'nav_purchase_orders', href: 'purchasing.html' },
+            { key: 'nav_purchase_orders',   href: 'purchasing.html?view=orders' },
+            { key: 'nav_purchase_invoices', href: 'purchasing.html?view=invoices' },
           ]
         },
         { icon: '🏭', key: 'nav_production', href: 'production.html' },
