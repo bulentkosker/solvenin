@@ -380,6 +380,7 @@ input[type=number]{-moz-appearance:textfield}
         </div>
       </div>
     </div>
+  </div> <!-- /#list-view -->
 
 <!-- ORDER FULL PAGE VIEW -->
 <div id="order-form-view" style="display:none">
@@ -884,8 +885,9 @@ document.addEventListener('keydown', e => {
 });
 
 function showOrderFormView() {
+  console.log('[sales] showOrderFormView called');
   document.getElementById('list-view').style.display = 'none';
-  document.getElementById('order-form-view').style.display = '';
+  document.getElementById('order-form-view').style.display = 'block';
   history.replaceState(null, '', editingOrderId ? `sales.html?action=edit&id=${editingOrderId}` : 'sales.html?action=new');
 }
 
@@ -902,6 +904,7 @@ function toggleDescCol() {
 }
 
 function openOrderModal() {
+  console.log('[sales] openOrderModal called');
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
