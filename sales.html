@@ -466,9 +466,8 @@ input[type=number]{-moz-appearance:textfield}
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-bottom:40px">
-      <button class="btn btn-outline" onclick="closeOrderForm()">Cancel</button>
-      <button class="btn btn-outline" onclick="saveOrder('draft')"><span data-i18n="btn_save_draft">Save as Draft</span></button>
-      <button class="btn btn-primary" onclick="saveOrder('confirmed')"><span data-i18n="btn_confirm_order">Confirm Order</span></button>
+      <button class="btn btn-outline" onclick="closeOrderForm()" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveOrder()" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -875,7 +874,7 @@ let _descVisible = false;
 document.addEventListener('keydown', e => {
   const formVisible = document.getElementById('order-form-view')?.style.display !== 'none';
   if (!formVisible) return;
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveOrder('confirmed'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveOrder(); }
   else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addOrderItem(); }
   else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
     if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
@@ -1053,7 +1052,7 @@ function recalcOrder() {
   document.getElementById('sum-total').textContent = fmt(Math.max(0,total).toFixed(2));
 }
 
-async function saveOrder(statusOverride) {
+async function saveOrder() {
   const customerId = document.getElementById('o-customer').value;
   if (!customerId) { showToast(t('err_select_customer'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && i.price >= 0 && (i.product_id || i.description));
@@ -1084,7 +1083,7 @@ async function saveOrder(statusOverride) {
     company_id: companyId,
     customer_id: customerId,
     order_number: document.getElementById('o-number').value || 'INV-' + Date.now(),
-    status: statusOverride || document.getElementById('o-status').value,
+    status: document.getElementById('o-status').value,
     issue_date: document.getElementById('o-date').value,
     due_date: document.getElementById('o-duedate').value || null,
     subtotal, tax_rate: taxRateValue, tax_rate_id: taxRateId, tax_amount: taxAmt, discount, total,
