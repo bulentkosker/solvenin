@@ -1072,7 +1072,6 @@ async function saveOrder() {
     description: i.description, quantity: i.qty, unit_price: i.price,
     discount: i.disc || 0, total: i.qty * i.price * (1-(i.disc||0)/100),
     warehouse_id: i.warehouse_id || null,
-    tax_rate_id: taxRateId || null,
     tax_rate_value: taxRateValue || 0
   }))).select();
 
