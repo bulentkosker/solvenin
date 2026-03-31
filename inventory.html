@@ -222,6 +222,7 @@ tr:hover .action-btns { opacity:1; }
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
+  <script src="utils.js"></script>
   <script src="quickadd.js"></script>
   <link rel="stylesheet" href="theme.css">
 </head>
@@ -650,9 +651,11 @@ const sb = createClient(
 window._supabase = sb;
 
 // Currency formatting - uses sidebar.js global
+  <script src="utils.js"></script>
 function fmt(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtShort(amount) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; const n=parseFloat(amount||0); if(n>=1000000) return sym+(n/1000000).toFixed(1)+'M'; if(n>=1000) return sym+(n/1000).toFixed(1)+'K'; return sym+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
  // expose for sidebar.js
+  <script src="utils.js"></script>
 
 // ===== STATE =====
 let companyId = null, currentUser = null;

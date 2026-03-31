@@ -1980,7 +1980,7 @@ const T = window.T = {
     col_issue_date:'Issue Date',
     lbl_company_info:'Company Information',
     lbl_company_info_sub:'Basic details about your company',
-    lbl_loading:'Loading...',
+    lbl_loading:'Loading...', lbl_search:'Search', no_data_found:'No data found',
     fc4_5:'Refund Policy',
     fc4_6:'Pricing',
     // INVENTORY - new keys
@@ -2788,7 +2788,7 @@ const T = window.T = {
     col_expected:'Beklenen',
     lbl_company_info:'Şirket Bilgileri',
     lbl_company_info_sub:'Şirketiniz hakkında temel bilgiler',
-    lbl_loading:'Yükleniyor...',
+    lbl_loading:'Yükleniyor...', lbl_search:'Ara', no_data_found:'Veri bulunamadı',
     fc4_5:'İade Politikası',
     fc4_6:'Fiyatlandırma',
 
