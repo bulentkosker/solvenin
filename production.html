@@ -406,7 +406,7 @@
 <div class="modal-overlay" id="order-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <div class="modal-title" id="order-modal-title" data-i18n="title_new_order">New Production Order</div>
+      <div class="modal-title" id="order-modal-title" data-i18n="title_new_prod_order">New Production Order</div>
       <button class="modal-close" onclick="closeOrderModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -939,7 +939,7 @@ function openOrderModal(id) {
   document.getElementById('order-preview').style.display = 'none';
 
   if (id) {
-    document.getElementById('order-modal-title').textContent = t('title_edit_order');
+    document.getElementById('order-modal-title').textContent = t('title_edit_prod_order');
     const order = orders.find(o => o.id === id);
     if (order) {
       document.getElementById('order-bom-id').value = order.bom_id || '';
@@ -950,7 +950,7 @@ function openOrderModal(id) {
       updateOrderPreview();
     }
   } else {
-    document.getElementById('order-modal-title').textContent = t('title_new_order');
+    document.getElementById('order-modal-title').textContent = t('title_new_prod_order');
   }
 
   populateBomSelect();
