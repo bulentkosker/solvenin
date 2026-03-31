@@ -671,7 +671,7 @@ await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRat
 }
 
 async function loadOrders() {
-  const { data } = await sb.from('purchase_orders').select('*, suppliers(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  const { data } = await sb.from('purchase_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
   renderOrders(orders);
   updateStats();
@@ -726,7 +726,7 @@ function renderOrders(list) {
     else if (o.status === 'confirmed') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','invoiced')">${t('btn_invoice')||'Faturalandır'}</button>`;
     return `<tr>
     <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
-    <td><strong>${o.suppliers?.name||'—'}</strong></td>
+    <td><strong>${o.contacts?.name||'—'}</strong></td>
     <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
     <td style="color:var(--gray500)">${o.expected_date||'—'}</td>
     <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
@@ -752,7 +752,7 @@ function renderInvoices(list) {
     if (o.status === 'invoiced') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
-      <td><strong>${o.suppliers?.name||'—'}</strong></td>
+      <td><strong>${o.contacts?.name||'—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
@@ -847,7 +847,7 @@ function filterOrders() {
   const suppId = document.getElementById('filter-supplier').value;
   renderOrders(orders.filter(o => {
     if (!['draft','confirmed','cancelled'].includes(o.status)) return false;
-    if (q && !o.order_number.toLowerCase().includes(q) && !(o.suppliers?.name||'').toLowerCase().includes(q)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status && o.status !== status) return false;
     if (suppId && o.supplier_id !== suppId) return false;
     return true;
@@ -859,7 +859,7 @@ function filterInvoices() {
   const status = document.getElementById('filter-inv-status')?.value || '';
   renderInvoices(orders.filter(o => {
     if (!['invoiced','paid'].includes(o.status)) return false;
-    if (q && !o.order_number.toLowerCase().includes(q) && !(o.suppliers?.name||'').toLowerCase().includes(q)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status && o.status !== status) return false;
     return true;
   }));

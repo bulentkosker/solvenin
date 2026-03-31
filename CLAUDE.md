@@ -61,6 +61,21 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Infinite recursion riski: company_users'a referans veren policy'lerde SECURITY DEFINER kullan
 - contacts, user_permissions: `= ANY(get_my_company_ids())` ile
 
+## Supabase SQL Execution
+- `exec_sql(query text)` — SECURITY DEFINER helper fonksiyonu
+- Tüm migration'lar node + service key ile çalıştırılır (SQL Editor'e gerek yok)
+- `.env` dosyasında: SUPABASE_URL, SUPABASE_SERVICE_KEY
+
+## Order Status Flow
+- Sales: draft → confirmed → invoiced → paid (overdue: invoiced + due_date geçmiş)
+- Purchase: draft → confirmed → invoiced → paid
+- Fatura limiti sadece invoiced/paid/overdue sayar (draft/confirmed hariç)
+
+## FK Relationships
+- `sales_orders.customer_id` → `contacts.id` (FK: sales_orders_customer_id_fkey)
+- `purchase_orders.supplier_id` → `contacts.id` (FK: purchase_orders_supplier_id_fkey)
+- Supabase join: `select('*, contacts(name)')` — eski `customers(name)` artık geçersiz
+
 ## Edge Functions
 - `create-user` — JWT verification OFF, yeni kullanıcı oluşturur
   - skip_company_creation flag ile trigger temizliği yapar

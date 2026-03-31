@@ -721,7 +721,7 @@ await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRat
 
 // ===== LOAD =====
 async function loadOrders() {
-  const { data } = await sb.from('sales_orders').select('*, customers(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  const { data } = await sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
   renderOrders(orders);
   updateStats();
@@ -759,7 +759,7 @@ function populateTaxSelect() {
 }
 
 async function loadPayments() {
-  const { data } = await sb.from('payments').select('*, sales_orders(order_number, customers(name))').eq('company_id', companyId).order('paid_at', { ascending: false });
+  const { data } = await sb.from('payments').select('*, sales_orders(order_number, contacts(name))').eq('company_id', companyId).order('paid_at', { ascending: false });
   payments = data || [];
   renderPayments(payments);
 }
@@ -785,7 +785,7 @@ function renderOrders(list) {
     else if (o.status === 'confirmed') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','invoiced')">${t('btn_invoice')||'Faturalandır'}</button>`;
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
-      <td><strong>${o.customers?.name || '—'}</strong></td>
+      <td><strong>${o.contacts?.name || '—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date || '—'}</td>
       <td style="color:var(--gray500)">${o.due_date || '—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
@@ -813,7 +813,7 @@ function renderInvoices(list) {
     if (o.status === 'invoiced' || isOverdue) flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
     return `<tr style="${isOverdue ? 'background:#fef2f2' : ''}">
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
-      <td><strong>${o.customers?.name || '—'}</strong></td>
+      <td><strong>${o.contacts?.name || '—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date || '—'}</td>
       <td style="color:${isOverdue ? 'var(--red);font-weight:700' : 'var(--gray500)'}">${o.due_date || '—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
@@ -859,7 +859,7 @@ function renderPayments(list) {
   const methodLabel = { cash:'💵 Cash', bank:'🏦 Bank', card:'💳 Card', other:'📋 Other' };
   tbody.innerHTML = list.map(p => `<tr>
     <td><strong style="color:var(--blue)">${p.sales_orders?.order_number||'—'}</strong></td>
-    <td>${p.sales_orders?.customers?.name||'—'}</td>
+    <td>${p.sales_orders?.contacts?.name||'—'}</td>
     <td><strong>${fmt(parseFloat(p.amount))}</strong></td>
     <td>${methodLabel[p.method]||p.method}</td>
     <td><code style="font-size:11px">${p.reference||'—'}</code></td>
@@ -898,7 +898,7 @@ function filterOrders() {
   const custId = document.getElementById('filter-customer').value;
   renderOrders(orders.filter(o => {
     if (!['draft','confirmed','cancelled'].includes(o.status)) return false;
-    if (q && !o.order_number.toLowerCase().includes(q) && !(o.customers?.name||'').toLowerCase().includes(q)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status && o.status !== status) return false;
     if (custId && o.customer_id !== custId) return false;
     return true;
@@ -914,7 +914,7 @@ function filterInvoices() {
       if (o.status === 'invoiced' && o.due_date && new Date(o.due_date) < new Date()) { /* include */ }
       else if (!['invoiced','paid'].includes(o.status)) return false;
     }
-    if (q && !o.order_number.toLowerCase().includes(q) && !(o.customers?.name||'').toLowerCase().includes(q)) return false;
+    if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status === 'overdue') { return o.status === 'invoiced' && o.due_date && new Date(o.due_date) < new Date(); }
     if (status && o.status !== status) return false;
     return true;
