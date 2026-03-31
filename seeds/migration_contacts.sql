@@ -1,6 +1,6 @@
 -- ============================================================
 -- Migration: Merge customers + suppliers → contacts
--- Run in Supabase SQL Editor — Step by step
+-- Run EACH STEP separately in Supabase SQL Editor
 -- ============================================================
 
 -- =====================
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   company_id uuid REFERENCES companies(id) ON DELETE CASCADE,
   name varchar(255) NOT NULL,
-  type varchar(20) DEFAULT 'customer', -- customer, supplier, both
+  type varchar(20) DEFAULT 'customer',
   is_customer boolean DEFAULT false,
   is_supplier boolean DEFAULT false,
   email varchar(255),
@@ -35,7 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_type ON contacts(company_id, is_customer, is_supplier);
 
 -- =====================
--- STEP 2: RLS
+-- STEP 2: RLS (run separately)
 -- =====================
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 
@@ -45,56 +45,40 @@ CREATE POLICY "Users can manage own company contacts"
   USING (company_id = ANY(get_my_company_ids()));
 
 -- =====================
--- STEP 3: Migrate customers → contacts
+-- STEP 3: Migrate customers → contacts (run separately)
+-- Only copies columns that exist in customers table
 -- =====================
 INSERT INTO contacts (id, company_id, name, is_customer, is_supplier, type,
-  email, phone, address, city, country, tax_number,
-  contact_person, notes, currency_code, is_active, deleted_at, deleted_by, created_at)
+  email, phone, address, city, country, tax_number, notes, is_active, created_at)
 SELECT id, company_id, name, true, false, 'customer',
-  email, phone, address, city, country, tax_number,
-  contact_person, notes,
-  COALESCE(currency_code, 'USD'),
-  is_active, deleted_at, deleted_by, created_at
+  email, phone, address, city, country, tax_number, notes, is_active, created_at
 FROM customers
 ON CONFLICT (id) DO NOTHING;
 
 -- =====================
--- STEP 4: Migrate suppliers → contacts
--- If same UUID exists (unlikely), mark as both
+-- STEP 4: Migrate suppliers → contacts (run separately)
 -- =====================
 INSERT INTO contacts (id, company_id, name, is_customer, is_supplier, type,
-  email, phone, address, city, country, tax_number,
-  contact_person, notes, currency_code, payment_terms,
-  is_active, deleted_at, deleted_by, created_at)
+  email, phone, address, city, country, tax_number, notes, is_active, created_at)
 SELECT id, company_id, name, false, true, 'supplier',
-  email, phone, address, city, country, tax_number,
-  contact_person, notes,
-  COALESCE(currency_code, 'USD'),
-  COALESCE(payment_terms, 30),
-  is_active, deleted_at, deleted_by, created_at
+  email, phone, address, city, country, tax_number, notes, is_active, created_at
 FROM suppliers
 ON CONFLICT (id) DO UPDATE SET
   is_supplier = true,
-  type = 'both',
-  payment_terms = COALESCE(EXCLUDED.payment_terms, contacts.payment_terms);
+  type = 'both';
 
 -- =====================
--- STEP 5: Update type column for consistency
+-- STEP 5: Sync extra columns if they exist (run separately, ignore errors)
 -- =====================
-UPDATE contacts SET type = 'both' WHERE is_customer = true AND is_supplier = true;
-UPDATE contacts SET type = 'customer' WHERE is_customer = true AND is_supplier = false;
-UPDATE contacts SET type = 'supplier' WHERE is_customer = false AND is_supplier = true;
+-- UPDATE contacts c SET contact_person = cu.contact_person FROM customers cu WHERE c.id = cu.id AND cu.contact_person IS NOT NULL;
+-- UPDATE contacts c SET currency_code = cu.currency_code FROM customers cu WHERE c.id = cu.id AND cu.currency_code IS NOT NULL;
+-- UPDATE contacts c SET payment_terms = su.payment_terms FROM suppliers su WHERE c.id = su.id AND su.payment_terms IS NOT NULL;
+-- UPDATE contacts c SET deleted_at = cu.deleted_at, deleted_by = cu.deleted_by FROM customers cu WHERE c.id = cu.id AND cu.deleted_at IS NOT NULL;
 
 -- =====================
--- STEP 6: Verify
+-- STEP 6: Verify (run separately)
 -- =====================
 SELECT type, count(*) FROM contacts GROUP BY type;
 SELECT count(*) as contacts_total FROM contacts;
 SELECT count(*) as customers_total FROM customers;
 SELECT count(*) as suppliers_total FROM suppliers;
-
--- =====================
--- NOTE: Do NOT drop customers/suppliers tables yet.
--- Frontend will be updated to use contacts first.
--- After verification, old tables can be dropped.
--- =====================
