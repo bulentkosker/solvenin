@@ -3464,6 +3464,7 @@ const T = window.T = {
     lbl_company_info:'Unternehmensinformationen',
     lbl_company_info_sub:'Grundlegende Angaben zu Ihrem Unternehmen',
     lbl_loading:'Wird geladen...',
+    nav_contacts:'Kontakte',page_contacts:'Kontakte',lbl_customer:'Kunde',lbl_supplier:'Lieferant',lbl_both:'Beides',filter_all:'Alle',filter_customers:'Kunden',filter_suppliers:'Lieferanten',lbl_search:'Suche',no_data_found:'Keine Daten gefunden',btn_new_contact:'+ Neuer Kontakt',toast_contact_saved:'Kontakt gespeichert',toast_contact_deleted:'Kontakt gelöscht',
     fc4_5:'Rückgaberecht',
     fc4_6:'Preise',
     table_stock_movements:'Lagerbewegungen',
@@ -4074,6 +4075,7 @@ const T = window.T = {
     lbl_company_info:'Informations sur l\'entreprise',
     lbl_company_info_sub:'Informations de base sur votre entreprise',
     lbl_loading:'Chargement...',
+    nav_contacts:'Contacts',page_contacts:'Contacts',lbl_customer:'Client',lbl_supplier:'Fournisseur',lbl_both:'Les deux',filter_all:'Tous',filter_customers:'Clients',filter_suppliers:'Fournisseurs',lbl_search:'Rechercher',no_data_found:'Aucune donnée trouvée',btn_new_contact:'+ Nouveau contact',toast_contact_saved:'Contact enregistré',toast_contact_deleted:'Contact supprimé',
     fc4_5:'Politique de remboursement',
     fc4_6:'Tarifs',
     table_stock_movements:'Mouvements de stock',
@@ -4683,6 +4685,7 @@ const T = window.T = {
     lbl_company_info:'Información de la empresa',
     lbl_company_info_sub:'Detalles básicos sobre su empresa',
     lbl_loading:'Cargando...',
+    nav_contacts:'Contactos',page_contacts:'Contactos',lbl_customer:'Cliente',lbl_supplier:'Proveedor',lbl_both:'Ambos',filter_all:'Todos',filter_customers:'Clientes',filter_suppliers:'Proveedores',lbl_search:'Buscar',no_data_found:'No se encontraron datos',btn_new_contact:'+ Nuevo contacto',toast_contact_saved:'Contacto guardado',toast_contact_deleted:'Contacto eliminado',
     fc4_5:'Política de reembolso',
     fc4_6:'Precios',
     table_stock_movements:'Movimientos de stock',
@@ -5261,7 +5264,7 @@ const T = window.T = {
     col_expected:'المتوقع',
     lbl_company_info:'معلومات الشركة',
     lbl_company_info_sub:'تفاصيل أساسية عن شركتك',
-    lbl_loading:'جاري التحميل...',
+    lbl_loading:'جاري التحميل...', nav_contacts:'جهات الاتصال',page_contacts:'جهات الاتصال',lbl_customer:'عميل',lbl_supplier:'مورد',lbl_both:'كلاهما',filter_all:'الكل',filter_customers:'العملاء',filter_suppliers:'الموردون',lbl_search:'بحث',no_data_found:'لا توجد بيانات',btn_new_contact:'+ جهة اتصال جديدة',toast_contact_saved:'تم الحفظ',toast_contact_deleted:'تم الحذف',
     fc4_5:'سياسة الاسترداد',
     fc4_6:'الأسعار',
     table_stock_movements:'حركات المخزون',
@@ -5839,7 +5842,7 @@ const T = window.T = {
     col_expected:'预期',
     lbl_company_info:'公司信息',
     lbl_company_info_sub:'公司基本信息',
-    lbl_loading:'加载中...',
+    lbl_loading:'加载中...', nav_contacts:'联系人',page_contacts:'联系人',lbl_customer:'客户',lbl_supplier:'供应商',lbl_both:'两者',filter_all:'全部',filter_customers:'客户',filter_suppliers:'供应商',lbl_search:'搜索',no_data_found:'未找到数据',btn_new_contact:'+ 新联系人',toast_contact_saved:'已保存',toast_contact_deleted:'已删除',
     fc4_5:'退款政策',
     fc4_6:'定价',
     table_stock_movements:'库存变动',
@@ -6488,6 +6491,7 @@ const T = window.T = {
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
     nav_purchasing:'Compras', nav_production:'Produção', nav_hr:'RH & Folha',
+    nav_contacts:'Contatos',page_contacts:'Contatos',lbl_customer:'Cliente',lbl_supplier:'Fornecedor',lbl_both:'Ambos',filter_all:'Todos',filter_customers:'Clientes',filter_suppliers:'Fornecedores',lbl_search:'Pesquisar',no_data_found:'Nenhum dado encontrado',btn_new_contact:'+ Novo contato',toast_contact_saved:'Contato salvo',toast_contact_deleted:'Contato excluído',
     page_shipping:'Envio & Logística', page_shipping_sub:'Gerir envios, veículos e motoristas',
     tab_shipments:'Envios', tab_vehicles:'Veículos', tab_drivers:'Motoristas',
     stat_in_transit:'Em trânsito', stat_delivered_today:'Entregue hoje', stat_available_vehicles:'Veículos disponíveis',
@@ -6846,7 +6850,7 @@ const T = window.T = {
     col_expected:'Ожидается',
     lbl_company_info:'Информация о компании',
     lbl_company_info_sub:'Основная информация о компании',
-    lbl_loading:'Загрузка...',
+    lbl_loading:'Загрузка...', nav_contacts:'Контакты',page_contacts:'Контакты',lbl_customer:'Клиент',lbl_supplier:'Поставщик',lbl_both:'Оба',filter_all:'Все',filter_customers:'Клиенты',filter_suppliers:'Поставщики',lbl_search:'Поиск',no_data_found:'Данные не найдены',btn_new_contact:'+ Новый контакт',toast_contact_saved:'Контакт сохранён',toast_contact_deleted:'Контакт удалён',
     fc4_5:'Политика возврата',
     fc4_6:'Цены',
     table_stock_movements:'Движения склада',
@@ -7431,7 +7435,7 @@ const T = window.T = {
     col_expected:'予定',
     lbl_company_info:'会社情報',
     lbl_company_info_sub:'会社の基本情報',
-    lbl_loading:'読み込み中...',
+    lbl_loading:'読み込み中...', nav_contacts:'連絡先',page_contacts:'連絡先',lbl_customer:'顧客',lbl_supplier:'サプライヤー',lbl_both:'両方',filter_all:'すべて',filter_customers:'顧客',filter_suppliers:'サプライヤー',lbl_search:'検索',no_data_found:'データなし',btn_new_contact:'+ 新規連絡先',toast_contact_saved:'保存しました',toast_contact_deleted:'削除しました',
     fc4_5:'返金ポリシー',
     fc4_6:'料金',
     table_stock_movements:'在庫移動',
@@ -7662,9 +7666,15 @@ function detectLang() {
   return SUPPORTED_LANGS.includes(browser) ? browser : 'en';
 }
 
+const _missingKeys = new Set();
 function t(key) {
   const lang = detectLang();
-  return (T[lang] && T[lang][key]) || (T['en'] && T['en'][key]) || key;
+  const val = (T[lang] && T[lang][key]) || (T['en'] && T['en'][key]);
+  if (!val && !_missingKeys.has(lang+':'+key)) {
+    _missingKeys.add(lang+':'+key);
+    console.warn(`[i18n] missing key "${key}" for lang "${lang}"`);
+  }
+  return val || key;
 }
 
 function applyTranslations() {
