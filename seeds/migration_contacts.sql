@@ -42,7 +42,7 @@ ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage own company contacts" ON contacts;
 CREATE POLICY "Users can manage own company contacts"
   ON contacts FOR ALL
-  USING (company_id IN (SELECT get_my_company_ids()));
+  USING (company_id = ANY(get_my_company_ids()));
 
 -- =====================
 -- STEP 3: Migrate customers → contacts
