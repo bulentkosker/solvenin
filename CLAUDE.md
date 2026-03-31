@@ -117,3 +117,13 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - `fix_company_users_rls.sql` — get_my_company_ids SECURITY DEFINER
 - `fix_company_users_insert_rls.sql` — get_my_admin_company_ids INSERT policy
 - `fix_company_plans.sql` — 'pro' → 'professional' normalizasyonu
+
+## Gelecek Planlar (Roadmap)
+- Web sitesi builder + E-ticaret modülü:
+  Müşteriler ERP'den kendi web sitelerini oluşturabilsin
+  E-ticaret siparişleri direkt ERP'ye düşsün
+  Stok, fatura, cari entegre çalışsın
+- Partner/Reseller ağı: Her ülkede satış+destek elemanı, gelir paylaşımı
+- API & Webhooks (Pro plan için)
+- Add-on: Telefon destek ($49/mo), Dedicated Manager ($99/mo), Kurulum ($199)
+- App Store: İleride ecosystem büyüyünce
