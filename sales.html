@@ -690,7 +690,7 @@ async function loadOrders() {
 }
 
 async function loadCustomers() {
-  const { data } = await sb.from('customers').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('contacts').select('*').eq('company_id', companyId).eq('is_active', true).eq('is_customer', true).order('name');
   customers = data || [];
   renderCustomers(customers);
   updateCustomerSelects();
@@ -1158,8 +1158,8 @@ async function saveCustomer() {
   const name = document.getElementById('c-name').value.trim();
   if (!name) { showToast(t('customer_required'), 'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('c-email').value.trim()||null, phone: document.getElementById('c-phone').value.trim()||null, address: document.getElementById('c-address').value.trim()||null, city: document.getElementById('c-city').value.trim()||null, country: document.getElementById('c-country').value.trim()||null, tax_number: document.getElementById('c-tax').value.trim()||null, notes: document.getElementById('c-notes').value.trim()||null };
-  if (editingCustomerId) { await sb.from('customers').update(payload).eq('id', editingCustomerId); showToast(t('customer_updated'),'success'); }
-  else { await sb.from('customers').insert(payload); showToast(t('customer_added'),'success'); }
+  if (editingCustomerId) { await sb.from('contacts').update(payload).eq('id', editingCustomerId); showToast(t('customer_updated'),'success'); }
+  else { await sb.from('contacts').insert(payload); showToast(t('customer_added'),'success'); }
   closeModal('customer-modal');
   await loadCustomers();
 }
@@ -1173,7 +1173,7 @@ async function deleteCustomer(id) {
     showToast(t('err_has_sales_orders').replace('{0}', count), 'error'); return;
   }
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('customers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
+  await sb.from('contacts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
   showToast(t('customer_deleted'),'success');
   await loadCustomers();
 }
@@ -1495,10 +1495,11 @@ function closeQACustomerModal() { document.getElementById('qa-customer-modal').c
 async function saveQACustomer() {
   const name = document.getElementById('qa-c-name').value.trim();
   if (!name) { showToast(t('customer_required') || 'Name required', 'error'); return; }
-  const { data, error } = await sb.from('customers').insert({
+  const { data, error } = await sb.from('contacts').insert({
     company_id: companyId, name,
     email: document.getElementById('qa-c-email').value.trim() || null,
     phone: document.getElementById('qa-c-phone').value.trim() || null,
+    is_customer: true, is_supplier: false, type: 'customer',
     is_active: true,
   }).select().single();
   if (error) { showToast(error.message, 'error'); return; }

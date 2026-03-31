@@ -642,7 +642,7 @@ async function loadOrders() {
 }
 
 async function loadSuppliers() {
-  const { data } = await sb.from('suppliers').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('contacts').select('*').eq('company_id', companyId).eq('is_active', true).eq('is_supplier', true).order('name');
   suppliers = data || [];
   renderSuppliers(suppliers);
   updateSupplierSelects();
@@ -1184,8 +1184,8 @@ async function saveSupplier() {
   const name = document.getElementById('s-name').value.trim();
   if (!name) { showToast(t('toast_supplier_name_required'),'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('s-email').value.trim()||null, phone: document.getElementById('s-phone').value.trim()||null, address: document.getElementById('s-address').value.trim()||null, city: document.getElementById('s-city').value.trim()||null, country: document.getElementById('s-country').value.trim()||null, tax_number: document.getElementById('s-tax').value.trim()||null, payment_terms: parseInt(document.getElementById('s-terms').value)||30, notes: document.getElementById('s-notes').value.trim()||null };
-  if (editingSupplierId) { await sb.from('suppliers').update(payload).eq('id',editingSupplierId); showToast(t('toast_supplier_updated'),'success'); }
-  else { await sb.from('suppliers').insert(payload); showToast(t('toast_supplier_added'),'success'); }
+  if (editingSupplierId) { await sb.from('contacts').update(payload).eq('id',editingSupplierId); showToast(t('toast_supplier_updated'),'success'); }
+  else { await sb.from('contacts').insert(payload); showToast(t('toast_supplier_added'),'success'); }
   closeModal('supplier-modal');
   await loadSuppliers();
 }
@@ -1199,7 +1199,7 @@ async function deleteSupplier(id) {
     showToast(t('err_has_purchase_orders').replace('{0}', count), 'error'); return;
   }
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('suppliers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
+  await sb.from('contacts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
   showToast(t('supplier_deleted'),'success');
   await loadSuppliers();
 }
@@ -1258,10 +1258,11 @@ function closeQASupplierModal() { document.getElementById('qa-supplier-modal').c
 async function saveQASupplier() {
   const name = document.getElementById('qa-s-name').value.trim();
   if (!name) { showToast(t('toast_supplier_name_required') || 'Name required', 'error'); return; }
-  const { data, error } = await sb.from('suppliers').insert({
+  const { data, error } = await sb.from('contacts').insert({
     company_id: companyId, name,
     email: document.getElementById('qa-s-email').value.trim() || null,
     phone: document.getElementById('qa-s-phone').value.trim() || null,
+    is_customer: false, is_supplier: true, type: 'supplier',
     is_active: true,
   }).select().single();
   if (error) { showToast(error.message, 'error'); return; }

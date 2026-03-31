@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Cariler</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<style>
+:root {
+  --navy:#0a0f1e;--navy2:#0f2650;--blue:#60a5fa;--blue-light:#eff6ff;
+  --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
+  --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+  --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
+  --gray600:#475569;--gray800:#1e293b;
+  --green:#10b981;--green-light:#ecfdf5;
+  --red:#ef4444;--red-light:#fef2f2;
+  --orange:#f59e0b;--orange-light:#fffbeb;
+  --purple:#8b5cf6;--purple-light:#f5f3ff;
+  --sidebar-w:220px;
+  --font-display:'Outfit',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:64px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:40;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:700}
+.content{padding:28px;flex:1}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-header h1{font-family:var(--font-display);font-size:22px;font-weight:800}
+.page-header p{font-size:13px;color:var(--gray400);margin-top:2px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:14px;padding:18px 20px;border:1px solid var(--gray200)}
+.stat-label{font-size:11px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;margin-top:4px}
+.filters-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--gray200);border-radius:10px;padding:0 12px;flex:1;max-width:320px}
+.search-box input{border:none;outline:none;font-size:13px;padding:9px 0;width:100%;background:transparent;font-family:var(--font-body)}
+.filter-select{padding:8px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;background:var(--white);font-family:var(--font-body);cursor:pointer;outline:none}
+.table-card{background:var(--white);border-radius:14px;border:1px solid var(--gray200);overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gray200);background:var(--gray50)}
+td{padding:12px 16px;border-bottom:1px solid var(--gray100);font-size:13px}
+tr:hover td{background:#f9fafb}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.badge-gray{background:var(--gray100);color:var(--gray500)}
+.btn{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
+.btn-primary{background:#0d4f3c;color:#fff}.btn-primary:hover{background:#0a3f30}
+.btn-outline{background:var(--white);border:1px solid var(--gray200);color:var(--gray600)}.btn-outline:hover{background:var(--gray50)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-icon{padding:6px 8px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--gray400)}
+.empty-state h3{margin:12px 0 4px;color:var(--gray600)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;padding:0;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s;box-shadow:0 10px 40px rgba(0,0,0,.08)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:24px 28px 20px;border-bottom:1px solid var(--gray100)}
+.modal-title{font-family:var(--font-display);font-size:18px;font-weight:800}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:var(--white);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--gray400)}
+.modal-body{padding:24px 28px}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:16px 28px 24px;border-top:1px solid var(--gray100)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field label{font-size:12px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;background:var(--white)}
+.field input:focus,.field select:focus{border-color:var(--blue)}
+.field.full{grid-column:1/-1}
+textarea{min-height:60px;resize:vertical}
+.checkbox-row{display:flex;gap:20px;align-items:center;margin-top:4px}
+.checkbox-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray700);cursor:pointer}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:#0d4f3c}
+#loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:#60a5fa}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
+</style>
+<script src="sidebar.js"></script>
+<script src="utils.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">👤 <span data-i18n="page_contacts">Cariler</span></div>
+    <div style="flex:1"></div>
+    <div class="topbar-btn" onclick="handleLogout()" title="Logout" style="color:var(--red);cursor:pointer">⏻</div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <h1>👤 <span data-i18n="page_contacts">Cariler</span></h1>
+        <p data-i18n="contacts_sub">Müşteri ve tedarikçilerinizi tek yerden yönetin</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="openContactModal()" data-i18n="btn_new_contact">+ Yeni Cari</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label" data-i18n="stat_total_contacts">Toplam Cari</div><div class="stat-val" id="stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label" data-i18n="stat_customers">Müşteriler</div><div class="stat-val" id="stat-customers">0</div></div>
+      <div class="stat-card"><div class="stat-label" data-i18n="stat_suppliers">Tedarikçiler</div><div class="stat-val" id="stat-suppliers">0</div></div>
+      <div class="stat-card"><div class="stat-label" data-i18n="stat_both">Her İkisi</div><div class="stat-val" id="stat-both">0</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-row">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="contact-search" placeholder="" data-i18n-placeholder="lbl_search" oninput="filterContacts()">
+      </div>
+      <select class="filter-select" id="filter-type" onchange="filterContacts()">
+        <option value="" data-i18n="filter_all">Tümü</option>
+        <option value="customer" data-i18n="filter_customers">Müşteriler</option>
+        <option value="supplier" data-i18n="filter_suppliers">Tedarikçiler</option>
+        <option value="both" data-i18n="filter_both">Her İkisi</option>
+      </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="col_name">Ad</th>
+              <th data-i18n="col_type">Tür</th>
+              <th data-i18n="col_email">E-posta</th>
+              <th data-i18n="col_phone">Telefon</th>
+              <th data-i18n="col_city">Şehir</th>
+              <th data-i18n="col_tax_no">Vergi No</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="contacts-tbody">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3 data-i18n="no_contacts">Henüz cari yok</h3><p data-i18n="no_contacts_sub">İlk carinizi ekleyin.</p><button class="btn btn-primary" onclick="openContactModal()" data-i18n="btn_new_contact">+ Yeni Cari</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <span class="modal-title" id="contact-modal-title" data-i18n="btn_new_contact">Yeni Cari</span>
+      <button class="modal-close" onclick="closeModal('contact-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="col_name">Ad *</label>
+          <input type="text" id="c-name" required>
+        </div>
+        <div class="field full">
+          <label data-i18n="col_type">Tür</label>
+          <div class="checkbox-row">
+            <label><input type="checkbox" id="c-is-customer" checked> <span data-i18n="lbl_customer">Müşteri</span></label>
+            <label><input type="checkbox" id="c-is-supplier"> <span data-i18n="lbl_supplier">Tedarikçi</span></label>
+          </div>
+        </div>
+        <div class="field"><label data-i18n="col_email">E-posta</label><input type="email" id="c-email"></div>
+        <div class="field"><label data-i18n="col_phone">Telefon</label><input type="text" id="c-phone"></div>
+        <div class="field"><label data-i18n="col_city">Şehir</label><input type="text" id="c-city"></div>
+        <div class="field"><label data-i18n="col_country">Ülke</label><input type="text" id="c-country"></div>
+        <div class="field"><label data-i18n="col_tax_no">Vergi No</label><input type="text" id="c-taxno"></div>
+        <div class="field"><label data-i18n="col_contact_person">Yetkili</label><input type="text" id="c-contact"></div>
+        <div class="field"><label data-i18n="col_payment_terms">Ödeme Vadesi (gün)</label><input type="number" id="c-terms" value="30" min="0"></div>
+        <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" id="c-credit" value="0" min="0" step="0.01"></div>
+        <div class="field full"><label data-i18n="col_address">Adres</label><textarea id="c-address"></textarea></div>
+        <div class="field full"><label data-i18n="label_notes">Notlar</label><textarea id="c-notes"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('contact-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveContact()" data-i18n="btn_save">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+let companyId = null;
+let contacts = [];
+let editingId = null;
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+
+  const { data: companies } = await sb.rpc('get_my_companies');
+  if (!companies?.length) return;
+  const saved = localStorage.getItem('currentCompanyId');
+  const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
+  companyId = active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+
+  // URL filter
+  const params = new URLSearchParams(window.location.search);
+  const filterParam = params.get('filter');
+  if (filterParam) document.getElementById('filter-type').value = filterParam;
+
+  await loadContacts();
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+  else applyTranslations();
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 300); }
+}
+
+async function loadContacts() {
+  const { data, error } = await sb.from('contacts')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .order('name');
+  if (error) { console.error('loadContacts:', error); }
+  contacts = data || [];
+  updateStats();
+  filterContacts();
+}
+
+function updateStats() {
+  const el = id => document.getElementById(id);
+  el('stat-total').textContent = contacts.length;
+  el('stat-customers').textContent = contacts.filter(c => c.is_customer && !c.is_supplier).length;
+  el('stat-suppliers').textContent = contacts.filter(c => c.is_supplier && !c.is_customer).length;
+  el('stat-both').textContent = contacts.filter(c => c.is_customer && c.is_supplier).length;
+}
+
+function filterContacts() {
+  const q = (document.getElementById('contact-search').value || '').toLowerCase();
+  const type = document.getElementById('filter-type').value;
+  const filtered = contacts.filter(c => {
+    if (q && !c.name.toLowerCase().includes(q) && !(c.email||'').toLowerCase().includes(q) && !(c.phone||'').includes(q)) return false;
+    if (type === 'customer' && !c.is_customer) return false;
+    if (type === 'supplier' && !c.is_supplier) return false;
+    if (type === 'both' && !(c.is_customer && c.is_supplier)) return false;
+    return true;
+  });
+  renderContacts(filtered);
+}
+
+function renderContacts(list) {
+  const tbody = document.getElementById('contacts-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3>${t('no_contacts') || 'Henüz cari yok'}</h3><p>${t('no_contacts_sub') || 'İlk carinizi ekleyin.'}</p><button class="btn btn-primary" onclick="openContactModal()">${t('btn_new_contact') || '+ Yeni Cari'}</button></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c => {
+    const typeBadge = (c.is_customer && c.is_supplier)
+      ? `<span class="badge badge-purple">${t('lbl_both') || 'Her İkisi'}</span>`
+      : c.is_customer
+        ? `<span class="badge badge-green">${t('lbl_customer') || 'Müşteri'}</span>`
+        : `<span class="badge badge-blue">${t('lbl_supplier') || 'Tedarikçi'}</span>`;
+    return `<tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${typeBadge}</td>
+      <td style="color:var(--gray500)">${c.email || '—'}</td>
+      <td style="color:var(--gray500)">${c.phone || '—'}</td>
+      <td style="color:var(--gray500)">${c.city || '—'}</td>
+      <td style="color:var(--gray500)">${c.tax_number || '—'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-icon btn-sm" onclick="editContact('${c.id}')">✏️</button>
+          <button class="btn btn-danger btn-icon btn-sm" onclick="deleteContact('${c.id}')">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openContactModal() {
+  editingId = null;
+  document.getElementById('contact-modal-title').textContent = t('btn_new_contact') || 'Yeni Cari';
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-is-customer').checked = true;
+  document.getElementById('c-is-supplier').checked = false;
+  document.getElementById('c-email').value = '';
+  document.getElementById('c-phone').value = '';
+  document.getElementById('c-city').value = '';
+  document.getElementById('c-country').value = '';
+  document.getElementById('c-taxno').value = '';
+  document.getElementById('c-contact').value = '';
+  document.getElementById('c-terms').value = '30';
+  document.getElementById('c-credit').value = '0';
+  document.getElementById('c-address').value = '';
+  document.getElementById('c-notes').value = '';
+  openModal('contact-modal');
+}
+
+function editContact(id) {
+  const c = contacts.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('contact-modal-title').textContent = t('title_edit_contact') || 'Cariyi Düzenle';
+  document.getElementById('c-name').value = c.name;
+  document.getElementById('c-is-customer').checked = c.is_customer;
+  document.getElementById('c-is-supplier').checked = c.is_supplier;
+  document.getElementById('c-email').value = c.email || '';
+  document.getElementById('c-phone').value = c.phone || '';
+  document.getElementById('c-city').value = c.city || '';
+  document.getElementById('c-country').value = c.country || '';
+  document.getElementById('c-taxno').value = c.tax_number || '';
+  document.getElementById('c-contact').value = c.contact_person || '';
+  document.getElementById('c-terms').value = c.payment_terms || 30;
+  document.getElementById('c-credit').value = c.credit_limit || 0;
+  document.getElementById('c-address').value = c.address || '';
+  document.getElementById('c-notes').value = c.notes || '';
+  openModal('contact-modal');
+}
+
+async function saveContact() {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { showToast(t('err_fill_name') || 'Ad giriniz', 'error'); return; }
+  const isCust = document.getElementById('c-is-customer').checked;
+  const isSupp = document.getElementById('c-is-supplier').checked;
+  if (!isCust && !isSupp) { showToast(t('err_select_type') || 'En az bir tür seçin', 'error'); return; }
+
+  const payload = {
+    company_id: companyId,
+    name,
+    is_customer: isCust,
+    is_supplier: isSupp,
+    type: (isCust && isSupp) ? 'both' : isCust ? 'customer' : 'supplier',
+    email: document.getElementById('c-email').value.trim() || null,
+    phone: document.getElementById('c-phone').value.trim() || null,
+    city: document.getElementById('c-city').value.trim() || null,
+    country: document.getElementById('c-country').value.trim() || null,
+    tax_number: document.getElementById('c-taxno').value.trim() || null,
+    contact_person: document.getElementById('c-contact').value.trim() || null,
+    payment_terms: parseInt(document.getElementById('c-terms').value) || 30,
+    credit_limit: parseFloat(document.getElementById('c-credit').value) || 0,
+    address: document.getElementById('c-address').value.trim() || null,
+    notes: document.getElementById('c-notes').value.trim() || null,
+  };
+
+  try {
+    if (editingId) {
+      const { error } = await sb.from('contacts').update(payload).eq('id', editingId);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('contacts').insert(payload);
+      if (error) throw error;
+    }
+    showToast(t('toast_contact_saved') || 'Cari kaydedildi', 'success');
+    closeModal('contact-modal');
+    await loadContacts();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+async function deleteContact(id) {
+  if (!confirm(t('confirm_delete_contact') || 'Bu cariyi silmek istiyor musunuz?')) return;
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('contacts').update({
+    is_active: false, deleted_at: new Date().toISOString(), deleted_by: user?.id
+  }).eq('id', id);
+  showToast(t('toast_contact_deleted') || 'Cari silindi', 'success');
+  await loadContacts();
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;background:${type === 'error' ? '#dc2626' : '#0d4f3c'}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+async function handleLogout() { await sb.auth.signOut(); window.location.href = 'auth.html'; }
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>

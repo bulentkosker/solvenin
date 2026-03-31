@@ -374,11 +374,12 @@
             { key: 'nav_warehouses',      href: 'settings.html#warehouses' },
           ]
         },
+        { icon: '👤', key: 'nav_contacts', href: 'contacts.html' },
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
           children: [
             { key: 'nav_sales_orders', href: 'sales.html' },
-            { key: 'nav_customers',    href: 'sales.html#customers' },
+            { key: 'nav_customers',    href: 'contacts.html?filter=customer' },
             { key: 'nav_payments',     href: 'sales.html#payments' },
           ]
         },
@@ -386,7 +387,7 @@
           icon: '🛒', key: 'nav_purchasing', href: 'purchasing.html',
           children: [
             { key: 'nav_purchase_orders', href: 'purchasing.html' },
-            { key: 'nav_suppliers',       href: 'purchasing.html#suppliers' },
+            { key: 'nav_suppliers',       href: 'contacts.html?filter=supplier' },
           ]
         },
         { icon: '🏭', key: 'nav_production', href: 'production.html' },

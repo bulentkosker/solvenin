@@ -1124,7 +1124,7 @@ async function loadDashboardStats(){
       sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('payments').select('id,amount,order_id').eq('company_id', companyId),
-      sb.from('customers').select('id').eq('company_id', companyId),
+      sb.from('contacts').select('id').eq('company_id', companyId).eq('is_customer', true),
       sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId),
       sb.from('products').select('id,quantity,min_stock').eq('company_id', companyId),
     ]);
