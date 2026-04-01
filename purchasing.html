@@ -1046,12 +1046,8 @@ let _descVisible = false;
 document.addEventListener('keydown', e => {
   const formVisible = document.getElementById('order-form-view')?.style.display !== 'none';
   if (!formVisible) return;
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveOrder(); }
-  else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addOrderItem(); }
-  else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-    if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
-    e.preventDefault(); if (orderItems.length > 1) { removeOrderItem(orderItems.length - 1); }
-  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.shiftKey) { e.preventDefault(); addOrderItem(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveOrder(); }
   else if (e.key === 'Escape' && !document.querySelector('.qa-panel.qa-open')) { closeOrderForm(); }
 });
 

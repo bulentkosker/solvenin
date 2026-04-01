@@ -99,7 +99,8 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Modal içinde modal olmasın
 - Fatura/sipariş formları tam sayfa açılsın (modal değil)
 - Number input: boş başlasın, placeholder="0", spinner yok, binlik ayraç locale-aware
-- Keyboard: Enter → sonraki alan, Ctrl+S → kaydet, Escape → kapat
+- Keyboard: Enter → sonraki alan, Ctrl+Enter → kaydet, Ctrl+Shift+Enter → yeni satır, Escape → kapat
+- YASAK kısayollar (tarayıcı çakışması): Ctrl+S, Ctrl+P, Ctrl+N, Ctrl+T, Ctrl+W, Ctrl+R
 - QA dropdown: ↑↓ navigasyon, Enter seç, Escape kapat
 
 ## Subscription Planları
