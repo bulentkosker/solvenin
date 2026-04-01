@@ -534,7 +534,7 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="payment-modal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">Record Payment</div>
+      <div class="modal-title" data-i18n="title_record_payment">Ödeme Kaydet</div>
       <button class="modal-close" onclick="closeModal('payment-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -562,8 +562,8 @@ tr:hover .row-actions{opacity:1}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('payment-modal')">Cancel</button>
-      <button class="btn btn-success" onclick="savePayment()">💳 Record Payment</button>
+      <button class="btn btn-outline" onclick="closeModal('payment-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="savePayment()" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
     </div>
   </div>
 </div>
@@ -696,6 +696,7 @@ window._supabase = sb;
 
 let companyId = null, companyName = 'My Company';
 let orders = [], customers = [], products = [], payments = [];
+let cashRegisters = [], bankAccounts = [];
 let currentView = 'orders'; // 'orders' or 'invoices'
 let editingOrderId = null, editingCustomerId = null;
 let customerQA = null;
@@ -1283,6 +1284,12 @@ function openPaymentModal(orderId, remaining) {
   document.getElementById('pay-method').value = 'bank';
   document.getElementById('pay-ref').value = '';
   document.getElementById('pay-notes').value = '';
+  // Populate register/account dropdowns
+  const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
+  document.getElementById('pay-register').innerHTML = `<option value="">${t('select_register')||'Kasa seç...'}</option>` + regOpts;
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('');
+  document.getElementById('pay-account').innerHTML = `<option value="">${t('select_account')||'Hesap seç...'}</option>` + accOpts;
+  onPayMethodChange();
   openModal('payment-modal');
 }
 
