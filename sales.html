@@ -568,6 +568,28 @@ tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
+<!-- INVOICE CONFIRM MODAL -->
+<div class="modal-overlay" id="invoice-confirm-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <span class="modal-title" data-i18n="title_create_invoice">Fatura Oluştur</span>
+      <button class="modal-close" onclick="closeModal('invoice-confirm-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--gray500);margin-bottom:16px" data-i18n="msg_confirm_invoice">Bu siparişi faturalandırmak istiyor musunuz?</p>
+      <input type="hidden" id="inv-order-id">
+      <div class="form-grid cols-1">
+        <div class="field"><label data-i18n="lbl_invoice_date">Fatura Tarihi</label><input type="date" id="inv-date"></div>
+        <div class="field"><label data-i18n="col_due_date">Vade Tarihi</label><input type="date" id="inv-due-date"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('invoice-confirm-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="confirmInvoice()" data-i18n="btn_invoice">Faturalandır</button>
+    </div>
+  </div>
+</div>
+
 <!-- INVOICE PREVIEW MODAL -->
 <div class="modal-overlay" id="invoice-modal">
   <div class="modal" style="max-width:860px">
@@ -1311,9 +1333,16 @@ async function savePayment() {
     }
   }
 
+  // 3. Auto-mark as paid if fully covered
+  const totalPaid = payments.filter(p => p.order_id === orderId).reduce((s,p) => s + parseFloat(p.amount), 0) + amount;
+  if (order && totalPaid >= parseFloat(order.total || 0)) {
+    await sb.from('sales_orders').update({ status: 'paid' }).eq('id', orderId);
+  }
+
   showToast(t('toast_payment_recorded'), 'success');
   closeModal('payment-modal');
   await Promise.all([loadOrders(), loadPayments()]);
+  updateStats();
 }
 
 // ===== INVOICE =====
@@ -1531,21 +1560,46 @@ function setTab(btn, tab) {
 }
 
 async function updateOrderStatus(id, newStatus) {
-  // Invoice limit check when creating invoice
   if (newStatus === 'invoiced') {
+    // Show invoice confirmation modal
     const { data: prof } = await sb.from('profiles').select('plan').eq('id', (await sb.auth.getUser()).data.user.id).single();
     if (!prof?.plan || prof.plan === 'free') {
       const { data: cnt } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
       if (cnt >= 30) { showInvoiceLimitModal(); return; }
     }
+    document.getElementById('inv-order-id').value = id;
+    document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
+    const due = new Date(); due.setDate(due.getDate() + 30);
+    document.getElementById('inv-due-date').value = due.toISOString().split('T')[0];
+    openModal('invoice-confirm-modal');
+    return;
   }
+  if (newStatus === 'paid') {
+    // Show payment modal
+    const order = orders.find(o => o.id === id);
+    const paidAmt = payments.filter(p => p.order_id === id).reduce((s,p) => s + parseFloat(p.amount), 0);
+    openPaymentModal(id, String(parseFloat(order?.total || 0) - paidAmt));
+    return;
+  }
+  // Direct status change (confirmed, cancelled)
   const { error } = await sb.from('sales_orders').update({ status: newStatus }).eq('id', id);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(t('toast_status_updated') || 'Durum güncellendi', 'success');
   await loadOrders();
-  await loadPayments();
-  filterOrders();
-  filterInvoices();
+  updateStats();
+}
+
+async function confirmInvoice() {
+  const id = document.getElementById('inv-order-id').value;
+  const invoiceDate = document.getElementById('inv-date').value;
+  const dueDate = document.getElementById('inv-due-date').value;
+  const { error } = await sb.from('sales_orders').update({
+    status: 'invoiced', issue_date: invoiceDate, due_date: dueDate
+  }).eq('id', id);
+  closeModal('invoice-confirm-modal');
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_invoiced') || 'Fatura oluşturuldu', 'success');
+  await loadOrders();
   updateStats();
 }
 
