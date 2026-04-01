@@ -1367,7 +1367,7 @@ async function viewInvoice(orderId) {
       <div>
         <div class="inv-logo">${companyName.split(' ')[0]}<span>.</span></div>
         <div class="inv-logo-sub"></div>
-        <div style="margin-top:8px;font-size:12px;color:var(--gray500)">Powered by solvenin.</div>
+        ${userPlan === 'free' ? '<div style="margin-top:8px;font-size:12px;color:var(--gray500)">Powered by solvenin.</div>' : ''}
       </div>
       <div class="inv-meta">
         <h2>INVOICE</h2>
@@ -1381,7 +1381,7 @@ async function viewInvoice(orderId) {
       <div class="inv-party">
         <h4>From</h4>
         <div class="name">${companyName}</div>
-        <p>Powered by Solvenin ERP</p>
+        ${userPlan === 'free' ? '<p>Powered by Solvenin ERP</p>' : `<p>${companyData.email||''}</p>`}
       </div>
       <div class="inv-party">
         <h4>Bill To</h4>
