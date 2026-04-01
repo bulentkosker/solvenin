@@ -623,6 +623,7 @@ let companyId = null;
 let cashRegisters = [];
 let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
+let currentView = 'orders';
 let taxRates = [];
 let editingOrderId = null, editingSupplierId = null;
 let supplierQA = null;
@@ -673,7 +674,8 @@ await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRat
 async function loadOrders() {
   const { data } = await sb.from('purchase_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
-  renderOrders(orders);
+  if (currentView === 'invoices') filterInvoices();
+  else filterOrders();
   updateStats();
 }
 
@@ -1285,6 +1287,7 @@ async function deleteSupplier(id) {
 
 // ===== TABS =====
 function setTab(btn,tab) {
+  if (tab === 'orders' || tab === 'invoices') currentView = tab;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   ['orders','invoices','suppliers'].forEach(t => {

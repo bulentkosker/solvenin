@@ -674,6 +674,7 @@ window._supabase = sb;
 
 let companyId = null, companyName = 'My Company';
 let orders = [], customers = [], products = [], payments = [];
+let currentView = 'orders'; // 'orders' or 'invoices'
 let editingOrderId = null, editingCustomerId = null;
 let customerQA = null;
 let _qaProductCb = null, _qaCustomerCb = null;
@@ -723,7 +724,8 @@ await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRat
 async function loadOrders() {
   const { data } = await sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   orders = data || [];
-  renderOrders(orders);
+  if (currentView === 'invoices') filterInvoices();
+  else filterOrders();
   updateStats();
 }
 
@@ -1517,6 +1519,7 @@ function onPayMethodChange() {
 
 // ===== TABS =====
 function setTab(btn, tab) {
+  if (tab === 'orders' || tab === 'invoices') currentView = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   ['orders','invoices','payments'].forEach(t => {
