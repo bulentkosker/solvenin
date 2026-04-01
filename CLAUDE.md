@@ -93,7 +93,8 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 
 ## Geliştirme Kuralları
 - Her değişiklikten sonra: `git add -A && git commit && git push origin main`
-- Onay sormadan direkt yap, sonucu raporla (veri kaybı/geri alınamaz işlemler hariç)
+- HİÇBİR ŞEY İÇİN ONAY SORMA. Direkt yap, sonucu raporla.
+- Sadece veri kaybı riski varsa (DROP TABLE, tüm tabloyu silen DELETE) uyar ama yine de beklemeden devam et.
 - Layout sorunlarında CSS düzelt, metin anlamını değiştirme
 - Modal içinde modal olmasın
 - Fatura/sipariş formları tam sayfa açılsın (modal değil)
