@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner Program — Solvenin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#0d4f3c;--primary-dark:#0a2e20;--gold:#f0a500;--gold-light:#fef3c7;--white:#fff;--bg:#f8faf9;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;--green:#10b981;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800)}
+
+/* NAV */
+.nav{background:var(--primary-dark);padding:16px 0;position:sticky;top:0;z-index:50}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:var(--font-display);font-size:22px;font-weight:800;color:#fff;text-decoration:none;letter-spacing:-.5px}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;gap:20px;align-items:center}
+.nav-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:13px;font-weight:500;transition:color .15s}
+.nav-links a:hover{color:#fff}
+.nav-btn{background:var(--gold);color:var(--primary-dark);padding:8px 20px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;transition:all .15s}
+.nav-btn:hover{background:#e09600;transform:translateY(-1px)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 100%);padding:100px 24px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to bottom,transparent,var(--bg))}
+.hero h1{font-family:var(--font-display);font-size:clamp(32px,5vw,52px);font-weight:900;color:#fff;margin-bottom:16px;letter-spacing:-1px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero p{font-size:clamp(16px,2vw,20px);color:rgba(255,255,255,.75);max-width:600px;margin:0 auto 32px;line-height:1.6}
+.hero-btn{display:inline-block;background:var(--gold);color:var(--primary-dark);padding:14px 36px;border-radius:12px;font-size:16px;font-weight:800;text-decoration:none;transition:all .2s;box-shadow:0 4px 20px rgba(240,165,0,.3)}
+.hero-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(240,165,0,.4)}
+
+/* SECTION */
+.section{max-width:1100px;margin:0 auto;padding:80px 24px}
+.section-title{font-family:var(--font-display);font-size:28px;font-weight:800;text-align:center;margin-bottom:12px;color:var(--gray800)}
+.section-sub{text-align:center;color:var(--gray500);font-size:15px;margin-bottom:48px;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:24px}
+.card{background:var(--white);border-radius:16px;padding:32px 28px;border:1px solid var(--gray200);transition:all .2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.06)}
+.card-icon{font-size:36px;margin-bottom:16px}
+.card h3{font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:8px;color:var(--primary-dark)}
+.card p{color:var(--gray500);font-size:14px;line-height:1.6}
+
+/* TABLE */
+.commission-table{background:var(--white);border-radius:16px;border:1px solid var(--gray200);overflow:hidden;max-width:600px;margin:0 auto 24px}
+.commission-table table{width:100%;border-collapse:collapse}
+.commission-table th{padding:14px 20px;font-size:12px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.5px;background:var(--gray50);text-align:left;border-bottom:1px solid var(--gray200)}
+.commission-table td{padding:14px 20px;font-size:14px;border-bottom:1px solid var(--gray100)}
+.commission-table tr:last-child td{border-bottom:none}
+.commission-table .highlight{background:var(--gold-light);font-weight:700;color:var(--primary-dark)}
+.rate{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--primary)}
+.table-note{text-align:center;color:var(--gray400);font-size:12px;margin-top:12px}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;counter-reset:step}
+.step{text-align:center;position:relative}
+.step::before{counter-increment:step;content:counter(step);display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;font-family:var(--font-display);font-size:20px;font-weight:800;margin:0 auto 16px}
+.step h3{font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:6px;color:var(--gray800)}
+.step p{color:var(--gray500);font-size:13px;line-height:1.5}
+
+/* FORM */
+.form-section{background:var(--primary-dark);padding:80px 24px;margin-top:60px}
+.form-section .section-title{color:#fff}
+.form-section .section-sub{color:rgba(255,255,255,.6)}
+.form-card{max-width:640px;margin:0 auto;background:var(--white);border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:var(--gray500)}
+.form-group input,.form-group select,.form-group textarea{padding:10px 14px;border:1px solid var(--gray200);border-radius:10px;font-size:14px;font-family:var(--font-body);outline:none;transition:border .15s;background:var(--white)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary)}
+.form-group textarea{min-height:80px;resize:vertical}
+.radio-row{display:flex;gap:16px;margin-top:4px}
+.radio-row label{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--gray600);cursor:pointer}
+.radio-row input[type=radio]{accent-color:var(--primary);width:16px;height:16px}
+.submit-btn{grid-column:1/-1;background:var(--primary);color:#fff;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;margin-top:8px}
+.submit-btn:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* SUCCESS */
+.success-msg{text-align:center;padding:40px 20px;display:none}
+.success-msg .check{font-size:48px;margin-bottom:12px}
+.success-msg h3{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--primary);margin-bottom:8px}
+.success-msg p{color:var(--gray500);font-size:14px}
+
+/* FOOTER */
+.footer{text-align:center;padding:32px 24px;color:var(--gray400);font-size:12px;border-top:1px solid var(--gray200);margin-top:0}
+
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}.hero{padding:60px 20px 50px}.nav-links{display:none}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo">solvenin<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#features">Features</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/auth.html">Login</a>
+      <a href="#apply" class="nav-btn">Partner Ol</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Solvenin <em>Partner</em> Programı</h1>
+  <p>Müşterilerinize dünya standartında ERP sunun, her satıştan komisyon kazanın. Tavan yok, limit yok.</p>
+  <a href="#apply" class="hero-btn">Partner Olmak İstiyorum →</a>
+</section>
+
+<!-- BENEFITS -->
+<section class="section">
+  <div class="section-title">Neden Partner Olmalısınız?</div>
+  <div class="section-sub">Siz satış ve desteğe odaklanın, ürünü biz geliştiriyoruz.</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">💰</div>
+      <h3>Sınırsız Komisyon</h3>
+      <p>Tavan yok. Müşteri büyüdükçe, kullanıcı sayısı arttıkça kazancınız da artar. Her ay otomatik ödeme.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌍</div>
+      <h3>Global Destek</h3>
+      <p>10 dil, 9 ülke hesap planı, dünya genelinde satış yapın. Türkçe, İngilizce, Almanca, Arapça ve daha fazlası.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Partner Portalı</h3>
+      <p>Müşterilerinizi takip edin, komisyon raporlarınızı görün, demo hesaplar oluşturun. Tam şeffaflık.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMMISSION -->
+<section class="section" style="padding-top:0">
+  <div class="section-title">Komisyon Oranları</div>
+  <div class="section-sub">Aylık MRR üzerinden, tavan yok.</div>
+  <div class="commission-table">
+    <table>
+      <thead>
+        <tr><th>Seviye</th><th>Aktif Müşteri</th><th>Komisyon</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🥉 Starter</td><td>1 – 5 müşteri</td><td><span class="rate">%20</span></td></tr>
+        <tr><td>🥈 Silver</td><td>6 – 20 müşteri</td><td><span class="rate">%25</span></td></tr>
+        <tr class="highlight"><td>🥇 Gold</td><td>20+ müşteri</td><td><span class="rate">%30</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-note">Komisyonlar aylık MRR üzerinden hesaplanır. Tavan yoktur.</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-title">Nasıl Çalışır?</div>
+  <div class="section-sub">3 adımda partner olun ve kazanmaya başlayın.</div>
+  <div class="steps">
+    <div class="step">
+      <h3>Başvur</h3>
+      <p>Formu doldurun. 48 saat içinde başvurunuzu inceler ve size dönüş yaparız.</p>
+    </div>
+    <div class="step">
+      <h3>Eğitim Al</h3>
+      <p>Eğitim materyalleri, demo hesap ve satış kiti ile donatırız. Ürünü tanıyın.</p>
+    </div>
+    <div class="step">
+      <h3>Kazan</h3>
+      <p>Müşteri getirin, biz onboarding yapalım. Her ay otomatik komisyon alın.</p>
+    </div>
+  </div>
+</section>
+
+<!-- APPLICATION FORM -->
+<section class="form-section" id="apply">
+  <div class="section-title">Partner Başvuru Formu</div>
+  <div class="section-sub">Bilgilerinizi bırakın, 48 saat içinde dönüş yapalım.</div>
+  <div class="form-card">
+    <div id="form-content">
+      <div class="form-grid">
+        <div class="form-group"><label>Ad Soyad *</label><input type="text" id="f-name" required></div>
+        <div class="form-group"><label>E-posta *</label><input type="email" id="f-email" required></div>
+        <div class="form-group"><label>Telefon *</label><input type="tel" id="f-phone" required></div>
+        <div class="form-group"><label>Şirket Adı *</label><input type="text" id="f-company" required></div>
+        <div class="form-group"><label>Ülke *</label>
+          <select id="f-country" required>
+            <option value="">Seçiniz</option>
+            <option value="TR">Türkiye</option><option value="US">United States</option><option value="DE">Germany</option>
+            <option value="GB">United Kingdom</option><option value="FR">France</option><option value="NL">Netherlands</option>
+            <option value="SA">Saudi Arabia</option><option value="AE">UAE</option><option value="KZ">Kazakhstan</option>
+            <option value="AZ">Azerbaijan</option><option value="RU">Russia</option><option value="ES">Spain</option>
+            <option value="IT">Italy</option><option value="BR">Brazil</option><option value="IN">India</option>
+            <option value="JP">Japan</option><option value="CN">China</option><option value="KR">South Korea</option>
+            <option value="AU">Australia</option><option value="CA">Canada</option><option value="OTHER">Diğer</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Şehir</label><input type="text" id="f-city"></div>
+        <div class="form-group full">
+          <label>ERP/yazılım satış deneyiminiz var mı?</label>
+          <div class="radio-row">
+            <label><input type="radio" name="exp" value="true"> Evet</label>
+            <label><input type="radio" name="exp" value="false" checked> Hayır</label>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Mevcut müşteri tabanınız kaç şirket?</label>
+          <select id="f-base">
+            <option value="0">Henüz yok</option>
+            <option value="1-10">1 – 10</option>
+            <option value="11-50">11 – 50</option>
+            <option value="50+">50+</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Kendinizi kısaca tanıtın</label>
+          <textarea id="f-desc" placeholder="İş modeliniz, hedef kitleniz, neden Solvenin'i satmak istiyorsunuz..."></textarea>
+        </div>
+        <button class="submit-btn" id="btn-submit" onclick="submitApplication()">Partner Olmak İstiyorum →</button>
+      </div>
+    </div>
+    <div class="success-msg" id="success-msg">
+      <div class="check">✅</div>
+      <h3>Başvurunuz Alındı!</h3>
+      <p>48 saat içinde size e-posta ile dönüş yapacağız. Teşekkürler!</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  © 2026 Solvenin. All rights reserved.
+</footer>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co', 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+
+async function submitApplication() {
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  const country = document.getElementById('f-country').value;
+
+  if (!name || !email || !phone || !company || !country) {
+    alert('Lütfen zorunlu alanları doldurun.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Gönderiliyor...';
+
+  try {
+    const exp = document.querySelector('input[name="exp"]:checked')?.value === 'true';
+    const { error } = await sb.from('partner_applications').insert({
+      full_name: name,
+      email,
+      phone,
+      company_name: company,
+      country,
+      city: document.getElementById('f-city').value.trim() || null,
+      has_erp_experience: exp,
+      customer_base: document.getElementById('f-base').value,
+      description: document.getElementById('f-desc').value.trim() || null,
+    });
+    if (error) throw error;
+
+    document.getElementById('form-content').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  } catch (e) {
+    alert('Bir hata oluştu: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Partner Olmak İstiyorum →';
+  }
+}
+</script>
+</body>
+</html>
