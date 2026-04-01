@@ -581,6 +581,43 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
   </div>
 </div>
 
+<!-- PAYMENT MODAL (standalone for invoiced→paid) -->
+<div class="modal-overlay" id="po-payment-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <span class="modal-title" data-i18n="title_record_payment">Ödeme Kaydet</span>
+      <button class="modal-close" onclick="closeModal('po-payment-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="po-pay-order-id">
+      <div class="form-grid cols-1">
+        <div class="field"><label data-i18n="col_amount">Tutar *</label><input type="number" id="po-pay-amount" step="0.01" min="0"></div>
+        <div class="field"><label data-i18n="label_pay_method">Ödeme Yöntemi</label>
+          <select id="po-pay-method" onchange="onPoPayMethodChange()">
+            <option value="cash">💵 Nakit</option>
+            <option value="bank" selected>🏦 Banka Transferi</option>
+            <option value="other">📌 Diğer</option>
+          </select>
+        </div>
+        <div class="field" id="po-pay-register-row" style="display:none">
+          <label data-i18n="label_cash_register">Kasa *</label>
+          <select id="po-pay-register"></select>
+        </div>
+        <div class="field" id="po-pay-account-row">
+          <label data-i18n="label_bank_account">Banka Hesabı *</label>
+          <select id="po-pay-account"></select>
+        </div>
+        <div class="field"><label data-i18n="col_reference">Referans</label><input type="text" id="po-pay-ref" placeholder="Dekont no..."></div>
+        <div class="field"><label data-i18n="label_notes">Not</label><textarea id="po-pay-notes" placeholder=""></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('po-payment-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="savePoPayment()" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- QUICK-ADD PRODUCT MINI MODAL -->
@@ -932,6 +969,73 @@ async function confirmInvoice() {
 function filterSuppliers() {
   const q = document.getElementById('supplier-search').value.toLowerCase();
   renderSuppliers(suppliers.filter(s => !q || s.name.toLowerCase().includes(q) || (s.email||'').toLowerCase().includes(q)));
+}
+
+// ===== STANDALONE PAYMENT MODAL =====
+function openRecvPaymentModal(orderId, amount) {
+  document.getElementById('po-pay-order-id').value = orderId;
+  document.getElementById('po-pay-amount').value = amount || '';
+  document.getElementById('po-pay-method').value = 'bank';
+  document.getElementById('po-pay-ref').value = '';
+  document.getElementById('po-pay-notes').value = '';
+  // Populate register/account dropdowns
+  const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
+  document.getElementById('po-pay-register').innerHTML = `<option value="">${t('select_register')||'Kasa seç...'}</option>` + regOpts;
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('');
+  document.getElementById('po-pay-account').innerHTML = `<option value="">${t('select_account')||'Hesap seç...'}</option>` + accOpts;
+  onPoPayMethodChange();
+  openModal('po-payment-modal');
+}
+
+function onPoPayMethodChange() {
+  const m = document.getElementById('po-pay-method').value;
+  document.getElementById('po-pay-register-row').style.display = m === 'cash' ? '' : 'none';
+  document.getElementById('po-pay-account-row').style.display = m === 'bank' ? '' : 'none';
+}
+
+async function savePoPayment() {
+  const orderId = document.getElementById('po-pay-order-id').value;
+  const amount = parseFloat(document.getElementById('po-pay-amount').value);
+  const method = document.getElementById('po-pay-method').value;
+  const registerId = document.getElementById('po-pay-register').value;
+  const accountId = document.getElementById('po-pay-account').value;
+  const ref = document.getElementById('po-pay-ref').value.trim() || null;
+  const notes = document.getElementById('po-pay-notes').value.trim() || null;
+
+  if (!amount || amount <= 0) { showToast(t('toast_invalid_amount') || 'Geçersiz tutar', 'error'); return; }
+  if (method === 'cash' && !registerId) { showToast(t('toast_select_register') || 'Kasa seçin', 'error'); return; }
+  if (method === 'bank' && !accountId) { showToast(t('toast_select_account') || 'Hesap seçin', 'error'); return; }
+
+  const order = orders.find(o => o.id === orderId);
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. Create cash/bank transaction
+  if (method === 'cash' && registerId) {
+    const reg = cashRegisters.find(r => r.id === registerId);
+    await sb.from('cash_transactions').insert({
+      company_id: companyId, register_id: registerId, type: 'out', amount,
+      currency_code: reg?.currency_code || 'USD',
+      description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
+      category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      reference: ref, transaction_date: today
+    });
+  } else if (method === 'bank' && accountId) {
+    const acc = bankAccounts.find(a => a.id === accountId);
+    await sb.from('bank_transactions').insert({
+      company_id: companyId, account_id: accountId, type: 'out', amount,
+      currency_code: acc?.currency_code || 'USD',
+      description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
+      category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      reference: ref, transaction_date: today
+    });
+  }
+
+  // 2. Mark as paid
+  await sb.from('purchase_orders').update({ status: 'paid' }).eq('id', orderId);
+
+  showToast(t('toast_payment_recorded') || 'Ödeme kaydedildi', 'success');
+  closeModal('po-payment-modal');
+  await loadOrders();
 }
 
 // ===== ORDER FORM (FULL PAGE) =====
