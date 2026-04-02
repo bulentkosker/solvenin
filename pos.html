@@ -325,14 +325,26 @@ function renderQuickButtons() {
 // ===== BARCODE =====
 document.addEventListener('DOMContentLoaded', () => {
   const inp = document.getElementById('barcode-input');
-  inp.addEventListener('keydown', e => {
+  inp.addEventListener('keydown', async e => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const code = inp.value.trim();
       if (!code) return;
-      const p = products.find(x => x.barcode === code);
-      if (p) { addToCart(p.id); inp.value = ''; }
-      else { showToast('Barkod bulunamadı: ' + code, 'error'); inp.value = ''; }
+      inp.value = '';
+      // First check local cache
+      let p = products.find(x => x.barcode === code);
+      if (!p) {
+        // Query Supabase directly (barcode may have been added after page load)
+        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode')
+          .eq('company_id', companyId).eq('barcode', code).eq('is_active', true).single();
+        if (data) {
+          p = data;
+          // Add to local cache
+          if (!products.find(x => x.id === data.id)) products.push(data);
+        }
+      }
+      if (p) { addToCart(p.id); }
+      else { showToast('Barkod bulunamadı: ' + code, 'error'); }
     }
   });
   // Always refocus barcode after any click (unless in modal)
