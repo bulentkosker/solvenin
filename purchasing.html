@@ -1271,7 +1271,6 @@ async function editOrder(id) {
     return;
   }
   editingOrderId = id;
-  const order = orders.find(o => o.id === id);
   if (!order) return;
   const { data: items } = await sb.from('purchase_order_items').select('*').eq('order_id', id);
   document.getElementById('order-modal-title').textContent = t('title_edit_po');
