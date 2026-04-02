@@ -697,6 +697,7 @@ window._supabase = sb;
 
 
 let companyId = null, companyName = 'My Company', companyData = {}, userPlan = 'free';
+let invoiceSettings = { show_discount: false, show_tax: true, show_description: false, show_unit: true, invoice_language: 'company' };
 let orders = [], customers = [], products = [], payments = [];
 let cashRegisters = [], bankAccounts = [];
 let currentView = 'orders'; // 'orders' or 'invoices'
@@ -730,10 +731,10 @@ async function init() {
 
   // Load company details + user plan + module data in parallel
   const [cdRes, profRes] = await Promise.all([
-    sb.from('companies').select('name,email,phone,address,tax_number,base_currency').eq('id', companyId).single(),
+    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings').eq('id', companyId).single(),
     sb.from('profiles').select('plan').eq('id', session.user.id).single(),
   ]);
-  if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; }
+  if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; if (cdRes.data.invoice_settings) invoiceSettings = { ...invoiceSettings, ...cdRes.data.invoice_settings }; }
   if (profRes.data?.plan) userPlan = profRes.data.plan;
   console.log('[sales] companyName:', companyName, 'plan:', userPlan);
 
@@ -1369,26 +1370,17 @@ async function viewInvoice(orderId) {
   const customer = customers.find(c => c.id === order.customer_id);
   currentInvoiceOrder = { order, items: items||[], customer };
 
-  const isTR = (typeof detectLang === 'function' ? detectLang() : 'en') === 'tr';
-  const L = {
-    invoice: isTR ? 'FATURA' : 'INVOICE',
-    invoiceNo: isTR ? 'Fatura No' : 'Invoice No',
-    date: isTR ? 'Tarih' : 'Date',
-    dueDate: isTR ? 'Vade' : 'Due',
-    billTo: isTR ? 'FATURA KESİLEN' : 'BILL TO',
-    from: isTR ? 'FATURA KESEN' : 'FROM',
-    product: isTR ? 'Ürün / Açıklama' : 'Product / Description',
-    qty: isTR ? 'Miktar' : 'Qty',
-    price: isTR ? 'Birim Fiyat' : 'Unit Price',
-    disc: isTR ? 'İndirim %' : 'Disc %',
-    total: isTR ? 'Toplam' : 'Total',
-    subtotal: isTR ? 'Ara Toplam' : 'Subtotal',
-    tax: isTR ? 'Vergi' : 'Tax',
-    discount: isTR ? 'İndirim' : 'Discount',
-    grandTotal: isTR ? 'GENEL TOPLAM' : 'GRAND TOTAL',
-    notes: isTR ? 'Notlar' : 'Notes',
-    taxNo: isTR ? 'VKN' : 'Tax No',
+  const lang = typeof detectLang === 'function' ? detectLang() : 'en';
+  const labels = {
+    tr: { invoice:'FATURA', invoiceNo:'Fatura No', date:'Tarih', dueDate:'Vade', billTo:'ALICI', from:'SATICI', product:'Ürün', desc:'Açıklama', qty:'Miktar', unit:'Birim', price:'Birim Fiyat', disc:'İndirim %', tax:'Vergi', total:'Toplam', subtotal:'Ara Toplam', discount:'İndirim', grandTotal:'GENEL TOPLAM', notes:'Notlar', taxNo:'VKN' },
+    en: { invoice:'INVOICE', invoiceNo:'Invoice No', date:'Date', dueDate:'Due', billTo:'BILL TO', from:'FROM', product:'Product', desc:'Description', qty:'Qty', unit:'Unit', price:'Unit Price', disc:'Disc %', tax:'Tax', total:'Total', subtotal:'Subtotal', discount:'Discount', grandTotal:'GRAND TOTAL', notes:'Notes', taxNo:'Tax No' },
+    ru: { invoice:'СЧЁТ-ФАКТУРА', invoiceNo:'Номер', date:'Дата', dueDate:'Срок', billTo:'ПОКУПАТЕЛЬ', from:'ПРОДАВЕЦ', product:'Товар', desc:'Описание', qty:'Кол-во', unit:'Ед.', price:'Цена', disc:'Скидка %', tax:'Налог', total:'Итого', subtotal:'Подитог', discount:'Скидка', grandTotal:'ИТОГО', notes:'Примечания', taxNo:'ИНН' },
+    de: { invoice:'RECHNUNG', invoiceNo:'Rechnungsnr', date:'Datum', dueDate:'Fällig', billTo:'KÄUFER', from:'VERKÄUFER', product:'Produkt', desc:'Beschreibung', qty:'Menge', unit:'Einheit', price:'Einzelpreis', disc:'Rabatt %', tax:'Steuer', total:'Gesamt', subtotal:'Zwischensumme', discount:'Rabatt', grandTotal:'GESAMTBETRAG', notes:'Notizen', taxNo:'USt-IdNr' },
   };
+  const L = labels[lang] || labels.en;
+  const IS = invoiceSettings;
+  const thS = 'padding:10px 12px;font-size:11px;font-weight:600';
+  const tdS = 'padding:10px 12px';
   const html = `<div class="invoice-page" id="pdf-content" style="font-family:'DM Sans',sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
       <div>
@@ -1423,28 +1415,32 @@ async function viewInvoice(orderId) {
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">
       <thead><tr style="background:#0d4f3c;color:#fff">
-        <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600">#</th>
-        <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600">${L.product}</th>
-        <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600">${L.qty}</th>
-        <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600">${L.price}</th>
-        <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600">${L.disc}</th>
-        <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600">${L.total}</th>
+        <th style="${thS};text-align:left">#</th>
+        <th style="${thS};text-align:left">${L.product}</th>
+        ${IS.show_description ? `<th style="${thS};text-align:left">${L.desc}</th>` : ''}
+        <th style="${thS};text-align:right">${L.qty}</th>
+        ${IS.show_unit ? `<th style="${thS};text-align:left">${L.unit}</th>` : ''}
+        <th style="${thS};text-align:right">${L.price}</th>
+        ${IS.show_discount ? `<th style="${thS};text-align:right">${L.disc}</th>` : ''}
+        <th style="${thS};text-align:right">${L.total}</th>
       </tr></thead>
       <tbody>
         ${(items||[]).map((item,i) => `<tr style="border-bottom:1px solid #e2e8f0;${i%2?'background:#f8fafc':''}">
-          <td style="padding:10px 12px">${i+1}</td>
-          <td style="padding:10px 12px">${item.description || item.products?.name || '—'}</td>
-          <td style="padding:10px 12px;text-align:right">${item.quantity}</td>
-          <td style="padding:10px 12px;text-align:right">${fmt(parseFloat(item.unit_price))}</td>
-          <td style="padding:10px 12px;text-align:right">${item.discount ? item.discount+'%' : '—'}</td>
-          <td style="padding:10px 12px;text-align:right;font-weight:700">${fmt(parseFloat(item.total))}</td>
+          <td style="${tdS}">${i+1}</td>
+          <td style="${tdS}">${item.products?.name || item.description || '—'}</td>
+          ${IS.show_description ? `<td style="${tdS}">${item.description || '—'}</td>` : ''}
+          <td style="${tdS};text-align:right">${item.quantity}</td>
+          ${IS.show_unit ? `<td style="${tdS}">${item.products?.unit || '—'}</td>` : ''}
+          <td style="${tdS};text-align:right">${fmt(parseFloat(item.unit_price))}</td>
+          ${IS.show_discount ? `<td style="${tdS};text-align:right">${item.discount ? item.discount+'%' : '—'}</td>` : ''}
+          <td style="${tdS};text-align:right;font-weight:700">${fmt(parseFloat(item.total))}</td>
         </tr>`).join('')}
       </tbody>
     </table>
     <div style="display:flex;justify-content:flex-end">
       <div style="width:280px">
         <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.subtotal}</span><span>${fmt(parseFloat(order.subtotal||0))}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.tax} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>
+        ${IS.show_tax ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.tax} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>` : ''}
         ${parseFloat(order.discount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.discount}</span><span>-${fmt(parseFloat(order.discount))}</span></div>` : ''}
         <div style="border-top:2px solid #0d4f3c;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#0d4f3c"><span>${L.grandTotal}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
       </div>
