@@ -268,13 +268,16 @@ async function startSession() {
   document.getElementById('barcode-input').focus();
 }
 
+let quickButtons = [];
 async function loadProducts() {
-  const { data } = await sb.from('products')
-    .select('id,name,sale_price,stock_quantity,unit,category_id,barcode,pos_quick_button,pos_button_color,pos_button_order')
-    .eq('company_id', companyId).eq('is_active', true).order('pos_button_order');
-  products = data || [];
-  const { data: cats } = await sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name');
-  categories = cats || [];
+  const [prodRes, catRes, qbRes] = await Promise.all([
+    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('pos_quick_buttons').select('*, products(id,name,sale_price,category_id)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
+  ]);
+  products = prodRes.data || [];
+  categories = catRes.data || [];
+  quickButtons = qbRes.data || [];
   renderCategories();
   renderQuickButtons();
 }
@@ -291,8 +294,8 @@ function F(n) { return currSym + parseFloat(n||0).toLocaleString(undefined, {min
 // ===== CATEGORIES =====
 let activeCat = '';
 function renderCategories() {
-  const qbCats = [...new Set(products.filter(p => p.pos_quick_button).map(p => p.category_id).filter(Boolean))];
-  const visibleCats = categories.filter(c => qbCats.includes(c.id));
+  const qbCatIds = [...new Set(quickButtons.map(b => b.products?.category_id).filter(Boolean))];
+  const visibleCats = categories.filter(c => qbCatIds.includes(c.id));
   document.getElementById('pos-categories').innerHTML = `<button class="cat-btn active" onclick="filterCat(this,'')">Tümü</button>` +
     visibleCats.map(c => `<button class="cat-btn" onclick="filterCat(this,'${c.id}')">${c.name}</button>`).join('');
 }
@@ -306,15 +309,15 @@ function filterCat(btn, id) {
 // ===== QUICK BUTTONS =====
 function renderQuickButtons() {
   const grid = document.getElementById('pos-grid');
-  const qbs = products.filter(p => p.pos_quick_button && (!activeCat || p.category_id === activeCat));
-  if (!qbs.length) {
-    grid.innerHTML = '<div class="pos-empty">Hızlı erişim butonu tanımlı değil.<br>Ayarlar\'dan ürünleri POS butonu olarak işaretleyin.</div>';
+  const filtered = quickButtons.filter(b => !activeCat || b.products?.category_id === activeCat);
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="pos-empty">Hızlı erişim butonu tanımlı değil.<br><a href="settings.html" style="color:var(--primary);font-weight:600">Settings → POS Ayarları</a>'ndan ekleyin.</div>`;
     return;
   }
-  grid.innerHTML = qbs.map(p => `
-    <button class="qb" style="background:${p.pos_button_color || '#0d4f3c'}" onclick="addToCart('${p.id}')">
-      <div class="qb-name">${p.name}</div>
-      <div class="qb-price">${F(p.sale_price)}</div>
+  grid.innerHTML = filtered.map(b => `
+    <button class="qb" style="background:${b.button_color || '#0d4f3c'}" onclick="addToCart('${b.product_id}')">
+      <div class="qb-name">${b.button_name}</div>
+      <div class="qb-price">${F(b.products?.sale_price)}</div>
     </button>
   `).join('');
 }

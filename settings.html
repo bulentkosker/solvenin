@@ -338,6 +338,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('modules', this)"><span class="settings-nav-icon">🧩</span> <span data-i18n="nav_modules">Modules</span></button>
         <button class="settings-nav-item" onclick="switchSection('invoice-settings', this)"><span class="settings-nav-icon">🧾</span> <span data-i18n="nav_invoice_settings">Fatura Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('integrations', this)"><span class="settings-nav-icon">🔗</span> <span data-i18n="nav_integrations">Entegrasyonlar</span></button>
+        <button class="settings-nav-item" onclick="switchSection('pos-settings', this)"><span class="settings-nav-icon">🖥️</span> <span data-i18n="nav_pos_settings">POS Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
@@ -713,6 +714,41 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- ===== POS SETTINGS ===== -->
+      <div class="settings-section" id="section-pos-settings">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="pos_quick_buttons_title">Hızlı Erişim Butonları</div>
+              <div class="settings-card-desc">POS ekranında görünecek ürün butonları</div>
+            </div>
+            <button class="btn-primary" onclick="openPosButtonModal()" style="padding:8px 16px;font-size:12px">+ Buton Ekle</button>
+          </div>
+          <div class="settings-card-body" style="padding:0 24px">
+            <div id="pos-buttons-list" class="manage-list"></div>
+          </div>
+        </div>
+
+        <!-- POS PIN Bölümü -->
+        <div class="settings-card" style="margin-top:20px">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title">POS Yönetici PIN</div>
+              <div class="settings-card-desc">POS'ta ürün silme gibi işlemler için 4 haneli PIN</div>
+            </div>
+            <button class="btn-primary" onclick="savePosPin()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group" style="max-width:200px">
+                <label>4 Haneli PIN</label>
+                <input type="password" id="pos-pin-input" maxlength="4" pattern="[0-9]{4}" placeholder="••••" style="text-align:center;font-size:18px;letter-spacing:8px">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== USERS ===== -->
       <div class="settings-section" id="section-users">
         <!-- Add User Form -->
@@ -820,6 +856,44 @@ tr:hover .action-btns { opacity:1; }
     </div><!-- /settings-layout -->
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- POS Button Modal -->
+<div class="modal-overlay" id="pos-button-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <span class="modal-title" id="pos-btn-modal-title">Buton Ekle</span>
+      <button class="modal-close" onclick="closeModal('pos-button-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Buton Adı *</label>
+          <input type="text" id="pb-name" placeholder="Ekmek">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Ürün *</label>
+          <select id="pb-product"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Renk</label>
+          <div id="pb-colors" style="display:flex;gap:6px;margin-top:4px"></div>
+        </div>
+        <div class="form-group" style="max-width:100px">
+          <label>Sıra</label>
+          <input type="number" id="pb-order" value="0" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('pos-button-modal')">İptal</button>
+      <button class="btn-primary" onclick="savePosButton()">Kaydet</button>
+    </div>
+  </div>
+</div>
 
 <!-- Accounting Integration Modal -->
 <div class="modal-overlay" id="accounting-modal">
@@ -1080,7 +1154,7 @@ async function init() {
     console.time('[settings] all data');
     await Promise.all([
       loadCompanies(), loadCountriesForModal(), loadCompanyData(),
-      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules(), loadUsers(), loadInvoiceSettings(), loadIntegrationSettings()
+      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules(), loadUsers(), loadInvoiceSettings(), loadIntegrationSettings(), loadPosSettings()
     ]);
     console.timeEnd('[settings] all data');
 
@@ -2251,6 +2325,110 @@ async function confirmAccountingToggle() {
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(newVal ? 'Muhasebe entegrasyonu aktif edildi' : 'Muhasebe entegrasyonu kapatıldı', 'success');
   await loadIntegrationSettings();
+}
+
+// ===== POS SETTINGS =====
+let posButtons = [], allProducts = [];
+const POS_COLORS = ['#0d4f3c','#1d4ed8','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#4d7c0f'];
+let editingPosButtonId = null;
+
+async function loadPosSettings() {
+  if (!companyId) return;
+  const [btnRes, prodRes, pinRes] = await Promise.all([
+    sb.from('pos_quick_buttons').select('*, products(name)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
+    sb.from('products').select('id, name').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('company_users').select('pos_pin').eq('company_id', companyId).eq('user_id', currentUser.id).single(),
+  ]);
+  posButtons = btnRes.data || [];
+  allProducts = prodRes.data || [];
+  if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').value = pinRes.data.pos_pin;
+  renderPosButtons();
+}
+
+function renderPosButtons() {
+  const el = document.getElementById('pos-buttons-list');
+  if (!posButtons.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray400)">Henüz buton eklenmemiş</div>';
+    return;
+  }
+  el.innerHTML = posButtons.map(b => `
+    <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray100)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:${b.button_color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${b.button_order}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600">${b.button_name}</div>
+          <div style="font-size:11px;color:var(--gray400)">${b.products?.name || '—'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="editPosButton('${b.id}')">✏️</button>
+        <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="deletePosButton('${b.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openPosButtonModal() {
+  editingPosButtonId = null;
+  document.getElementById('pos-btn-modal-title').textContent = 'Buton Ekle';
+  document.getElementById('pb-name').value = '';
+  document.getElementById('pb-order').value = posButtons.length;
+  document.getElementById('pb-product').innerHTML = '<option value="">Ürün seçin...</option>' +
+    allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  renderColorPicker('#0d4f3c');
+  openModal('pos-button-modal');
+}
+
+function editPosButton(id) {
+  const b = posButtons.find(x => x.id === id);
+  if (!b) return;
+  editingPosButtonId = id;
+  document.getElementById('pos-btn-modal-title').textContent = 'Buton Düzenle';
+  document.getElementById('pb-name').value = b.button_name;
+  document.getElementById('pb-order').value = b.button_order;
+  document.getElementById('pb-product').innerHTML = '<option value="">Ürün seçin...</option>' +
+    allProducts.map(p => `<option value="${p.id}" ${p.id === b.product_id ? 'selected' : ''}>${p.name}</option>`).join('');
+  renderColorPicker(b.button_color);
+  openModal('pos-button-modal');
+}
+
+let selectedPosColor = '#0d4f3c';
+function renderColorPicker(active) {
+  selectedPosColor = active;
+  document.getElementById('pb-colors').innerHTML = POS_COLORS.map(c =>
+    `<div onclick="selectPosColor('${c}')" style="width:28px;height:28px;border-radius:6px;background:${c};cursor:pointer;border:3px solid ${c === active ? '#000' : 'transparent'}"></div>`
+  ).join('');
+}
+function selectPosColor(c) { renderColorPicker(c); }
+
+async function savePosButton() {
+  const name = document.getElementById('pb-name').value.trim();
+  const productId = document.getElementById('pb-product').value;
+  const order = parseInt(document.getElementById('pb-order').value) || 0;
+  if (!name || !productId) { showToast('Ad ve ürün zorunlu', 'error'); return; }
+
+  const payload = { company_id: companyId, product_id: productId, button_name: name, button_color: selectedPosColor, button_order: order };
+  if (editingPosButtonId) {
+    await sb.from('pos_quick_buttons').update(payload).eq('id', editingPosButtonId);
+  } else {
+    await sb.from('pos_quick_buttons').insert(payload);
+  }
+  closeModal('pos-button-modal');
+  showToast('Buton kaydedildi', 'success');
+  await loadPosSettings();
+}
+
+async function deletePosButton(id) {
+  await sb.from('pos_quick_buttons').update({ is_active: false }).eq('id', id);
+  showToast('Buton silindi', 'success');
+  await loadPosSettings();
+}
+
+async function savePosPin() {
+  const pin = document.getElementById('pos-pin-input').value.trim();
+  if (pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) { showToast('PIN 4 haneli sayı olmalı', 'error'); return; }
+  await sb.from('company_users').update({ pos_pin: pin || null }).eq('company_id', companyId).eq('user_id', currentUser.id);
+  showToast('PIN kaydedildi', 'success');
 }
 
 // ===== INVOICE SETTINGS =====
