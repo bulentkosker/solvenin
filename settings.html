@@ -663,7 +663,7 @@ tr:hover .action-btns { opacity:1; }
                 <div style="font-size:12px;color:var(--gray400);margin-top:4px" id="accounting-status-text">Kapalı — Faturalar serbest düzenlenebilir</div>
               </div>
               <div>
-                <button class="btn-primary" id="btn-toggle-accounting" onclick="toggleAccountingIntegration()" style="padding:8px 16px;font-size:12px">Aktif Et</button>
+                <button class="btn-primary" id="btn-toggle-accounting" onclick="openAccountingModal()" style="padding:8px 16px;font-size:12px">Aktif Et</button>
               </div>
             </div>
           </div>
@@ -820,6 +820,28 @@ tr:hover .action-btns { opacity:1; }
     </div><!-- /settings-layout -->
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- Accounting Integration Modal -->
+<div class="modal-overlay" id="accounting-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <span class="modal-title" id="accounting-modal-title">Muhasebe Entegrasyonu</span>
+      <button class="modal-close" onclick="closeModal('accounting-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 28px">
+      <p style="font-size:13px;color:var(--gray600);margin-bottom:16px" id="accounting-modal-desc"></p>
+      <div id="accounting-date-row" style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px">Başlangıç Tarihi</label>
+        <input type="date" id="accounting-start-date" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+      </div>
+      <div style="padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e" id="accounting-modal-warning">⚠️ Seçilen tarihten önceki faturalar etkilenmez.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('accounting-modal')">İptal</button>
+      <button class="btn-primary" id="accounting-modal-confirm" onclick="confirmAccountingToggle()">Aktif Et</button>
+    </div>
+  </div>
+</div>
 
 <!-- Warehouse Modal -->
 <div class="modal-overlay" id="warehouse-modal">
@@ -2188,15 +2210,44 @@ async function loadIntegrationSettings() {
   }
 }
 
-async function toggleAccountingIntegration() {
+function openAccountingModal() {
+  const modal = document.getElementById('accounting-modal');
+  const title = document.getElementById('accounting-modal-title');
+  const desc = document.getElementById('accounting-modal-desc');
+  const dateRow = document.getElementById('accounting-date-row');
+  const warning = document.getElementById('accounting-modal-warning');
+  const confirmBtn = document.getElementById('accounting-modal-confirm');
+
+  if (_accountingEnabled) {
+    title.textContent = 'Muhasebe Entegrasyonunu Kapat';
+    desc.textContent = 'Yeni faturalar yevmiyeye düşmez. Mevcut kayıtlar korunur.';
+    dateRow.style.display = 'none';
+    warning.textContent = '⚠️ Mevcut yevmiye kayıtları silinmez, korunur.';
+    confirmBtn.textContent = 'Kapat';
+    confirmBtn.style.background = '#ef4444';
+  } else {
+    title.textContent = 'Muhasebe Entegrasyonunu Aktif Et';
+    desc.textContent = 'Bu tarihten itibaren faturalar otomatik olarak yevmiyeye düşecek ve düzenlenemez olacak.';
+    dateRow.style.display = '';
+    document.getElementById('accounting-start-date').value = new Date().toISOString().split('T')[0];
+    warning.textContent = '⚠️ Seçilen tarihten önceki faturalar etkilenmez.';
+    confirmBtn.textContent = 'Aktif Et';
+    confirmBtn.style.background = '';
+  }
+  openModal('accounting-modal');
+}
+
+async function confirmAccountingToggle() {
   const newVal = !_accountingEnabled;
   const { data: { user } } = await sb.auth.getUser();
   const update = { accounting_enabled: newVal };
   if (newVal) {
-    update.accounting_enabled_at = new Date().toISOString();
+    const startDate = document.getElementById('accounting-start-date').value;
+    update.accounting_enabled_at = startDate ? new Date(startDate).toISOString() : new Date().toISOString();
     update.accounting_enabled_by = user?.id;
   }
   const { error } = await sb.from('companies').update(update).eq('id', companyId);
+  closeModal('accounting-modal');
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(newVal ? 'Muhasebe entegrasyonu aktif edildi' : 'Muhasebe entegrasyonu kapatıldı', 'success');
   await loadIntegrationSettings();
