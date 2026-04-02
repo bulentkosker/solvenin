@@ -725,13 +725,19 @@ async function init() {
   if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
+  companyName = _active.company_name || 'My Company';
   localStorage.setItem('currentCompanyId', companyId);
-await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts()]);
-  // Load company details for PDF
-  const { data: cd } = await sb.from('companies').select('name,email,phone,address,tax_number,base_currency').eq('id', companyId).single();
-  if (cd) { companyData = cd; companyName = cd.name; }
-  const { data: prof } = await sb.from('profiles').select('plan').eq('id', session.user.id).single();
-  if (prof?.plan) userPlan = prof.plan;
+
+  // Load company details + user plan + module data in parallel
+  const [cdRes, profRes] = await Promise.all([
+    sb.from('companies').select('name,email,phone,address,tax_number,base_currency').eq('id', companyId).single(),
+    sb.from('profiles').select('plan').eq('id', session.user.id).single(),
+  ]);
+  if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; }
+  if (profRes.data?.plan) userPlan = profRes.data.plan;
+  console.log('[sales] companyName:', companyName, 'plan:', userPlan);
+
+  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts()]);
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
