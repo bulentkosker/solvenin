@@ -343,11 +343,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== CART =====
 function addToCart(pid) {
-  const p = products.find(x => x.id === pid);
-  if (!p) return;
+  let p = products.find(x => x.id === pid);
+  if (!p) {
+    // Fallback: try from quick button joined data
+    const qb = quickButtons.find(b => b.product_id === pid);
+    if (qb?.products) p = qb.products;
+  }
+  if (!p) { console.warn('[pos] Product not found:', pid); return; }
   const ex = cart.find(c => c.pid === pid);
   if (ex) ex.qty++;
-  else cart.push({ pid, name: p.name, price: parseFloat(p.sale_price||0), qty: 1, unit: p.unit });
+  else cart.push({ pid, name: p.name, price: parseFloat(p.sale_price||0), qty: 1, unit: p.unit || '' });
   renderCart();
 }
 

@@ -968,6 +968,32 @@ async function confirmInvoice() {
   }).eq('id', id);
   closeModal('invoice-confirm-modal');
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+  // Create stock movements (in) for each item
+  try {
+    const { data: items } = await sb.from('purchase_order_items').select('product_id, quantity, warehouse_id').eq('order_id', id);
+    const { data: { user } } = await sb.auth.getUser();
+    const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
+    const order = orders.find(o => o.id === id);
+    if (items?.length) {
+      const movements = items.filter(i => i.product_id).map(i => ({
+        company_id: companyId,
+        product_id: i.product_id,
+        warehouse_id: i.warehouse_id || defaultWh,
+        type: 'in',
+        quantity: i.quantity,
+        reference: order?.order_number || 'PO',
+        notes: 'Alış faturası stok girişi',
+        created_by: user?.id,
+      }));
+      if (movements.length) {
+        const { error: smErr } = await sb.from('stock_movements').insert(movements);
+        if (smErr) console.error('Stock movement error:', smErr);
+        else console.log('[purchasing] Stock movements created:', movements.length);
+      }
+    }
+  } catch (e) { console.error('Stock movement error:', e); }
+
   showToast(t('toast_invoiced') || 'Fatura oluşturuldu', 'success');
   await loadOrders();
 }
