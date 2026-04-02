@@ -399,8 +399,9 @@
         {
           icon: '💳', key: 'nav_finance', href: null,
           children: [
-            { key: 'nav_cashbank',   href: 'cashbank.html' },
-            { key: 'nav_accounting', href: 'accounting.html' },
+            { key: 'nav_cashbank',        href: 'cashbank.html' },
+            { key: 'nav_cashier_report',  href: 'cashbank.html?tab=cashier-report' },
+            { key: 'nav_accounting',      href: 'accounting.html' },
           ]
         },
         { icon: '📊', key: 'nav_reports', href: '#' },

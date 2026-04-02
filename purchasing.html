@@ -1023,6 +1023,7 @@ async function savePoPayment() {
       currency_code: reg?.currency_code || 'USD',
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
       category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      payment_method: 'cash',
       reference: ref, transaction_date: today
     });
   } else if ((method === 'bank' || method === 'card') && accountId) {
@@ -1032,6 +1033,7 @@ async function savePoPayment() {
       currency_code: acc?.currency_code || 'USD',
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
       category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
       reference: ref, transaction_date: today
     });
   }

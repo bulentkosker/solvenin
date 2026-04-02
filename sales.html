@@ -1344,6 +1344,7 @@ async function savePayment() {
         currency_code: reg?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
         category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        payment_method: 'cash',
         reference: ref, transaction_date: new Date().toISOString().split('T')[0]
       });
     }
@@ -1357,6 +1358,7 @@ async function savePayment() {
         currency_code: acc?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
         category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
         reference: ref, transaction_date: new Date().toISOString().split('T')[0]
       });
     }
@@ -1630,8 +1632,8 @@ async function createPaymentJournalEntry(order, amount, method, date) {
   try {
     const accCode = method === 'cash' ? '100' : '102';
     const entryNum = 'JE-P-' + order.order_number + '-' + Date.now();
-
-    const jeType = method === 'cash' ? 'cash' : 'bank';
+    const jeTypeMap = { cash: 'cash', bank: 'bank', card: 'bank', check: 'bank' };
+    const jeType = jeTypeMap[method] || 'bank';
     const { data: je, error } = await sb.from('journal_entries').insert({
       company_id: companyId,
       entry_number: entryNum,

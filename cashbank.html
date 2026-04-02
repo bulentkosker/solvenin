@@ -314,6 +314,7 @@
       <button class="tab-btn active" onclick="setTab(this,'cash')" data-i18n="tab_cash">Cash Registers</button>
       <button class="tab-btn" onclick="setTab(this,'bank')" data-i18n="tab_bank">Bank Accounts</button>
       <button class="tab-btn" onclick="setTab(this,'transactions')" data-i18n="tab_transactions">All Transactions</button>
+      <button class="tab-btn" onclick="setTab(this,'cashier-report')" data-i18n="tab_cashier_report">Kasiyer Raporu</button>
     </div>
 
     <!-- ════ CASH TAB ════ -->
@@ -491,6 +492,22 @@
             </table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CASHIER REPORT TAB -->
+    <div id="tab-cashier-report" style="display:none">
+      <div class="filters-row" style="margin-bottom:20px">
+        <div class="field" style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:12px;font-weight:600;color:var(--gray500);white-space:nowrap" data-i18n="lbl_date">Tarih:</label>
+          <input type="date" id="cr-date" style="padding:8px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadCashierReport()" data-i18n="btn_load_report">Raporu Getir</button>
+        <button class="btn btn-outline btn-sm" onclick="printCashierReport()">🖨️</button>
+      </div>
+
+      <div id="cashier-report-content">
+        <div style="text-align:center;padding:40px;color:var(--gray400)" data-i18n="cashier_select_date">Tarih seçip "Raporu Getir" butonuna basın</div>
       </div>
     </div>
 
@@ -977,6 +994,13 @@ async function init() {
   var savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+
+  // URL tab param
+  const tabParam = new URLSearchParams(window.location.search).get('tab');
+  if (tabParam) {
+    const tabBtn = document.querySelector(`.tab-btn[onclick*="'${tabParam}'"]`);
+    if (tabBtn) setTab(tabBtn, tabParam);
+  }
 }
 
 // ===== DATA LOADING =====
@@ -1601,13 +1625,121 @@ function downloadCSV(rows, filename) {
   a.click();
 }
 
+// ===== CASHIER REPORT =====
+async function loadCashierReport() {
+  const date = document.getElementById('cr-date').value;
+  if (!date) return;
+  const nextDay = new Date(new Date(date).getTime() + 86400000).toISOString().split('T')[0];
+
+  const [cashRes, bankRes] = await Promise.all([
+    sb.from('cash_transactions').select('*').eq('company_id', companyId).gte('transaction_date', date).lt('transaction_date', nextDay),
+    sb.from('bank_transactions').select('*').eq('company_id', companyId).gte('transaction_date', date).lt('transaction_date', nextDay),
+  ]);
+
+  const cashTxs = cashRes.data || [];
+  const bankTxs = bankRes.data || [];
+
+  // Combine all for detail
+  const allTxs = [
+    ...cashTxs.map(tx => ({ ...tx, _source: 'cash', _method: tx.payment_method || 'cash' })),
+    ...bankTxs.map(tx => ({ ...tx, _source: 'bank', _method: tx.payment_method || 'bank_transfer' })),
+  ].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+
+  // Group by payment method
+  const methods = ['cash', 'credit_card', 'bank_transfer', 'check'];
+  const methodLabels = { cash: '💵 Nakit', credit_card: '💳 Kredi Kartı', bank_transfer: '🏦 Banka Transferi', check: '📝 Çek' };
+
+  const inTxs = allTxs.filter(tx => tx.type === 'in');
+  const outTxs = allTxs.filter(tx => tx.type === 'out');
+
+  function summaryTable(txs, title) {
+    let totalCount = 0, totalAmount = 0;
+    const rows = methods.map(m => {
+      const mtxs = txs.filter(tx => tx._method === m);
+      const count = mtxs.length;
+      const amount = mtxs.reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
+      totalCount += count;
+      totalAmount += amount;
+      return `<tr><td>${methodLabels[m]}</td><td style="text-align:right">${count}</td><td style="text-align:right;font-weight:600">${fmt(amount)}</td></tr>`;
+    }).join('');
+    return `<div style="margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;color:var(--gray600);margin-bottom:8px">${title}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--gray50)"><th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500)">${t('col_payment_method') || 'Ödeme Tipi'}</th><th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:600;color:var(--gray500)">${t('col_count') || 'İşlem'}</th><th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:600;color:var(--gray500)">${t('col_amount') || 'Tutar'}</th></tr></thead>
+        <tbody>${rows}
+        <tr style="border-top:2px solid var(--gray300);font-weight:700"><td>${t('lbl_total') || 'TOPLAM'}</td><td style="text-align:right">${totalCount}</td><td style="text-align:right">${fmt(totalAmount)}</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  const totalIn = inTxs.reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
+  const totalOut = outTxs.reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
+
+  let html = `<div id="cashier-report-printable">`;
+  html += `<div style="font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:16px">${t('cashier_report_title') || 'Kasiyer Gün Sonu Raporu'} — ${date}</div>`;
+  html += summaryTable(inTxs, t('lbl_collections') || '📥 TAHSİLATLAR');
+  html += summaryTable(outTxs, t('lbl_payments_out') || '📤 ÖDEMELER');
+
+  // Net
+  html += `<div style="background:var(--gray50);border-radius:10px;padding:16px;margin-bottom:24px">
+    <div style="font-size:13px;font-weight:700;color:var(--gray600);margin-bottom:8px">${t('lbl_net_status') || 'NET DURUM'}</div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px"><span>${t('lbl_total_collection') || 'Toplam Tahsilat'}</span><span style="color:var(--green);font-weight:700">${fmt(totalIn)}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px"><span>${t('lbl_total_payment') || 'Toplam Ödeme'}</span><span style="color:var(--red);font-weight:700">${fmt(totalOut)}</span></div>
+    <div style="border-top:2px solid var(--gray300);margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:16px;font-weight:800"><span>NET</span><span style="color:${totalIn - totalOut >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(totalIn - totalOut)}</span></div>
+  </div>`;
+
+  // Detail table
+  if (allTxs.length) {
+    html += `<div style="font-size:13px;font-weight:700;color:var(--gray600);margin-bottom:8px">${t('lbl_detail') || 'DETAY'}</div>`;
+    html += `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:var(--gray50)">
+        <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--gray500)">${t('col_description') || 'Açıklama'}</th>
+        <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--gray500)">${t('col_type') || 'Tip'}</th>
+        <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--gray500)">${t('col_payment_method') || 'Yöntem'}</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:600;color:var(--gray500)">${t('col_amount') || 'Tutar'}</th>
+      </tr></thead><tbody>`;
+    allTxs.forEach(tx => {
+      const color = tx.type === 'in' ? 'var(--green)' : 'var(--red)';
+      html += `<tr style="border-bottom:1px solid var(--gray100)">
+        <td style="padding:8px 10px">${tx.description || '—'}</td>
+        <td style="padding:8px 10px"><span style="color:${color};font-weight:600">${tx.type === 'in' ? '📥' : '📤'}</span></td>
+        <td style="padding:8px 10px">${methodLabels[tx._method] || tx._method}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:600;color:${color}">${tx.type === 'in' ? '+' : '-'}${fmt(parseFloat(tx.amount))}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('cashier-report-content').innerHTML = html;
+}
+
+function printCashierReport() {
+  const el = document.getElementById('cashier-report-printable');
+  if (!el) { showToast(t('cashier_select_date') || 'Önce raporu getirin', 'error'); return; }
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Kasiyer Raporu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body{font-family:'DM Sans',sans-serif;padding:24px;color:#1e293b}table{width:100%;border-collapse:collapse}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #e2e8f0}th{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase}</style>
+  </head><body>${el.innerHTML}</body></html>`);
+  win.document.close();
+  win.onload = () => { win.print(); };
+}
+
 // ===== UI HELPERS =====
 async function setTab(btn, tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['cash','bank','transactions'].forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+  ['cash','bank','transactions','cashier-report'].forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.style.display = t === tab ? '' : 'none';
   });
+  if (tab === 'cashier-report') {
+    if (!document.getElementById('cr-date').value) {
+      document.getElementById('cr-date').value = new Date().toISOString().split('T')[0];
+    }
+  }
   if (tab === 'transactions') {
     await loadAllTransactionsIfNeeded();
     filterAllTx();
