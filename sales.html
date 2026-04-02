@@ -1326,7 +1326,7 @@ async function savePayment() {
 
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
   if (method === 'cash' && !registerId) { showToast(t('toast_select_register'), 'error'); return; }
-  if (method === 'bank' && !accountId) { showToast(t('toast_select_account'), 'error'); return; }
+  if ((method === 'bank' || method === 'card') && !accountId) { showToast(t('toast_select_account'), 'error'); return; }
 
   const order = orders.find(o => o.id === orderId);
 
@@ -1347,7 +1347,7 @@ async function savePayment() {
         reference: ref, transaction_date: new Date().toISOString().split('T')[0]
       });
     }
-  } else if (method === 'bank' && accountId) {
+  } else if ((method === 'bank' || method === 'card') && accountId) {
     const { data: dup } = await sb.from('bank_transactions').select('id').eq('source_type','invoice_sale').eq('source_id', orderId).eq('account_id', accountId);
     if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
     else {
@@ -1518,7 +1518,7 @@ async function loadCashBankAccounts() {
 function onPayMethodChange() {
   const m = document.getElementById('pay-method').value;
   document.getElementById('pay-register-row').style.display = m === 'cash' ? '' : 'none';
-  document.getElementById('pay-account-row').style.display = m === 'bank' ? '' : 'none';
+  document.getElementById('pay-account-row').style.display = (m === 'bank' || m === 'card') ? '' : 'none';
 }
 
 // ===== TABS =====

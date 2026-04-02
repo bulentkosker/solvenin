@@ -597,6 +597,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
           <select id="po-pay-method" onchange="onPoPayMethodChange()">
             <option value="cash">💵 Nakit</option>
             <option value="bank" selected>🏦 Banka Transferi</option>
+            <option value="card">💳 Kredi Kartı</option>
             <option value="other">📌 Diğer</option>
           </select>
         </div>
@@ -995,7 +996,7 @@ function openRecvPaymentModal(orderId, amount) {
 function onPoPayMethodChange() {
   const m = document.getElementById('po-pay-method').value;
   document.getElementById('po-pay-register-row').style.display = m === 'cash' ? '' : 'none';
-  document.getElementById('po-pay-account-row').style.display = m === 'bank' ? '' : 'none';
+  document.getElementById('po-pay-account-row').style.display = (m === 'bank' || m === 'card') ? '' : 'none';
 }
 
 async function savePoPayment() {
@@ -1009,7 +1010,7 @@ async function savePoPayment() {
 
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount') || 'Geçersiz tutar', 'error'); return; }
   if (method === 'cash' && !registerId) { showToast(t('toast_select_register') || 'Kasa seçin', 'error'); return; }
-  if (method === 'bank' && !accountId) { showToast(t('toast_select_account') || 'Hesap seçin', 'error'); return; }
+  if ((method === 'bank' || method === 'card') && !accountId) { showToast(t('toast_select_account') || 'Hesap seçin', 'error'); return; }
 
   const order = orders.find(o => o.id === orderId);
   const today = new Date().toISOString().split('T')[0];
@@ -1024,7 +1025,7 @@ async function savePoPayment() {
       category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
       reference: ref, transaction_date: today
     });
-  } else if (method === 'bank' && accountId) {
+  } else if ((method === 'bank' || method === 'card') && accountId) {
     const acc = bankAccounts.find(a => a.id === accountId);
     await sb.from('bank_transactions').insert({
       company_id: companyId, account_id: accountId, type: 'out', amount,
