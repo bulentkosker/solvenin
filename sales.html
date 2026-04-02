@@ -1585,53 +1585,73 @@ async function confirmInvoice() {
   updateStats();
 }
 
+async function getAccountId(code) {
+  const { data } = await sb.from('chart_of_accounts').select('id').eq('company_id', companyId).eq('code', code).single();
+  return data?.id || null;
+}
+
 async function createSaleJournalEntry(order, date) {
   try {
     const total = parseFloat(order.total || 0);
     const taxAmt = parseFloat(order.tax_amount || 0);
     const netAmt = total - taxAmt;
+    const entryNum = 'JE-S-' + order.order_number + '-' + Date.now();
+
     const { data: je, error } = await sb.from('journal_entries').insert({
       company_id: companyId,
+      entry_number: entryNum,
       entry_date: date,
       description: `${t('sale_invoice') || 'Satış faturası'} – ${order.order_number}`,
-      reference: order.order_number,
       type: 'invoice_sale',
       source_id: order.id,
       is_posted: true,
     }).select('id').single();
     if (error || !je) { console.error('JE create error:', error); return; }
 
-    // Debit: Receivables (120), Credit: Revenue (600)
+    const [acc120, acc600, acc391] = await Promise.all([
+      getAccountId('120'), getAccountId('600'), getAccountId('391')
+    ]);
+
     const lines = [
-      { journal_entry_id: je.id, account_code: '120', description: order.contacts?.name || '', debit: total, credit: 0 },
-      { journal_entry_id: je.id, account_code: '600', description: order.order_number, debit: 0, credit: netAmt },
+      { entry_id: je.id, account_id: acc120, description: order.contacts?.name || '', debit: total, credit: 0 },
+      { entry_id: je.id, account_id: acc600, description: order.order_number, debit: 0, credit: netAmt },
     ];
-    if (taxAmt > 0) {
-      lines.push({ journal_entry_id: je.id, account_code: '391', description: `KDV – ${order.order_number}`, debit: 0, credit: taxAmt });
+    if (taxAmt > 0 && acc391) {
+      lines.push({ entry_id: je.id, account_id: acc391, description: `KDV – ${order.order_number}`, debit: 0, credit: taxAmt });
     }
-    await sb.from('journal_entry_lines').insert(lines);
+    const { error: lErr } = await sb.from('journal_lines').insert(lines);
+    if (lErr) console.error('JE lines error:', lErr);
+    else console.log('[accounting] Sale JE created:', entryNum);
   } catch (e) { console.error('Journal entry error:', e); }
 }
 
 async function createPaymentJournalEntry(order, amount, method, date) {
   if (!accountingEnabled) return;
   try {
-    const accountCode = method === 'cash' ? '100' : '102'; // Kasa or Banka
+    const accCode = method === 'cash' ? '100' : '102';
+    const entryNum = 'JE-P-' + order.order_number + '-' + Date.now();
+
     const { data: je, error } = await sb.from('journal_entries').insert({
       company_id: companyId,
+      entry_number: entryNum,
       entry_date: date,
       description: `${t('sale_payment') || 'Satış tahsilatı'} – ${order.order_number}`,
-      reference: order.order_number,
       type: 'cash',
       source_id: order.id,
       is_posted: true,
     }).select('id').single();
-    if (error || !je) return;
+    if (error || !je) { console.error('Payment JE error:', error); return; }
 
-    await sb.from('journal_entry_lines').insert([
-      { journal_entry_id: je.id, account_code: accountCode, description: order.contacts?.name || '', debit: amount, credit: 0 },
-      { journal_entry_id: je.id, account_code: '120', description: order.order_number, debit: 0, credit: amount },
+    const [accCashBank, acc120] = await Promise.all([
+      getAccountId(accCode), getAccountId('120')
     ]);
+
+    const { error: lErr } = await sb.from('journal_lines').insert([
+      { entry_id: je.id, account_id: accCashBank, description: order.contacts?.name || '', debit: amount, credit: 0 },
+      { entry_id: je.id, account_id: acc120, description: order.order_number, debit: 0, credit: amount },
+    ]);
+    if (lErr) console.error('Payment JE lines error:', lErr);
+    else console.log('[accounting] Payment JE created:', entryNum);
   } catch (e) { console.error('Payment JE error:', e); }
 }
 
