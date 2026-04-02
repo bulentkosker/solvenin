@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS — Solvenin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<style>
+:root{--primary:#0d4f3c;--primary-dark:#0a2e20;--white:#fff;--bg:#f0f2f5;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+.pos-header{background:var(--primary-dark);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;color:#fff;flex-shrink:0}
+.pos-header .logo{font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:-.5px}
+.pos-header .logo span{color:#f0a500}
+.pos-header .info{display:flex;gap:16px;align-items:center;font-size:12px;color:rgba(255,255,255,.7)}
+.pos-header .info strong{color:#fff}
+.pos-exit{background:rgba(255,255,255,.1);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.pos-exit:hover{background:rgba(255,255,255,.2)}
+
+.pos-main{display:flex;flex:1;overflow:hidden}
+
+/* LEFT: Products */
+.pos-products{flex:2;display:flex;flex-direction:column;background:var(--white);border-right:1px solid var(--gray200)}
+.pos-search{padding:12px 16px;border-bottom:1px solid var(--gray100);display:flex;gap:8px}
+.pos-search input{flex:1;padding:10px 14px;border:1px solid var(--gray200);border-radius:10px;font-size:14px;outline:none;font-family:var(--font-body)}
+.pos-search input:focus{border-color:var(--primary)}
+.pos-categories{padding:8px 16px;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--gray100);flex-shrink:0}
+.cat-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--gray200);background:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font-body);color:var(--gray600)}
+.cat-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pos-grid{flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-content:start}
+.product-card{background:var(--gray50);border:1px solid var(--gray200);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.product-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.product-card:active{transform:scale(.97)}
+.product-card .name{font-size:13px;font-weight:600;color:var(--gray800);margin-bottom:4px;line-height:1.3}
+.product-card .price{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--primary)}
+.product-card .stock{font-size:10px;color:var(--gray400);margin-top:2px}
+
+/* RIGHT: Cart */
+.pos-cart{flex:1;display:flex;flex-direction:column;min-width:340px;max-width:400px;background:var(--white)}
+.cart-header{padding:14px 16px;border-bottom:1px solid var(--gray100);font-family:var(--font-display);font-size:15px;font-weight:700}
+.cart-items{flex:1;overflow-y:auto;padding:8px 0}
+.cart-item{display:flex;align-items:center;padding:8px 16px;gap:10px;border-bottom:1px solid var(--gray100)}
+.cart-item .ci-name{flex:1;font-size:13px;font-weight:500}
+.cart-item .ci-qty{display:flex;align-items:center;gap:4px}
+.cart-item .ci-qty button{width:28px;height:28px;border-radius:6px;border:1px solid var(--gray200);background:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cart-item .ci-qty button:hover{background:var(--gray50)}
+.cart-item .ci-qty span{width:32px;text-align:center;font-weight:600;font-size:14px}
+.cart-item .ci-total{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--primary);min-width:80px;text-align:right}
+.cart-item .ci-remove{color:var(--red);cursor:pointer;font-size:16px;padding:4px}
+.cart-empty{text-align:center;padding:40px;color:var(--gray400);font-size:13px}
+
+.cart-summary{padding:16px;border-top:1px solid var(--gray200);background:var(--gray50)}
+.summary-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)}
+.summary-row.total{font-size:18px;font-weight:800;color:var(--primary);padding:8px 0;font-family:var(--font-display)}
+
+.cart-actions{padding:12px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--gray200)}
+.pay-buttons{display:flex;gap:8px}
+.pay-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.pay-btn:hover{transform:translateY(-1px)}
+.pay-btn.cash{background:#dcfce7;color:#166534}
+.pay-btn.card{background:#eff6ff;color:#1d4ed8}
+.pay-btn.bank{background:#fef3c7;color:#92400e}
+.btn-complete{background:var(--primary);color:#fff;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-body);width:100%}
+.btn-complete:hover{background:var(--primary-dark)}
+.btn-complete:disabled{opacity:.4;cursor:not-allowed}
+
+/* Payment modal */
+.pos-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.pos-modal.open{display:flex}
+.pos-modal-card{background:#fff;border-radius:16px;padding:28px;width:380px;max-width:95vw}
+.pos-modal-card h3{font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:16px}
+.pos-field{margin-bottom:12px}
+.pos-field label{font-size:12px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px}
+.pos-field input,.pos-field select{width:100%;padding:10px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:14px;outline:none;font-family:var(--font-body)}
+.pos-field input:focus{border-color:var(--primary)}
+.change-display{text-align:center;padding:16px;margin:12px 0;background:var(--gray50);border-radius:10px}
+.change-display .label{font-size:12px;color:var(--gray500)}
+.change-display .amount{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--primary)}
+.pos-modal-actions{display:flex;gap:8px;margin-top:16px}
+.pos-modal-actions button{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:var(--font-body)}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;font-size:13px;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s}
+.toast.show{opacity:1;transform:translateY(0)}
+
+#loading-screen{position:fixed;inset:0;background:#0a2e20;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff}.loading-logo span{color:#f0a500}
+</style>
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+
+<!-- HEADER -->
+<div class="pos-header">
+  <div class="logo">solvenin<span>.</span> POS</div>
+  <div class="info">
+    <span id="pos-register-name"></span>
+    <span>|</span>
+    <span id="pos-cashier-name"></span>
+  </div>
+  <button class="pos-exit" onclick="exitPOS()">✕ Çıkış</button>
+</div>
+
+<!-- MAIN -->
+<div class="pos-main">
+  <!-- PRODUCTS -->
+  <div class="pos-products">
+    <div class="pos-search">
+      <input type="text" id="pos-search" placeholder="Ürün ara veya barkod okut..." oninput="filterProducts()">
+    </div>
+    <div class="pos-categories" id="pos-categories"></div>
+    <div class="pos-grid" id="pos-grid"></div>
+  </div>
+
+  <!-- CART -->
+  <div class="pos-cart">
+    <div class="cart-header">🛒 Sepet <span id="cart-count" style="color:var(--gray400);font-weight:400;font-size:13px">(0)</span></div>
+    <div class="cart-items" id="cart-items">
+      <div class="cart-empty">Ürün eklemek için sol taraftan seçin</div>
+    </div>
+    <div class="cart-summary">
+      <div class="summary-row"><span>Ara Toplam</span><span id="cart-subtotal">$0</span></div>
+      <div class="summary-row"><span>KDV</span><span id="cart-tax">$0</span></div>
+      <div class="summary-row total"><span>TOPLAM</span><span id="cart-total">$0</span></div>
+    </div>
+    <div class="cart-actions">
+      <div class="pay-buttons">
+        <button class="pay-btn cash" onclick="openPayment('cash')">💵 Nakit</button>
+        <button class="pay-btn card" onclick="openPayment('card')">💳 Kart</button>
+        <button class="pay-btn bank" onclick="openPayment('bank')">🏦 Transfer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="pos-modal" id="payment-modal">
+  <div class="pos-modal-card">
+    <h3 id="pay-modal-title">Ödeme</h3>
+    <div class="pos-field">
+      <label>Toplam Tutar</label>
+      <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--primary)" id="pay-total-display">$0</div>
+    </div>
+    <div id="pay-cash-section">
+      <div class="pos-field">
+        <label>Alınan Tutar</label>
+        <input type="number" id="pay-received" step="0.01" oninput="calcChange()" autofocus>
+      </div>
+      <div class="change-display">
+        <div class="label">Para Üstü</div>
+        <div class="amount" id="pay-change">$0</div>
+      </div>
+    </div>
+    <div id="pay-account-section" style="display:none">
+      <div class="pos-field">
+        <label>Hesap</label>
+        <select id="pay-pos-account"></select>
+      </div>
+    </div>
+    <div class="pos-modal-actions">
+      <button onclick="closePayment()" style="background:var(--gray100);color:var(--gray600)">İptal</button>
+      <button onclick="completeSale()" style="background:var(--primary);color:#fff" id="btn-complete-sale">Ödemeyi Tamamla</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="pos-modal" id="receipt-modal">
+  <div class="pos-modal-card" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">✅</div>
+    <h3>Satış Tamamlandı</h3>
+    <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--primary);margin:8px 0" id="receipt-total">$0</div>
+    <div id="receipt-change-row" style="font-size:14px;color:var(--gray500);margin-bottom:16px"></div>
+    <div class="pos-modal-actions">
+      <button onclick="closeReceipt()" style="background:var(--primary);color:#fff;flex:1">Yeni Satış</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+let companyId = null, currentUser = null;
+let products = [], categories = [], cart = [];
+let cashRegisters = [], bankAccounts = [];
+let selectedPayMethod = 'cash';
+let taxRate = 0; // default, could load from company settings
+
+function fmt(n) {
+  const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
+  return sym + parseFloat(n||0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+
+  const { data: companies } = await sb.rpc('get_my_companies');
+  if (!companies?.length) { window.location.href = 'dashboard.html'; return; }
+  const saved = localStorage.getItem('currentCompanyId');
+  const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
+  companyId = active.company_id;
+
+  document.getElementById('pos-cashier-name').textContent = currentUser.email;
+  document.getElementById('pos-register-name').textContent = active.company_name;
+
+  await Promise.all([loadProducts(), loadAccounts()]);
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
+}
+
+async function loadProducts() {
+  const { data } = await sb.from('products').select('id,name,sale_price,cost_price,stock_quantity,unit,category_id,product_type')
+    .eq('company_id', companyId).eq('is_active', true).order('name');
+  products = data || [];
+
+  const { data: cats } = await sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name');
+  categories = cats || [];
+
+  renderCategories();
+  renderProducts();
+}
+
+async function loadAccounts() {
+  const { data: regs } = await sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true);
+  cashRegisters = regs || [];
+  const { data: accs } = await sb.from('bank_accounts').select('id,account_name,currency_code').eq('company_id', companyId).eq('is_active', true);
+  bankAccounts = accs || [];
+}
+
+function renderCategories() {
+  const el = document.getElementById('pos-categories');
+  el.innerHTML = `<button class="cat-btn active" onclick="filterByCategory(this,'')">Tümü</button>` +
+    categories.map(c => `<button class="cat-btn" onclick="filterByCategory(this,'${c.id}')">${c.name}</button>`).join('');
+}
+
+let activeCategoryId = '';
+function filterByCategory(btn, catId) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeCategoryId = catId;
+  renderProducts();
+}
+
+function filterProducts() {
+  renderProducts();
+}
+
+function renderProducts() {
+  const q = (document.getElementById('pos-search').value || '').toLowerCase();
+  const grid = document.getElementById('pos-grid');
+  const filtered = products.filter(p => {
+    if (p.product_type === 'service') return true; // services always show
+    if (activeCategoryId && p.category_id !== activeCategoryId) return false;
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card" onclick="addToCart('${p.id}')">
+      <div class="name">${p.name}</div>
+      <div class="price">${fmt(p.sale_price)}</div>
+      ${p.product_type !== 'service' ? `<div class="stock">${p.stock_quantity || 0} ${p.unit || 'adet'}</div>` : ''}
+    </div>
+  `).join('') || '<div class="cart-empty">Ürün bulunamadı</div>';
+}
+
+// ===== CART =====
+function addToCart(productId) {
+  const p = products.find(x => x.id === productId);
+  if (!p) return;
+  const existing = cart.find(c => c.product_id === productId);
+  if (existing) { existing.qty++; }
+  else { cart.push({ product_id: productId, name: p.name, price: parseFloat(p.sale_price || 0), qty: 1, unit: p.unit }); }
+  renderCart();
+}
+
+function updateCartQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  renderCart();
+}
+
+function removeCartItem(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  if (!cart.length) {
+    el.innerHTML = '<div class="cart-empty">Ürün eklemek için sol taraftan seçin</div>';
+  } else {
+    el.innerHTML = cart.map((c, i) => `
+      <div class="cart-item">
+        <div class="ci-name">${c.name}</div>
+        <div class="ci-qty">
+          <button onclick="updateCartQty(${i},-1)">−</button>
+          <span>${c.qty}</span>
+          <button onclick="updateCartQty(${i},1)">+</button>
+        </div>
+        <div class="ci-total">${fmt(c.qty * c.price)}</div>
+        <div class="ci-remove" onclick="removeCartItem(${i})">✕</div>
+      </div>
+    `).join('');
+  }
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const tax = subtotal * taxRate / 100;
+  const total = subtotal + tax;
+  document.getElementById('cart-subtotal').textContent = fmt(subtotal);
+  document.getElementById('cart-tax').textContent = fmt(tax);
+  document.getElementById('cart-total').textContent = fmt(total);
+  document.getElementById('cart-count').textContent = `(${cart.reduce((s,c) => s + c.qty, 0)})`;
+}
+
+function getCartTotal() {
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  return subtotal + subtotal * taxRate / 100;
+}
+
+// ===== PAYMENT =====
+function openPayment(method) {
+  if (!cart.length) return;
+  selectedPayMethod = method;
+  const total = getCartTotal();
+  document.getElementById('pay-total-display').textContent = fmt(total);
+  document.getElementById('pay-modal-title').textContent = method === 'cash' ? '💵 Nakit Ödeme' : method === 'card' ? '💳 Kart Ödeme' : '🏦 Transfer';
+  document.getElementById('pay-cash-section').style.display = method === 'cash' ? '' : 'none';
+  document.getElementById('pay-account-section').style.display = method !== 'cash' ? '' : 'none';
+
+  if (method === 'cash') {
+    document.getElementById('pay-received').value = '';
+    document.getElementById('pay-change').textContent = fmt(0);
+  } else {
+    const opts = bankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('');
+    document.getElementById('pay-pos-account').innerHTML = `<option value="">Hesap seç...</option>` + opts;
+  }
+  document.getElementById('payment-modal').classList.add('open');
+  if (method === 'cash') setTimeout(() => document.getElementById('pay-received').focus(), 100);
+}
+
+function closePayment() { document.getElementById('payment-modal').classList.remove('open'); }
+
+function calcChange() {
+  const total = getCartTotal();
+  const received = parseFloat(document.getElementById('pay-received').value) || 0;
+  document.getElementById('pay-change').textContent = fmt(Math.max(0, received - total));
+}
+
+async function completeSale() {
+  const total = getCartTotal();
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const taxAmt = subtotal * taxRate / 100;
+
+  if (selectedPayMethod === 'cash') {
+    const received = parseFloat(document.getElementById('pay-received').value) || 0;
+    if (received < total) { showToast('Yetersiz tutar', 'error'); return; }
+  }
+  if ((selectedPayMethod === 'card' || selectedPayMethod === 'bank') && !document.getElementById('pay-pos-account').value) {
+    showToast('Hesap seçin', 'error'); return;
+  }
+
+  const btn = document.getElementById('btn-complete-sale');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    // 1. Create sales_order
+    const orderNum = 'POS-' + Date.now().toString(36).toUpperCase();
+    const { data: order, error } = await sb.from('sales_orders').insert({
+      company_id: companyId,
+      order_number: orderNum,
+      order_type: 'pos',
+      status: 'paid',
+      issue_date: new Date().toISOString().split('T')[0],
+      subtotal, tax_rate: taxRate, tax_amount: taxAmt, discount: 0, total,
+      created_by: currentUser.id,
+    }).select('id').single();
+    if (error) throw error;
+
+    // 2. Create order items
+    await sb.from('sales_order_items').insert(cart.map(c => ({
+      order_id: order.id,
+      product_id: c.product_id,
+      description: c.name,
+      quantity: c.qty,
+      unit_price: c.price,
+      discount: 0,
+      total: c.qty * c.price,
+    })));
+
+    // 3. Create payment transaction
+    const today = new Date().toISOString().split('T')[0];
+    if (selectedPayMethod === 'cash' && cashRegisters.length) {
+      await sb.from('cash_transactions').insert({
+        company_id: companyId,
+        register_id: cashRegisters[0].id,
+        type: 'in', amount: total,
+        currency_code: cashRegisters[0].currency_code || 'USD',
+        description: `POS satış – ${orderNum}`,
+        category: 'sale', source_type: 'invoice_sale', source_id: order.id,
+        payment_method: 'cash',
+        transaction_date: today,
+      });
+    } else if (selectedPayMethod === 'card' || selectedPayMethod === 'bank') {
+      const accId = document.getElementById('pay-pos-account').value;
+      const acc = bankAccounts.find(a => a.id === accId);
+      await sb.from('bank_transactions').insert({
+        company_id: companyId,
+        account_id: accId,
+        type: 'in', amount: total,
+        currency_code: acc?.currency_code || 'USD',
+        description: `POS satış – ${orderNum}`,
+        category: 'sale', source_type: 'invoice_sale', source_id: order.id,
+        payment_method: selectedPayMethod === 'card' ? 'credit_card' : 'bank_transfer',
+        transaction_date: today,
+      });
+    }
+
+    // 4. Stock movements
+    for (const c of cart) {
+      await sb.from('stock_movements').insert({
+        company_id: companyId, product_id: c.product_id,
+        type: 'out', quantity: c.qty,
+        reason: 'POS sale', reference_id: order.id, reference_type: 'sales_order',
+        created_by: currentUser.id,
+      });
+    }
+
+    // Show receipt
+    const change = selectedPayMethod === 'cash' ? parseFloat(document.getElementById('pay-received').value || 0) - total : 0;
+    document.getElementById('receipt-total').textContent = fmt(total);
+    document.getElementById('receipt-change-row').textContent = change > 0 ? `Para üstü: ${fmt(change)}` : '';
+    closePayment();
+    document.getElementById('receipt-modal').classList.add('open');
+    cart = [];
+    renderCart();
+  } catch (e) {
+    showToast('Hata: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ödemeyi Tamamla';
+  }
+}
+
+function closeReceipt() { document.getElementById('receipt-modal').classList.remove('open'); }
+function exitPOS() { window.location.href = 'dashboard.html'; }
+
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.background = type === 'error' ? '#dc2626' : '#0d4f3c';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('receipt-modal').classList.contains('open')) closeReceipt();
+    else if (document.getElementById('payment-modal').classList.contains('open')) closePayment();
+  }
+  if (e.key === 'Enter' && document.getElementById('payment-modal').classList.contains('open')) {
+    completeSale();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

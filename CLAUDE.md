@@ -66,6 +66,18 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Tüm migration'lar node + service key ile çalıştırılır (SQL Editor'e gerek yok)
 - `.env` dosyasında: SUPABASE_URL, SUPABASE_SERVICE_KEY
 
+## POS Module
+- `pos.html` — full-screen POS interface (no sidebar)
+- Product grid with category filter + search
+- Cart with +/- quantity, real-time totals
+- Payment: Cash (with change calc), Card, Bank Transfer
+- Creates sales_order (order_type='pos', status='paid')
+- Auto: stock movements, cash/bank transactions
+- Tables: `pos_sessions`, `pos_cash_transfers`
+- `sales_orders.order_type` — 'sale' (normal) or 'pos' (POS)
+- `cash_transactions.payment_method` / `bank_transactions.payment_method`
+- Cashier report in cashbank.html (tab: cashier-report)
+
 ## Accounting Integration
 - `companies.accounting_enabled` — toggle in Settings > Entegrasyonlar
 - When enabled: invoiced/paid orders auto-create journal entries
