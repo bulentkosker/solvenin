@@ -418,8 +418,12 @@ tr:hover .action-btns { opacity:1; }
           <input type="text" id="p-name" data-i18n-placeholder="label_product_name" placeholder="Product Name *">
         </div>
         <div class="form-group">
-          <label><span data-i18n="label_sku">SKU / Barcode</span></label>
-          <input type="text" id="p-sku" data-i18n-placeholder="label_sku" placeholder="SKU / Barcode">
+          <label><span data-i18n="label_sku">SKU</span></label>
+          <input type="text" id="p-sku" placeholder="SKU">
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="lbl_barcode">Barkod</span></label>
+          <input type="text" id="p-barcode" placeholder="Barkod">
         </div>
       </div>
       <div class="form-row">
@@ -931,7 +935,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = t('title_add_product');
-  ['p-name','p-sku','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['p-name','p-sku','p-barcode','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('p-category-id').value = '';
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
@@ -946,6 +950,7 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = t('title_edit_product');
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
+  document.getElementById('p-barcode').value = p.barcode || '';
   document.getElementById('p-category-id').value = p.category_id || '';
   document.getElementById('p-unit').value = p.unit || 'pcs';
   document.getElementById('p-type').value = p.product_type || 'finished_good';
@@ -1207,6 +1212,7 @@ async function saveProduct() {
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
+    barcode: document.getElementById('p-barcode').value.trim() || null,
     category_id: document.getElementById('p-category-id').value || null,
     unit: document.getElementById('p-unit').value || 'pcs',
     product_type: document.getElementById('p-type').value || 'finished_good',

@@ -971,9 +971,11 @@ async function confirmInvoice() {
 
   // Create stock movements (in) for each item
   try {
-    const { data: items } = await sb.from('purchase_order_items').select('product_id, quantity, warehouse_id').eq('order_id', id);
+    const { data: items, error: itemsErr } = await sb.from('purchase_order_items').select('product_id, quantity, warehouse_id').eq('order_id', id);
+    console.log('[purchasing] Invoice items for', id, ':', JSON.stringify(items), itemsErr?.message);
     const { data: { user } } = await sb.auth.getUser();
     const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
+    console.log('[purchasing] Default warehouse:', defaultWh);
     const order = orders.find(o => o.id === id);
     if (items?.length) {
       const movements = items.filter(i => i.product_id).map(i => ({

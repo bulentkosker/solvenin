@@ -441,9 +441,13 @@ async function pinKey(k) {
   renderPinDots();
   if (pinValue.length === 4) {
     // Verify PIN
-    const { data } = await sb.from('company_users').select('user_id')
-      .eq('company_id', companyId).eq('pos_pin', pinValue).in('role', ['owner','admin','manager']);
-    if (data?.length) {
+    console.log('[pos] PIN verify:', pinValue, 'company:', companyId);
+    const { data, error: pinErr } = await sb.from('company_users').select('user_id, role, pos_pin')
+      .eq('company_id', companyId).eq('pos_pin', pinValue);
+    console.log('[pos] PIN result:', JSON.stringify(data), pinErr?.message);
+    // Filter for manager+ roles client-side (simpler, avoids PostgREST .in() issues)
+    const validManagers = (data || []).filter(d => ['owner','admin','manager'].includes(d.role));
+    if (validManagers.length) {
       closePin();
       if (pinCallback) pinCallback();
       pinCallback = null;
