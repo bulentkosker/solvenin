@@ -680,6 +680,7 @@ window._supabase = sb;
 
 
 let companyId = null;
+let accountingEnabled = false;
 let cashRegisters = [];
 let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
@@ -714,6 +715,9 @@ async function init() {
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
+  // Load accounting setting
+  const { data: compSettings } = await sb.from('companies').select('accounting_enabled').eq('id', companyId).single();
+  accountingEnabled = !!compSettings?.accounting_enabled;
 await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadCashBankAccounts()]);
   var savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -796,8 +800,8 @@ function renderOrders(list) {
     <td>${flowBtn}</td>
     <td><div class="row-actions">
       ${o.status === 'confirmed' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
-      <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>
-      <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>
+      ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>` : ''}
+      ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>` : ''}
     </div></td>
   </tr>`;
   }).join('');
@@ -1255,7 +1259,17 @@ async function saveOrder() {
   await loadOrders();
 }
 
+function canEditOrder(status) {
+  if (!accountingEnabled) return true;
+  return ['draft','confirmed'].includes(status);
+}
+
 async function editOrder(id) {
+  const order = orders.find(o => o.id === id);
+  if (order && !canEditOrder(order.status)) {
+    showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
+    return;
+  }
   editingOrderId = id;
   const order = orders.find(o => o.id === id);
   if (!order) return;

@@ -698,6 +698,7 @@ window._supabase = sb;
 
 let companyId = null, companyName = 'My Company', companyData = {}, userPlan = 'free';
 let invoiceSettings = { show_discount: false, show_tax: true, show_description: false, show_unit: true, invoice_language: 'company' };
+let accountingEnabled = false;
 let orders = [], customers = [], products = [], payments = [];
 let cashRegisters = [], bankAccounts = [];
 let currentView = 'orders'; // 'orders' or 'invoices'
@@ -731,10 +732,10 @@ async function init() {
 
   // Load company details + user plan + module data in parallel
   const [cdRes, profRes] = await Promise.all([
-    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings').eq('id', companyId).single(),
+    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings,accounting_enabled').eq('id', companyId).single(),
     sb.from('profiles').select('plan').eq('id', session.user.id).single(),
   ]);
-  if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; if (cdRes.data.invoice_settings) invoiceSettings = { ...invoiceSettings, ...cdRes.data.invoice_settings }; }
+  if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; if (cdRes.data.invoice_settings) invoiceSettings = { ...invoiceSettings, ...cdRes.data.invoice_settings }; accountingEnabled = !!cdRes.data.accounting_enabled; }
   if (profRes.data?.plan) userPlan = profRes.data.plan;
   console.log('[sales] companyName:', companyName, 'plan:', userPlan);
 
@@ -831,8 +832,9 @@ function renderOrders(list) {
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${statusLabel[o.status]||o.status}</span></td>
       <td>${flowBtn}</td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="View">👁</button>
+        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>` : ''}
+        ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -859,8 +861,9 @@ function renderInvoices(list) {
       <td><span class="badge ${statusBadge[displayStatus]||'badge-gray'}">${statusLabel[displayStatus]||displayStatus}</span></td>
       <td><div class="row-actions">
         ${flowBtn}
-        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="PDF">🧾</button>
-        <button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Payment">💳</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="View">👁</button>
+        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>` : ''}
+        ${o.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Payment">💳</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1212,7 +1215,17 @@ async function saveOrder() {
   await loadOrders();
 }
 
+function canEditOrder(status) {
+  if (!accountingEnabled) return true;
+  return ['draft','confirmed'].includes(status);
+}
+
 async function editOrder(id) {
+  const order = orders.find(o => o.id === id);
+  if (order && !canEditOrder(order.status)) {
+    showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
+    return;
+  }
   editingOrderId = id;
   const order = orders.find(o => o.id === id);
   if (!order) return;
@@ -1350,7 +1363,10 @@ async function savePayment() {
     }
   }
 
-  // 3. Auto-mark as paid if fully covered
+  // 3. Journal entry for payment
+  if (order) await createPaymentJournalEntry(order, amount, method, new Date().toISOString().split('T')[0]);
+
+  // 4. Auto-mark as paid if fully covered
   const totalPaid = payments.filter(p => p.order_id === orderId).reduce((s,p) => s + parseFloat(p.amount), 0) + amount;
   if (order && totalPaid >= parseFloat(order.total || 0)) {
     await sb.from('sales_orders').update({ status: 'paid' }).eq('id', orderId);
@@ -1558,9 +1574,66 @@ async function confirmInvoice() {
   }).eq('id', id);
   closeModal('invoice-confirm-modal');
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+  // Auto journal entry if accounting enabled
+  if (accountingEnabled) {
+    const order = orders.find(o => o.id === id);
+    if (order) await createSaleJournalEntry(order, invoiceDate);
+  }
+
   showToast(t('toast_invoiced') || 'Fatura oluşturuldu', 'success');
   await loadOrders();
   updateStats();
+}
+
+async function createSaleJournalEntry(order, date) {
+  try {
+    const total = parseFloat(order.total || 0);
+    const taxAmt = parseFloat(order.tax_amount || 0);
+    const netAmt = total - taxAmt;
+    const { data: je, error } = await sb.from('journal_entries').insert({
+      company_id: companyId,
+      entry_date: date,
+      description: `${t('sale_invoice') || 'Satış faturası'} – ${order.order_number}`,
+      reference: order.order_number,
+      type: 'invoice_sale',
+      source_id: order.id,
+      is_posted: true,
+    }).select('id').single();
+    if (error || !je) { console.error('JE create error:', error); return; }
+
+    // Debit: Receivables (120), Credit: Revenue (600)
+    const lines = [
+      { journal_entry_id: je.id, account_code: '120', description: order.contacts?.name || '', debit: total, credit: 0 },
+      { journal_entry_id: je.id, account_code: '600', description: order.order_number, debit: 0, credit: netAmt },
+    ];
+    if (taxAmt > 0) {
+      lines.push({ journal_entry_id: je.id, account_code: '391', description: `KDV – ${order.order_number}`, debit: 0, credit: taxAmt });
+    }
+    await sb.from('journal_entry_lines').insert(lines);
+  } catch (e) { console.error('Journal entry error:', e); }
+}
+
+async function createPaymentJournalEntry(order, amount, method, date) {
+  if (!accountingEnabled) return;
+  try {
+    const accountCode = method === 'cash' ? '100' : '102'; // Kasa or Banka
+    const { data: je, error } = await sb.from('journal_entries').insert({
+      company_id: companyId,
+      entry_date: date,
+      description: `${t('sale_payment') || 'Satış tahsilatı'} – ${order.order_number}`,
+      reference: order.order_number,
+      type: 'cash',
+      source_id: order.id,
+      is_posted: true,
+    }).select('id').single();
+    if (error || !je) return;
+
+    await sb.from('journal_entry_lines').insert([
+      { journal_entry_id: je.id, account_code: accountCode, description: order.contacts?.name || '', debit: amount, credit: 0 },
+      { journal_entry_id: je.id, account_code: '120', description: order.order_number, debit: 0, credit: amount },
+    ]);
+  } catch (e) { console.error('Payment JE error:', e); }
 }
 
 // ===== HELPERS =====

@@ -66,6 +66,15 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Tüm migration'lar node + service key ile çalıştırılır (SQL Editor'e gerek yok)
 - `.env` dosyasında: SUPABASE_URL, SUPABASE_SERVICE_KEY
 
+## Accounting Integration
+- `companies.accounting_enabled` — toggle in Settings > Entegrasyonlar
+- When enabled: invoiced/paid orders auto-create journal entries
+  - Sale invoice: Debit 120 (Receivables), Credit 600 (Revenue) + 391 (VAT)
+  - Payment: Debit 100/102 (Cash/Bank), Credit 120 (Receivables)
+- When enabled: invoiced/paid orders cannot be edited (locked)
+- When disabled: no journal entries, all orders editable
+- `companies.invoice_settings` JSONB — PDF column toggles (unit, discount, tax, description)
+
 ## Order Status Flow
 - Sales: draft → confirmed → invoiced → paid (overdue: invoiced + due_date geçmiş)
 - Purchase: draft → confirmed → invoiced → paid
