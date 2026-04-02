@@ -1422,8 +1422,9 @@ async function viewInvoice(orderId) {
   openModal('invoice-modal');
 }
 
-async function downloadPDF() {
-  if (!currentInvoiceOrder) return;
+function downloadPDF() {
+  console.log('[pdf] downloadPDF called, jspdf:', typeof window.jspdf, 'autoTable:', typeof window.jspdf?.jsPDF?.prototype?.autoTable);
+  if (!currentInvoiceOrder) { console.log('[pdf] no currentInvoiceOrder'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const { order, customer, items } = currentInvoiceOrder;
@@ -1597,6 +1598,7 @@ async function downloadPDF() {
 }
 
 function savePDF() {
+  console.log('[pdf] savePDF called');
   const doc = downloadPDF();
   if (!doc) return;
   const { order, customer } = currentInvoiceOrder;
@@ -1606,6 +1608,7 @@ function savePDF() {
 }
 
 function printPDF() {
+  console.log('[pdf] printPDF called');
   const doc = downloadPDF();
   if (!doc) return;
   doc.autoPrint();
