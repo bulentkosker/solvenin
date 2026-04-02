@@ -1631,12 +1631,13 @@ async function createPaymentJournalEntry(order, amount, method, date) {
     const accCode = method === 'cash' ? '100' : '102';
     const entryNum = 'JE-P-' + order.order_number + '-' + Date.now();
 
+    const jeType = method === 'cash' ? 'cash' : 'bank';
     const { data: je, error } = await sb.from('journal_entries').insert({
       company_id: companyId,
       entry_number: entryNum,
       entry_date: date,
       description: `${t('sale_payment') || 'Satış tahsilatı'} – ${order.order_number}`,
-      type: 'cash',
+      type: jeType,
       source_id: order.id,
       is_posted: true,
     }).select('id').single();
