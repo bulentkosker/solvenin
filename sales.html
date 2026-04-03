@@ -475,47 +475,17 @@ tr:hover .row-actions{opacity:1}
 
   <!-- Ürün tablosu wrapper -->
   <div style="flex:1;overflow:auto;padding:0 16px;">
-    <table id="order-items-table" style="width:100%;border-collapse:collapse;table-layout:fixed;">
-      <colgroup>
-        <col id="col-s-num" style="width:32px;">
-        <col id="col-s-product" style="width:auto;">
-        <col id="col-s-desc" style="width:0px;">
-        <col id="col-s-qty" style="width:80px;">
-        <col id="col-s-price" style="width:110px;">
-        <col id="col-s-disc" style="width:65px;">
-        <col id="col-s-wh" style="width:100px;">
-        <col id="col-s-total" style="width:110px;">
-        <col id="col-s-del" style="width:32px;">
-      </colgroup>
+    <table id="order-items-table" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:#0d4f3c;">
-          <th style="padding:7px 4px 7px 8px;text-align:left;font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;user-select:none;">#</th>
-          <th class="resizable" style="padding:7px 4px;text-align:left;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_product">ÜRÜN</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th class="resizable desc-col" style="display:none;padding:7px 4px;text-align:left;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_description">AÇIKLAMA</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_qty">MİKTAR</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_unit_price">BİRİM FİYAT</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_disc_pct">İND%</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th class="resizable" style="padding:7px 4px;text-align:center;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
-            <span data-i18n="col_warehouse">DEPO</span>
-            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
-          </th>
-          <th style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;"><span data-i18n="col_total">TOPLAM</span></th>
-          <th></th>
+          <th style="width:32px;padding:8px 4px 8px 8px;text-align:left;font-size:10px;color:rgba(255,255,255,0.6);font-weight:400;border:none;">#</th>
+          <th style="padding:8px 4px;text-align:left;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">ÜRÜN / AÇIKLAMA</th>
+          <th style="width:85px;padding:8px 4px;text-align:right;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">MİKTAR</th>
+          <th style="width:70px;padding:8px 4px;text-align:center;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">BİRİM</th>
+          <th style="width:115px;padding:8px 4px;text-align:right;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">BİRİM FİYAT</th>
+          <th style="width:65px;padding:8px 4px;text-align:right;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">İND%</th>
+          <th style="width:115px;padding:8px 4px;text-align:right;font-size:10px;color:#fff;font-weight:500;letter-spacing:0.5px;border:none;text-transform:uppercase;">TOPLAM</th>
+          <th style="width:36px;border:none;"></th>
         </tr>
       </thead>
       <tbody id="order-items">
@@ -1057,7 +1027,6 @@ function showOrderFormView() {
   document.getElementById('list-view').style.display = 'none';
   document.getElementById('order-form-view').style.display = 'flex';
   history.replaceState(null, '', editingOrderId ? `sales.html?action=edit&id=${editingOrderId}` : 'sales.html?action=new');
-  initColumnResize('solvenin_col_widths_sales');
 }
 
 async function closeOrderForm() {
@@ -1099,8 +1068,6 @@ function getFormSnapshot() {
 function toggleDescCol() {
   _descVisible = !_descVisible;
   document.querySelectorAll('.desc-col').forEach(el => el.style.display = _descVisible ? '' : 'none');
-  const descCol = document.getElementById('col-s-desc');
-  if (descCol) descCol.style.width = _descVisible ? '150px' : '0px';
   document.getElementById('btn-toggle-desc').textContent = _descVisible ? (t('btn_hide_desc') || 'Açıklama −') : (t('btn_show_desc') || 'Açıklama +');
 }
 
@@ -1157,27 +1124,29 @@ function itemKeyNav(e, row, col) {
 
 function renderOrderItems() {
   const tbody = document.getElementById('order-items');
-  const dsp = _descVisible ? '' : 'display:none';
-  const inputS = 'border:1px solid #e8e8e8;border-radius:3px;padding:2px 5px;font-size:12px;height:24px;box-sizing:border-box;width:100%;';
+  const inputS = 'border:1px solid #e8e8e8;border-radius:3px;padding:2px 6px;font-size:12px;height:26px;box-sizing:border-box;width:100%;';
+  const tdS = 'padding:4px 4px;font-size:12px;border-bottom:1px solid #f0f0f0;';
+  const tdR = tdS + 'text-align:right;';
   tbody.innerHTML = orderItems.map((item, i) => {
-    const bgColor = i % 2 === 0 ? 'white' : '#fafffe';
-    return `<tr data-row="${i}" style="background:${bgColor};height:32px;">
-    <td style="padding:2px 4px 2px 8px;font-size:11px;color:#999;">${i+1}</td>
-    <td style="padding:2px 4px;">
+    const bgColor = i % 2 === 0 ? 'white' : '#f8fff8';
+    const prod = item.product_id ? products.find(p => p.id === item.product_id) : null;
+    const unit = prod?.unit || '';
+    return `<tr data-row="${i}" style="background:${bgColor};">
+    <td style="${tdS}padding-left:8px;color:#999;font-size:11px;">${i+1}</td>
+    <td style="${tdS}">
       <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="min-width:120px"></div>
     </td>
-    <td class="desc-col" style="${dsp};padding:2px 4px;"><input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="${t('col_description')||'Açıklama'}" oninput="orderItems[${i}].description=this.value" style="${inputS}"></td>
-    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')" style="${inputS}text-align:right;"></td>
-    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')" style="${inputS}text-align:right;"></td>
-    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="disc" data-row="${i}" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="${inputS}text-align:right;"></td>
-    <td style="padding:2px 4px;">
+    <td style="${tdR}"><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')" style="${inputS}text-align:right;"></td>
+    <td style="${tdS}text-align:center;">
       <select onchange="orderItems[${i}].warehouse_id=this.value" style="${inputS}font-size:11px;text-align:center;">
-        <option value="">Depo</option>
+        <option value="">—</option>
         ${warehouses.map(w=>`<option value="${w.id}" ${item.warehouse_id===w.id?'selected':''}>${w.name}</option>`).join('')}
       </select>
     </td>
-    <td style="padding:2px 4px;text-align:right;font-weight:bold;color:#222;font-size:12px;" id="item-total-${i}">—</td>
-    <td style="padding:2px 4px;text-align:center;"><button onclick="removeOrderItem(${i})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:14px;padding:0;">✕</button></td>
+    <td style="${tdR}"><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')" style="${inputS}text-align:right;"></td>
+    <td style="${tdR}"><input type="text" class="num-input" data-col="disc" data-row="${i}" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="${inputS}text-align:right;"></td>
+    <td style="${tdR}font-weight:bold;color:#222;" id="item-total-${i}">—</td>
+    <td style="${tdS}text-align:center;"><button onclick="removeOrderItem(${i})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:14px;padding:0;">✕</button></td>
   </tr>`;
   }).join('');
   // Initialize QA on each product cell
@@ -1199,38 +1168,6 @@ function renderOrderItems() {
     });
   });
   recalcOrder();
-}
-
-function initColumnResize(storageKey) {
-  const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-  Object.keys(saved).forEach(colId => {
-    const col = document.getElementById(colId);
-    if (col) col.style.width = saved[colId];
-  });
-  document.querySelectorAll('#order-items-table .resize-handle').forEach(handle => {
-    handle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      const th = handle.closest('th');
-      const colIndex = Array.from(th.parentElement.children).indexOf(th);
-      const colEl = document.querySelectorAll('#order-items-table col')[colIndex];
-      if (!colEl || !colEl.id) return;
-      const startX = e.pageX;
-      const startWidth = th.offsetWidth;
-      const onMove = ev => {
-        const newWidth = Math.max(40, startWidth + ev.pageX - startX);
-        colEl.style.width = newWidth + 'px';
-        const widths = JSON.parse(localStorage.getItem(storageKey) || '{}');
-        widths[colEl.id] = newWidth + 'px';
-        localStorage.setItem(storageKey, JSON.stringify(widths));
-      };
-      const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-  });
 }
 
 function getSelectedTaxRate() {
