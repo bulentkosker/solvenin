@@ -695,7 +695,7 @@ let orderItems = [];
 const statusBadge = { draft:'badge-gray', confirmed:'badge-blue', invoiced:'badge-purple', paid:'badge-green', cancelled:'badge-red' };
 const statusLabel = {};
 function getStatusLabels() {
-  return { draft:t('status_draft'), sent:t('status_sent'), confirmed:t('status_confirmed'), received:t('status_received'), cancelled:t('status_cancelled') };
+  return { draft:t('status_draft')||'Taslak', confirmed:t('status_confirmed')||'Onaylandı', invoiced:t('status_invoiced')||'Faturalandı', paid:t('status_paid')||'Ödendi', cancelled:t('status_cancelled')||'İptal' };
 }
 
 // ===== INIT =====
@@ -803,7 +803,7 @@ function renderOrders(list) {
       ${o.status === 'confirmed' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
       <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
       ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>` : ''}
-      ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>` : ''}
+      ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
     </div></td>
   </tr>`;
   }).join('');
@@ -1298,12 +1298,24 @@ function canEditOrder(status) {
 }
 
 let _viewMode = false;
+
+async function cancelOrder(id) {
+  if (!confirm(t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?')) return;
+  const { error } = await sb.from('purchase_orders').update({ status: 'cancelled' }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_order_cancelled') || 'Sipariş iptal edildi', 'success');
+  await loadOrders();
+}
+
 async function viewOrder(id) {
   _viewMode = true;
   await editOrder(id);
   document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
     el.disabled = true; el.style.opacity = '0.7';
   });
+  document.querySelectorAll('#order-form-view .btn-danger, #order-form-view .ci-qty button, #order-form-view .ci-del').forEach(el => el.style.display = 'none');
+  const addLineBtn = document.querySelector('#order-form-view [onclick*="addOrderItem"]');
+  if (addLineBtn) addLineBtn.style.display = 'none';
   document.getElementById('order-modal-title').textContent = t('title_view_order') || 'Sipariş Detayı';
   const actionsBar = document.querySelector('#order-form-view [style*="padding-bottom:40px"]');
   if (actionsBar) {

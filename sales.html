@@ -834,7 +834,7 @@ function renderOrders(list) {
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
         ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Düzenle">✏️</button>` : ''}
-        ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Sil">🗑️</button>` : ''}
+        ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1010,10 +1010,40 @@ function showOrderFormView() {
   history.replaceState(null, '', editingOrderId ? `sales.html?action=edit&id=${editingOrderId}` : 'sales.html?action=new');
 }
 
-function closeOrderForm() {
+async function closeOrderForm() {
+  if (!_viewMode && _originalFormData) {
+    const currentData = getFormSnapshot();
+    if (JSON.stringify(currentData) !== JSON.stringify(_originalFormData)) {
+      if (!await showConfirm(t('confirm_unsaved') || 'Kaydedilmemiş değişiklikler var. Çıkmak istediğinizden emin misiniz?', t('btn_discard') || 'Değişiklikleri İptal Et')) return;
+    }
+  }
+  _viewMode = false;
+  _originalFormData = null;
+  // Restore form controls
+  document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+    el.disabled = false; el.style.opacity = '';
+  });
+  document.querySelectorAll('#order-form-view .btn-danger, #order-form-view .ci-qty button, #order-form-view .ci-del').forEach(el => el.style.display = '');
+  const addLineBtn = document.querySelector('#order-form-view [onclick*="addOrderItem"]');
+  if (addLineBtn) addLineBtn.style.display = '';
+  const descToggle = document.getElementById('btn-toggle-desc');
+  if (descToggle) descToggle.style.display = '';
+
   document.getElementById('order-form-view').style.display = 'none';
   document.getElementById('list-view').style.display = '';
   history.replaceState(null, '', 'sales.html');
+}
+
+function getFormSnapshot() {
+  return {
+    customer: document.getElementById('o-customer')?.value || '',
+    number: document.getElementById('o-number')?.value || '',
+    date: document.getElementById('o-date')?.value || '',
+    status: document.getElementById('o-status')?.value || '',
+    discount: document.getElementById('o-discount')?.value || '',
+    notes: document.getElementById('o-notes')?.value || '',
+    items: JSON.stringify(orderItems),
+  };
 }
 
 function toggleDescCol() {
@@ -1040,6 +1070,7 @@ function openOrderModal() {
   renderOrderItems();
   updateCustomerSelects();
   showOrderFormView();
+  setTimeout(() => { _originalFormData = getFormSnapshot(); }, 100);
 }
 
 function addOrderItem() {
@@ -1222,6 +1253,8 @@ function canEditOrder(status) {
 }
 
 let _viewMode = false;
+let _originalFormData = null;
+
 async function viewOrder(id) {
   _viewMode = true;
   await editOrder(id);
@@ -1229,10 +1262,16 @@ async function viewOrder(id) {
   document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
     el.disabled = true; el.style.opacity = '0.7';
   });
+  // Hide editing controls
+  document.querySelectorAll('#order-form-view .btn-danger, #order-form-view .ci-qty button, #order-form-view .ci-del').forEach(el => el.style.display = 'none');
+  const addLineBtn = document.querySelector('#order-form-view [onclick*="addOrderItem"]');
+  if (addLineBtn) addLineBtn.style.display = 'none';
+  const descToggle = document.getElementById('btn-toggle-desc');
+  if (descToggle) descToggle.style.display = 'none';
   // Change title
   document.getElementById('order-modal-title').textContent = t('title_view_order') || 'Sipariş Detayı';
-  // Replace save buttons with view actions
-  const actionsBar = document.querySelector('#order-form-view .cart-actions, #order-form-view [style*="padding-bottom:40px"]');
+  // Replace save buttons
+  const actionsBar = document.querySelector('#order-form-view [style*="padding-bottom:40px"]');
   if (actionsBar) {
     const order = orders.find(o => o.id === id);
     actionsBar.innerHTML = `<div style="display:flex;gap:10px;justify-content:flex-end;padding-bottom:40px">
@@ -1283,6 +1322,16 @@ async function editOrder(id) {
   updateCustomerSelects();
   renderOrderItems();
   showOrderFormView();
+  setTimeout(() => { _originalFormData = getFormSnapshot(); }, 100);
+}
+
+async function cancelOrder(id) {
+  if (!await showConfirm(t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?', t('btn_cancel_order') || 'İptal Et')) return;
+  const { error } = await sb.from('sales_orders').update({ status: 'cancelled' }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_order_cancelled') || 'Sipariş iptal edildi', 'success');
+  await loadOrders();
+  updateStats();
 }
 
 async function deleteOrder(id) {
