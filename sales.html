@@ -414,42 +414,43 @@ tr:hover .row-actions{opacity:1}
   </div> <!-- /#list-view -->
 
 <!-- ORDER FULL PAGE VIEW -->
-<div id="order-form-view" style="display:none">
-  <div class="content" style="padding:16px 28px">
-    <!-- Header bar -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:12px">
-        <a onclick="closeOrderForm()" style="cursor:pointer;font-size:13px;color:var(--gray500);text-decoration:none">← <span data-i18n="btn_back">Geri</span></a>
-        <span class="modal-title" id="order-modal-title" style="font-size:17px"></span>
-      </div>
-      <div style="display:flex;gap:8px" id="form-action-buttons">
-        <button class="btn btn-outline btn-sm" onclick="closeOrderForm()" data-i18n="btn_cancel">İptal</button>
-        <button class="btn btn-primary btn-sm" onclick="saveOrder()" data-i18n="btn_save">Kaydet</button>
-      </div>
+<div id="order-form-view" style="display:none;flex-direction:column;height:100vh;position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:100;">
+  <!-- Üst bar -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="closeOrderForm()" style="background:none;border:none;color:#666;font-size:13px;cursor:pointer;">← Geri</button>
+      <span id="order-modal-title" style="font-size:15px;font-weight:600;color:#111;"></span>
+      <span id="form-status-badge"></span>
     </div>
+    <div style="display:flex;gap:8px;" id="form-action-buttons">
+      <button onclick="closeOrderForm()" style="padding:5px 14px;border:1px solid #ddd;background:white;border-radius:5px;font-size:13px;cursor:pointer;color:#555;" data-i18n="btn_cancel">İptal</button>
+      <button onclick="saveOrder()" style="padding:5px 16px;background:#0d4f3c;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-weight:500;" data-i18n="btn_save">Kaydet</button>
+    </div>
+  </div>
 
-    <!-- Compact form fields -->
-    <div style="background:#f8f9fa;border-radius:8px;padding:12px 16px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="col_customer">Müşteri</label>
-        <div id="o-customer-qa" style="flex:1"></div>
+  <!-- Üst bilgiler (kompakt grid) -->
+  <div style="background:#f8f9fa;padding:10px 16px;border-bottom:1px solid #eee;">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">
+      <div style="grid-column:span 2;">
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="col_customer">Müşteri *</div>
+        <div id="o-customer-qa" style="position:relative;"></div>
         <input type="hidden" id="o-customer">
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="lbl_order_no">Sipariş No</label>
-        <input type="text" id="o-number" disabled style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;background:#f0f0f0;color:#333">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_order_no">Sipariş No</div>
+        <input type="text" id="o-number" disabled style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:#f0f0f0;color:#333;">
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="lbl_issue_date">Tarih</label>
-        <input type="date" id="o-date" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_issue_date">Tarih *</div>
+        <input id="o-date" type="date" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="col_due_date">Vade</label>
-        <input type="date" id="o-duedate" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="col_due_date">Vade</div>
+        <input id="o-duedate" type="date" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="col_status">Durum</label>
-        <select id="o-status" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="col_status">Durum</div>
+        <select id="o-status" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
           <option value="draft" data-i18n="status_draft">Taslak</option>
           <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
           <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
@@ -457,50 +458,96 @@ tr:hover .row-actions{opacity:1}
           <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="lbl_tax_rate">Vergi</label>
-        <select id="o-tax" onchange="recalcOrder()" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px">
-          <option value="" data-rate="0">— 0%</option>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_tax_rate">Vergi Oranı</div>
+        <select id="o-tax" onchange="recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
+          <option value="" data-rate="0">— Vergi Yok</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="lbl_discount">İndirim</label>
-        <input type="text" id="o-discount" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;text-align:right">
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label style="font-size:11px;color:#666;min-width:60px;flex-shrink:0" data-i18n="label_notes">Not</label>
-        <input type="text" id="o-notes" placeholder="" style="flex:1;height:32px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px">
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_discount">İndirim</div>
+        <input id="o-discount" type="text" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;text-align:right;">
       </div>
     </div>
+  </div>
 
-    <!-- Items table -->
-    <table class="items-table" style="margin-bottom:8px">
+  <!-- Ürün tablosu wrapper -->
+  <div style="flex:1;overflow:auto;padding:0 16px;">
+    <table id="order-items-table" style="width:100%;border-collapse:collapse;table-layout:fixed;">
+      <colgroup>
+        <col id="col-s-num" style="width:32px;">
+        <col id="col-s-product" style="width:auto;">
+        <col id="col-s-desc" style="width:0px;">
+        <col id="col-s-qty" style="width:80px;">
+        <col id="col-s-price" style="width:110px;">
+        <col id="col-s-disc" style="width:65px;">
+        <col id="col-s-wh" style="width:100px;">
+        <col id="col-s-total" style="width:110px;">
+        <col id="col-s-del" style="width:32px;">
+      </colgroup>
       <thead>
-        <tr style="background:#0d4f3c">
-          <th style="color:#fff;font-size:11px;padding:8px 10px;width:30%"><span data-i18n="col_product">Ürün</span></th>
-          <th class="desc-col" style="display:none;color:#fff;font-size:11px;padding:8px 10px"><span data-i18n="col_description">Açıklama</span></th>
-          <th style="color:#fff;font-size:11px;padding:8px 10px;text-align:right;width:10%"><span data-i18n="col_qty">Miktar</span></th>
-          <th style="color:#fff;font-size:11px;padding:8px 10px;text-align:right;width:12%"><span data-i18n="col_unit_price">Birim Fiyat</span></th>
-          <th style="color:#fff;font-size:11px;padding:8px 10px;text-align:right;width:8%"><span data-i18n="col_disc_pct">İnd%</span></th>
-          <th style="color:#fff;font-size:11px;padding:8px 10px;width:10%"><span data-i18n="col_warehouse">Depo</span></th>
-          <th style="color:#fff;font-size:11px;padding:8px 10px;text-align:right;width:12%"><span data-i18n="col_total">Toplam</span></th>
-          <th style="width:30px"></th>
+        <tr style="background:#0d4f3c;">
+          <th style="padding:7px 4px 7px 8px;text-align:left;font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;user-select:none;">#</th>
+          <th class="resizable" style="padding:7px 4px;text-align:left;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_product">ÜRÜN</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable desc-col" style="display:none;padding:7px 4px;text-align:left;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_description">AÇIKLAMA</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_qty">MİKTAR</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_unit_price">BİRİM FİYAT</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_disc_pct">İND%</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable" style="padding:7px 4px;text-align:center;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_warehouse">DEPO</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;"><span data-i18n="col_total">TOPLAM</span></th>
+          <th></th>
         </tr>
       </thead>
-      <tbody id="order-items"></tbody>
+      <tbody id="order-items">
+        <!-- Satırlar JS ile eklenir -->
+      </tbody>
     </table>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button class="btn btn-outline btn-sm" onclick="addOrderItem()" style="font-size:11px;padding:4px 12px"><span data-i18n="btn_add_line">+ Satır Ekle</span></button>
-      <button class="btn btn-outline btn-sm" onclick="toggleDescCol()" id="btn-toggle-desc" style="font-size:10px;padding:4px 8px" data-i18n="btn_show_desc">Açıklama +</button>
+    <!-- Satır ekle butonu -->
+    <div style="padding:6px 8px;border-top:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
+      <button onclick="addOrderItem()" style="background:none;border:none;color:#0d4f3c;font-size:12px;cursor:pointer;font-weight:500;" data-i18n="btn_add_line">+ Ürün Ekle</button>
+      <button onclick="toggleDescCol()" id="btn-toggle-desc" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;" data-i18n="btn_show_desc">Açıklama +</button>
     </div>
+  </div>
 
-    <!-- Summary (right aligned) -->
-    <div style="display:flex;justify-content:flex-end;padding-bottom:30px">
-      <div style="width:240px;background:#f8f9fa;border-radius:8px;padding:12px 16px">
-        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:var(--gray500)"><span data-i18n="lbl_subtotal">Ara Toplam</span><span id="sum-subtotal">—</span></div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:var(--gray500)"><span data-i18n="lbl_tax">Vergi</span><span id="sum-tax">—</span></div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:var(--gray500)"><span data-i18n="lbl_discount">İndirim</span><span id="sum-discount">—</span></div>
-        <div style="border-top:2px solid #0d4f3c;margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#0d4f3c"><span>TOPLAM</span><span id="sum-total">—</span></div>
+  <!-- Alt alan -->
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:12px;padding:12px 16px;background:#f8f9fa;border-top:1px solid #eee;">
+    <div>
+      <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="label_notes">Notlar</div>
+      <textarea id="o-notes" placeholder="" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:6px 8px;font-size:12px;resize:none;height:52px;box-sizing:border-box;font-family:inherit;"></textarea>
+    </div>
+    <div style="background:white;border-radius:6px;border:1px solid #e8e8e8;padding:10px 14px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+        <span data-i18n="lbl_subtotal">Ara Toplam</span><span id="sum-subtotal" style="color:#222;">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+        <span data-i18n="lbl_tax">Vergi</span><span id="sum-tax" style="color:#222;">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:8px;">
+        <span data-i18n="lbl_discount">İndirim</span><span id="sum-discount" style="color:#c00;">—</span>
+      </div>
+      <div style="border-top:2px solid #0d4f3c;padding-top:8px;display:flex;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:600;color:#111;">TOPLAM</span>
+        <span id="sum-total" style="font-size:14px;font-weight:600;color:#0d4f3c;">—</span>
       </div>
     </div>
   </div>
@@ -1008,8 +1055,9 @@ document.addEventListener('keydown', e => {
 function showOrderFormView() {
   console.log('[sales] showOrderFormView called');
   document.getElementById('list-view').style.display = 'none';
-  document.getElementById('order-form-view').style.display = 'block';
+  document.getElementById('order-form-view').style.display = 'flex';
   history.replaceState(null, '', editingOrderId ? `sales.html?action=edit&id=${editingOrderId}` : 'sales.html?action=new');
+  initColumnResize('solvenin_col_widths_sales');
 }
 
 async function closeOrderForm() {
@@ -1051,6 +1099,8 @@ function getFormSnapshot() {
 function toggleDescCol() {
   _descVisible = !_descVisible;
   document.querySelectorAll('.desc-col').forEach(el => el.style.display = _descVisible ? '' : 'none');
+  const descCol = document.getElementById('col-s-desc');
+  if (descCol) descCol.style.width = _descVisible ? '150px' : '0px';
   document.getElementById('btn-toggle-desc').textContent = _descVisible ? (t('btn_hide_desc') || 'Açıklama −') : (t('btn_show_desc') || 'Açıklama +');
 }
 
@@ -1108,23 +1158,28 @@ function itemKeyNav(e, row, col) {
 function renderOrderItems() {
   const tbody = document.getElementById('order-items');
   const dsp = _descVisible ? '' : 'display:none';
-  tbody.innerHTML = orderItems.map((item, i) => `<tr data-row="${i}">
-    <td>
-      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="min-width:140px"></div>
+  const inputS = 'border:1px solid #e8e8e8;border-radius:3px;padding:2px 5px;font-size:12px;height:24px;box-sizing:border-box;width:100%;';
+  tbody.innerHTML = orderItems.map((item, i) => {
+    const bgColor = i % 2 === 0 ? 'white' : '#fafffe';
+    return `<tr data-row="${i}" style="background:${bgColor};height:32px;">
+    <td style="padding:2px 4px 2px 8px;font-size:11px;color:#999;">${i+1}</td>
+    <td style="padding:2px 4px;">
+      <div class="qa-wrap" data-qa-idx="${i}" data-qa-val="${item.product_id||''}" style="min-width:120px"></div>
     </td>
-    <td class="desc-col" style="${dsp}"><input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="${t('col_description')||'Açıklama'}" oninput="orderItems[${i}].description=this.value"></td>
-    <td><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')"></td>
-    <td><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')"></td>
-    <td><input type="text" class="num-input" data-col="disc" data-row="${i}" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="min-width:60px"></td>
-    <td>
-      <select onchange="orderItems[${i}].warehouse_id=this.value" style="min-width:90px;font-size:11px">
+    <td class="desc-col" style="${dsp};padding:2px 4px;"><input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="${t('col_description')||'Açıklama'}" oninput="orderItems[${i}].description=this.value" style="${inputS}"></td>
+    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')" style="${inputS}text-align:right;"></td>
+    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')" style="${inputS}text-align:right;"></td>
+    <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="disc" data-row="${i}" value="${item.disc ? fmtNum(item.disc) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].disc=parseNum(this.value)||0;fmtInput(this);recalcOrder()" style="${inputS}text-align:right;"></td>
+    <td style="padding:2px 4px;">
+      <select onchange="orderItems[${i}].warehouse_id=this.value" style="${inputS}font-size:11px;text-align:center;">
         <option value="">Depo</option>
         ${warehouses.map(w=>`<option value="${w.id}" ${item.warehouse_id===w.id?'selected':''}>${w.name}</option>`).join('')}
       </select>
     </td>
-    <td class="item-total" id="item-total-${i}">—</td>
-    <td><button class="btn btn-danger btn-icon btn-sm" onclick="removeOrderItem(${i})">✕</button></td>
-  </tr>`).join('');
+    <td style="padding:2px 4px;text-align:right;font-weight:bold;color:#222;font-size:12px;" id="item-total-${i}">—</td>
+    <td style="padding:2px 4px;text-align:center;"><button onclick="removeOrderItem(${i})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:14px;padding:0;">✕</button></td>
+  </tr>`;
+  }).join('');
   // Initialize QA on each product cell
   tbody.querySelectorAll('.qa-wrap[data-qa-idx]').forEach(wrap => {
     const idx = parseInt(wrap.dataset.qaIdx);
@@ -1137,7 +1192,6 @@ function renderOrderItems() {
         orderItems[idx].price = parseFloat(p?._price || 0);
         orderItems[idx].description = p?.name || '';
         recalcOrder();
-        // Auto-focus qty
         setTimeout(() => { const q = document.querySelector(`input[data-row="${idx}"][data-col="qty"]`); if (q) q.focus(); }, 50);
       },
       onAdd(query) { openQAProductModal(query, (prod) => { orderItems[idx].product_id = prod.id; orderItems[idx].price = prod.sale_price || 0; orderItems[idx].description = prod.name; recalcOrder(); renderOrderItems(); }); },
@@ -1145,6 +1199,38 @@ function renderOrderItems() {
     });
   });
   recalcOrder();
+}
+
+function initColumnResize(storageKey) {
+  const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  Object.keys(saved).forEach(colId => {
+    const col = document.getElementById(colId);
+    if (col) col.style.width = saved[colId];
+  });
+  document.querySelectorAll('#order-items-table .resize-handle').forEach(handle => {
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const th = handle.closest('th');
+      const colIndex = Array.from(th.parentElement.children).indexOf(th);
+      const colEl = document.querySelectorAll('#order-items-table col')[colIndex];
+      if (!colEl || !colEl.id) return;
+      const startX = e.pageX;
+      const startWidth = th.offsetWidth;
+      const onMove = ev => {
+        const newWidth = Math.max(40, startWidth + ev.pageX - startX);
+        colEl.style.width = newWidth + 'px';
+        const widths = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        widths[colEl.id] = newWidth + 'px';
+        localStorage.setItem(storageKey, JSON.stringify(widths));
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
 }
 
 function getSelectedTaxRate() {
@@ -1324,7 +1410,7 @@ async function viewOrder(id) {
   </div>`;
 
   document.getElementById('list-view').style.display = 'none';
-  formView.style.display = 'block';
+  formView.style.display = 'flex';
   history.replaceState(null, '', 'sales.html?action=view&id=' + id);
 }
 
