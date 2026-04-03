@@ -1308,23 +1308,72 @@ async function cancelOrder(id) {
 }
 
 async function viewOrder(id) {
-  _viewMode = true;
-  await editOrder(id);
-  document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
-    el.disabled = true; el.style.opacity = '0.7';
-  });
-  document.querySelectorAll('#order-form-view .btn-danger, #order-form-view .ci-qty button, #order-form-view .ci-del').forEach(el => el.style.display = 'none');
-  const addLineBtn = document.querySelector('#order-form-view [onclick*="addOrderItem"]');
-  if (addLineBtn) addLineBtn.style.display = 'none';
-  document.getElementById('order-modal-title').textContent = t('title_view_order') || 'Sipariş Detayı';
-  const actionsBar = document.querySelector('#order-form-view [style*="padding-bottom:40px"]');
-  if (actionsBar) {
-    const order = orders.find(o => o.id === id);
-    actionsBar.innerHTML = `<div style="display:flex;gap:10px;justify-content:flex-end;padding-bottom:40px">
-      ${canEditOrder(order?.status) ? `<button class="btn btn-outline" onclick="_viewMode=false;editOrder('${id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
-      <button class="btn btn-primary" onclick="closeOrderForm()">Kapat</button>
-    </div>`;
-  }
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  const { data: items } = await sb.from('purchase_order_items').select('*, products:product_id(name, unit)').eq('order_id', id);
+  const supplier = suppliers.find(c => c.id === order.supplier_id);
+
+  const thS = 'padding:8px 12px;font-size:11px;font-weight:600;text-align:left;color:#fff;background:#0d4f3c;white-space:nowrap';
+  const tdS = 'padding:8px 12px;font-size:13px;border-bottom:1px solid #e2e8f0';
+  const labels = getStatusLabels();
+
+  const formView = document.getElementById('order-form-view');
+  formView.innerHTML = `<div class="content" style="padding:20px 28px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <a style="cursor:pointer;font-size:13px;color:var(--gray500);text-decoration:none" onclick="closeOrderForm()">← ${t('btn_back')||'Geri'}</a>
+      <div style="display:flex;gap:8px">
+        ${canEditOrder(order.status) ? `<button class="btn btn-outline btn-sm" onclick="closeOrderForm();editOrder('${id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
+        ${order.status !== 'cancelled' && order.status !== 'paid' && (order.status==='draft'||order.status==='confirmed'||!accountingEnabled) ? `<button class="btn btn-danger btn-sm" onclick="cancelOrder('${id}')">✕ ${t('btn_cancel_order')||'İptal'}</button>` : ''}
+      </div>
+    </div>
+
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:800;margin-bottom:16px">${t('title_view_order')||'Sipariş Detayı'}</div>
+
+    <div style="background:#f8f9fa;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px">
+      <div><span style="color:var(--gray400);font-size:11px">${t('col_supplier')||'Tedarikçi'}</span><br><strong>${supplier?.name||order.contacts?.name||'—'}</strong></div>
+      <div><span style="color:var(--gray400);font-size:11px">${t('col_po_number')||'Sipariş No'}</span><br><strong>${order.order_number}</strong></div>
+      <div><span style="color:var(--gray400);font-size:11px">${t('col_date')||'Tarih'}</span><br><strong>${order.issue_date||'—'}</strong></div>
+      <div><span style="color:var(--gray400);font-size:11px">${t('col_expected')||'Beklenen'}</span><br><strong>${order.expected_date||'—'}</strong></div>
+      <div><span style="color:var(--gray400);font-size:11px">${t('col_status')||'Durum'}</span><br><span class="badge ${statusBadge[order.status]||'badge-gray'}">${labels[order.status]||order.status}</span></div>
+      <div><span style="color:var(--gray400);font-size:11px">${t('lbl_tax_rate')||'Vergi'}</span><br><strong>${order.tax_rate||0}%</strong></div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <thead><tr>
+        <th style="${thS}">#</th>
+        <th style="${thS}">${t('col_product')||'Ürün'}</th>
+        <th style="${thS};text-align:right">${t('col_qty')||'Miktar'}</th>
+        <th style="${thS}">${t('col_unit')||'Birim'}</th>
+        <th style="${thS};text-align:right">${t('col_unit_price')||'Birim Fiyat'}</th>
+        <th style="${thS};text-align:right">${t('col_total')||'Toplam'}</th>
+      </tr></thead>
+      <tbody>
+        ${(items||[]).map((it,i) => `<tr style="${i%2?'background:#f8fafc':''}">
+          <td style="${tdS}">${i+1}</td>
+          <td style="${tdS};font-weight:500">${it.products?.name||it.description||'—'}</td>
+          <td style="${tdS};text-align:right">${it.quantity}</td>
+          <td style="${tdS}">${it.products?.unit||'—'}</td>
+          <td style="${tdS};text-align:right">${fmt(parseFloat(it.unit_price||0))}</td>
+          <td style="${tdS};text-align:right;font-weight:700">${fmt(parseFloat(it.total||0))}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <div style="display:flex;justify-content:flex-end">
+      <div style="width:260px;background:#f8f9fa;border-radius:10px;padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_subtotal')||'Ara Toplam'}</span><span>${fmt(parseFloat(order.subtotal||0))}</span></div>
+        ${parseFloat(order.tax_amount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_tax')||'Vergi'} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>` : ''}
+        ${parseFloat(order.discount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_discount')||'İndirim'}</span><span>-${fmt(parseFloat(order.discount||0))}</span></div>` : ''}
+        <div style="border-top:2px solid #0d4f3c;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#0d4f3c"><span>${t('lbl_total')||'TOPLAM'}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
+      </div>
+    </div>
+
+    ${order.notes ? `<div style="margin-top:16px;padding:12px 16px;background:#f8f9fa;border-radius:8px;font-size:12px;color:var(--gray600)"><strong>${t('label_notes')||'Notlar'}:</strong> ${order.notes}</div>` : ''}
+  </div>`;
+
+  document.getElementById('list-view').style.display = 'none';
+  formView.style.display = 'block';
+  history.replaceState(null, '', 'purchasing.html?action=view&id=' + id);
 }
 
 async function editOrder(id) {
