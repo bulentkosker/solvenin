@@ -801,6 +801,7 @@ function renderOrders(list) {
     <td>${flowBtn}</td>
     <td><div class="row-actions">
       ${o.status === 'confirmed' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
+      <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
       ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>` : ''}
       ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')}">🗑️</button>` : ''}
     </div></td>
@@ -1257,18 +1258,19 @@ async function saveOrder() {
     total: i.qty * i.price,
     tax_rate_value: taxRateValue || 0
   }));
-  const { error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload);
+  const { data: savedItemsData, error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload).select();
   if (itemsErr) { console.error('[purchasing] Items insert error:', itemsErr.message); showToast('Kalem kayıt hatası: ' + itemsErr.message, 'error'); }
 
   // Create stock movements when status becomes 'received'
   if (status === 'received' && prevStatus !== 'received') {
+    const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
     const orderNumber = document.getElementById('o-number').value || 'PO-'+orderId;
     const movements = validItems
       .filter(i => i.product_id && i.qty > 0)
       .map(i => ({
         company_id: companyId,
         product_id: i.product_id,
-        warehouse_id: i.warehouse_id || null,
+        warehouse_id: defaultWh,
         type: 'in',
         quantity: i.qty,
         reference: orderNumber,
@@ -1277,9 +1279,8 @@ async function saveOrder() {
       }));
     if (movements.length) {
       await sb.from('stock_movements').insert(movements);
-      // Update received_qty on items
-      if (savedItems.data) {
-        for (const item of savedItems.data) {
+      if (savedItemsData) {
+        for (const item of savedItemsData) {
           await sb.from('purchase_order_items').update({ received_qty: item.quantity }).eq('id', item.id);
         }
       }
@@ -1296,9 +1297,32 @@ function canEditOrder(status) {
   return ['draft','confirmed'].includes(status);
 }
 
+let _viewMode = false;
+async function viewOrder(id) {
+  _viewMode = true;
+  await editOrder(id);
+  document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+    el.disabled = true; el.style.opacity = '0.7';
+  });
+  document.getElementById('order-modal-title').textContent = t('title_view_order') || 'Sipariş Detayı';
+  const actionsBar = document.querySelector('#order-form-view [style*="padding-bottom:40px"]');
+  if (actionsBar) {
+    const order = orders.find(o => o.id === id);
+    actionsBar.innerHTML = `<div style="display:flex;gap:10px;justify-content:flex-end;padding-bottom:40px">
+      ${canEditOrder(order?.status) ? `<button class="btn btn-outline" onclick="_viewMode=false;editOrder('${id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
+      <button class="btn btn-primary" onclick="closeOrderForm()">Kapat</button>
+    </div>`;
+  }
+}
+
 async function editOrder(id) {
+  if (!_viewMode) {
+    document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+      el.disabled = false; el.style.opacity = '';
+    });
+  }
   const order = orders.find(o => o.id === id);
-  if (order && !canEditOrder(order.status)) {
+  if (!_viewMode && order && !canEditOrder(order.status)) {
     showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
     return;
   }

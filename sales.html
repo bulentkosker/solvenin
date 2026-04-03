@@ -832,9 +832,9 @@ function renderOrders(list) {
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${statusLabel[o.status]||o.status}</span></td>
       <td>${flowBtn}</td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="View">👁</button>
-        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>` : ''}
-        ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
+        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Düzenle">✏️</button>` : ''}
+        ${o.status === 'draft' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="Sil">🗑️</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -861,9 +861,10 @@ function renderInvoices(list) {
       <td><span class="badge ${statusBadge[displayStatus]||'badge-gray'}">${statusLabel[displayStatus]||displayStatus}</span></td>
       <td><div class="row-actions">
         ${flowBtn}
-        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="View">👁</button>
-        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Edit">✏️</button>` : ''}
-        ${o.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Payment">💳</button>` : ''}
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="PDF">📄</button>
+        ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Düzenle">✏️</button>` : ''}
+        ${o.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Ödeme">💳</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1220,9 +1221,45 @@ function canEditOrder(status) {
   return ['draft','confirmed'].includes(status);
 }
 
+let _viewMode = false;
+async function viewOrder(id) {
+  _viewMode = true;
+  await editOrder(id);
+  // Make form read-only
+  document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+    el.disabled = true; el.style.opacity = '0.7';
+  });
+  // Change title
+  document.getElementById('order-modal-title').textContent = t('title_view_order') || 'Sipariş Detayı';
+  // Replace save buttons with view actions
+  const actionsBar = document.querySelector('#order-form-view .cart-actions, #order-form-view [style*="padding-bottom:40px"]');
+  if (actionsBar) {
+    const order = orders.find(o => o.id === id);
+    actionsBar.innerHTML = `<div style="display:flex;gap:10px;justify-content:flex-end;padding-bottom:40px">
+      <button class="btn btn-outline" onclick="viewInvoice('${id}')">📄 PDF</button>
+      ${canEditOrder(order?.status) ? `<button class="btn btn-outline" onclick="closeViewAndEdit('${id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
+      <button class="btn btn-primary" onclick="closeOrderForm()">Kapat</button>
+    </div>`;
+  }
+}
+
+function closeViewAndEdit(id) {
+  _viewMode = false;
+  document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+    el.disabled = false; el.style.opacity = '';
+  });
+  editOrder(id);
+}
+
 async function editOrder(id) {
+  if (!_viewMode) {
+    // Re-enable form if coming from view mode
+    document.querySelectorAll('#order-form-view input, #order-form-view select, #order-form-view textarea').forEach(el => {
+      el.disabled = false; el.style.opacity = '';
+    });
+  }
   const order = orders.find(o => o.id === id);
-  if (order && !canEditOrder(order.status)) {
+  if (!_viewMode && order && !canEditOrder(order.status)) {
     showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
     return;
   }
