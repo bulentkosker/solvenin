@@ -555,14 +555,26 @@ async function completeSale() {
       });
     }
 
-    // 4. Stock
+    // 4. Stock movements + update product quantities
+    const defaultWh = cashRegisters.length ? null : null; // Will get from warehouses
+    const { data: whData } = await sb.from('warehouses').select('id').eq('company_id', companyId).eq('is_default', true).single();
+    const whId = whData?.id || null;
     for (const c of cart) {
-      await sb.from('stock_movements').insert({
+      const { error: smErr } = await sb.from('stock_movements').insert({
         company_id: companyId, product_id: c.pid, type: 'out', quantity: c.qty,
-        reason: 'POS sale', reference_id: order.id, reference_type: 'sales_order',
+        warehouse_id: whId, reference: orderNum, notes: 'POS satış',
         created_by: currentUser.id,
       });
+      if (smErr) console.error('[pos] Stock movement error:', smErr.message);
+      // Update product quantity
+      const prod = products.find(p => p.id === c.pid);
+      if (prod) {
+        const newQty = Math.max(0, (prod.stock_quantity || 0) - c.qty);
+        await sb.from('products').update({ quantity: newQty }).eq('id', c.pid);
+        prod.stock_quantity = newQty;
+      }
     }
+    console.log('[pos] Stock movements created for', orderNum);
 
     // Receipt
     const change = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) - total : 0;
