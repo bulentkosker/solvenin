@@ -971,7 +971,7 @@ async function confirmInvoice() {
 
   // Create stock movements (in) for each item
   try {
-    const { data: items, error: itemsErr } = await sb.from('purchase_order_items').select('product_id, quantity, warehouse_id').eq('order_id', id);
+    const { data: items, error: itemsErr } = await sb.from('purchase_order_items').select('product_id, quantity').eq('order_id', id);
     console.log('[purchasing] Invoice items for', id, ':', JSON.stringify(items), itemsErr?.message);
     const { data: { user } } = await sb.auth.getUser();
     const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
@@ -981,7 +981,7 @@ async function confirmInvoice() {
       const movements = items.filter(i => i.product_id).map(i => ({
         company_id: companyId,
         product_id: i.product_id,
-        warehouse_id: i.warehouse_id || defaultWh,
+        warehouse_id: defaultWh,
         type: 'in',
         quantity: i.quantity,
         reference: order?.order_number || 'PO',
@@ -1251,13 +1251,14 @@ async function saveOrder() {
     orderId = data.id;
   }
 
-  const savedItems = await sb.from('purchase_order_items').insert(validItems.map(i => ({
+  const itemsPayload = validItems.map(i => ({
     order_id: orderId, product_id: i.product_id||null,
     description: i.description, quantity: i.qty, unit_price: i.price,
-    discount: i.disc || 0, total: i.qty * i.price * (1-(i.disc||0)/100),
-    warehouse_id: i.warehouse_id || null,
+    total: i.qty * i.price,
     tax_rate_value: taxRateValue || 0
-  }))).select();
+  }));
+  const { error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload);
+  if (itemsErr) { console.error('[purchasing] Items insert error:', itemsErr.message); showToast('Kalem kayıt hatası: ' + itemsErr.message, 'error'); }
 
   // Create stock movements when status becomes 'received'
   if (status === 'received' && prevStatus !== 'received') {
