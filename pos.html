@@ -448,9 +448,9 @@ async function pinKey(k) {
     // Filter for manager+ roles client-side (simpler, avoids PostgREST .in() issues)
     const validManagers = (data || []).filter(d => ['owner','admin','manager'].includes(d.role));
     if (validManagers.length) {
+      const cb = pinCallback;
       closePin();
-      if (pinCallback) pinCallback();
-      pinCallback = null;
+      if (cb) cb();
     } else {
       showToast('Yanlış PIN', 'error');
       pinValue = '';
