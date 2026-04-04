@@ -2329,7 +2329,7 @@ async function confirmAccountingToggle() {
 
 // ===== POS SETTINGS =====
 let posButtons = [], allProducts = [];
-const POS_COLORS = ['#0d4f3c','#1d4ed8','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#4d7c0f'];
+const POS_COLORS = ['#1e40af','#1d4ed8','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#4d7c0f'];
 let editingPosButtonId = null;
 
 async function loadPosSettings() {
@@ -2375,7 +2375,7 @@ function openPosButtonModal() {
   document.getElementById('pb-order').value = posButtons.length;
   document.getElementById('pb-product').innerHTML = '<option value="">Ürün seçin...</option>' +
     allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  renderColorPicker('#0d4f3c');
+  renderColorPicker('#1e40af');
   openModal('pos-button-modal');
 }
 
@@ -2392,7 +2392,7 @@ function editPosButton(id) {
   openModal('pos-button-modal');
 }
 
-let selectedPosColor = '#0d4f3c';
+let selectedPosColor = '#1e40af';
 function renderColorPicker(active) {
   selectedPosColor = active;
   document.getElementById('pb-colors').innerHTML = POS_COLORS.map(c =>
@@ -2538,7 +2538,7 @@ async function loadUsers() {
       const initials = displayName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
       return `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:50%;background:rgba(13,79,60,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d4f3c">${initials}</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(30,64,175,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1e40af">${initials}</div>
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--gray800)">${displayName}${isSelf?' <span style="font-size:10px;color:var(--gray400)">(you)</span>':''}</div>
             <div style="font-size:11px;color:var(--gray400)">${m.role} · ${m.status}</div>
@@ -2548,7 +2548,7 @@ async function loadUsers() {
           <select style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px" ${isOwner?'disabled':''} onchange="changeUserRole('${m.user_id}',this.value)">
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
-          ${!isOwner&&!isSelf ? `<a href="user-permissions.html?user=${m.user_id}" style="padding:4px 8px;border:1px solid #0d4f3c;border-radius:6px;font-size:11px;background:#fff;color:#0d4f3c;cursor:pointer;font-weight:500;text-decoration:none;display:inline-block">${t('btn_permissions') || 'İzinler'}</a>` : ''}
+          ${!isOwner&&!isSelf ? `<a href="user-permissions.html?user=${m.user_id}" style="padding:4px 8px;border:1px solid #1e40af;border-radius:6px;font-size:11px;background:#fff;color:#1e40af;cursor:pointer;font-weight:500;text-decoration:none;display:inline-block">${t('btn_permissions') || 'İzinler'}</a>` : ''}
           ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
         </div>
       </div>`;

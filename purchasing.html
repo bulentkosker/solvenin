@@ -232,7 +232,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <span id="lang-name" style="color:var(--gray400);font-weight:400">English</span>
       <span style="font-size:9px;color:var(--gray400)">▾</span>
     </button>
-    <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a2540;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1e293b;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
       <div class="lang-opt" data-lang="en" onclick="selectLang('en')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">EN &nbsp; English</div>
       <div class="lang-opt" data-lang="tr" onclick="selectLang('tr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TR &nbsp; Türkçe</div>
       <div class="lang-opt" data-lang="de" onclick="selectLang('de')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">DE &nbsp; Deutsch</div>
@@ -399,7 +399,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div style="display:flex;gap:8px;" id="form-action-buttons">
       <button onclick="closeOrderForm()" style="padding:5px 14px;border:1px solid #ddd;background:white;border-radius:5px;font-size:13px;cursor:pointer;color:#555;" data-i18n="btn_cancel">İptal</button>
-      <button onclick="saveOrder()" style="padding:5px 16px;background:#0d4f3c;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-weight:500;" data-i18n="btn_save">Kaydet</button>
+      <button onclick="saveOrder()" style="padding:5px 16px;background:#1e40af;color:white;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-weight:500;" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 
@@ -461,7 +461,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         <col id="col-p-del" style="width:32px;">
       </colgroup>
       <thead>
-        <tr style="background:#0d4f3c;">
+        <tr style="background:#1e40af;">
           <th style="padding:7px 4px 7px 8px;text-align:left;font-size:10px;color:rgba(255,255,255,0.6);font-weight:500;user-select:none;">#</th>
           <th class="resizable" style="padding:7px 4px;text-align:left;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
             <span data-i18n="col_product">ÜRÜN</span>
@@ -489,7 +489,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </table>
     <!-- Satır ekle butonu -->
     <div style="padding:6px 8px;border-top:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
-      <button onclick="addOrderItem()" style="background:none;border:none;color:#0d4f3c;font-size:12px;cursor:pointer;font-weight:500;" data-i18n="btn_add_line">+ Ürün Ekle</button>
+      <button onclick="addOrderItem()" style="background:none;border:none;color:#1e40af;font-size:12px;cursor:pointer;font-weight:500;" data-i18n="btn_add_line">+ Ürün Ekle</button>
       <button onclick="toggleDescCol()" id="btn-toggle-desc" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;" data-i18n="btn_show_desc">Açıklama +</button>
     </div>
   </div>
@@ -510,9 +510,9 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:8px;">
         <span data-i18n="lbl_discount">İndirim</span><span id="sum-discount" style="color:#c00;">—</span>
       </div>
-      <div style="border-top:2px solid #0d4f3c;padding-top:8px;display:flex;justify-content:space-between;">
+      <div style="border-top:2px solid #1e40af;padding-top:8px;display:flex;justify-content:space-between;">
         <span style="font-size:14px;font-weight:600;color:#111;">TOPLAM</span>
-        <span id="sum-total" style="font-size:14px;font-weight:600;color:#0d4f3c;">—</span>
+        <span id="sum-total" style="font-size:14px;font-weight:600;color:#1e40af;">—</span>
       </div>
     </div>
   </div>
@@ -1397,7 +1397,7 @@ async function viewOrder(id) {
   const { data: items } = await sb.from('purchase_order_items').select('*, products:product_id(name, unit)').eq('order_id', id);
   const supplier = suppliers.find(c => c.id === order.supplier_id);
 
-  const thS = 'padding:8px 12px;font-size:11px;font-weight:600;text-align:left;color:#fff;background:#0d4f3c;white-space:nowrap';
+  const thS = 'padding:8px 12px;font-size:11px;font-weight:600;text-align:left;color:#fff;background:#1e40af;white-space:nowrap';
   const tdS = 'padding:8px 12px;font-size:13px;border-bottom:1px solid #e2e8f0';
   const labels = getStatusLabels();
 
@@ -1448,7 +1448,7 @@ async function viewOrder(id) {
         <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_subtotal')||'Ara Toplam'}</span><span>${fmt(parseFloat(order.subtotal||0))}</span></div>
         ${parseFloat(order.tax_amount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_tax')||'Vergi'} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>` : ''}
         ${parseFloat(order.discount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--gray500)"><span>${t('lbl_discount')||'İndirim'}</span><span>-${fmt(parseFloat(order.discount||0))}</span></div>` : ''}
-        <div style="border-top:2px solid #0d4f3c;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#0d4f3c"><span>${t('lbl_total')||'TOPLAM'}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
+        <div style="border-top:2px solid #1e40af;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#1e40af"><span>${t('lbl_total')||'TOPLAM'}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
       </div>
     </div>
 

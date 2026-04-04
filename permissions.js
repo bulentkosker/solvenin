@@ -66,7 +66,7 @@
         <div style="font-size:48px">🔒</div>
         <div style="font-size:18px;font-weight:700;color:#1e293b">${window.t?.('perm_no_access') || 'Access Denied'}</div>
         <div style="font-size:14px;color:#64748b">${window.t?.('perm_no_access_desc') || 'You do not have permission to view this module.'}</div>
-        <a href="dashboard.html" style="margin-top:12px;padding:10px 20px;background:#0d4f3c;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">${window.t?.('btn_back_dashboard') || 'Back to Dashboard'}</a>
+        <a href="dashboard.html" style="margin-top:12px;padding:10px 20px;background:#1e40af;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">${window.t?.('btn_back_dashboard') || 'Back to Dashboard'}</a>
       `;
       main.style.position = 'relative';
       main.appendChild(overlay);

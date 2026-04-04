@@ -9,11 +9,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --emerald: #0d4f3c;
-  --emerald-dark: #0a2e20;
+  --emerald: #1e40af;
+  --emerald-dark: #1e293b;
   --emerald-mid: #1a6b52;
-  --emerald-light: rgba(13,79,60,0.08);
-  --gold: #f0a500;
+  --emerald-light: rgba(30,64,175,0.08);
+  --gold: #38bdf8;
   --gold-dark: #d99200;
   --gold-light: #fff8e6;
   --bg: #f8f7f4;
@@ -69,7 +69,7 @@ body {
   content: '';
   position: absolute;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(240,165,0,0.08) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 65%);
   bottom: -200px; right: -200px;
   pointer-events: none;
 }
@@ -134,8 +134,8 @@ body {
 }
 .feat-icon {
   width: 36px; height: 36px;
-  background: rgba(240,165,0,0.12);
-  border: 1px solid rgba(240,165,0,0.2);
+  background: rgba(56,189,248,0.12);
+  border: 1px solid rgba(56,189,248,0.2);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-size: 16px;
@@ -190,8 +190,8 @@ body {
 /* ── TABS ── */
 .tab-bar {
   display: flex;
-  background: rgba(13,79,60,0.06);
-  border: 1px solid rgba(13,79,60,0.12);
+  background: rgba(30,64,175,0.06);
+  border: 1px solid rgba(30,64,175,0.12);
   border-radius: 14px;
   padding: 4px;
   margin-bottom: 36px;
@@ -212,7 +212,7 @@ body {
 .tab-btn.active {
   background: var(--emerald);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(13,79,60,0.3);
+  box-shadow: 0 4px 14px rgba(30,64,175,0.3);
 }
 
 /* ── FORM HEADER ── */
@@ -264,7 +264,7 @@ body {
 .field input::placeholder { color: var(--gray-mid); }
 .field input:focus {
   border-color: var(--emerald);
-  box-shadow: 0 0 0 3px rgba(13,79,60,0.1), var(--shadow-sm);
+  box-shadow: 0 0 0 3px rgba(30,64,175,0.1), var(--shadow-sm);
 }
 .field input.error { border-color: var(--red); }
 
@@ -330,7 +330,7 @@ body {
 .btn-primary:hover:not(:disabled) {
   background: var(--gold-dark);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(240,165,0,0.35);
+  box-shadow: 0 8px 24px rgba(56,189,248,0.35);
 }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
@@ -397,8 +397,8 @@ body {
 }
 .success-icon {
   width: 72px; height: 72px;
-  background: rgba(13,79,60,0.08);
-  border: 2px solid rgba(13,79,60,0.2);
+  background: rgba(30,64,175,0.08);
+  border: 2px solid rgba(30,64,175,0.2);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 32px;
@@ -442,7 +442,7 @@ body {
 .lang-menu {
   display: none;
   position: absolute; top: calc(100% + 8px); right: 0;
-  background: #1a2540;
+  background: #1e293b;
   border-radius: 14px; padding: 6px; min-width: 170px; z-index: 999;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
@@ -509,8 +509,8 @@ body {
           <!-- Base platform -->
           <ellipse cx="130" cy="140" rx="110" ry="18" fill="rgba(255,255,255,0.04)"/>
           <!-- Center hub box -->
-          <rect x="100" y="72" width="60" height="52" rx="8" fill="rgba(240,165,0,0.18)" stroke="rgba(240,165,0,0.4)" stroke-width="1.5"/>
-          <rect x="108" y="80" width="44" height="16" rx="4" fill="rgba(240,165,0,0.25)"/>
+          <rect x="100" y="72" width="60" height="52" rx="8" fill="rgba(56,189,248,0.18)" stroke="rgba(56,189,248,0.4)" stroke-width="1.5"/>
+          <rect x="108" y="80" width="44" height="16" rx="4" fill="rgba(56,189,248,0.25)"/>
           <rect x="108" y="102" width="20" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
           <rect x="132" y="102" width="20" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
           <!-- Left module -->
@@ -526,19 +526,19 @@ body {
           <rect x="112" y="36" width="36" height="8" rx="3" fill="rgba(255,255,255,0.12)"/>
           <rect x="112" y="49" width="22" height="5" rx="2" fill="rgba(255,255,255,0.08)"/>
           <!-- Connection lines -->
-          <line x1="100" y1="98" x2="70" y2="107" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
-          <line x1="160" y1="98" x2="190" y2="107" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
-          <line x1="130" y1="72" x2="130" y2="62" stroke="rgba(240,165,0,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="100" y1="98" x2="70" y2="107" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="160" y1="98" x2="190" y2="107" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="130" y1="72" x2="130" y2="62" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
           <!-- Dots at connection ends -->
-          <circle cx="70" cy="107" r="3" fill="rgba(240,165,0,0.5)"/>
-          <circle cx="190" cy="107" r="3" fill="rgba(240,165,0,0.5)"/>
-          <circle cx="130" cy="62" r="3" fill="rgba(240,165,0,0.5)"/>
+          <circle cx="70" cy="107" r="3" fill="rgba(56,189,248,0.5)"/>
+          <circle cx="190" cy="107" r="3" fill="rgba(56,189,248,0.5)"/>
+          <circle cx="130" cy="62" r="3" fill="rgba(56,189,248,0.5)"/>
           <!-- Animated pulse on center -->
-          <circle cx="130" cy="98" r="6" fill="rgba(240,165,0,0.2)">
+          <circle cx="130" cy="98" r="6" fill="rgba(56,189,248,0.2)">
             <animate attributeName="r" values="6;10;6" dur="2.5s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="0.2;0;0.2" dur="2.5s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="130" cy="98" r="4" fill="rgba(240,165,0,0.7)"/>
+          <circle cx="130" cy="98" r="4" fill="rgba(56,189,248,0.7)"/>
         </svg>
       </div>
 
@@ -721,13 +721,13 @@ body {
     <div id="onboard-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;min-height:18px"></div>
     <div style="margin-bottom:16px">
       <label style="font-size:12px;font-weight:600;color:#1a1a2e;opacity:.65;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:7px">Full Name</label>
-      <input type="text" id="onboard-name" placeholder="John Smith" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#0d4f3c'" onblur="this.style.borderColor='#e8e4dc'">
+      <input type="text" id="onboard-name" placeholder="John Smith" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#1e40af'" onblur="this.style.borderColor='#e8e4dc'">
     </div>
     <div style="margin-bottom:28px">
       <label style="font-size:12px;font-weight:600;color:#1a1a2e;opacity:.65;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:7px">Phone Number <span style="color:#ef4444">*</span></label>
-      <input type="tel" id="onboard-phone" placeholder="+1 555 000 0000" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#0d4f3c'" onblur="this.style.borderColor='#e8e4dc'">
+      <input type="tel" id="onboard-phone" placeholder="+1 555 000 0000" style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dc;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#1e40af'" onblur="this.style.borderColor='#e8e4dc'">
     </div>
-    <button onclick="saveOnboarding()" style="width:100%;padding:14px;background:#f0a500;color:#1a1a2e;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#d99200'" onmouseout="this.style.background='#f0a500'">Continue →</button>
+    <button onclick="saveOnboarding()" style="width:100%;padding:14px;background:#38bdf8;color:#1a1a2e;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#d99200'" onmouseout="this.style.background='#38bdf8'">Continue →</button>
   </div>
 </div>
 
@@ -1060,7 +1060,7 @@ function showChangePasswordScreen(userId) {
         <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">${t.confirm_password || 'Confirm Password'}</label>
         <input type="password" id="confirm-pass" placeholder="Repeat password" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:16px;outline:none">
         <div id="change-pass-msg" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:12px"></div>
-        <button onclick="submitChangePassword('${userId}')" style="width:100%;padding:12px;background:#0d4f3c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t.btn_change_pass || 'Change Password'}</button>
+        <button onclick="submitChangePassword('${userId}')" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t.btn_change_pass || 'Change Password'}</button>
       </div>
     </div>
   `;

@@ -55,7 +55,7 @@ tr:hover td{background:#f9fafb}
 .badge-purple{background:var(--purple-light);color:var(--purple)}
 .badge-gray{background:var(--gray100);color:var(--gray500)}
 .btn{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
-.btn-primary{background:#0d4f3c;color:#fff}.btn-primary:hover{background:#0a3f30}
+.btn-primary{background:#1e40af;color:#fff}.btn-primary:hover{background:#0a3f30}
 .btn-outline{background:var(--white);border:1px solid var(--gray200);color:var(--gray600)}.btn-outline:hover{background:var(--gray50)}
 .btn-danger{background:var(--red-light);color:var(--red);border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
 .btn-sm{padding:6px 12px;font-size:12px}
@@ -79,7 +79,7 @@ tr:hover td{background:#f9fafb}
 textarea{min-height:60px;resize:vertical}
 .checkbox-row{display:flex;gap:20px;align-items:center;margin-top:4px}
 .checkbox-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray700);cursor:pointer}
-.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:#0d4f3c}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:#1e40af}
 #loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
 .loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
 .loading-logo span{color:#60a5fa}
@@ -389,7 +389,7 @@ function closeModal(id) { document.getElementById(id)?.classList.remove('open');
 
 function showToast(msg, type) {
   const el = document.createElement('div');
-  el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;background:${type === 'error' ? '#dc2626' : '#0d4f3c'}`;
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;background:${type === 'error' ? '#dc2626' : '#1e40af'}`;
   el.textContent = msg;
   document.body.appendChild(el);
   requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });

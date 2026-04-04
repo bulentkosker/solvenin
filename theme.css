@@ -8,13 +8,13 @@
 
 :root {
   /* ── BRAND ── */
-  --primary:        #0d4f3c;
+  --primary:        #1e40af;
   --primary-dark:   #1e293b;
-  --primary-mid:    #1a6b52;
-  --primary-light:  rgba(13,79,60,0.08);
-  --accent:         #f0a500;
-  --accent-dark:    #d4900a;
-  --accent-light:   #fff8e6;
+  --primary-mid:    #2563eb;
+  --primary-light:  rgba(30,64,175,0.08);
+  --accent:         #38bdf8;
+  --accent-dark:    #0ea5e9;
+  --accent-light:   #e0f2fe;
 
   /* ── BACKGROUNDS (Akaunting neutral) ── */
   --bg:             #f8f9fa;
@@ -29,12 +29,12 @@
   --gray-dark:      #6c757d;
 
   /* ── OLD VARIABLE REMAPS (pages use these via var()) ── */
-  --navy:           #0a2e20;
-  --navy2:          #0d4f3c;
-  --blue:           #0d4f3c;
-  --blue-dark:      #0a2e20;
-  --blue-light:     rgba(13,79,60,0.08);
-  --sky:            #1a6b52;
+  --navy:           #1e293b;
+  --navy2:          #1e40af;
+  --blue:           #1e40af;
+  --blue-dark:      #1e293b;
+  --blue-light:     rgba(30,64,175,0.08);
+  --sky:            #2563eb;
 
   --gray50:         #f8f9fa;
   --gray100:        #f1f3f5;
@@ -65,8 +65,8 @@
   --badge-warning-text: #92400e;
   --badge-danger-bg:    #fee2e2;
   --badge-danger-text:  #991b1b;
-  --badge-info-bg:      rgba(13,79,60,0.08);
-  --badge-info-text:    #0d4f3c;
+  --badge-info-bg:      rgba(30,64,175,0.08);
+  --badge-info-text:    #1e40af;
 
   /* ── TYPOGRAPHY ── */
   --font-display:   'Outfit', sans-serif;
@@ -370,7 +370,7 @@ button.btn-primary {
 button.btn-primary:hover:not(:disabled) {
   background: var(--primary-dark) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(13,79,60,0.25) !important;
+  box-shadow: 0 4px 12px rgba(30,64,175,0.25) !important;
 }
 
 .btn-secondary,
@@ -423,7 +423,7 @@ button.btn-accent {
 button.btn-accent:hover:not(:disabled) {
   background: var(--accent-dark) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(240,165,0,0.3) !important;
+  box-shadow: 0 4px 12px rgba(56,189,248,0.3) !important;
 }
 
 .btn-sm {
@@ -454,7 +454,7 @@ button.btn-accent:hover:not(:disabled) {
 .search-box:focus-within,
 .topbar-search:focus-within {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(13,79,60,0.08) !important;
+  box-shadow: 0 0 0 3px rgba(30,64,175,0.08) !important;
 }
 .search-box input,
 .topbar-search input {
@@ -671,7 +671,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(13,79,60,0.08) !important;
+  box-shadow: 0 0 0 3px rgba(30,64,175,0.08) !important;
   outline: none;
 }
 
