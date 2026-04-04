@@ -676,27 +676,46 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card-head">
             <div>
               <div class="settings-card-title" data-i18n="nav_invoice_settings">Fatura Ayarları</div>
-              <div class="settings-card-desc" data-i18n="invoice_settings_desc">Fatura PDF görünümünü özelleştirin</div>
+              <div class="settings-card-desc">Numaralama, PDF görünümü ve dil ayarları</div>
             </div>
             <button class="btn-primary" onclick="saveInvoiceSettings()" data-i18n="btn_save_changes">Kaydet</button>
           </div>
+          <!-- Tabs -->
+          <div style="display:flex;border-bottom:2px solid var(--gray200);padding:0 20px">
+            <button class="inv-tab active" onclick="switchInvTab('general',this)" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px">⚙️ Genel</button>
+            <button class="inv-tab" onclick="switchInvTab('pdf',this)" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px">📄 PDF Ayarları</button>
+          </div>
           <div class="settings-card-body">
-            <div class="manage-list">
-              <div class="manage-item" style="padding:12px 0">
-                <div style="font-weight:600;font-size:13px;margin-bottom:8px">Fatura Numarası Formatı</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <!-- TAB: Genel -->
+            <div id="inv-tab-general" class="manage-list">
+              <div class="manage-item" style="padding:14px 0">
+                <div style="font-weight:600;font-size:13px;margin-bottom:10px">📋 Fatura Numarası Formatı</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                   <div>
-                    <label style="font-size:11px;color:var(--gray400);display:block;margin-bottom:3px">Satış Faturası Başlangıç</label>
-                    <input type="text" id="inv-sales-prefix" placeholder="INV0001" style="width:100%;padding:7px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px;font-family:monospace">
-                    <div style="font-size:10px;color:var(--gray400);margin-top:2px">Örn: INV0001, FTR00100, S-0001</div>
+                    <label style="font-size:11px;color:var(--gray500);display:block;margin-bottom:4px">Satış Faturası</label>
+                    <input type="text" id="inv-sales-prefix" placeholder="INV0001" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px;font-family:monospace">
+                    <div style="font-size:10px;color:var(--gray400);margin-top:3px">Örn: INV0001, FTR00100, S-0001</div>
                   </div>
                   <div>
-                    <label style="font-size:11px;color:var(--gray400);display:block;margin-bottom:3px">Alış Faturası Başlangıç</label>
-                    <input type="text" id="inv-purchase-prefix" placeholder="PO0001" style="width:100%;padding:7px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px;font-family:monospace">
-                    <div style="font-size:10px;color:var(--gray400);margin-top:2px">Örn: PO0001, ALŞ00100, P-0001</div>
+                    <label style="font-size:11px;color:var(--gray500);display:block;margin-bottom:4px">Alış Faturası</label>
+                    <input type="text" id="inv-purchase-prefix" placeholder="PO0001" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px;font-family:monospace">
+                    <div style="font-size:10px;color:var(--gray400);margin-top:3px">Örn: PO0001, ALŞ00100, P-0001</div>
                   </div>
                 </div>
               </div>
+              <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+                <div><div style="font-weight:600;font-size:13px" data-i18n="inv_language">🌐 Fatura Dili</div><div style="font-size:11px;color:var(--gray400)">Fatura PDF'inde kullanılacak dil</div></div>
+                <select id="inv-language" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:13px">
+                  <option value="company">Şirket dili</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="en">English</option>
+                  <option value="ru">Русский</option>
+                  <option value="de">Deutsch</option>
+                </select>
+              </div>
+            </div>
+            <!-- TAB: PDF Ayarları -->
+            <div id="inv-tab-pdf" class="manage-list" style="display:none">
               <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
                 <div><div style="font-weight:600;font-size:13px" data-i18n="inv_show_unit">Birim kolonu göster</div><div style="font-size:11px;color:var(--gray400)">KG, Adet, Litre vb.</div></div>
                 <label class="toggle"><input type="checkbox" id="inv-show-unit" checked><span class="track"></span><span class="thumb"></span></label>
@@ -712,16 +731,6 @@ tr:hover .action-btns { opacity:1; }
               <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
                 <div><div style="font-weight:600;font-size:13px" data-i18n="inv_show_description">Açıklama kolonu göster</div></div>
                 <label class="toggle"><input type="checkbox" id="inv-show-description"><span class="track"></span><span class="thumb"></span></label>
-              </div>
-              <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
-                <div><div style="font-weight:600;font-size:13px" data-i18n="inv_language">Fatura dili</div></div>
-                <select id="inv-language" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:13px">
-                  <option value="company">Şirket dili</option>
-                  <option value="tr">Türkçe</option>
-                  <option value="en">English</option>
-                  <option value="ru">Русский</option>
-                  <option value="de">Deutsch</option>
-                </select>
               </div>
             </div>
           </div>
@@ -2449,6 +2458,14 @@ async function savePosPin() {
 }
 
 // ===== INVOICE SETTINGS =====
+function switchInvTab(tab, btn) {
+  document.getElementById('inv-tab-general').style.display = tab === 'general' ? '' : 'none';
+  document.getElementById('inv-tab-pdf').style.display = tab === 'pdf' ? '' : 'none';
+  document.querySelectorAll('.inv-tab').forEach(b => {
+    b.style.color = 'var(--gray500)'; b.style.fontWeight = '500'; b.style.borderBottomColor = 'transparent';
+  });
+  btn.style.color = 'var(--primary)'; btn.style.fontWeight = '600'; btn.style.borderBottomColor = 'var(--primary)';
+}
 async function loadInvoiceSettings() {
   if (!companyId) return;
   const { data } = await sb.from('companies').select('invoice_settings').eq('id', companyId).single();
