@@ -970,6 +970,14 @@ async function saveProject() {
 }
 
 async function deleteProject(id) {
+  const [tasks, expenses, logs, ms] = await Promise.all([
+    sb.from('tasks').select('id',{count:'exact',head:true}).eq('project_id',id).eq('is_active',true),
+    sb.from('project_expenses').select('id',{count:'exact',head:true}).eq('project_id',id).eq('is_active',true),
+    sb.from('time_logs').select('id',{count:'exact',head:true}).eq('project_id',id).eq('is_active',true),
+    sb.from('milestones').select('id',{count:'exact',head:true}).eq('project_id',id).eq('is_active',true),
+  ]);
+  const total = (tasks.count||0)+(expenses.count||0)+(logs.count||0)+(ms.count||0);
+  if (total > 0) { showToast((t('err_has_related')||'Silinemez: {0} ilişkili kayıt var (görev, harcama, zaman kaydı vb.)').replace('{0}',total),'error'); return; }
   if (!await showConfirm(t('confirm_delete_project'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
@@ -1032,6 +1040,8 @@ async function saveTask() {
 }
 
 async function deleteTask(id) {
+  const { count } = await sb.from('time_logs').select('id',{count:'exact',head:true}).eq('task_id',id).eq('is_active',true);
+  if (count > 0) { showToast((t('err_has_related')||'Silinemez: {0} zaman kaydı var').replace('{0}',count),'error'); return; }
   if (!await showConfirm(t('confirm_delete_task'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();

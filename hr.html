@@ -1449,7 +1449,25 @@ async function savePosition() {
 }
 
 // ===== DELETE =====
-function openDeleteModal(type, id, name) {
+async function openDeleteModal(type, id, name) {
+  // FK checks before allowing delete
+  if (type === 'dept') {
+    const { count } = await sb.from('employees').select('id',{count:'exact',head:true}).eq('department_id',id).eq('is_active',true);
+    if (count > 0) { showToast(('Silinemez: ' + count + ' çalışan bu departmanda'), 'error'); return; }
+  } else if (type === 'pos') {
+    const { count } = await sb.from('employees').select('id',{count:'exact',head:true}).eq('position_id',id).eq('is_active',true);
+    if (count > 0) { showToast(('Silinemez: ' + count + ' çalışan bu pozisyonda'), 'error'); return; }
+  } else if (type === 'leavetype') {
+    const { count } = await sb.from('leave_requests').select('id',{count:'exact',head:true}).eq('leave_type_id',id);
+    if (count > 0) { showToast(('Silinemez: ' + count + ' izin talebi bu türde'), 'error'); return; }
+  } else if (type === 'emp') {
+    const [lr, att] = await Promise.all([
+      sb.from('leave_requests').select('id',{count:'exact',head:true}).eq('employee_id',id),
+      sb.from('attendance').select('id',{count:'exact',head:true}).eq('employee_id',id),
+    ]);
+    const total = (lr.count||0)+(att.count||0);
+    if (total > 0) { showToast(('Silinemez: ' + total + ' ilişkili kayıt var (izin/devamsızlık)'), 'error'); return; }
+  }
   document.getElementById('delete-msg').textContent = `"${name}" silinecek. Bu işlem geri alınamaz.`;
   deleteCallback = async () => {
     let error;

@@ -1495,15 +1495,22 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!await showConfirm(t('confirm_delete_po'), t('lbl_delete')||'Delete')) return;
-  const { count: mvCount } = await sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('invoice_id', id).eq('is_active', true);
-  if (mvCount > 0) {
-    showToast(t('err_has_stock_movements').replace('{0}', mvCount), 'error'); return;
+  const [payments, movements, journals] = await Promise.all([
+    sb.from('payments').select('id',{count:'exact',head:true}).eq('order_id',id),
+    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('invoice_id',id).eq('is_active',true),
+    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('reference_id',id),
+  ]);
+  const total = (payments.count||0)+(movements.count||0)+(journals.count||0);
+  if (total > 0) {
+    const parts = [];
+    if (payments.count) parts.push(payments.count + ' ödeme');
+    if (movements.count) parts.push(movements.count + ' stok hareketi');
+    if (journals.count) parts.push(journals.count + ' muhasebe kaydı');
+    showToast((t('err_has_related')||'Silinemez: ') + parts.join(', ') + ' var', 'error'); return;
   }
+  if (!await showConfirm(t('confirm_delete_po'), t('lbl_delete')||'Delete')) return;
   const { data: { user: _u } } = await sb.auth.getUser();
   const _now = new Date().toISOString();
-  await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id })
-    .eq('invoice_id', id);
   await sb.from('purchase_orders').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('po_deleted'),'success');
   await loadOrders();

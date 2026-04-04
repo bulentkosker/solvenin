@@ -1014,6 +1014,13 @@ async function saveEquip() {
 }
 
 async function deleteEquip(id) {
+  const [wos, plans, failures] = await Promise.all([
+    sb.from('work_orders').select('id',{count:'exact',head:true}).eq('equipment_id',id).eq('is_active',true),
+    sb.from('maintenance_plans').select('id',{count:'exact',head:true}).eq('equipment_id',id).eq('is_active',true),
+    sb.from('failure_records').select('id',{count:'exact',head:true}).eq('equipment_id',id).eq('is_active',true),
+  ]);
+  const total = (wos.count||0)+(plans.count||0)+(failures.count||0);
+  if (total > 0) { showToast((t('err_has_related')||'Silinemez: {0} ilişkili kayıt var').replace('{0}',total),'error'); return; }
   if (!await showConfirm(t('confirm_delete_equip'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
@@ -1189,6 +1196,8 @@ async function saveProvider() {
 }
 
 async function deleteProvider(id) {
+  const { count } = await sb.from('work_orders').select('id',{count:'exact',head:true}).eq('provider_id',id).eq('is_active',true);
+  if (count > 0) { showToast((t('err_has_related')||'Silinemez: {0} ilişkili iş emri var').replace('{0}',count),'error'); return; }
   if (!await showConfirm(t('confirm_delete_provider'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();

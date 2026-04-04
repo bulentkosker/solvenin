@@ -868,6 +868,8 @@ async function saveVehicle() {
 }
 
 async function deleteVehicle(id) {
+  const { count } = await sb.from('shipments').select('id',{count:'exact',head:true}).eq('vehicle_id',id).eq('is_active',true);
+  if (count > 0) { showToast((t('err_has_related')||'Silinemez: {0} aktif sevkiyat var').replace('{0}',count),'error'); return; }
   if (!await showConfirm(t('confirm_delete_vehicle'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
@@ -929,6 +931,8 @@ async function saveDriver() {
 }
 
 async function deleteDriver(id) {
+  const { count } = await sb.from('shipments').select('id',{count:'exact',head:true}).eq('driver_id',id).eq('is_active',true);
+  if (count > 0) { showToast((t('err_has_related')||'Silinemez: {0} aktif sevkiyat var').replace('{0}',count),'error'); return; }
   if (!await showConfirm(t('confirm_delete_driver'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();

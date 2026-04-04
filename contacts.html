@@ -375,6 +375,12 @@ async function saveContact() {
 }
 
 async function deleteContact(id) {
+  const [so, po] = await Promise.all([
+    sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).eq('is_active', true),
+    sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).eq('is_active', true),
+  ]);
+  const total = (so.count||0) + (po.count||0);
+  if (total > 0) { showToast((t('err_has_orders') || 'Silinemez: {0} aktif sipariş var').replace('{0}', total), 'error'); return; }
   if (!await showConfirm(t('confirm_delete_contact') || 'Bu cariyi silmek istiyor musunuz?', t('lbl_confirm') || 'Onay', t('btn_delete') || 'Sil')) return;
   const { data: { user } } = await sb.auth.getUser();
   await sb.from('contacts').update({
