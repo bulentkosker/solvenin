@@ -160,38 +160,89 @@ textarea{min-height:60px;resize:vertical}
 
 <!-- STATEMENT MODAL -->
 <div class="modal-overlay" id="statement-modal">
-  <div class="modal" style="max-width:900px;width:95vw">
-    <div class="modal-head">
+  <div class="modal" style="max-width:1200px;width:98vw;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-head" style="flex-shrink:0">
       <span class="modal-title" id="stmt-title">Hesap Ekstresi</span>
       <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" style="background:var(--green);color:#fff" onclick="openManualTxModal()">+ Manuel Hareket</button>
         <input type="date" id="stmt-from" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px" onchange="loadStatement()">
         <span style="color:var(--gray400);font-size:12px">—</span>
         <input type="date" id="stmt-to" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px" onchange="loadStatement()">
-        <button class="btn btn-outline btn-sm" onclick="printStatement()">🖨️ Yazdır</button>
+        <button class="btn btn-outline btn-sm" onclick="printStatement()">🖨️</button>
         <button class="modal-close" onclick="closeModal('statement-modal')">✕</button>
       </div>
     </div>
-    <div class="modal-body" style="padding:0">
-      <div id="stmt-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 24px;background:var(--gray50);border-bottom:1px solid var(--gray100)">
-        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Borç</div><div id="stmt-debit" style="font-size:18px;font-weight:800;color:var(--red);margin-top:2px">0</div></div>
-        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Alacak</div><div id="stmt-credit" style="font-size:18px;font-weight:800;color:var(--green);margin-top:2px">0</div></div>
-        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Bakiye</div><div id="stmt-balance" style="font-size:18px;font-weight:800;margin-top:2px">0</div></div>
-      </div>
-      <div style="overflow-x:auto;max-height:50vh;overflow-y:auto">
-        <table style="font-size:12px">
+    <div id="stmt-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 24px;background:var(--gray50);border-bottom:1px solid var(--gray100);flex-shrink:0">
+      <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Borç</div><div id="stmt-debit" style="font-size:18px;font-weight:800;color:var(--red);margin-top:2px">0</div></div>
+      <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Alacak</div><div id="stmt-credit" style="font-size:18px;font-weight:800;color:var(--green);margin-top:2px">0</div></div>
+      <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Bakiye</div><div id="stmt-balance" style="font-size:18px;font-weight:800;margin-top:2px">0</div></div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <!-- Sol: Liste -->
+      <div style="flex:1;overflow-y:auto;border-right:1px solid var(--gray100)">
+        <table style="font-size:12px;width:100%">
           <thead>
             <tr>
-              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Tarih</th>
-              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Belge</th>
-              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Açıklama</th>
-              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Borç</th>
-              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Alacak</th>
-              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Bakiye</th>
+              <th style="padding:6px 10px;position:sticky;top:0;background:var(--gray50);z-index:1">Tarih</th>
+              <th style="padding:6px 10px;position:sticky;top:0;background:var(--gray50);z-index:1">Belge</th>
+              <th style="padding:6px 10px;position:sticky;top:0;background:var(--gray50);z-index:1">Açıklama</th>
+              <th style="padding:6px 10px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Borç</th>
+              <th style="padding:6px 10px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Alacak</th>
+              <th style="padding:6px 10px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Bakiye</th>
             </tr>
           </thead>
           <tbody id="stmt-tbody"></tbody>
         </table>
       </div>
+      <!-- Sağ: Önizleme -->
+      <div id="stmt-preview" style="width:380px;overflow-y:auto;background:#fafbfc;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="text-align:center;color:var(--gray400);font-size:12px;padding:20px">
+          <div style="font-size:28px;margin-bottom:8px">👈</div>
+          Detay görmek için bir satıra tıklayın
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANUEL HAReket MODAL -->
+<div class="modal-overlay" id="manual-tx-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title">Manuel Cari Hareket</span>
+      <button class="modal-close" onclick="closeModal('manual-tx-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Tür *</label>
+          <select id="mtx-type"><option value="debit">Borç</option><option value="credit">Alacak</option></select>
+        </div>
+        <div class="field">
+          <label>Tutar *</label>
+          <input type="number" id="mtx-amount" min="0.01" step="0.01" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label>Tarih *</label>
+          <input type="date" id="mtx-date">
+        </div>
+        <div class="field">
+          <label>Referans</label>
+          <input type="text" id="mtx-ref" placeholder="Belge no, dekont no vb.">
+        </div>
+        <div class="field full">
+          <label>Açıklama *</label>
+          <input type="text" id="mtx-desc" placeholder="Açılış bakiyesi, virman, düzeltme vb.">
+        </div>
+        <div class="field full">
+          <label>Notlar</label>
+          <textarea id="mtx-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('manual-tx-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveManualTx()">Kaydet</button>
     </div>
   </div>
 </div>
@@ -346,6 +397,15 @@ async function loadBalances() {
     if (!sid) return;
     if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
     balances[sid].debit += parseFloat(p.amount||0);
+  });
+  // Manual contact transactions
+  const { data: manualTx } = await sb.from('contact_transactions')
+    .select('contact_id, type, amount')
+    .eq('company_id', companyId).eq('is_active', true);
+  (manualTx||[]).forEach(tx => {
+    if (!balances[tx.contact_id]) balances[tx.contact_id] = { debit:0, credit:0 };
+    if (tx.type === 'debit') balances[tx.contact_id].debit += parseFloat(tx.amount||0);
+    else balances[tx.contact_id].credit += parseFloat(tx.amount||0);
   });
   filterContacts();
 }
@@ -503,16 +563,16 @@ function openStatement(contactId) {
   stmtContactId = contactId;
   const c = contacts.find(x => x.id === contactId);
   document.getElementById('stmt-title').textContent = (c?.name || '') + ' — Hesap Ekstresi';
-  // Default: son 1 yıl
   const now = new Date();
   const yearAgo = new Date(now.getFullYear()-1, now.getMonth(), now.getDate());
   document.getElementById('stmt-from').value = yearAgo.toISOString().split('T')[0];
   document.getElementById('stmt-to').value = now.toISOString().split('T')[0];
+  document.getElementById('stmt-preview').innerHTML = '<div style="text-align:center;color:var(--gray400);font-size:12px;padding:20px"><div style="font-size:28px;margin-bottom:8px">👈</div>Detay görmek için bir satıra tıklayın</div>';
   openModal('statement-modal');
   loadStatement();
 }
 
-let stmtLines = []; // store for expand/collapse
+let stmtLines = [];
 
 async function loadStatement() {
   if (!stmtContactId) return;
@@ -524,78 +584,66 @@ async function loadStatement() {
   const lines = [];
   const c = contacts.find(x => x.id === stmtContactId);
 
-  // Sales invoices with items
+  // Sales invoices
   if (c?.is_customer) {
     let q = sb.from('sales_orders').select('id,order_number,issue_date,due_date,total,subtotal,tax_amount,discount,status,notes')
       .eq('company_id', companyId).eq('customer_id', stmtContactId).eq('is_active', true)
       .in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
-    const { data: sales } = await q.order('issue_date');
-    for (const o of (sales||[])) {
-      const { data: items } = await sb.from('sales_order_items').select('description,quantity,unit_price,total,products(name,unit)').eq('order_id', o.id);
-      lines.push({ type:'invoice', date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total||0), credit: 0, status: o.status, orderId: o.id,
-        detail: { due_date: o.due_date, subtotal: o.subtotal, tax: o.tax_amount, discount: o.discount, notes: o.notes, items: items||[] }
-      });
-    }
+    const { data } = await q.order('issue_date');
+    (data||[]).forEach(o => lines.push({ type:'sale_invoice', date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total||0), credit: 0, status: o.status, _data: o }));
   }
 
-  // Purchase invoices with items
+  // Purchase invoices
   if (c?.is_supplier) {
     let q = sb.from('purchase_orders').select('id,order_number,issue_date,expected_date,total,subtotal,tax_amount,discount,status,notes')
       .eq('company_id', companyId).eq('supplier_id', stmtContactId).eq('is_active', true)
       .in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
-    const { data: purchases } = await q.order('issue_date');
-    for (const o of (purchases||[])) {
-      const { data: items } = await sb.from('purchase_order_items').select('description,quantity,unit_price,total,products(name,unit)').eq('order_id', o.id);
-      lines.push({ type:'invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, orderId: o.id,
-        detail: { due_date: o.expected_date, subtotal: o.subtotal, tax: o.tax_amount, discount: o.discount, notes: o.notes, items: items||[] }
-      });
-    }
+    const { data } = await q.order('issue_date');
+    (data||[]).forEach(o => lines.push({ type:'purchase_invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, _data: o }));
   }
 
-  // Payments for sales
+  // Sale payments
   if (c?.is_customer) {
-    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,sales_orders!inner(customer_id,order_number,company_id)')
+    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,register_id,account_id,sales_orders!inner(customer_id,order_number,company_id)')
       .eq('sales_orders.company_id', companyId).eq('sales_orders.customer_id', stmtContactId);
     if (from) q = q.gte('payment_date', from);
     if (to) q = q.lte('payment_date', to);
-    const { data: sp } = await q;
-    (sp||[]).forEach(p => {
-      const methodLabel = {cash:'Nakit',bank:'Banka',card:'Kredi Kartı',check:'Çek'}[p.payment_method] || p.payment_method || '';
-      lines.push({ type:'payment', date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0),
-        detail: { method: methodLabel, ref: p.reference, notes: p.notes, orderNo: p.sales_orders?.order_number }
-      });
-    });
+    const { data } = await q;
+    (data||[]).forEach(p => lines.push({ type:'payment_in', date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: p }));
   }
 
-  // Payments for purchases
+  // Purchase payments
   if (c?.is_supplier) {
-    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,purchase_orders!inner(supplier_id,order_number,company_id)')
+    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,register_id,account_id,purchase_orders!inner(supplier_id,order_number,company_id)')
       .eq('purchase_orders.company_id', companyId).eq('purchase_orders.supplier_id', stmtContactId);
     if (from) q = q.gte('payment_date', from);
     if (to) q = q.lte('payment_date', to);
-    const { data: pp } = await q;
-    (pp||[]).forEach(p => {
-      const methodLabel = {cash:'Nakit',bank:'Banka',card:'Kredi Kartı',check:'Çek'}[p.payment_method] || p.payment_method || '';
-      lines.push({ type:'payment', date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0,
-        detail: { method: methodLabel, ref: p.reference, notes: p.notes, orderNo: p.purchase_orders?.order_number }
-      });
-    });
+    const { data } = await q;
+    (data||[]).forEach(p => lines.push({ type:'payment_out', date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: p }));
+  }
+
+  // Manual transactions
+  {
+    let q = sb.from('contact_transactions').select('*')
+      .eq('company_id', companyId).eq('contact_id', stmtContactId).eq('is_active', true);
+    if (from) q = q.gte('date', from);
+    if (to) q = q.lte('date', to);
+    const { data } = await q;
+    (data||[]).forEach(tx => lines.push({
+      type:'manual', date: tx.date, doc: tx.reference || '—', desc: tx.description,
+      debit: tx.type==='debit' ? parseFloat(tx.amount) : 0,
+      credit: tx.type==='credit' ? parseFloat(tx.amount) : 0,
+      _data: tx
+    }));
   }
 
   lines.sort((a,b) => (a.date||'').localeCompare(b.date||''));
-
   let totalDebit = 0, totalCredit = 0, runBal = 0;
-  lines.forEach((l,i) => {
-    totalDebit += l.debit;
-    totalCredit += l.credit;
-    runBal += l.debit - l.credit;
-    l.balance = runBal;
-    l._idx = i;
-  });
+  lines.forEach(l => { totalDebit += l.debit; totalCredit += l.credit; runBal += l.debit - l.credit; l.balance = runBal; });
   stmtLines = lines;
 
   document.getElementById('stmt-debit').textContent = fmtMoney(totalDebit);
@@ -610,75 +658,154 @@ async function loadStatement() {
     return;
   }
 
-  const rowS = 'padding:6px 12px;';
+  const icon = {sale_invoice:'📄',purchase_invoice:'📦',payment_in:'💰',payment_out:'💸',manual:'📝'};
   tbody.innerHTML = lines.map((l,i) => {
-    const arrow = l.detail ? `<span id="arrow-${i}" style="display:inline-block;transition:transform .2s;margin-right:4px;font-size:9px;color:var(--gray400)">▶</span>` : '';
-    const click = l.detail ? `onclick="toggleDetail(${i})" style="cursor:pointer;${rowS}"` : `style="${rowS}"`;
-    return `<tr id="stmt-row-${i}" ${click}>
-    <td style="${rowS}white-space:nowrap">${arrow}${l.date || '—'}</td>
-    <td style="${rowS}font-weight:500">${l.doc}</td>
-    <td style="${rowS}color:var(--gray500)">${l.desc}${l.status ? ` <span class="badge badge-${l.status==='paid'?'green':l.status==='overdue'?'red':'blue'}" style="font-size:9px;padding:1px 6px">${l.status}</span>` : ''}</td>
-    <td style="${rowS}text-align:right;color:var(--red);font-weight:600">${l.debit ? fmtMoney(l.debit) : ''}</td>
-    <td style="${rowS}text-align:right;color:var(--green);font-weight:600">${l.credit ? fmtMoney(l.credit) : ''}</td>
-    <td style="${rowS}text-align:right;font-weight:700;color:${l.balance>0?'var(--red)':l.balance<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(l.balance))}</td>
-  </tr>
-  <tr id="stmt-detail-${i}" style="display:none"><td colspan="6" style="padding:0;background:#f8fafc;border-bottom:1px solid var(--gray200)"><div id="stmt-detail-content-${i}" style="padding:10px 16px 10px 32px"></div></td></tr>`;
+    const statusBadge = l.status ? ` <span class="badge badge-${l.status==='paid'?'green':l.status==='overdue'?'red':'blue'}" style="font-size:9px;padding:1px 6px">${l.status}</span>` : '';
+    return `<tr id="stmt-row-${i}" onclick="selectStmtRow(${i})" style="cursor:pointer">
+    <td style="padding:5px 10px;white-space:nowrap;font-size:11px">${l.date || '—'}</td>
+    <td style="padding:5px 10px;font-weight:500;font-size:11px">${icon[l.type]||''} ${l.doc}</td>
+    <td style="padding:5px 10px;color:var(--gray500);font-size:11px">${l.desc}${statusBadge}</td>
+    <td style="padding:5px 10px;text-align:right;color:var(--red);font-weight:600;font-size:11px">${l.debit ? fmtMoney(l.debit) : ''}</td>
+    <td style="padding:5px 10px;text-align:right;color:var(--green);font-weight:600;font-size:11px">${l.credit ? fmtMoney(l.credit) : ''}</td>
+    <td style="padding:5px 10px;text-align:right;font-weight:700;font-size:11px;color:${l.balance>0?'var(--red)':l.balance<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(l.balance))}</td>
+  </tr>`;
   }).join('') + `<tr style="background:var(--gray50);font-weight:700;border-top:2px solid var(--gray300)">
-    <td colspan="3" style="padding:8px 12px">TOPLAM</td>
-    <td style="padding:8px 12px;text-align:right;color:var(--red)">${fmtMoney(totalDebit)}</td>
-    <td style="padding:8px 12px;text-align:right;color:var(--green)">${fmtMoney(totalCredit)}</td>
-    <td style="padding:8px 12px;text-align:right;color:${finalBal>0?'var(--red)':finalBal<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(finalBal))}</td>
+    <td colspan="3" style="padding:6px 10px;font-size:11px">TOPLAM</td>
+    <td style="padding:6px 10px;text-align:right;color:var(--red);font-size:11px">${fmtMoney(totalDebit)}</td>
+    <td style="padding:6px 10px;text-align:right;color:var(--green);font-size:11px">${fmtMoney(totalCredit)}</td>
+    <td style="padding:6px 10px;text-align:right;font-size:11px;color:${finalBal>0?'var(--red)':finalBal<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(finalBal))}</td>
   </tr>`;
 }
 
-function toggleDetail(idx) {
-  const detailRow = document.getElementById('stmt-detail-' + idx);
-  const arrow = document.getElementById('arrow-' + idx);
-  const content = document.getElementById('stmt-detail-content-' + idx);
-  if (!detailRow) return;
-  const isOpen = detailRow.style.display !== 'none';
-  detailRow.style.display = isOpen ? 'none' : '';
-  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
-  if (!isOpen && content && !content.dataset.loaded) {
-    content.dataset.loaded = '1';
-    const l = stmtLines[idx];
-    if (!l?.detail) return;
-    const d = l.detail;
-    let html = '';
-    if (l.type === 'invoice' && d.items?.length) {
-      html += `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px">
-        <thead><tr style="background:#eef2f7">
-          <th style="padding:4px 8px;text-align:left;font-size:10px;border:none">Ürün</th>
-          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Miktar</th>
-          <th style="padding:4px 8px;text-align:center;font-size:10px;border:none">Birim</th>
-          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Birim Fiyat</th>
-          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Toplam</th>
-        </tr></thead><tbody>`;
-      d.items.forEach(it => {
-        html += `<tr><td style="padding:3px 8px;border-bottom:1px solid #eee">${it.products?.name || it.description || '—'}</td>
-          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee">${it.quantity}</td>
-          <td style="padding:3px 8px;text-align:center;border-bottom:1px solid #eee">${it.products?.unit || '—'}</td>
-          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee">${fmtMoney(it.unit_price)}</td>
-          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee;font-weight:600">${fmtMoney(it.total)}</td></tr>`;
+let _selectedStmtRow = -1;
+async function selectStmtRow(idx) {
+  // Highlight row
+  document.querySelectorAll('#stmt-tbody tr').forEach(r => r.style.background = '');
+  const row = document.getElementById('stmt-row-' + idx);
+  if (row) row.style.background = '#eef2ff';
+  _selectedStmtRow = idx;
+
+  const l = stmtLines[idx];
+  if (!l) return;
+  const panel = document.getElementById('stmt-preview');
+  panel.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray400)">Yükleniyor...</div>';
+
+  const d = l._data;
+  let html = '';
+  const hdr = (title, badge) => `<div style="padding:14px 16px;border-bottom:1px solid var(--gray200);display:flex;align-items:center;justify-content:space-between">
+    <div style="font-weight:700;font-size:14px">${title}</div>${badge||''}</div>`;
+  const field = (label, val) => val ? `<div style="margin-bottom:8px"><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.3px">${label}</div><div style="font-size:13px;font-weight:500;margin-top:1px">${val}</div></div>` : '';
+
+  if (l.type === 'sale_invoice' || l.type === 'purchase_invoice') {
+    const table = l.type === 'sale_invoice' ? 'sales_order_items' : 'purchase_order_items';
+    const { data: items } = await sb.from(table).select('description,quantity,unit_price,discount,total,products(name,unit)').eq('order_id', d.id);
+    const statusBadge = `<span class="badge badge-${d.status==='paid'?'green':d.status==='overdue'?'red':'blue'}">${d.status}</span>`;
+    html = hdr(l.type==='sale_invoice' ? '📄 Satış Faturası' : '📦 Alış Faturası', statusBadge);
+    html += '<div style="padding:14px 16px">';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">`;
+    html += field('Belge No', d.order_number);
+    html += field('Tarih', d.issue_date);
+    html += field('Vade', d.due_date || d.expected_date || '—');
+    html += field('Durum', d.status);
+    html += '</div>';
+    // Items
+    if (items?.length) {
+      html += `<div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Kalemler</div>`;
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px"><thead><tr style="background:#f1f5f9">';
+      html += '<th style="padding:4px 6px;text-align:left;border:none;font-size:10px">Ürün</th>';
+      html += '<th style="padding:4px 6px;text-align:right;border:none;font-size:10px">Miktar</th>';
+      html += '<th style="padding:4px 6px;text-align:right;border:none;font-size:10px">Fiyat</th>';
+      html += '<th style="padding:4px 6px;text-align:right;border:none;font-size:10px">Toplam</th></tr></thead><tbody>';
+      items.forEach(it => {
+        html += `<tr><td style="padding:3px 6px;border-bottom:1px solid #f0f0f0">${it.products?.name||it.description||'—'}</td>
+          <td style="padding:3px 6px;text-align:right;border-bottom:1px solid #f0f0f0">${it.quantity} ${it.products?.unit||''}</td>
+          <td style="padding:3px 6px;text-align:right;border-bottom:1px solid #f0f0f0">${fmtMoney(it.unit_price)}</td>
+          <td style="padding:3px 6px;text-align:right;border-bottom:1px solid #f0f0f0;font-weight:600">${fmtMoney(it.total)}</td></tr>`;
       });
       html += '</tbody></table>';
-      const info = [];
-      if (d.subtotal) info.push('Ara Toplam: ' + fmtMoney(d.subtotal));
-      if (d.tax) info.push('Vergi: ' + fmtMoney(d.tax));
-      if (d.discount) info.push('İndirim: ' + fmtMoney(d.discount));
-      if (d.due_date) info.push('Vade: ' + d.due_date);
-      if (info.length) html += `<div style="font-size:11px;color:var(--gray500);display:flex;gap:16px;flex-wrap:wrap">${info.map(i=>'<span>'+i+'</span>').join('')}</div>`;
-      if (d.notes) html += `<div style="font-size:11px;color:var(--gray400);margin-top:4px;font-style:italic">📝 ${d.notes}</div>`;
-    } else if (l.type === 'payment') {
-      const info = [];
-      if (d.method) info.push('Yöntem: <strong>' + d.method + '</strong>');
-      if (d.orderNo) info.push('Fatura: <strong>' + d.orderNo + '</strong>');
-      if (d.ref) info.push('Referans: ' + d.ref);
-      html += `<div style="font-size:11px;color:var(--gray600);display:flex;gap:16px;flex-wrap:wrap">${info.map(i=>'<span>'+i+'</span>').join('')}</div>`;
-      if (d.notes) html += `<div style="font-size:11px;color:var(--gray400);margin-top:4px;font-style:italic">📝 ${d.notes}</div>`;
     }
-    content.innerHTML = html || '<div style="color:var(--gray400);font-size:11px">Detay bilgisi yok</div>';
+    // Totals
+    html += '<div style="border-top:1px solid var(--gray200);padding-top:8px;font-size:12px">';
+    html += `<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--gray500)">Ara Toplam</span><span>${fmtMoney(d.subtotal)}</span></div>`;
+    if (parseFloat(d.tax_amount||0)) html += `<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--gray500)">Vergi</span><span>${fmtMoney(d.tax_amount)}</span></div>`;
+    if (parseFloat(d.discount||0)) html += `<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--gray500)">İndirim</span><span style="color:var(--red)">-${fmtMoney(d.discount)}</span></div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:700;font-size:14px;border-top:2px solid var(--gray300);margin-top:4px"><span>TOPLAM</span><span>${fmtMoney(d.total)}</span></div>`;
+    html += '</div>';
+    if (d.notes) html += `<div style="margin-top:10px;padding:8px 10px;background:var(--gray50);border-radius:6px;font-size:11px;color:var(--gray500)">📝 ${d.notes}</div>`;
+    html += '</div>';
+
+  } else if (l.type === 'payment_in' || l.type === 'payment_out') {
+    const methodLabels = {cash:'💵 Nakit',bank:'🏦 Banka Transferi',card:'💳 Kredi Kartı',check:'📋 Çek'};
+    const orderNo = d.sales_orders?.order_number || d.purchase_orders?.order_number || '';
+    html = hdr(l.type==='payment_in' ? '💰 Tahsilat' : '💸 Ödeme', '');
+    html += '<div style="padding:14px 16px">';
+    html += `<div style="font-size:28px;font-weight:800;color:${l.type==='payment_in'?'var(--green)':'var(--red)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+    html += field('Tarih', d.payment_date);
+    html += field('Yöntem', methodLabels[d.payment_method] || d.payment_method || '—');
+    html += field('İlgili Fatura', orderNo || '—');
+    html += field('Referans', d.reference || '—');
+    html += '</div>';
+    if (d.notes) html += `<div style="margin-top:10px;padding:8px 10px;background:var(--gray50);border-radius:6px;font-size:11px;color:var(--gray500)">📝 ${d.notes}</div>`;
+    html += '</div>';
+
+  } else if (l.type === 'manual') {
+    const typeLabel = d.type === 'debit' ? '🔴 Borç Hareketi' : '🟢 Alacak Hareketi';
+    html = hdr('📝 Manuel Hareket', `<button class="btn btn-danger btn-sm" onclick="deleteManualTx('${d.id}')" style="font-size:10px;padding:3px 8px">Sil</button>`);
+    html += '<div style="padding:14px 16px">';
+    html += `<div style="font-size:28px;font-weight:800;color:${d.type==='debit'?'var(--red)':'var(--green)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+    html += field('Tür', typeLabel);
+    html += field('Tarih', d.date);
+    html += field('Açıklama', d.description);
+    html += field('Referans', d.reference || '—');
+    html += '</div>';
+    if (d.notes) html += `<div style="margin-top:10px;padding:8px 10px;background:var(--gray50);border-radius:6px;font-size:11px;color:var(--gray500)">📝 ${d.notes}</div>`;
+    html += '</div>';
   }
+
+  panel.innerHTML = html;
+}
+
+// ===== MANUEL HAReket =====
+function openManualTxModal() {
+  document.getElementById('mtx-type').value = 'debit';
+  document.getElementById('mtx-amount').value = '';
+  document.getElementById('mtx-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mtx-ref').value = '';
+  document.getElementById('mtx-desc').value = '';
+  document.getElementById('mtx-notes').value = '';
+  openModal('manual-tx-modal');
+}
+
+async function saveManualTx() {
+  const type = document.getElementById('mtx-type').value;
+  const amount = parseFloat(document.getElementById('mtx-amount').value);
+  const date = document.getElementById('mtx-date').value;
+  const desc = document.getElementById('mtx-desc').value.trim();
+  if (!amount || amount <= 0) { showToast('Tutar giriniz', 'error'); return; }
+  if (!date) { showToast('Tarih giriniz', 'error'); return; }
+  if (!desc) { showToast('Açıklama giriniz', 'error'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  const { error } = await sb.from('contact_transactions').insert({
+    company_id: companyId, contact_id: stmtContactId, type, amount, date,
+    description: desc, reference: document.getElementById('mtx-ref').value.trim() || null,
+    notes: document.getElementById('mtx-notes').value.trim() || null, created_by: user?.id
+  });
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Hareket kaydedildi ✓', 'success');
+  closeModal('manual-tx-modal');
+  await loadStatement();
+  await loadBalances();
+}
+
+async function deleteManualTx(id) {
+  if (!await showConfirm('Bu hareketi silmek istediğinizden emin misiniz?', 'Onay', 'Sil')) return;
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('contact_transactions').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: user?.id }).eq('id', id);
+  showToast('Hareket silindi', 'success');
+  await loadStatement();
+  await loadBalances();
 }
 
 function printStatement() {
