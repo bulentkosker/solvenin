@@ -822,8 +822,7 @@ tr:hover .action-btns { opacity:1; }
               <select id="recycle-filter" onchange="filterRecycleBin()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--gray200)">
                 <option value="">All Types</option>
                 <option value="product">Products</option>
-                <option value="customer">Customers</option>
-                <option value="supplier">Suppliers</option>
+                <option value="contact">Contacts</option>
                 <option value="sales_order">Sales Orders</option>
                 <option value="purchase_order">Purchase Orders</option>
                 <option value="stock_movement">Stock Movements</option>
@@ -2150,7 +2149,7 @@ async function loadRecycleBin() {
   // Query each table for soft-deleted records
   const queries = await Promise.all([
     sb.from('products').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('contacts').select('id,name,type,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('contacts').select('id,name,is_customer,is_supplier,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
     sb.from('sales_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
     sb.from('purchase_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
     sb.from('stock_movements').select('id,type,quantity,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
@@ -2159,17 +2158,21 @@ async function loadRecycleBin() {
     sb.from('chart_of_accounts').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
   ]);
 
-  const types = ['product','customer','supplier','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account'];
-  const labelFields = ['name','name','name','order_number','order_number','type','name','account_name','name'];
+  const types = ['product','contact','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account'];
+  const labelFields = ['name','name','order_number','order_number','type','name','account_name','name'];
 
   allDeletedRecords = [];
   queries.forEach(({ data }, i) => {
     (data || []).forEach(r => {
+      let subtype = '';
+      if (types[i] === 'contact') {
+        subtype = r.is_customer && r.is_supplier ? ' (Müşteri+Tedarikçi)' : r.is_supplier ? ' (Tedarikçi)' : ' (Müşteri)';
+      }
       allDeletedRecords.push({
         type: types[i],
         id: r.id,
         label: r[labelFields[i]] || r.id,
-        extra: types[i] === 'stock_movement' ? ` (${r.quantity})` : '',
+        extra: types[i] === 'stock_movement' ? ` (${r.quantity})` : subtype,
         deleted_at: r.deleted_at,
         deleted_by: r.deleted_by,
       });
@@ -2192,10 +2195,10 @@ function renderRecycleBin(records) {
   if (!tbody) return;
 
   const typeLabels = {
-    product: t('rl_product'), customer: t('rl_customer'), supplier: t('rl_supplier'),
-    sales_order: t('rl_sales_order'), purchase_order: t('rl_purchase_order'),
-    stock_movement: t('rl_stock_movement'), cash_register: t('rl_cash_register'),
-    bank_account: t('rl_bank_account'), coa_account: t('rl_coa_account'),
+    product: t('rl_product') || 'Ürün', contact: t('rl_contact') || 'Cari',
+    sales_order: t('rl_sales_order') || 'Satış', purchase_order: t('rl_purchase_order') || 'Satın Alma',
+    stock_movement: t('rl_stock_movement') || 'Stok Hareketi', cash_register: t('rl_cash_register') || 'Kasa',
+    bank_account: t('rl_bank_account') || 'Banka Hesabı', coa_account: t('rl_coa_account') || 'Hesap',
   };
 
   if (!records.length) {
@@ -2218,23 +2221,23 @@ function renderRecycleBin(records) {
 
 async function restoreRecord(type, id) {
   const tableMap = {
-    product: 'products', contact: 'contacts',
+    product: 'products', contact: 'contacts', customer: 'contacts', supplier: 'contacts',
     sales_order: 'sales_orders', purchase_order: 'purchase_orders',
     stock_movement: 'stock_movements', cash_register: 'cash_registers',
     bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
   };
   const table = tableMap[type];
-  if (!table) return;
+  if (!table) { showToast('Bilinmeyen kayıt türü: ' + type, 'error'); return; }
   const { error } = await sb.from(table).update({ is_active: true, deleted_at: null, deleted_by: null }).eq('id', id);
   if (error) { showToast(error.message, 'error'); return; }
-  showToast(t('toast_restored')||'Record restored ✓', 'success');
+  showToast(t('toast_restored')||'Kayıt geri yüklendi ✓', 'success');
   await loadRecycleBin();
 }
 
 async function hardDeleteRecord(type, id, label) {
-  if (!await showConfirm(`${t('confirm_hard_delete')||'Permanently delete'} "${label}"? ${t('confirm_hard_delete_sub')||'This cannot be undone.'}`, t('btn_hard_delete')||'Delete Forever')) return;
+  if (!await showConfirm(`${t('confirm_hard_delete')||'Kalıcı olarak sil'} "${label}"? ${t('confirm_hard_delete_sub')||'Bu işlem geri alınamaz.'}`, t('btn_hard_delete')||'Kalıcı Sil')) return;
   const tableMap = {
-    product: 'products', contact: 'contacts',
+    product: 'products', contact: 'contacts', customer: 'contacts', supplier: 'contacts',
     sales_order: 'sales_orders', purchase_order: 'purchase_orders',
     stock_movement: 'stock_movements', cash_register: 'cash_registers',
     bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
