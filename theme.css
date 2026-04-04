@@ -751,7 +751,7 @@ a:hover { color: var(--primary-dark); }
    CRITICAL SIDEBAR OVERRIDE (flash prevention)
    ================================================================ */
 .sidebar {
-  background: var(--primary-dark) !important;
+  background: var(--sb-bg, #1a2744) !important;
   width: 220px;
 }
 .main { margin-left: 220px; }

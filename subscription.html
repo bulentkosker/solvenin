@@ -42,11 +42,6 @@
 html { font-size: 14px; }
 body { font-family: var(--font-body); background: var(--bg); color: var(--gray800); min-height: 100vh; display: flex; }
 
-/* ===== SIDEBAR ===== */
-.sidebar {
-  width: var(--sidebar-w); background: #334155; min-height: 100vh;
-  position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50;
-}
 
 
 
@@ -269,7 +264,6 @@ function setLang(lang) {
 </script>
     <style>
     /* Critical sidebar CSS - prevents layout flash */
-    .sidebar { width: 220px; background: #334155; min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 50; }
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
