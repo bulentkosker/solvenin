@@ -378,25 +378,21 @@ async function loadBalances() {
     if (!balances[o.supplier_id]) balances[o.supplier_id] = { debit:0, credit:0 };
     balances[o.supplier_id].credit += parseFloat(o.total||0);
   });
-  // Payments received from customers (credit for customer)
-  const { data: salesPayments } = await sb.from('payments')
-    .select('order_id, amount, sales_orders!inner(customer_id)')
-    .eq('sales_orders.company_id', companyId);
-  (salesPayments||[]).forEach(p => {
+  // Payments — single query, then split by customer/supplier
+  const { data: allPayments } = await sb.from('payments')
+    .select('order_id, amount, sales_orders(customer_id), purchase_orders(supplier_id)')
+    .eq('company_id', companyId);
+  (allPayments||[]).forEach(p => {
     const cid = p.sales_orders?.customer_id;
-    if (!cid) return;
-    if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
-    balances[cid].credit += parseFloat(p.amount||0);
-  });
-  // Payments made to suppliers (debit reduction)
-  const { data: purchPayments } = await sb.from('payments')
-    .select('order_id, amount, purchase_orders!inner(supplier_id)')
-    .eq('purchase_orders.company_id', companyId);
-  (purchPayments||[]).forEach(p => {
+    if (cid) {
+      if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
+      balances[cid].credit += parseFloat(p.amount||0);
+    }
     const sid = p.purchase_orders?.supplier_id;
-    if (!sid) return;
-    if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
-    balances[sid].debit += parseFloat(p.amount||0);
+    if (sid) {
+      if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
+      balances[sid].debit += parseFloat(p.amount||0);
+    }
   });
   // Manual contact transactions
   const { data: manualTx } = await sb.from('contact_transactions')
@@ -606,24 +602,28 @@ async function loadStatement() {
     (data||[]).forEach(o => lines.push({ type:'purchase_invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, _data: o }));
   }
 
-  // Sale payments
+  // Sale payments — get all payments for this company, then filter by customer via sales_orders join
   if (c?.is_customer) {
-    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,register_id,account_id,sales_orders!inner(customer_id,order_number,company_id)')
-      .eq('sales_orders.company_id', companyId).eq('sales_orders.customer_id', stmtContactId);
-    if (from) q = q.gte('payment_date', from);
-    if (to) q = q.lte('payment_date', to);
-    const { data } = await q;
-    (data||[]).forEach(p => lines.push({ type:'payment_in', date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: p }));
+    const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id,sales_orders(customer_id,order_number)')
+      .eq('company_id', companyId);
+    (data||[]).filter(p => p.sales_orders?.customer_id === stmtContactId).forEach(p => {
+      const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
+      if (from && paidDate < from) return;
+      if (to && paidDate > to) return;
+      lines.push({ type:'payment_in', date: paidDate, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: {...p, payment_method: p.method} });
+    });
   }
 
   // Purchase payments
   if (c?.is_supplier) {
-    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,register_id,account_id,purchase_orders!inner(supplier_id,order_number,company_id)')
-      .eq('purchase_orders.company_id', companyId).eq('purchase_orders.supplier_id', stmtContactId);
-    if (from) q = q.gte('payment_date', from);
-    if (to) q = q.lte('payment_date', to);
-    const { data } = await q;
-    (data||[]).forEach(p => lines.push({ type:'payment_out', date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: p }));
+    const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id,purchase_orders(supplier_id,order_number)')
+      .eq('company_id', companyId);
+    (data||[]).filter(p => p.purchase_orders?.supplier_id === stmtContactId).forEach(p => {
+      const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
+      if (from && paidDate < from) return;
+      if (to && paidDate > to) return;
+      lines.push({ type:'payment_out', date: paidDate, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method} });
+    });
   }
 
   // Manual transactions
@@ -741,8 +741,8 @@ async function selectStmtRow(idx) {
     html += '<div style="padding:14px 16px">';
     html += `<div style="font-size:28px;font-weight:800;color:${l.type==='payment_in'?'var(--green)':'var(--red)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
-    html += field('Tarih', d.payment_date);
-    html += field('Yöntem', methodLabels[d.payment_method] || d.payment_method || '—');
+    html += field('Tarih', d.paid_at ? d.paid_at.split('T')[0] : l.date);
+    html += field('Yöntem', methodLabels[d.payment_method || d.method] || d.payment_method || d.method || '—');
     html += field('İlgili Fatura', orderNo || '—');
     html += field('Referans', d.reference || '—');
     html += '</div>';
