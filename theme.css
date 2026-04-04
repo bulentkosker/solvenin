@@ -9,7 +9,7 @@
 :root {
   /* ── BRAND ── */
   --primary:        #1e40af;
-  --primary-dark:   #334155;
+  --primary-dark:   #1a2744;
   --primary-mid:    #2563eb;
   --primary-light:  rgba(30,64,175,0.08);
   --accent:         #38bdf8;
@@ -29,10 +29,10 @@
   --gray-dark:      #6c757d;
 
   /* ── OLD VARIABLE REMAPS (pages use these via var()) ── */
-  --navy:           #334155;
+  --navy:           #1a2744;
   --navy2:          #1e40af;
   --blue:           #1e40af;
-  --blue-dark:      #334155;
+  --blue-dark:      #1a2744;
   --blue-light:     rgba(30,64,175,0.08);
   --sky:            #2563eb;
 

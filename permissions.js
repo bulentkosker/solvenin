@@ -64,7 +64,7 @@
       overlay.style.cssText = 'position:fixed;inset:0;z-index:500;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:40px';
       overlay.innerHTML = `
         <div style="font-size:48px">🔒</div>
-        <div style="font-size:18px;font-weight:700;color:#334155">${window.t?.('perm_no_access') || 'Access Denied'}</div>
+        <div style="font-size:18px;font-weight:700;color:#1a2744">${window.t?.('perm_no_access') || 'Access Denied'}</div>
         <div style="font-size:14px;color:#64748b">${window.t?.('perm_no_access_desc') || 'You do not have permission to view this module.'}</div>
         <a href="dashboard.html" style="margin-top:12px;padding:10px 20px;background:#1e40af;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">${window.t?.('btn_back_dashboard') || 'Back to Dashboard'}</a>
       `;

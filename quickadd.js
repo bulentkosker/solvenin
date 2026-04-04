@@ -15,7 +15,7 @@ window.QA = (function () {
       .qa-wrap { position:relative; display:block; }
       .qa-input {
         width:100%; padding:8px 10px; border:1px solid var(--gray200,#e2e8f0);
-        border-radius:8px; font-size:13px; color:var(--gray800,#334155);
+        border-radius:8px; font-size:13px; color:var(--gray800,#1a2744);
         outline:none; background:#fff; font-family:inherit; cursor:pointer;
         transition:border .15s; box-sizing:border-box;
       }
@@ -28,7 +28,7 @@ window.QA = (function () {
       }
       .qa-panel.qa-open { display:block; }
       .qa-opt {
-        padding:8px 12px; font-size:13px; color:var(--gray700,#334155);
+        padding:8px 12px; font-size:13px; color:var(--gray700,#1a2744);
         cursor:pointer; transition:background .1s; user-select:none;
       }
       .qa-opt:hover, .qa-opt.qa-hl { background:var(--gray50,#f8fafc); }

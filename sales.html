@@ -15,7 +15,7 @@
   --sky:#60a5fa;--white:#fff;--bg:#f5f7fb;
   --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
   --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
-  --gray600:#475569;--gray800:#334155;
+  --gray600:#475569;--gray800:#1a2744;
   --green:#10b981;--green-light:#ecfdf5;
   --red:#ef4444;--red-light:#fef2f2;
   --orange:#f59e0b;--orange-light:#fffbeb;
@@ -237,7 +237,7 @@ tr:hover .row-actions{opacity:1}
       <span id="lang-name" style="color:var(--gray400);font-weight:400">English</span>
       <span style="font-size:9px;color:var(--gray400)">▾</span>
     </button>
-    <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#334155;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a2744;border-radius:12px;padding:6px;min-width:160px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
       <div class="lang-opt" data-lang="en" onclick="selectLang('en')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">EN &nbsp; English</div>
       <div class="lang-opt" data-lang="tr" onclick="selectLang('tr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TR &nbsp; Türkçe</div>
       <div class="lang-opt" data-lang="de" onclick="selectLang('de')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">DE &nbsp; Deutsch</div>
@@ -1568,7 +1568,7 @@ async function viewInvoice(orderId) {
     <div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f8fafc;border-radius:10px">
       <div style="flex:1">
         <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:6px">${L.billTo}</div>
-        <div style="font-size:14px;font-weight:700;color:#334155">${customer?.name||'—'}</div>
+        <div style="font-size:14px;font-weight:700;color:#1a2744">${customer?.name||'—'}</div>
         ${customer?.email ? `<div style="font-size:12px;color:#64748b">${customer.email}</div>` : ''}
         ${customer?.phone ? `<div style="font-size:12px;color:#64748b">${customer.phone}</div>` : ''}
         ${customer?.address ? `<div style="font-size:12px;color:#64748b">${customer.address}${customer.city ? ', '+customer.city : ''}</div>` : ''}
@@ -1576,7 +1576,7 @@ async function viewInvoice(orderId) {
       </div>
       <div style="flex:1">
         <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:6px">${L.from}</div>
-        <div style="font-size:14px;font-weight:700;color:#334155">${companyName}</div>
+        <div style="font-size:14px;font-weight:700;color:#1a2744">${companyName}</div>
         ${companyData.address ? `<div style="font-size:12px;color:#64748b">${companyData.address}</div>` : ''}
         ${companyData.email ? `<div style="font-size:12px;color:#64748b">${companyData.email}</div>` : ''}
         ${companyData.phone ? `<div style="font-size:12px;color:#64748b">${companyData.phone}</div>` : ''}
