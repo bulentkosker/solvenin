@@ -73,18 +73,18 @@ select.filter-btn { appearance:none; padding-right:28px; background-image:url("d
 .table-title { font-family:var(--font-display); font-size:13px; font-weight:700; }
 .table-count { font-size:12px; color:var(--gray400); background:var(--gray100); padding:3px 10px; border-radius:99px; }
 table { width:100%; border-collapse:collapse; }
-th { text-align:left; font-size:10px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; padding:6px 10px; border-bottom:1px solid var(--gray200); background:var(--gray50); white-space:nowrap; cursor:pointer; user-select:none; }
+th { text-align:left; font-size:10px !important; font-weight:600; color:var(--gray400) !important; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px !important; border-bottom:1px solid var(--gray200) !important; background:var(--gray50) !important; white-space:nowrap !important; cursor:pointer; user-select:none; }
 th:hover { color:var(--blue); }
 th.sorted { color:var(--blue); }
-td { padding:6px 10px; font-size:12px; color:var(--gray600); border-bottom:1px solid var(--gray100); vertical-align:middle; white-space:nowrap; }
-tr:last-child td { border-bottom:none; }
-tr:hover td { background:var(--gray50); }
-.td-name { font-weight:600; color:var(--gray800); display:flex; align-items:center; gap:8px; white-space:nowrap; }
-.item-icon { width:26px; height:26px; border-radius:6px; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
-.item-sku { font-size:10px; color:var(--gray400); font-weight:400; display:inline; margin-left:6px; }
+td { padding:3px 10px !important; font-size:11px !important; color:var(--gray600); border-bottom:1px solid var(--gray100) !important; vertical-align:middle !important; white-space:nowrap; }
+tr:last-child td { border-bottom:none !important; }
+tr:hover td { background:var(--gray50) !important; }
+.td-name { font-weight:600; color:var(--gray800); display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.item-icon { width:20px; height:20px; border-radius:4px; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+.item-sku { font-size:9px; color:var(--gray400); font-weight:400; display:inline; margin-left:4px; }
 
 /* BADGES */
-.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+.badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:600; }
 .badge-green { background:var(--green-light); color:var(--green); }
 .badge-orange { background:var(--orange-light); color:var(--orange); }
 .badge-red { background:var(--red-light); color:var(--red); }
