@@ -558,8 +558,9 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <input type="hidden" id="pay-order-id">
       <div class="form-grid cols-1">
-        <div class="field"><label><span data-i18n="col_amount">Amount *</span></label><input type="number" id="pay-amount" step="0.01"></div>
-        <div class="field"><label data-i18n="label_pay_method">Payment Method</label>
+        <div class="field"><label><span data-i18n="col_amount">Tutar *</span></label><input type="number" id="pay-amount" step="0.01"></div>
+        <div class="field"><label><span data-i18n="lbl_payment_date">Ödeme Tarihi *</span></label><input type="date" id="pay-date"></div>
+        <div class="field"><label data-i18n="label_pay_method">Ödeme Yöntemi</label>
           <select id="pay-method" onchange="onPayMethodChange()">
             <option value="cash">💵 Cash (Register)</option>
             <option value="bank">🏦 Bank Transfer</option>
@@ -1455,6 +1456,7 @@ async function deleteCustomer(id) {
 function openPaymentModal(orderId, remaining) {
   document.getElementById('pay-order-id').value = orderId;
   document.getElementById('pay-amount').value = parseFloat(remaining || 0).toFixed(2);
+  document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pay-method').value = 'bank';
   document.getElementById('pay-ref').value = '';
   document.getElementById('pay-notes').value = '';
@@ -1476,6 +1478,7 @@ async function savePayment() {
   const ref = document.getElementById('pay-ref').value.trim() || null;
   const notes = document.getElementById('pay-notes').value.trim() || null;
 
+  const payDate = document.getElementById('pay-date').value || new Date().toISOString().split('T')[0];
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
   if (method === 'cash' && !registerId) { showToast(t('toast_select_register'), 'error'); return; }
   if ((method === 'bank' || method === 'card') && !accountId) { showToast(t('toast_select_account'), 'error'); return; }
@@ -1483,7 +1486,7 @@ async function savePayment() {
   const order = orders.find(o => o.id === orderId);
 
   // 1. Save payment record
-  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes });
+  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
 
   // 2. Auto-create cash or bank transaction
   if (method === 'cash' && registerId) {
@@ -1497,7 +1500,7 @@ async function savePayment() {
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
         category: 'sale', source_type: 'invoice_sale', source_id: orderId,
         payment_method: 'cash',
-        reference: ref, transaction_date: new Date().toISOString().split('T')[0]
+        reference: ref, transaction_date: payDate
       });
     }
   } else if ((method === 'bank' || method === 'card') && accountId) {
@@ -1511,13 +1514,13 @@ async function savePayment() {
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
         category: 'sale', source_type: 'invoice_sale', source_id: orderId,
         payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
-        reference: ref, transaction_date: new Date().toISOString().split('T')[0]
+        reference: ref, transaction_date: payDate
       });
     }
   }
 
   // 3. Journal entry for payment
-  if (order) await createPaymentJournalEntry(order, amount, method, new Date().toISOString().split('T')[0]);
+  if (order) await createPaymentJournalEntry(order, amount, method, payDate);
 
   // 4. Auto-mark as paid if fully covered
   const totalPaid = payments.filter(p => p.order_id === orderId).reduce((s,p) => s + parseFloat(p.amount), 0) + amount;

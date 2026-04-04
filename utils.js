@@ -68,6 +68,16 @@ function fmtShort(amount) {
   return sym + n.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// ===== DATE FORMATTING =====
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+  if (isNaN(d)) return dateStr;
+  const lang = (typeof detectLang === 'function') ? detectLang() : 'en';
+  const locale = lang === 'tr' ? 'tr-TR' : lang === 'de' ? 'de-DE' : lang === 'fr' ? 'fr-FR' : 'en-GB';
+  return d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 // ===== KEYBOARD: Enter navigates to next field =====
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter') return;

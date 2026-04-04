@@ -631,6 +631,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <input type="hidden" id="po-pay-order-id">
       <div class="form-grid cols-1">
         <div class="field"><label data-i18n="col_amount">Tutar *</label><input type="number" id="po-pay-amount" step="0.01" min="0"></div>
+        <div class="field"><label data-i18n="lbl_payment_date">Ödeme Tarihi *</label><input type="date" id="po-pay-date"></div>
         <div class="field"><label data-i18n="label_pay_method">Ödeme Yöntemi</label>
           <select id="po-pay-method" onchange="onPoPayMethodChange()">
             <option value="cash">💵 Nakit</option>
@@ -1048,6 +1049,7 @@ function filterSuppliers() {
 function openRecvPaymentModal(orderId, amount) {
   document.getElementById('po-pay-order-id').value = orderId;
   document.getElementById('po-pay-amount').value = amount || '';
+  document.getElementById('po-pay-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('po-pay-method').value = 'bank';
   document.getElementById('po-pay-ref').value = '';
   document.getElementById('po-pay-notes').value = '';
@@ -1075,12 +1077,15 @@ async function savePoPayment() {
   const ref = document.getElementById('po-pay-ref').value.trim() || null;
   const notes = document.getElementById('po-pay-notes').value.trim() || null;
 
+  const payDate = document.getElementById('po-pay-date').value || new Date().toISOString().split('T')[0];
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount') || 'Geçersiz tutar', 'error'); return; }
   if (method === 'cash' && !registerId) { showToast(t('toast_select_register') || 'Kasa seçin', 'error'); return; }
   if ((method === 'bank' || method === 'card') && !accountId) { showToast(t('toast_select_account') || 'Hesap seçin', 'error'); return; }
 
   const order = orders.find(o => o.id === orderId);
-  const today = new Date().toISOString().split('T')[0];
+
+  // 0. Save payment record
+  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
 
   // 1. Create cash/bank transaction
   if (method === 'cash' && registerId) {
@@ -1091,7 +1096,7 @@ async function savePoPayment() {
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
       category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
       payment_method: 'cash',
-      reference: ref, transaction_date: today
+      reference: ref, transaction_date: payDate
     });
   } else if ((method === 'bank' || method === 'card') && accountId) {
     const acc = bankAccounts.find(a => a.id === accountId);
@@ -1101,7 +1106,7 @@ async function savePoPayment() {
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
       category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
       payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
-      reference: ref, transaction_date: today
+      reference: ref, transaction_date: payDate
     });
   }
 

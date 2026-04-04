@@ -677,6 +677,28 @@ textarea:focus {
 
 
 /* ================================================================
+   DATE INPUTS — consistent styling
+   ================================================================ */
+input[type="date"] {
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  border: 1.5px solid var(--gray-light, #e9ecef) !important;
+  border-radius: 6px !important;
+  background: var(--white, #fff) !important;
+  color: var(--text, #1a1a2e) !important;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
+
+
+/* ================================================================
    ALERT BAR — consistent radius
    ================================================================ */
 .alert-bar {
