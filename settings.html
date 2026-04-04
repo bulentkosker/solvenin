@@ -703,15 +703,32 @@ tr:hover .action-btns { opacity:1; }
                   </div>
                 </div>
               </div>
-              <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
-                <div><div style="font-weight:600;font-size:13px" data-i18n="inv_language">🌐 Fatura Dili</div><div style="font-size:11px;color:var(--gray400)">Fatura PDF'inde kullanılacak dil</div></div>
-                <select id="inv-language" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:13px">
-                  <option value="company">Şirket dili</option>
-                  <option value="tr">Türkçe</option>
-                  <option value="en">English</option>
-                  <option value="ru">Русский</option>
-                  <option value="de">Deutsch</option>
-                </select>
+              <div class="manage-item" style="padding:14px 0">
+                <div style="font-weight:600;font-size:13px;margin-bottom:10px">📅 Varsayılan Değerler</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                  <div>
+                    <label style="font-size:11px;color:var(--gray500);display:block;margin-bottom:4px">Ödeme Vadesi (gün)</label>
+                    <input type="number" id="inv-default-due-days" placeholder="30" min="0" max="365" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px">
+                    <div style="font-size:10px;color:var(--gray400);margin-top:3px">Fatura tarihine eklenir</div>
+                  </div>
+                  <div>
+                    <label style="font-size:11px;color:var(--gray500);display:block;margin-bottom:4px">Varsayılan Vergi Oranı</label>
+                    <select id="inv-default-tax" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px">
+                      <option value="">Vergi yok</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:11px;color:var(--gray500);display:block;margin-bottom:4px">Varsayılan Depo</label>
+                    <select id="inv-default-warehouse" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:13px">
+                      <option value="">Seçilmemiş</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="manage-item" style="padding:14px 0">
+                <div style="font-weight:600;font-size:13px;margin-bottom:6px">📝 Varsayılan Fatura Notu</div>
+                <div style="font-size:11px;color:var(--gray400);margin-bottom:6px">Her yeni faturanın not alanına otomatik eklenir (IBAN, ödeme koşulları vb.)</div>
+                <textarea id="inv-default-notes" placeholder="Banka: ... IBAN: TR... &#10;Ödeme koşulları: ..." style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;min-height:60px;resize:vertical"></textarea>
               </div>
             </div>
             <!-- TAB: PDF Ayarları -->
@@ -731,6 +748,16 @@ tr:hover .action-btns { opacity:1; }
               <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
                 <div><div style="font-weight:600;font-size:13px" data-i18n="inv_show_description">Açıklama kolonu göster</div></div>
                 <label class="toggle"><input type="checkbox" id="inv-show-description"><span class="track"></span><span class="thumb"></span></label>
+              </div>
+              <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+                <div><div style="font-weight:600;font-size:13px">🌐 Fatura Dili</div><div style="font-size:11px;color:var(--gray400)">Fatura PDF'inde kullanılacak dil</div></div>
+                <select id="inv-language" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:13px">
+                  <option value="company">Şirket dili</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="en">English</option>
+                  <option value="ru">Русский</option>
+                  <option value="de">Deutsch</option>
+                </select>
               </div>
             </div>
           </div>
@@ -2477,6 +2504,16 @@ async function loadInvoiceSettings() {
   document.getElementById('inv-language').value = s.invoice_language || 'company';
   document.getElementById('inv-sales-prefix').value = s.sales_number_format || '';
   document.getElementById('inv-purchase-prefix').value = s.purchase_number_format || '';
+  document.getElementById('inv-default-due-days').value = s.default_due_days ?? 30;
+  document.getElementById('inv-default-notes').value = s.default_notes || '';
+  // Populate tax rates dropdown
+  const { data: taxes } = await sb.from('tax_rates').select('id,name,rate').eq('company_id', companyId).order('rate');
+  const taxSel = document.getElementById('inv-default-tax');
+  taxSel.innerHTML = '<option value="">Vergi yok</option>' + (taxes||[]).map(t => `<option value="${t.id}" ${t.id===s.default_tax_id?'selected':''}>${t.name} (${t.rate}%)</option>`).join('');
+  // Populate warehouses dropdown
+  const { data: whs } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).order('name');
+  const whSel = document.getElementById('inv-default-warehouse');
+  whSel.innerHTML = '<option value="">Seçilmemiş</option>' + (whs||[]).map(w => `<option value="${w.id}" ${w.id===s.default_warehouse_id?'selected':''}>${w.name}</option>`).join('');
 }
 
 async function saveInvoiceSettings() {
@@ -2488,6 +2525,10 @@ async function saveInvoiceSettings() {
     invoice_language: document.getElementById('inv-language').value,
     sales_number_format: document.getElementById('inv-sales-prefix').value.trim() || null,
     purchase_number_format: document.getElementById('inv-purchase-prefix').value.trim() || null,
+    default_due_days: parseInt(document.getElementById('inv-default-due-days').value) || 30,
+    default_tax_id: document.getElementById('inv-default-tax').value || null,
+    default_warehouse_id: document.getElementById('inv-default-warehouse').value || null,
+    default_notes: document.getElementById('inv-default-notes').value.trim() || null,
   };
   const { error } = await sb.from('companies').update({ invoice_settings: settings }).eq('id', companyId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }

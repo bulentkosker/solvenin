@@ -1177,13 +1177,17 @@ function openOrderModal() {
   if (supplierQA) supplierQA.setValue('');
   document.getElementById('o-number').value = generateNextNumber(_invoiceSettings.purchase_number_format || 'PO0001', orders);
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
-  const exp = new Date(); exp.setDate(exp.getDate() + 14);
+  const dueDays = _invoiceSettings.default_due_days ?? 14;
+  const exp = new Date(); exp.setDate(exp.getDate() + dueDays);
   document.getElementById('o-expected').value = exp.toISOString().split('T')[0];
   document.getElementById('o-status').value = 'draft';
-  document.getElementById('o-tax').value = '0';
+  const defTax = _invoiceSettings.default_tax_id;
+  if (defTax) { const taxSel = document.getElementById('o-tax'); if ([...taxSel.options].some(o => o.value === defTax)) taxSel.value = defTax; }
+  else document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '';
-  document.getElementById('o-notes').value = '';
-  orderItems = [{ product_id:'', description:'', qty:0, price:0, warehouse_id:defaultWarehouseId() }];
+  document.getElementById('o-notes').value = _invoiceSettings.default_notes || '';
+  const defWh = _invoiceSettings.default_warehouse_id || defaultWarehouseId();
+  orderItems = [{ product_id:'', description:'', qty:0, price:0, warehouse_id:defWh }];
   renderOrderItems();
   updateSupplierSelects();
   showOrderFormView();
