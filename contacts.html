@@ -512,6 +512,8 @@ function openStatement(contactId) {
   loadStatement();
 }
 
+let stmtLines = []; // store for expand/collapse
+
 async function loadStatement() {
   if (!stmtContactId) return;
   const from = document.getElementById('stmt-from').value;
@@ -522,67 +524,79 @@ async function loadStatement() {
   const lines = [];
   const c = contacts.find(x => x.id === stmtContactId);
 
-  // Sales invoices (customer)
+  // Sales invoices with items
   if (c?.is_customer) {
-    let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status')
+    let q = sb.from('sales_orders').select('id,order_number,issue_date,due_date,total,subtotal,tax_amount,discount,status,notes')
       .eq('company_id', companyId).eq('customer_id', stmtContactId).eq('is_active', true)
       .in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
     const { data: sales } = await q.order('issue_date');
-    (sales||[]).forEach(o => {
-      lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total||0), credit: 0, status: o.status });
-    });
+    for (const o of (sales||[])) {
+      const { data: items } = await sb.from('sales_order_items').select('description,quantity,unit_price,total,products(name,unit)').eq('order_id', o.id);
+      lines.push({ type:'invoice', date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total||0), credit: 0, status: o.status, orderId: o.id,
+        detail: { due_date: o.due_date, subtotal: o.subtotal, tax: o.tax_amount, discount: o.discount, notes: o.notes, items: items||[] }
+      });
+    }
   }
 
-  // Purchase invoices (supplier)
+  // Purchase invoices with items
   if (c?.is_supplier) {
-    let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status')
+    let q = sb.from('purchase_orders').select('id,order_number,issue_date,expected_date,total,subtotal,tax_amount,discount,status,notes')
       .eq('company_id', companyId).eq('supplier_id', stmtContactId).eq('is_active', true)
       .in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
     const { data: purchases } = await q.order('issue_date');
-    (purchases||[]).forEach(o => {
-      lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status });
-    });
+    for (const o of (purchases||[])) {
+      const { data: items } = await sb.from('purchase_order_items').select('description,quantity,unit_price,total,products(name,unit)').eq('order_id', o.id);
+      lines.push({ type:'invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, orderId: o.id,
+        detail: { due_date: o.expected_date, subtotal: o.subtotal, tax: o.tax_amount, discount: o.discount, notes: o.notes, items: items||[] }
+      });
+    }
   }
 
-  // Payments for sales orders
+  // Payments for sales
   if (c?.is_customer) {
-    let q = sb.from('payments').select('id,amount,payment_date,reference,sales_orders!inner(customer_id,order_number,company_id)')
+    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,sales_orders!inner(customer_id,order_number,company_id)')
       .eq('sales_orders.company_id', companyId).eq('sales_orders.customer_id', stmtContactId);
     if (from) q = q.gte('payment_date', from);
     if (to) q = q.lte('payment_date', to);
     const { data: sp } = await q;
     (sp||[]).forEach(p => {
-      lines.push({ date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0) });
+      const methodLabel = {cash:'Nakit',bank:'Banka',card:'Kredi Kartı',check:'Çek'}[p.payment_method] || p.payment_method || '';
+      lines.push({ type:'payment', date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0),
+        detail: { method: methodLabel, ref: p.reference, notes: p.notes, orderNo: p.sales_orders?.order_number }
+      });
     });
   }
 
-  // Payments for purchase orders
+  // Payments for purchases
   if (c?.is_supplier) {
-    let q = sb.from('payments').select('id,amount,payment_date,reference,purchase_orders!inner(supplier_id,order_number,company_id)')
+    let q = sb.from('payments').select('id,amount,payment_date,payment_method,reference,notes,purchase_orders!inner(supplier_id,order_number,company_id)')
       .eq('purchase_orders.company_id', companyId).eq('purchase_orders.supplier_id', stmtContactId);
     if (from) q = q.gte('payment_date', from);
     if (to) q = q.lte('payment_date', to);
     const { data: pp } = await q;
     (pp||[]).forEach(p => {
-      lines.push({ date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0 });
+      const methodLabel = {cash:'Nakit',bank:'Banka',card:'Kredi Kartı',check:'Çek'}[p.payment_method] || p.payment_method || '';
+      lines.push({ type:'payment', date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0,
+        detail: { method: methodLabel, ref: p.reference, notes: p.notes, orderNo: p.purchase_orders?.order_number }
+      });
     });
   }
 
-  // Sort by date
   lines.sort((a,b) => (a.date||'').localeCompare(b.date||''));
 
-  // Calculate running balance and totals
   let totalDebit = 0, totalCredit = 0, runBal = 0;
-  lines.forEach(l => {
+  lines.forEach((l,i) => {
     totalDebit += l.debit;
     totalCredit += l.credit;
     runBal += l.debit - l.credit;
     l.balance = runBal;
+    l._idx = i;
   });
+  stmtLines = lines;
 
   document.getElementById('stmt-debit').textContent = fmtMoney(totalDebit);
   document.getElementById('stmt-credit').textContent = fmtMoney(totalCredit);
@@ -596,19 +610,75 @@ async function loadStatement() {
     return;
   }
 
-  tbody.innerHTML = lines.map(l => `<tr>
-    <td style="padding:6px 12px;white-space:nowrap">${l.date || '—'}</td>
-    <td style="padding:6px 12px;font-weight:500">${l.doc}</td>
-    <td style="padding:6px 12px;color:var(--gray500)">${l.desc}</td>
-    <td style="padding:6px 12px;text-align:right;color:var(--red);font-weight:600">${l.debit ? fmtMoney(l.debit) : ''}</td>
-    <td style="padding:6px 12px;text-align:right;color:var(--green);font-weight:600">${l.credit ? fmtMoney(l.credit) : ''}</td>
-    <td style="padding:6px 12px;text-align:right;font-weight:700;color:${l.balance>0?'var(--red)':l.balance<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(l.balance))}</td>
-  </tr>`).join('') + `<tr style="background:var(--gray50);font-weight:700;border-top:2px solid var(--gray300)">
+  const rowS = 'padding:6px 12px;';
+  tbody.innerHTML = lines.map((l,i) => {
+    const arrow = l.detail ? `<span id="arrow-${i}" style="display:inline-block;transition:transform .2s;margin-right:4px;font-size:9px;color:var(--gray400)">▶</span>` : '';
+    const click = l.detail ? `onclick="toggleDetail(${i})" style="cursor:pointer;${rowS}"` : `style="${rowS}"`;
+    return `<tr id="stmt-row-${i}" ${click}>
+    <td style="${rowS}white-space:nowrap">${arrow}${l.date || '—'}</td>
+    <td style="${rowS}font-weight:500">${l.doc}</td>
+    <td style="${rowS}color:var(--gray500)">${l.desc}${l.status ? ` <span class="badge badge-${l.status==='paid'?'green':l.status==='overdue'?'red':'blue'}" style="font-size:9px;padding:1px 6px">${l.status}</span>` : ''}</td>
+    <td style="${rowS}text-align:right;color:var(--red);font-weight:600">${l.debit ? fmtMoney(l.debit) : ''}</td>
+    <td style="${rowS}text-align:right;color:var(--green);font-weight:600">${l.credit ? fmtMoney(l.credit) : ''}</td>
+    <td style="${rowS}text-align:right;font-weight:700;color:${l.balance>0?'var(--red)':l.balance<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(l.balance))}</td>
+  </tr>
+  <tr id="stmt-detail-${i}" style="display:none"><td colspan="6" style="padding:0;background:#f8fafc;border-bottom:1px solid var(--gray200)"><div id="stmt-detail-content-${i}" style="padding:10px 16px 10px 32px"></div></td></tr>`;
+  }).join('') + `<tr style="background:var(--gray50);font-weight:700;border-top:2px solid var(--gray300)">
     <td colspan="3" style="padding:8px 12px">TOPLAM</td>
     <td style="padding:8px 12px;text-align:right;color:var(--red)">${fmtMoney(totalDebit)}</td>
     <td style="padding:8px 12px;text-align:right;color:var(--green)">${fmtMoney(totalCredit)}</td>
     <td style="padding:8px 12px;text-align:right;color:${finalBal>0?'var(--red)':finalBal<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(finalBal))}</td>
   </tr>`;
+}
+
+function toggleDetail(idx) {
+  const detailRow = document.getElementById('stmt-detail-' + idx);
+  const arrow = document.getElementById('arrow-' + idx);
+  const content = document.getElementById('stmt-detail-content-' + idx);
+  if (!detailRow) return;
+  const isOpen = detailRow.style.display !== 'none';
+  detailRow.style.display = isOpen ? 'none' : '';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+  if (!isOpen && content && !content.dataset.loaded) {
+    content.dataset.loaded = '1';
+    const l = stmtLines[idx];
+    if (!l?.detail) return;
+    const d = l.detail;
+    let html = '';
+    if (l.type === 'invoice' && d.items?.length) {
+      html += `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px">
+        <thead><tr style="background:#eef2f7">
+          <th style="padding:4px 8px;text-align:left;font-size:10px;border:none">Ürün</th>
+          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Miktar</th>
+          <th style="padding:4px 8px;text-align:center;font-size:10px;border:none">Birim</th>
+          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Birim Fiyat</th>
+          <th style="padding:4px 8px;text-align:right;font-size:10px;border:none">Toplam</th>
+        </tr></thead><tbody>`;
+      d.items.forEach(it => {
+        html += `<tr><td style="padding:3px 8px;border-bottom:1px solid #eee">${it.products?.name || it.description || '—'}</td>
+          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee">${it.quantity}</td>
+          <td style="padding:3px 8px;text-align:center;border-bottom:1px solid #eee">${it.products?.unit || '—'}</td>
+          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee">${fmtMoney(it.unit_price)}</td>
+          <td style="padding:3px 8px;text-align:right;border-bottom:1px solid #eee;font-weight:600">${fmtMoney(it.total)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      const info = [];
+      if (d.subtotal) info.push('Ara Toplam: ' + fmtMoney(d.subtotal));
+      if (d.tax) info.push('Vergi: ' + fmtMoney(d.tax));
+      if (d.discount) info.push('İndirim: ' + fmtMoney(d.discount));
+      if (d.due_date) info.push('Vade: ' + d.due_date);
+      if (info.length) html += `<div style="font-size:11px;color:var(--gray500);display:flex;gap:16px;flex-wrap:wrap">${info.map(i=>'<span>'+i+'</span>').join('')}</div>`;
+      if (d.notes) html += `<div style="font-size:11px;color:var(--gray400);margin-top:4px;font-style:italic">📝 ${d.notes}</div>`;
+    } else if (l.type === 'payment') {
+      const info = [];
+      if (d.method) info.push('Yöntem: <strong>' + d.method + '</strong>');
+      if (d.orderNo) info.push('Fatura: <strong>' + d.orderNo + '</strong>');
+      if (d.ref) info.push('Referans: ' + d.ref);
+      html += `<div style="font-size:11px;color:var(--gray600);display:flex;gap:16px;flex-wrap:wrap">${info.map(i=>'<span>'+i+'</span>').join('')}</div>`;
+      if (d.notes) html += `<div style="font-size:11px;color:var(--gray400);margin-top:4px;font-style:italic">📝 ${d.notes}</div>`;
+    }
+    content.innerHTML = html || '<div style="color:var(--gray400);font-size:11px">Detay bilgisi yok</div>';
+  }
 }
 
 function printStatement() {
