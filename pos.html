@@ -126,7 +126,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
   <div class="pos-cart">
     <div class="cart-header">
       <h3>🛒 Sepet <span id="cart-count" style="color:var(--gray400);font-weight:400;font-size:13px">(0)</span></h3>
-      <div class="cart-customer" id="cart-customer" onclick="selectCustomer()">👤 Misafir</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="clearCart()" style="background:none;border:1px solid var(--gray200);color:var(--red);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;display:none" id="btn-clear-cart">🗑 Temizle</button>
+        <div class="cart-customer" id="cart-customer" onclick="selectCustomer()">👤 Misafir</div>
+      </div>
     </div>
     <div class="cart-items" id="cart-items"><div class="cart-empty">Barkod okutarak ürün ekleyin</div></div>
     <div class="cart-summary">
@@ -396,7 +399,7 @@ function loadCartFromStorage() {
 
 function cartQty(idx, delta) {
   if (delta < 0) {
-    requestPin('Ürün silme/azaltma yönetici onayı gerektirir', () => {
+    requireManager('Miktar azaltma yönetici onayı gerektirir', () => {
       cart[idx].qty += delta;
       if (cart[idx].qty <= 0) cart.splice(idx, 1);
       renderCart();
@@ -404,28 +407,69 @@ function cartQty(idx, delta) {
     });
     return;
   }
+  // [+] PIN gerektirmez
   cart[idx].qty += delta;
   renderCart();
   saveCartToStorage();
 }
 
 function removeItem(idx) {
-  requestPin('Ürün silme yönetici onayı gerektirir', () => {
+  requireManager('Ürün silme yönetici onayı gerektirir', () => {
     cart.splice(idx, 1);
     renderCart();
     saveCartToStorage();
   });
 }
 
+function editQty(idx) {
+  requireManager('Miktar değiştirme yönetici onayı gerektirir', () => {
+    const span = document.getElementById('qty-val-' + idx);
+    if (!span) return;
+    const input = document.createElement('input');
+    input.type = 'number'; input.min = '0'; input.value = cart[idx].qty;
+    input.style.cssText = 'width:40px;text-align:center;border:1px solid var(--primary);border-radius:4px;font-size:13px;font-weight:700;padding:2px;';
+    input.onkeydown = (e) => { if (e.key === 'Enter') applyQty(idx, input); if (e.key === 'Escape') renderCart(); };
+    input.onblur = () => applyQty(idx, input);
+    span.replaceWith(input);
+    input.focus(); input.select();
+  });
+}
+
+function applyQty(idx, input) {
+  const val = parseInt(input.value) || 0;
+  if (val <= 0) cart.splice(idx, 1);
+  else cart[idx].qty = val;
+  renderCart();
+  saveCartToStorage();
+}
+
+function clearCart() {
+  if (!cart.length) return;
+  requireManager('Tüm sepeti temizlemek için yönetici PIN\'i girin', async () => {
+    const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('pos_cancelled_carts').insert({
+      company_id: companyId, session_id: sessionId, cancelled_by: user?.id,
+      items: cart, total, reason: 'Sepet temizlendi (yönetici onayı)'
+    });
+    cart = [];
+    renderCart();
+    saveCartToStorage();
+    showToast('Sepet temizlendi', 'info');
+  });
+}
+
 function renderCart() {
   const el = document.getElementById('cart-items');
+  const clearBtn = document.getElementById('btn-clear-cart');
+  if (clearBtn) clearBtn.style.display = cart.length > 0 ? '' : 'none';
   if (!cart.length) { el.innerHTML = '<div class="cart-empty">Barkod okutarak ürün ekleyin</div>'; }
   else {
     el.innerHTML = cart.map((c,i) => `<div class="ci">
       <div class="ci-name">${c.name}</div>
       <div class="ci-qty">
         <button onclick="cartQty(${i},-1)">−</button>
-        <span>${c.qty}</span>
+        <span id="qty-val-${i}" onclick="editQty(${i})" style="cursor:pointer;min-width:28px;text-align:center" title="Tıkla: miktar düzenle">${c.qty}</span>
         <button onclick="cartQty(${i},1)">+</button>
       </div>
       <div class="ci-total">${F(c.qty*c.price)}</div>
@@ -441,7 +485,49 @@ function renderCart() {
 
 function getTotal() { return cart.reduce((s,c) => s + c.qty * c.price, 0); }
 
-// ===== PIN SYSTEM =====
+// ===== PIN SYSTEM + MANAGER SESSION =====
+let managerSession = { userId: null, expiresAt: 0 };
+let _sessionTimer = null;
+
+function isManagerActive() {
+  return managerSession.userId && Date.now() < managerSession.expiresAt;
+}
+
+function requireManager(reason, callback) {
+  if (isManagerActive()) { callback(); return; }
+  requestPin(reason, callback);
+}
+
+function activateManagerSession(userId) {
+  managerSession = { userId, expiresAt: Date.now() + 60000 };
+  // Show indicator
+  let ind = document.getElementById('manager-indicator');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'manager-indicator';
+    ind.style.cssText = 'position:fixed;top:50px;right:16px;background:#1e40af;color:#fff;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;z-index:999;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+    document.body.appendChild(ind);
+  }
+  ind.style.display = 'flex';
+  updateManagerTimer();
+  if (_sessionTimer) clearInterval(_sessionTimer);
+  _sessionTimer = setInterval(updateManagerTimer, 1000);
+}
+
+function updateManagerTimer() {
+  const ind = document.getElementById('manager-indicator');
+  if (!ind) return;
+  const remaining = Math.max(0, Math.ceil((managerSession.expiresAt - Date.now()) / 1000));
+  if (remaining <= 0) {
+    ind.style.display = 'none';
+    managerSession = { userId: null, expiresAt: 0 };
+    if (_sessionTimer) { clearInterval(_sessionTimer); _sessionTimer = null; }
+    showToast('Yönetici oturumu sona erdi', 'info');
+    return;
+  }
+  ind.innerHTML = '🔓 Yönetici <span style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:4px">' + remaining + 's</span>';
+}
+
 function requestPin(reason, callback) {
   pinCallback = callback;
   pinValue = '';
@@ -468,14 +554,11 @@ async function pinKey(k) {
   pinValue += k;
   renderPinDots();
   if (pinValue.length === 4) {
-    // Verify PIN
-    console.log('[pos] PIN verify:', pinValue, 'company:', companyId);
-    const { data, error: pinErr } = await sb.from('company_users').select('user_id, role, pos_pin')
+    const { data } = await sb.from('company_users').select('user_id, role, pos_pin')
       .eq('company_id', companyId).eq('pos_pin', pinValue);
-    console.log('[pos] PIN result:', JSON.stringify(data), pinErr?.message);
-    // Filter for manager+ roles client-side (simpler, avoids PostgREST .in() issues)
-    const validManagers = (data || []).filter(d => ['owner','admin','manager'].includes(d.role));
-    if (validManagers.length) {
+    const valid = (data || []).filter(d => ['owner','admin','manager'].includes(d.role));
+    if (valid.length) {
+      activateManagerSession(valid[0].user_id);
       const cb = pinCallback;
       closePin();
       if (cb) cb();
