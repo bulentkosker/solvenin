@@ -430,6 +430,14 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">
       <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;">Para Birimi</div>
+        <select id="o-currency" onchange="onCurrencyChange()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;"></select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;">Kur</div>
+        <input id="o-exchange-rate" type="text" class="num-input" value="1" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;text-align:right;">
+      </div>
+      <div>
         <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_tax_rate">Vergi Oranı</div>
         <select id="o-tax" onchange="recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
           <option value="" data-rate="0">— Vergi Yok</option>
@@ -720,6 +728,7 @@ window._supabase = sb;
 
 
 let companyId = null;
+let companyData = {};
 let accountingEnabled = false;
 let cashRegisters = [];
 let bankAccounts = [];
@@ -756,7 +765,8 @@ async function init() {
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
   // Load accounting setting
-  const { data: compSettings } = await sb.from('companies').select('accounting_enabled,invoice_settings').eq('id', companyId).single();
+  const { data: compSettings } = await sb.from('companies').select('accounting_enabled,invoice_settings,base_currency').eq('id', companyId).single();
+  companyData = compSettings || {};
   accountingEnabled = !!compSettings?.accounting_enabled;
   const _invoiceSettings = compSettings?.invoice_settings || {};
 await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadCashBankAccounts()]);
@@ -916,7 +926,7 @@ function updateSupplierSelects() {
     supplierQA = QA.create(container, {
       items,
       placeholder: t('placeholder_search_suppliers') || 'Tedarikçi ara...',
-      onSelect(id) { document.getElementById('o-supplier').value = id; },
+      onSelect(id) { document.getElementById('o-supplier').value = id; setContactCurrency(id); },
       onAdd(query) { openQASupplierModal(query); },
       addLabel(q) { return `+ "${q}" ${t('lbl_supplier_add_new') || 'tedarikçi ekle'}`; },
     });
@@ -1170,6 +1180,50 @@ function generateNextNumber(format, existingOrders) {
   return prefix + String(maxNum + 1).padStart(digits, '0');
 }
 
+// ===== MULTI-CURRENCY =====
+let baseCurrency = 'KZT';
+let orderCurrency = null;
+let exchangeRatesCache = {};
+
+function initCurrencyDropdown() {
+  const sel = document.getElementById('o-currency');
+  if (!sel) return;
+  baseCurrency = companyData?.base_currency || _invoiceSettings?.base_currency || 'KZT';
+  const currencies = ['USD','EUR','GBP','TRY','RUB','KZT','CNY','AED','SAR'];
+  if (!currencies.includes(baseCurrency)) currencies.unshift(baseCurrency);
+  sel.innerHTML = currencies.map(c => `<option value="${c}" ${c===baseCurrency?'selected':''}>${c}</option>`).join('');
+}
+
+async function onCurrencyChange() {
+  const cur = document.getElementById('o-currency').value;
+  orderCurrency = cur;
+  const rateInput = document.getElementById('o-exchange-rate');
+  if (cur === baseCurrency) {
+    rateInput.value = '1'; rateInput.disabled = true; rateInput.style.background = '#f0f0f0';
+  } else {
+    rateInput.disabled = false; rateInput.style.background = 'white';
+    if (!exchangeRatesCache[cur]) {
+      const { data } = await sb.from('exchange_rates').select('rate').eq('company_id', companyId).eq('currency', cur).order('rate_date', { ascending: false }).limit(1);
+      if (data?.[0]) exchangeRatesCache[cur] = data[0].rate;
+    }
+    if (exchangeRatesCache[cur]) rateInput.value = fmtNum(exchangeRatesCache[cur]);
+    else { rateInput.value = ''; rateInput.placeholder = 'Kur girin'; }
+  }
+  recalcOrder();
+}
+
+function setContactCurrency(contactId) {
+  const contact = suppliers.find(c => c.id === contactId);
+  if (contact?.currency_code) {
+    document.getElementById('o-currency').value = contact.currency_code;
+    onCurrencyChange();
+  }
+}
+
+function getExchangeRate() { return parseNum(document.getElementById('o-exchange-rate')?.value) || 1; }
+function getCurrSym(code) { const s={USD:'$',EUR:'€',GBP:'£',TRY:'₺',RUB:'₽',KZT:'₸',CNY:'¥',AED:'د.إ',SAR:'﷼'}; return s[code]||code; }
+function fmtFx(amount, cur) { if (!cur) cur=orderCurrency||baseCurrency; return getCurrSym(cur)+parseFloat(amount||0).toLocaleString(_fmtLocale(),{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
 function openOrderModal() {
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_po');
@@ -1186,6 +1240,11 @@ function openOrderModal() {
   else document.getElementById('o-tax').value = '0';
   document.getElementById('o-discount').value = '';
   document.getElementById('o-notes').value = _invoiceSettings.default_notes || '';
+  initCurrencyDropdown();
+  document.getElementById('o-exchange-rate').value = '1';
+  document.getElementById('o-exchange-rate').disabled = true;
+  document.getElementById('o-exchange-rate').style.background = '#f0f0f0';
+  orderCurrency = baseCurrency;
   const defWh = _invoiceSettings.default_warehouse_id || defaultWarehouseId();
   orderItems = [{ product_id:'', description:'', qty:0, price:0, warehouse_id:defWh }];
   renderOrderItems();
@@ -1301,21 +1360,35 @@ function getSelectedTaxRate() {
 }
 
 function recalcOrder() {
+  const cur = document.getElementById('o-currency')?.value || baseCurrency;
+  const rate = getExchangeRate();
+  const isForeign = cur !== baseCurrency && rate !== 1;
   let subtotal = 0;
   orderItems.forEach((item,i) => {
-    const t = item.qty * item.price;
-    subtotal += t;
+    const lineTotal = item.qty * item.price;
+    subtotal += lineTotal;
     const el = document.getElementById('item-total-'+i);
-    if (el) el.textContent = fmt(t);
+    if (el) {
+      if (isForeign) el.innerHTML = `<div>${fmtFx(lineTotal, cur)}</div><div style="font-size:10px;color:#888;font-weight:400">${fmt(lineTotal * rate)}</div>`;
+      else el.textContent = fmt(lineTotal);
+    }
   });
   const taxRate = getSelectedTaxRate().value;
   const discount = parseNum(document.getElementById('o-discount').value)||0;
   const tax = subtotal * taxRate / 100;
   const total = subtotal + tax - discount;
-  document.getElementById('sum-subtotal').textContent = fmt(subtotal);
-  document.getElementById('sum-tax').textContent = fmt(tax);
-  document.getElementById('sum-discount').textContent = '-'+fmt(discount);
-  document.getElementById('sum-total').textContent = fmt(Math.max(0,total).toFixed(2));
+  const localTotal = total * rate;
+  if (isForeign) {
+    document.getElementById('sum-subtotal').innerHTML = `${fmtFx(subtotal, cur)}<br><span style="font-size:10px;color:#888">${fmt(subtotal*rate)}</span>`;
+    document.getElementById('sum-tax').innerHTML = `${fmtFx(tax, cur)}<br><span style="font-size:10px;color:#888">${fmt(tax*rate)}</span>`;
+    document.getElementById('sum-discount').innerHTML = `-${fmtFx(discount, cur)}<br><span style="font-size:10px;color:#888">-${fmt(discount*rate)}</span>`;
+    document.getElementById('sum-total').innerHTML = `${fmtFx(Math.max(0,total), cur)}<br><span style="font-size:11px;color:#666">${fmt(Math.max(0,localTotal))}</span>`;
+  } else {
+    document.getElementById('sum-subtotal').textContent = fmt(subtotal);
+    document.getElementById('sum-tax').textContent = fmt(tax);
+    document.getElementById('sum-discount').textContent = '-'+fmt(discount);
+    document.getElementById('sum-total').textContent = fmt(Math.max(0,total).toFixed(2));
+  }
 }
 
 async function saveOrder() {
@@ -1335,13 +1408,26 @@ async function saveOrder() {
   const { data: { user } } = await sb.auth.getUser();
   const status = document.getElementById('o-status').value;
 
+  const fxCur = document.getElementById('o-currency')?.value || baseCurrency;
+  const fxRate = getExchangeRate();
+  const isForeign = fxCur !== baseCurrency && fxRate !== 1;
+  const localSubtotal = isForeign ? subtotal * fxRate : subtotal;
+  const localTax = isForeign ? taxAmt * fxRate : taxAmt;
+  const localTotal = isForeign ? total * fxRate : total;
+
   const payload = {
     company_id: companyId, supplier_id: supplierId,
     order_number: document.getElementById('o-number').value || 'PO-'+Date.now(),
     status,
     issue_date: document.getElementById('o-date').value,
     expected_date: document.getElementById('o-expected').value || null,
-    subtotal, tax_rate: taxRateValue, tax_amount: taxAmt, discount, total,
+    subtotal: isForeign ? localSubtotal : subtotal,
+    tax_rate: taxRateValue, tax_amount: isForeign ? localTax : taxAmt,
+    discount: isForeign ? discount * fxRate : discount,
+    total: isForeign ? localTotal : total,
+    total_foreign: isForeign ? total : null,
+    currency_code: fxCur !== baseCurrency ? fxCur : null,
+    exchange_rate: fxRate,
     notes: document.getElementById('o-notes').value.trim()||null,
     created_by: user.id
   };
@@ -1358,12 +1444,18 @@ async function saveOrder() {
     orderId = data.id;
   }
 
-  const itemsPayload = validItems.map(i => ({
-    order_id: orderId, product_id: i.product_id||null,
-    description: i.description, quantity: i.qty, unit_price: i.price,
-    total: i.qty * i.price,
-    tax_rate_value: taxRateValue || 0
-  }));
+  const itemsPayload = validItems.map(i => {
+    const lineTotal = i.qty * i.price;
+    return {
+      order_id: orderId, product_id: i.product_id||null,
+      description: i.description, quantity: i.qty,
+      unit_price: isForeign ? i.price * fxRate : i.price,
+      unit_price_foreign: isForeign ? i.price : null,
+      total: isForeign ? lineTotal * fxRate : lineTotal,
+      total_foreign: isForeign ? lineTotal : null,
+      tax_rate_value: taxRateValue || 0
+    };
+  });
   const { data: savedItemsData, error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload).select();
   if (itemsErr) { console.error('[purchasing] Items insert error:', itemsErr.message); showToast('Kalem kayıt hatası: ' + itemsErr.message, 'error'); }
 
@@ -1509,7 +1601,22 @@ async function editOrder(id) {
   taxSel.value = matchOpt ? matchOpt.value : '';
   document.getElementById('o-discount').value = order.discount ? fmtNum(order.discount) : '';
   document.getElementById('o-notes').value = order.notes||'';
-  orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));
+  // Currency
+  initCurrencyDropdown();
+  const fxCur = order.currency_code || baseCurrency;
+  const fxRate = parseFloat(order.exchange_rate) || 1;
+  document.getElementById('o-currency').value = fxCur;
+  orderCurrency = fxCur;
+  const rateInput = document.getElementById('o-exchange-rate');
+  if (fxCur === baseCurrency) { rateInput.value = '1'; rateInput.disabled = true; rateInput.style.background = '#f0f0f0'; }
+  else { rateInput.value = fmtNum(fxRate); rateInput.disabled = false; rateInput.style.background = 'white'; }
+  // Load items — use foreign prices if available
+  const isForeign = fxCur !== baseCurrency && fxRate !== 1;
+  // If foreign and discount stored in local, convert back
+  if (isForeign && order.discount) {
+    document.getElementById('o-discount').value = fmtNum(order.discount / fxRate);
+  }
+  orderItems = (items||[]).map(i => ({ product_id: i.product_id||'', description: i.description||'', qty: i.quantity, price: isForeign && i.unit_price_foreign ? i.unit_price_foreign : i.unit_price, disc: i.discount||0, warehouse_id: i.warehouse_id||'' }));
   if (!orderItems.length) orderItems = [{ product_id:'', description:'', qty:0, price:0, disc:0, warehouse_id:'' }];
   updateSupplierSelects();
   renderOrderItems();

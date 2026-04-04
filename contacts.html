@@ -274,6 +274,20 @@ textarea{min-height:60px;resize:vertical}
         <div class="field"><label data-i18n="col_country">Ülke</label><input type="text" id="c-country"></div>
         <div class="field"><label data-i18n="col_tax_no">Vergi No</label><input type="text" id="c-taxno"></div>
         <div class="field"><label data-i18n="col_contact_person">Yetkili</label><input type="text" id="c-contact"></div>
+        <div class="field"><label>Para Birimi</label>
+          <select id="c-currency">
+            <option value="">Şirket para birimi</option>
+            <option value="USD">USD — Amerikan Doları</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — İngiliz Sterlini</option>
+            <option value="TRY">TRY — Türk Lirası</option>
+            <option value="RUB">RUB — Rus Rublesi</option>
+            <option value="KZT">KZT — Kazak Tengesi</option>
+            <option value="CNY">CNY — Çin Yuanı</option>
+            <option value="AED">AED — BAE Dirhemi</option>
+            <option value="SAR">SAR — Suudi Riyali</option>
+          </select>
+        </div>
         <div class="field"><label data-i18n="col_payment_terms">Ödeme Vadesi (gün)</label><input type="number" id="c-terms" value="30" min="0"></div>
         <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" id="c-credit" value="0" min="0" step="0.01"></div>
         <div class="field full"><label data-i18n="col_address">Adres</label><textarea id="c-address"></textarea></div>
@@ -466,6 +480,7 @@ function openContactModal() {
   document.getElementById('c-country').value = '';
   document.getElementById('c-taxno').value = '';
   document.getElementById('c-contact').value = '';
+  document.getElementById('c-currency').value = '';
   document.getElementById('c-terms').value = '30';
   document.getElementById('c-credit').value = '0';
   document.getElementById('c-address').value = '';
@@ -487,6 +502,7 @@ function editContact(id) {
   document.getElementById('c-country').value = c.country || '';
   document.getElementById('c-taxno').value = c.tax_number || '';
   document.getElementById('c-contact').value = c.contact_person || '';
+  document.getElementById('c-currency').value = c.currency_code || '';
   document.getElementById('c-terms').value = c.payment_terms || 30;
   document.getElementById('c-credit').value = c.credit_limit || 0;
   document.getElementById('c-address').value = c.address || '';
@@ -513,6 +529,7 @@ async function saveContact() {
     country: document.getElementById('c-country').value.trim() || null,
     tax_number: document.getElementById('c-taxno').value.trim() || null,
     contact_person: document.getElementById('c-contact').value.trim() || null,
+    currency_code: document.getElementById('c-currency').value || null,
     payment_terms: parseInt(document.getElementById('c-terms').value) || 30,
     credit_limit: parseFloat(document.getElementById('c-credit').value) || 0,
     address: document.getElementById('c-address').value.trim() || null,
