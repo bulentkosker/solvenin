@@ -499,7 +499,7 @@ function requireManager(reason, callback) {
 }
 
 function activateManagerSession(userId) {
-  managerSession = { userId, expiresAt: Date.now() + 60000 };
+  managerSession = { userId, expiresAt: Date.now() + 10000 };
   // Show indicator
   let ind = document.getElementById('manager-indicator');
   if (!ind) {
