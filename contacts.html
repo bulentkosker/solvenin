@@ -379,22 +379,30 @@ async function loadBalances() {
     if (!balances[o.supplier_id]) balances[o.supplier_id] = { debit:0, credit:0 };
     balances[o.supplier_id].credit += parseFloat(o.total||0);
   });
-  // Payments — single query, then split by customer/supplier
-  const { data: allPayments } = await sb.from('payments')
-    .select('order_id, amount, sales_orders(customer_id), purchase_orders(supplier_id)')
-    .eq('company_id', companyId);
-  (allPayments||[]).forEach(p => {
-    const cid = p.sales_orders?.customer_id;
-    if (cid) {
-      if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
-      balances[cid].credit += parseFloat(p.amount||0);
-    }
-    const sid = p.purchase_orders?.supplier_id;
-    if (sid) {
-      if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
-      balances[sid].debit += parseFloat(p.amount||0);
-    }
-  });
+  // Payments — map via order tables (avoid ambiguous FK join)
+  const { data: allPayments } = await sb.from('payments').select('order_id, amount').eq('company_id', companyId);
+  if (allPayments?.length) {
+    // Build order→contact maps from already-loaded sales/purchases
+    const saleOrderCustomer = {};
+    (sales||[]).forEach(o => { saleOrderCustomer[o.id || o.customer_id] = o.customer_id; });
+    // Re-query for full mapping
+    const { data: soMap } = await sb.from('sales_orders').select('id,customer_id').eq('company_id', companyId).eq('is_active', true);
+    const { data: poMap } = await sb.from('purchase_orders').select('id,supplier_id').eq('company_id', companyId).eq('is_active', true);
+    const custMap = {}; (soMap||[]).forEach(o => { custMap[o.id] = o.customer_id; });
+    const suppMap = {}; (poMap||[]).forEach(o => { suppMap[o.id] = o.supplier_id; });
+    allPayments.forEach(p => {
+      const cid = custMap[p.order_id];
+      if (cid) {
+        if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
+        balances[cid].credit += parseFloat(p.amount||0);
+      }
+      const sid = suppMap[p.order_id];
+      if (sid) {
+        if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
+        balances[sid].debit += parseFloat(p.amount||0);
+      }
+    });
+  }
   // Manual contact transactions
   const { data: manualTx } = await sb.from('contact_transactions')
     .select('contact_id, type, amount')
@@ -603,28 +611,42 @@ async function loadStatement() {
     (data||[]).forEach(o => lines.push({ type:'purchase_invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, _data: o }));
   }
 
-  // Sale payments — get all payments for this company, then filter by customer via sales_orders join
+  // Sale payments — find orders for this customer, then get their payments
   if (c?.is_customer) {
-    const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id,sales_orders(customer_id,order_number)')
-      .eq('company_id', companyId);
-    (data||[]).filter(p => p.sales_orders?.customer_id === stmtContactId).forEach(p => {
-      const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
-      if (from && paidDate < from) return;
-      if (to && paidDate > to) return;
-      lines.push({ type:'payment_in', date: paidDate, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: {...p, payment_method: p.method} });
-    });
+    const { data: custOrders } = await sb.from('sales_orders').select('id,order_number')
+      .eq('company_id', companyId).eq('customer_id', stmtContactId).eq('is_active', true);
+    const orderMap = {};
+    (custOrders||[]).forEach(o => { orderMap[o.id] = o.order_number; });
+    const orderIds = Object.keys(orderMap);
+    if (orderIds.length) {
+      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id')
+        .eq('company_id', companyId).in('order_id', orderIds);
+      (data||[]).forEach(p => {
+        const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
+        if (from && paidDate < from) return;
+        if (to && paidDate > to) return;
+        lines.push({ type:'payment_in', date: paidDate, doc: p.reference || orderMap[p.order_id] || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: {...p, payment_method: p.method, _orderNo: orderMap[p.order_id]} });
+      });
+    }
   }
 
-  // Purchase payments
+  // Purchase payments — find orders for this supplier, then get their payments
   if (c?.is_supplier) {
-    const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id,purchase_orders(supplier_id,order_number)')
-      .eq('company_id', companyId);
-    (data||[]).filter(p => p.purchase_orders?.supplier_id === stmtContactId).forEach(p => {
-      const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
-      if (from && paidDate < from) return;
-      if (to && paidDate > to) return;
-      lines.push({ type:'payment_out', date: paidDate, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method} });
-    });
+    const { data: suppOrders } = await sb.from('purchase_orders').select('id,order_number')
+      .eq('company_id', companyId).eq('supplier_id', stmtContactId).eq('is_active', true);
+    const orderMap = {};
+    (suppOrders||[]).forEach(o => { orderMap[o.id] = o.order_number; });
+    const orderIds = Object.keys(orderMap);
+    if (orderIds.length) {
+      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id')
+        .eq('company_id', companyId).in('order_id', orderIds);
+      (data||[]).forEach(p => {
+        const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
+        if (from && paidDate < from) return;
+        if (to && paidDate > to) return;
+        lines.push({ type:'payment_out', date: paidDate, doc: p.reference || orderMap[p.order_id] || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method, _orderNo: orderMap[p.order_id]} });
+      });
+    }
   }
 
   // Manual transactions
@@ -737,7 +759,7 @@ async function selectStmtRow(idx) {
 
   } else if (l.type === 'payment_in' || l.type === 'payment_out') {
     const methodLabels = {cash:'💵 Nakit',bank:'🏦 Banka Transferi',card:'💳 Kredi Kartı',check:'📋 Çek'};
-    const orderNo = d.sales_orders?.order_number || d.purchase_orders?.order_number || '';
+    const orderNo = d._orderNo || d.sales_orders?.order_number || d.purchase_orders?.order_number || '';
     html = hdr(l.type==='payment_in' ? '💰 Tahsilat' : '💸 Ödeme', '');
     html += '<div style="padding:14px 16px">';
     html += `<div style="font-size:28px;font-weight:800;color:${l.type==='payment_in'?'var(--green)':'var(--red)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
