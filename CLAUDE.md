@@ -141,12 +141,49 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - `fix_company_users_insert_rls.sql` — get_my_admin_company_ids INSERT policy
 - `fix_company_plans.sql` — 'pro' → 'professional' normalizasyonu
 
-## Gelecek Planlar (Roadmap)
-- Web sitesi builder + E-ticaret modülü:
-  Müşteriler ERP'den kendi web sitelerini oluşturabilsin
-  E-ticaret siparişleri direkt ERP'ye düşsün
-  Stok, fatura, cari entegre çalışsın
-- Partner/Reseller ağı: Her ülkede satış+destek elemanı, gelir paylaşımı
-- API & Webhooks (Pro plan için)
-- Add-on: Telefon destek ($49/mo), Dedicated Manager ($99/mo), Kurulum ($199)
-- App Store: İleride ecosystem büyüyünce
+## Solvenin Roadmap
+
+### Şu An (Devam Eden)
+- Core ERP modülleri tamamlandı
+- POS modülü tamamlandı
+- Partner programı sayfası tamamlandı
+- Fatura PDF iyileştirme devam ediyor
+- Paddle entegrasyonu bekliyor
+- Email sistemi bekliyor
+
+### Yakın Vadeli
+- İhracat & İthalat modülü (ticari fatura, gümrük beyannamesi, konşimento, menşei şehadetnamesi, gıda/bitki sağlık sertifikası, CMR, TIR karnet — faturaya bağlı, müşteriye email)
+- Kasa oturumu & gün sonu raporu
+- POS terminal entegrasyonu (Kaspi QR, IP tabanlı POS cihazları)
+- Dil audit (10 dil tam tamamlama: EN, TR, RU, KZ, DE, FR, ES, PL, AR, ZH)
+
+### Orta Vadeli
+- E-Ticaret modülü (Add-on: $35/ay B2C, $35/ay B2B)
+  * 10 hazır şablon
+  * Subdomain: musteri.solvenin.com veya kendi domaini (dahil)
+  * Yerel ödeme sistemleri (Kaspi QR, Halyk — KZ; iyzico, PayTR — TR; vb.)
+  * Kargo: pkge.net API (Jet Logistics KZ, Kazpost, Yurtiçi, DHL vb. 850+ firma)
+  * Ürün başına: 4-5 resim + 1 video, meta başlık/açıklama, e-ticaret işareti
+  * B2B: Bayi başvuru formu → onay → özel fiyat/vade
+  * Stok kartında perakende + toptan fiyat kolonları
+  * Stok tükenince listeden kaldır
+- Bildirim sistemi (kullanıcı seçer: email / WhatsApp / uygulama içi)
+- 2FA (iki faktörlü kimlik doğrulama)
+
+### Uzun Vadeli
+- Mobil uygulama (iOS/Android)
+- Müşteriye özel white-label uygulama
+- App Store (partner modülleri)
+- API & Webhooks (Pro plan)
+
+## Pazar Stratejisi
+- Aşama 1: Kazakistan + Orta Asya (öncelikli)
+- Aşama 2: Türkiye
+- Aşama 3: Global
+
+## E-Ticaret Teknik Notlar
+- order_type: 'ecommerce' (sales_orders tablosunda)
+- Ürün tablosunda: is_ecommerce boolean, retail_price, wholesale_price, meta_title, meta_description
+- Subdomain: Vercel custom domain ile yönetilir
+- Ödeme: her ülke için ayrı entegrasyon, Settings'ten API key girilir
+- Kargo: pkge.net API anahtarı Settings'ten girilir
