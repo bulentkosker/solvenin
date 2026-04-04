@@ -9,7 +9,7 @@
   const CSS = `
     :root {
       --sidebar-w: 220px;
-      --sb-bg:       #0a2e20;
+      --sb-bg:       #c0c0c0;
       --sb-accent:   #f0a500;
       --sb-accent2:  #d4900a;
       --font-display: 'Outfit', sans-serif;
