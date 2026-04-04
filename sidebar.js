@@ -9,9 +9,9 @@
   const CSS = `
     :root {
       --sidebar-w: 220px;
-      --sb-bg:       #c0c0c0;
-      --sb-accent:   #f0a500;
-      --sb-accent2:  #d4900a;
+      --sb-bg:       #1e293b;
+      --sb-accent:   #38bdf8;
+      --sb-accent2:  #0ea5e9;
       --font-display: 'Outfit', sans-serif;
     }
     .sidebar {
@@ -40,7 +40,7 @@
     .sidebar-section { padding: 8px 8px 4px; }
     .sidebar-section-label {
       font-size: 9px; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      text-transform: uppercase; color: rgba(148,163,184,0.7);
       padding: 0 8px; margin-bottom: 4px;
     }
 
@@ -53,15 +53,15 @@
       font-size: 12px; font-weight: 500;
       border-left: 3px solid transparent;
     }
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #f1f5f9; }
     .nav-item.active {
-      background: rgba(13,79,60,0.45); color: #fff; font-weight: 600;
+      background: rgba(56,189,248,0.12); color: #f1f5f9; font-weight: 600;
       border-left-color: var(--sb-accent);
     }
     .nav-item.active .nav-icon { color: var(--sb-accent); }
     .nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
     .nav-badge {
-      margin-left: auto; background: rgba(240,165,0,0.25);
+      margin-left: auto; background: rgba(56,189,248,0.15);
       color: var(--sb-accent); font-size: 10px; font-weight: 700;
       padding: 2px 7px; border-radius: 99px;
     }
@@ -74,7 +74,7 @@
       color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 500;
       user-select: none; border-left: 3px solid transparent;
     }
-    .nav-parent:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-parent:hover { background: rgba(255,255,255,0.06); color: #f1f5f9; }
     .nav-parent.open { color: #fff; }
     .nav-parent.has-active { color: #fff; border-left-color: var(--sb-accent); }
     .nav-parent.has-active .nav-icon { color: var(--sb-accent); }
@@ -98,9 +98,9 @@
       text-decoration: none; color: rgba(255,255,255,0.6);
       font-size: 11.5px; font-weight: 400;
     }
-    .nav-child:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+    .nav-child:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
     .nav-child.active {
-      background: rgba(13,79,60,0.4); color: var(--sb-accent); font-weight: 600;
+      background: rgba(56,189,248,0.1); color: var(--sb-accent); font-weight: 600;
     }
     .nav-child-dot {
       width: 4px; height: 4px; border-radius: 50%;
@@ -139,7 +139,7 @@
       border: 1px solid rgba(255,255,255,0.1);
       transition: background .15s;
     }
-    .company-switcher:hover { background: rgba(240,165,0,0.15); }
+    .company-switcher:hover { background: rgba(56,189,248,0.1); }
     .company-icon { font-size: 15px; flex-shrink: 0; }
     .company-info { flex: 1; min-width: 0; }
     .company-name {
@@ -188,7 +188,7 @@
     .user-card:hover { background: rgba(255,255,255,0.08); }
     .user-avatar {
       width: 30px; height: 30px; border-radius: 8px;
-      background: rgba(240,165,0,0.3);
+      background: rgba(56,189,248,0.25);
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; color: #fff; font-size: 12px; flex-shrink: 0;
     }
@@ -199,13 +199,13 @@
     /* ── AI Button ── */
     .ai-btn {
       width: 100%; padding: 9px 12px; border-radius: 8px;
-      border: 1.5px solid rgba(240,165,0,0.3);
-      background: rgba(240,165,0,0.08); color: var(--sb-accent);
+      border: 1.5px solid rgba(56,189,248,0.3);
+      background: rgba(56,189,248,0.08); color: var(--sb-accent);
       font-size: 12px; font-weight: 600; cursor: pointer;
       transition: all .15s; text-align: left; margin-top: 6px;
       display: flex; align-items: center; gap: 8px;
     }
-    .ai-btn:hover { background: rgba(240,165,0,0.2); border-color: var(--sb-accent); }
+    .ai-btn:hover { background: rgba(56,189,248,0.15); border-color: var(--sb-accent); }
 
     /* ── AI Chat Panel ── */
     #ai-chat-panel {
