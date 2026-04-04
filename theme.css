@@ -9,7 +9,7 @@
 :root {
   /* ── BRAND ── */
   --primary:        #0d4f3c;
-  --primary-dark:   #0a2e20;
+  --primary-dark:   #c0c0c0;
   --primary-mid:    #1a6b52;
   --primary-light:  rgba(13,79,60,0.08);
   --accent:         #f0a500;
