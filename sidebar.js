@@ -327,40 +327,41 @@
 
     /* ── MOBILE ── */
     .sb-hamburger {
-      display: none; position: fixed; top: 12px; left: 12px; z-index: 60;
-      width: 40px; height: 40px; border-radius: 10px;
+      display: none; position: fixed; top: 10px; left: 10px; z-index: 100;
+      width: 36px; height: 36px; border-radius: 8px;
       background: var(--sb-bg); border: none; cursor: pointer;
       align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .sb-hamburger span {
-      display: block; width: 18px; height: 2px; background: #fff;
+      display: block; width: 16px; height: 2px; background: #fff;
       border-radius: 2px; position: relative; transition: all .2s;
     }
     .sb-hamburger span::before, .sb-hamburger span::after {
-      content: ''; position: absolute; left: 0; width: 18px; height: 2px;
+      content: ''; position: absolute; left: 0; width: 16px; height: 2px;
       background: #fff; border-radius: 2px; transition: all .2s;
     }
-    .sb-hamburger span::before { top: -6px; }
-    .sb-hamburger span::after { top: 6px; }
+    .sb-hamburger span::before { top: -5px; }
+    .sb-hamburger span::after { top: 5px; }
     .sb-hamburger.open span { background: transparent; }
     .sb-hamburger.open span::before { top: 0; transform: rotate(45deg); }
     .sb-hamburger.open span::after { top: 0; transform: rotate(-45deg); }
     .sb-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-      z-index: 49; backdrop-filter: blur(2px);
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 54; backdrop-filter: blur(2px);
     }
     .sb-overlay.open { display: block; }
     @media (max-width: 768px) {
       .sb-hamburger { display: flex; }
       .sidebar {
+        width: 260px;
         transform: translateX(-100%);
         transition: transform .25s ease;
         z-index: 55;
       }
       .sidebar.sb-open { transform: translateX(0); }
-      .main { margin-left: 0 !important; }
-      .topbar { padding-left: 56px !important; }
+      .main { margin-left: 0 !important; width: 100% !important; }
+      .topbar { padding-left: 52px !important; }
     }
   `;
 
