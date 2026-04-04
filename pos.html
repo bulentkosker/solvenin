@@ -265,6 +265,7 @@ async function startSession() {
   document.getElementById('pos-register-name').textContent = selectedRegister.name;
   document.getElementById('pos-session-time').textContent = '⏱ ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + "'den beri";
   document.getElementById('register-modal').classList.remove('open');
+  loadCartFromStorage();
   document.getElementById('barcode-input').focus();
 }
 
@@ -357,7 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function addToCart(pid) {
   let p = products.find(x => x.id === pid);
   if (!p) {
-    // Fallback: try from quick button joined data
     const qb = quickButtons.find(b => b.product_id === pid);
     if (qb?.products) p = qb.products;
   }
@@ -366,26 +366,54 @@ function addToCart(pid) {
   if (ex) ex.qty++;
   else cart.push({ pid, name: p.name, price: parseFloat(p.sale_price||0), qty: 1, unit: p.unit || '' });
   renderCart();
+  saveCartToStorage();
+}
+
+// ===== CART PERSISTENCE =====
+function saveCartToStorage() {
+  const key = 'pos_active_cart_' + companyId;
+  if (cart.length > 0) {
+    localStorage.setItem(key, JSON.stringify({ items: cart, customerId: selectedCustomerId, sessionId: sessionId, updatedAt: new Date().toISOString() }));
+  } else {
+    localStorage.removeItem(key);
+  }
+}
+
+function loadCartFromStorage() {
+  const key = 'pos_active_cart_' + companyId;
+  const saved = localStorage.getItem(key);
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    if (data.items?.length) {
+      cart = data.items;
+      selectedCustomerId = data.customerId || null;
+      renderCart();
+      showToast('Önceki fiş geri yüklendi (' + cart.length + ' kalem)', 'info');
+    }
+  } catch(e) { localStorage.removeItem(key); }
 }
 
 function cartQty(idx, delta) {
   if (delta < 0) {
-    // Decrease/remove requires manager PIN
     requestPin('Ürün silme/azaltma yönetici onayı gerektirir', () => {
       cart[idx].qty += delta;
       if (cart[idx].qty <= 0) cart.splice(idx, 1);
       renderCart();
+      saveCartToStorage();
     });
     return;
   }
   cart[idx].qty += delta;
   renderCart();
+  saveCartToStorage();
 }
 
 function removeItem(idx) {
   requestPin('Ürün silme yönetici onayı gerektirir', () => {
     cart.splice(idx, 1);
     renderCart();
+    saveCartToStorage();
   });
 }
 
@@ -584,6 +612,7 @@ async function completeSale() {
     document.getElementById('receipt-modal').classList.add('open');
     cart = [];
     renderCart();
+    saveCartToStorage();
   } catch (e) {
     showToast('Hata: ' + e.message, 'error');
   } finally {
@@ -596,7 +625,33 @@ function closeReceipt() {
   document.getElementById('barcode-input').focus();
 }
 
-function exitPOS() { window.location.href = 'dashboard.html'; }
+function exitPOS() {
+  if (cart.length === 0) { window.location.href = 'dashboard.html'; return; }
+  requestPin('Fişi iptal etmek için yönetici PIN\'i girin', async () => {
+    // Log cancelled cart
+    const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('pos_cancelled_carts').insert({
+      company_id: companyId, session_id: sessionId, cancelled_by: user?.id,
+      items: cart, total, reason: 'Yönetici onayı ile fiş iptal'
+    });
+    cart = [];
+    saveCartToStorage();
+    window.location.href = 'dashboard.html';
+  });
+}
+
+// ===== EXIT PROTECTION =====
+window.addEventListener('beforeunload', (e) => {
+  if (cart.length > 0) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// Prevent back button
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => {
+  history.pushState(null, '', location.href);
+  if (cart.length > 0) showToast('Sepette ürün var — önce fişi tamamlayın veya iptal edin', 'error');
+});
 
 function showToast(msg, type) {
   const el = document.createElement('div');
@@ -613,6 +668,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('receipt-modal').classList.contains('open')) closeReceipt();
     else if (document.getElementById('pin-modal').classList.contains('open')) closePin();
     else if (document.getElementById('payment-modal').classList.contains('open')) closePayment();
+    // ESC ile POS'tan çıkış engelle
   }
 });
 
