@@ -971,17 +971,57 @@
       const titleEl = document.getElementById('solvenin-confirm-title');
       const okBtn = document.getElementById('solvenin-confirm-ok');
       const cancelBtn = document.getElementById('solvenin-confirm-cancel');
-      if (!overlay) { resolve(window.confirm(message)); return; }
-      titleEl.textContent = title || 'Confirm';
+      if (!overlay) { resolve(false); return; }
+      titleEl.textContent = title || (window.t && window.t('lbl_confirm')) || 'Onay';
       msg.textContent = message;
-      okBtn.textContent = confirmLabel || 'Delete';
-      if (cancelBtn) cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'Cancel';
+      okBtn.textContent = confirmLabel || (window.t && window.t('btn_ok')) || 'Tamam';
+      if (cancelBtn) {
+        cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'İptal';
+        cancelBtn.style.display = '';
+      }
       overlay.classList.add('open');
       window._confirmReject = () => { resolve(false); };
-      okBtn.onclick = () => {
-        overlay.classList.remove('open');
-        resolve(true);
-      };
+      okBtn.onclick = () => { overlay.classList.remove('open'); resolve(true); };
+      if (cancelBtn) cancelBtn.onclick = () => { overlay.classList.remove('open'); resolve(false); };
+    });
+  };
+
+  window.showAlert = function(message, title) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('solvenin-confirm-overlay');
+      const msg = document.getElementById('solvenin-confirm-msg');
+      const titleEl = document.getElementById('solvenin-confirm-title');
+      const okBtn = document.getElementById('solvenin-confirm-ok');
+      const cancelBtn = document.getElementById('solvenin-confirm-cancel');
+      if (!overlay) { resolve(); return; }
+      titleEl.textContent = title || (window.t && window.t('lbl_info')) || 'Bilgi';
+      msg.textContent = message;
+      okBtn.textContent = (window.t && window.t('btn_ok')) || 'Tamam';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+      overlay.classList.add('open');
+      okBtn.onclick = () => { overlay.classList.remove('open'); if (cancelBtn) cancelBtn.style.display = ''; resolve(); };
+    });
+  };
+
+  window.showPrompt = function(message, defaultValue, title) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('solvenin-confirm-overlay');
+      const msg = document.getElementById('solvenin-confirm-msg');
+      const titleEl = document.getElementById('solvenin-confirm-title');
+      const okBtn = document.getElementById('solvenin-confirm-ok');
+      const cancelBtn = document.getElementById('solvenin-confirm-cancel');
+      if (!overlay) { resolve(null); return; }
+      titleEl.textContent = title || (window.t && window.t('lbl_input')) || 'Giriş';
+      msg.innerHTML = message + '<br><input id="solvenin-prompt-input" type="text" value="' + (defaultValue || '').replace(/"/g, '&quot;') + '" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
+      okBtn.textContent = (window.t && window.t('btn_ok')) || 'Tamam';
+      if (cancelBtn) {
+        cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'İptal';
+        cancelBtn.style.display = '';
+      }
+      overlay.classList.add('open');
+      setTimeout(() => { const inp = document.getElementById('solvenin-prompt-input'); if (inp) { inp.focus(); inp.select(); } }, 100);
+      okBtn.onclick = () => { const v = document.getElementById('solvenin-prompt-input')?.value; overlay.classList.remove('open'); resolve(v); };
+      if (cancelBtn) cancelBtn.onclick = () => { overlay.classList.remove('open'); resolve(null); };
     });
   };
 

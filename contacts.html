@@ -375,7 +375,7 @@ async function saveContact() {
 }
 
 async function deleteContact(id) {
-  if (!confirm(t('confirm_delete_contact') || 'Bu cariyi silmek istiyor musunuz?')) return;
+  if (!await showConfirm(t('confirm_delete_contact') || 'Bu cariyi silmek istiyor musunuz?', t('lbl_confirm') || 'Onay', t('btn_delete') || 'Sil')) return;
   const { data: { user } } = await sb.auth.getUser();
   await sb.from('contacts').update({
     is_active: false, deleted_at: new Date().toISOString(), deleted_by: user?.id

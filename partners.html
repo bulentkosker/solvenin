@@ -249,7 +249,7 @@ async function submitApplication() {
   const country = document.getElementById('f-country').value;
 
   if (!name || !email || !phone || !company || !country) {
-    alert('Lütfen zorunlu alanları doldurun.');
+    showAlert('Lütfen zorunlu alanları doldurun.', 'Uyarı');
     return;
   }
 
@@ -275,7 +275,7 @@ async function submitApplication() {
     document.getElementById('form-content').style.display = 'none';
     document.getElementById('success-msg').style.display = 'block';
   } catch (e) {
-    alert('Bir hata oluştu: ' + e.message);
+    showAlert('Bir hata oluştu: ' + e.message, 'Hata');
     btn.disabled = false;
     btn.textContent = 'Partner Olmak İstiyorum →';
   }

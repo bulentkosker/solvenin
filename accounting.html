@@ -1454,7 +1454,7 @@ async function switchToCompany(cid, name) {
     document.getElementById('sb-company-name').textContent=name;
     document.getElementById('sb-company-menu').style.display='none';
     companyId=cid; window.location.reload();
-  } catch(e){alert(e.message);}
+  } catch(e){showAlert(e.message, 'Hata');}
 }
 function sidebarOpenNewCompany() {
   document.getElementById('sb-company-menu').style.display='none';

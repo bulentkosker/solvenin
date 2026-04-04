@@ -1816,10 +1816,10 @@ async function saveCatAdd(parentId) {
   showToast(`"${name}" added ✓`, 'success');
 }
 
-function openRenameCat(id) {
+async function openRenameCat(id) {
   const cat = allCategories.find(c=>c.id===id);
   if (!cat) return;
-  const newName = prompt(t('lbl_rename_cat'), cat.name);
+  const newName = await showPrompt(t('lbl_rename_cat') || 'Yeni kategori adı:', cat.name);
   if (!newName || newName.trim() === cat.name) return;
   renameCat(id, newName.trim().toUpperCase());
 }

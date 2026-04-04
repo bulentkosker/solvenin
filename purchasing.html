@@ -1384,7 +1384,7 @@ function canEditOrder(status) {
 let _viewMode = false;
 
 async function cancelOrder(id) {
-  if (!confirm(t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?')) return;
+  if (!await showConfirm(t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?', t('lbl_confirm') || 'Onay', t('btn_cancel_order') || 'İptal Et')) return;
   const { error } = await sb.from('purchase_orders').update({ status: 'cancelled' }).eq('id', id);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(t('toast_order_cancelled') || 'Sipariş iptal edildi', 'success');
