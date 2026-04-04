@@ -165,14 +165,7 @@
     /* ── SECTION DIVIDER ── */
     .section-divider{height:1px;background:var(--gray200);margin:20px 0}
 
-    @media(max-width:768px){
-      .main{margin-left:0}
-      .stats-row{grid-template-columns:1fr 1fr}
-      .form-row{grid-template-columns:1fr}
-      .form-row-3{grid-template-columns:1fr}
-      .bom-line{grid-template-columns:1fr 80px 70px 36px}
-      .bom-line-output{grid-template-columns:1fr 80px 70px 100px 36px}
-    }
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:16px!important}}
   </style>
   <style>
     /* Critical sidebar CSS - prevents layout flash */
