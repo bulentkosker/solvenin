@@ -756,15 +756,37 @@ a:hover { color: var(--primary-dark); }
 }
 .main { margin-left: 220px; }
 @media (max-width: 768px) {
-  .main { margin-left: 0 !important; }
+  .main { margin-left: 0 !important; width: 100% !important; }
   .sidebar { transform: translateX(-100%); transition: transform .25s ease; }
   .sidebar.sb-open { transform: translateX(0); }
-  .content { padding: 16px !important; }
+  .content { padding: 12px !important; }
   .topbar { padding-left: 56px !important; }
-  .stats-grid, .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid, .stats-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important; margin-bottom: 12px !important; }
+  .stat-card { padding: 10px 12px !important; border-radius: 10px !important; }
+  .stat-label { font-size: 9px !important; letter-spacing: 0.3px !important; }
+  .stat-value, .stat-val { font-size: 18px !important; }
+  .stat-change, .stat-sub { font-size: 10px !important; }
+  .stat-icon { width: 28px !important; height: 28px !important; font-size: 13px !important; }
   .form-grid { grid-template-columns: 1fr !important; }
-  table { font-size: 12px; }
-  td, th { padding: 8px 10px !important; }
+  .page-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+  .page-header h1 { font-size: 17px !important; }
+  .filters-row, .toolbar { flex-direction: column; align-items: stretch !important; }
+  .search-box { max-width: 100% !important; min-width: 0 !important; }
+  table { font-size: 11px !important; }
+  th { padding: 6px 8px !important; font-size: 9px !important; }
+  td { padding: 6px 8px !important; font-size: 11px !important; }
+  .table-card { border-radius: 8px !important; }
+  .btn { padding: 8px 14px !important; font-size: 12px !important; }
+  .btn-sm { padding: 5px 10px !important; font-size: 11px !important; }
+  .modal { width: 95vw !important; max-width: 95vw !important; border-radius: 12px !important; }
+  .modal-head { padding: 14px 16px !important; }
+  .modal-body { padding: 14px 16px !important; }
+  .tabs-bar, .tabs-row, .tab-bar { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .tab-btn { white-space: nowrap !important; padding: 8px 14px !important; font-size: 12px !important; }
+}
+@media (max-width: 400px) {
+  .stats-grid, .stats-row { grid-template-columns: 1fr !important; }
+  .stat-value, .stat-val { font-size: 16px !important; }
 }
 
 /* ================================================================
