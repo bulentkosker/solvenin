@@ -324,6 +324,44 @@
     .new-company-box .btn-create:hover { background: #1e293b; }
     .new-company-box .btn-create:disabled { opacity:.6; cursor:not-allowed; }
     @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── MOBILE ── */
+    .sb-hamburger {
+      display: none; position: fixed; top: 12px; left: 12px; z-index: 60;
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--sb-bg); border: none; cursor: pointer;
+      align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .sb-hamburger span {
+      display: block; width: 18px; height: 2px; background: #fff;
+      border-radius: 2px; position: relative; transition: all .2s;
+    }
+    .sb-hamburger span::before, .sb-hamburger span::after {
+      content: ''; position: absolute; left: 0; width: 18px; height: 2px;
+      background: #fff; border-radius: 2px; transition: all .2s;
+    }
+    .sb-hamburger span::before { top: -6px; }
+    .sb-hamburger span::after { top: 6px; }
+    .sb-hamburger.open span { background: transparent; }
+    .sb-hamburger.open span::before { top: 0; transform: rotate(45deg); }
+    .sb-hamburger.open span::after { top: 0; transform: rotate(-45deg); }
+    .sb-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 49; backdrop-filter: blur(2px);
+    }
+    .sb-overlay.open { display: block; }
+    @media (max-width: 768px) {
+      .sb-hamburger { display: flex; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        z-index: 55;
+      }
+      .sidebar.sb-open { transform: translateX(0); }
+      .main { margin-left: 0 !important; }
+      .topbar { padding-left: 56px !important; }
+    }
   `;
 
   /* ── CURRENCY ────────────────────────────────────────────── */
@@ -584,6 +622,38 @@
       document.body.insertBefore(sidebar, document.body.firstChild);
     }
     sidebar.innerHTML = buildHTML();
+
+    // Inject hamburger + overlay for mobile
+    if (!document.getElementById('sb-hamburger')) {
+      const btn = document.createElement('button');
+      btn.id = 'sb-hamburger';
+      btn.className = 'sb-hamburger';
+      btn.innerHTML = '<span></span>';
+      btn.onclick = () => {
+        sidebar.classList.toggle('sb-open');
+        btn.classList.toggle('open');
+        document.getElementById('sb-mobile-overlay')?.classList.toggle('open');
+      };
+      document.body.appendChild(btn);
+      const ov = document.createElement('div');
+      ov.id = 'sb-mobile-overlay';
+      ov.className = 'sb-overlay';
+      ov.onclick = () => {
+        sidebar.classList.remove('sb-open');
+        btn.classList.remove('open');
+        ov.classList.remove('open');
+      };
+      document.body.appendChild(ov);
+    }
+
+    // Close sidebar on mobile when navigating
+    sidebar.addEventListener('click', (e) => {
+      if (e.target.closest('a[href]') && window.innerWidth <= 768) {
+        sidebar.classList.remove('sb-open');
+        document.getElementById('sb-hamburger')?.classList.remove('open');
+        document.getElementById('sb-mobile-overlay')?.classList.remove('open');
+      }
+    });
 
     // Inject AI chat panel if not exists
     injectAIPanel();

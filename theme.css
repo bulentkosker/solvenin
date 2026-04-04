@@ -755,6 +755,17 @@ a:hover { color: var(--primary-dark); }
   width: 220px;
 }
 .main { margin-left: 220px; }
+@media (max-width: 768px) {
+  .main { margin-left: 0 !important; }
+  .sidebar { transform: translateX(-100%); transition: transform .25s ease; }
+  .sidebar.sb-open { transform: translateX(0); }
+  .content { padding: 16px !important; }
+  .topbar { padding-left: 56px !important; }
+  .stats-grid, .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  table { font-size: 12px; }
+  td, th { padding: 8px 10px !important; }
+}
 
 /* ================================================================
    NUMBER INPUT — remove spinners globally
