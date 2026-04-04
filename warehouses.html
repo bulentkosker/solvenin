@@ -531,13 +531,23 @@ function closeDeleteModal() {
 }
 
 async function confirmDelete() {
+  const [movements, levels] = await Promise.all([
+    sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('warehouse_id', deletingId).eq('is_active', true),
+    sb.from('products').select('id', {count:'exact',head:true}).eq('warehouse_id', deletingId).eq('active', true),
+  ]);
+  const parts = [];
+  if (movements.count > 0) parts.push(movements.count + ' stok hareketi');
+  if (levels.count > 0) parts.push(levels.count + ' ürün');
+  if (parts.length > 0) {
+    showToast('Silinemez: Bu deponun ' + parts.join(' / ') + ' var', 'error');
+    closeDeleteModal(); return;
+  }
   const { error } = await sb.from('warehouses').delete().eq('id', deletingId);
   if (error) {
-    showToast(error.message.includes('foreign key') ? 'Cannot delete: warehouse has stock movements' : error.message, 'error');
-    closeDeleteModal();
-    return;
+    showToast(error.message, 'error');
+    closeDeleteModal(); return;
   }
-  showToast('Warehouse deleted', 'success');
+  showToast(t('toast_deleted') || 'Depo silindi', 'success');
   closeDeleteModal();
   await loadWarehouses();
 }
