@@ -1070,13 +1070,37 @@ function toggleDescCol() {
   document.getElementById('btn-toggle-desc').textContent = _descVisible ? (t('btn_hide_desc') || 'Açıklama −') : (t('btn_show_desc') || 'Açıklama +');
 }
 
+function generateNextNumber(format, existingOrders) {
+  // Parse prefix and number from format: "INV0001" → prefix="INV", digits=4, start=1
+  const match = format.match(/^(.*?)(\d+)$/);
+  if (!match) return format;
+  const prefix = match[1];
+  const numStr = match[2];
+  const digits = numStr.length;
+  const startNum = parseInt(numStr, 10);
+
+  // Find the highest existing number with same prefix
+  let maxNum = startNum - 1;
+  (existingOrders || []).forEach(o => {
+    const on = o.order_number || '';
+    if (on.startsWith(prefix)) {
+      const numPart = on.substring(prefix.length);
+      const n = parseInt(numPart, 10);
+      if (!isNaN(n) && n > maxNum) maxNum = n;
+    }
+  });
+
+  const nextNum = maxNum + 1;
+  return prefix + String(nextNum).padStart(digits, '0');
+}
+
 function openOrderModal() {
   console.log('[sales] openOrderModal called');
   editingOrderId = null;
   document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
   if (customerQA) customerQA.setValue('');
-  document.getElementById('o-number').value = 'INV-' + String(orders.length + 1).padStart(4,'0');
+  document.getElementById('o-number').value = generateNextNumber(invoiceSettings.sales_number_format || 'INV0001', orders);
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
   const due = new Date(); due.setDate(due.getDate() + 30);
   document.getElementById('o-duedate').value = due.toISOString().split('T')[0];
