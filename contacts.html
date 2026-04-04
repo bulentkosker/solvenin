@@ -141,16 +141,55 @@ textarea{min-height:60px;resize:vertical}
             <tr>
               <th data-i18n="col_name">Ad</th>
               <th data-i18n="col_type">Tür</th>
-              <th data-i18n="col_email">E-posta</th>
+              <th style="text-align:right" data-i18n="col_debit">Borç</th>
+              <th style="text-align:right" data-i18n="col_credit">Alacak</th>
+              <th style="text-align:right" data-i18n="col_balance">Bakiye</th>
               <th data-i18n="col_phone">Telefon</th>
               <th data-i18n="col_city">Şehir</th>
-              <th data-i18n="col_tax_no">Vergi No</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="contacts-tbody">
-            <tr><td colspan="7"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3 data-i18n="no_contacts">Henüz cari yok</h3><p data-i18n="no_contacts_sub">İlk carinizi ekleyin.</p><button class="btn btn-primary" onclick="openContactModal()" data-i18n="btn_new_contact">+ Yeni Cari</button></div></td></tr>
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3 data-i18n="no_contacts">Henüz cari yok</h3><p data-i18n="no_contacts_sub">İlk carinizi ekleyin.</p><button class="btn btn-primary" onclick="openContactModal()" data-i18n="btn_new_contact">+ Yeni Cari</button></div></td></tr>
           </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATEMENT MODAL -->
+<div class="modal-overlay" id="statement-modal">
+  <div class="modal" style="max-width:900px;width:95vw">
+    <div class="modal-head">
+      <span class="modal-title" id="stmt-title">Hesap Ekstresi</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="date" id="stmt-from" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px" onchange="loadStatement()">
+        <span style="color:var(--gray400);font-size:12px">—</span>
+        <input type="date" id="stmt-to" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px" onchange="loadStatement()">
+        <button class="btn btn-outline btn-sm" onclick="printStatement()">🖨️ Yazdır</button>
+        <button class="modal-close" onclick="closeModal('statement-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div id="stmt-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 24px;background:var(--gray50);border-bottom:1px solid var(--gray100)">
+        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Borç</div><div id="stmt-debit" style="font-size:18px;font-weight:800;color:var(--red);margin-top:2px">0</div></div>
+        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Toplam Alacak</div><div id="stmt-credit" style="font-size:18px;font-weight:800;color:var(--green);margin-top:2px">0</div></div>
+        <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px">Bakiye</div><div id="stmt-balance" style="font-size:18px;font-weight:800;margin-top:2px">0</div></div>
+      </div>
+      <div style="overflow-x:auto;max-height:50vh;overflow-y:auto">
+        <table style="font-size:12px">
+          <thead>
+            <tr>
+              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Tarih</th>
+              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Belge</th>
+              <th style="padding:8px 12px;position:sticky;top:0;background:var(--gray50);z-index:1">Açıklama</th>
+              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Borç</th>
+              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Alacak</th>
+              <th style="padding:8px 12px;text-align:right;position:sticky;top:0;background:var(--gray50);z-index:1">Bakiye</th>
+            </tr>
+          </thead>
+          <tbody id="stmt-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -204,6 +243,8 @@ window._supabase = sb;
 let companyId = null;
 let contacts = [];
 let editingId = null;
+let balances = {}; // { contactId: { debit, credit } }
+let stmtContactId = null;
 
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -222,6 +263,7 @@ async function init() {
   if (filterParam) document.getElementById('filter-type').value = filterParam;
 
   await loadContacts();
+  await loadBalances();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -264,10 +306,59 @@ function filterContacts() {
   renderContacts(filtered);
 }
 
+async function loadBalances() {
+  if (!companyId) return;
+  balances = {};
+  // Sales invoices (customer owes us = debit for customer)
+  const { data: sales } = await sb.from('sales_orders')
+    .select('customer_id, total')
+    .eq('company_id', companyId).eq('is_active', true)
+    .in('status', ['invoiced','paid','overdue']);
+  (sales||[]).forEach(o => {
+    if (!balances[o.customer_id]) balances[o.customer_id] = { debit:0, credit:0 };
+    balances[o.customer_id].debit += parseFloat(o.total||0);
+  });
+  // Purchase invoices (we owe supplier = credit for supplier, but from supplier perspective it's debit)
+  const { data: purchases } = await sb.from('purchase_orders')
+    .select('supplier_id, total')
+    .eq('company_id', companyId).eq('is_active', true)
+    .in('status', ['invoiced','paid','overdue']);
+  (purchases||[]).forEach(o => {
+    if (!balances[o.supplier_id]) balances[o.supplier_id] = { debit:0, credit:0 };
+    balances[o.supplier_id].credit += parseFloat(o.total||0);
+  });
+  // Payments received from customers (credit for customer)
+  const { data: salesPayments } = await sb.from('payments')
+    .select('order_id, amount, sales_orders!inner(customer_id)')
+    .eq('sales_orders.company_id', companyId);
+  (salesPayments||[]).forEach(p => {
+    const cid = p.sales_orders?.customer_id;
+    if (!cid) return;
+    if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
+    balances[cid].credit += parseFloat(p.amount||0);
+  });
+  // Payments made to suppliers (debit reduction)
+  const { data: purchPayments } = await sb.from('payments')
+    .select('order_id, amount, purchase_orders!inner(supplier_id)')
+    .eq('purchase_orders.company_id', companyId);
+  (purchPayments||[]).forEach(p => {
+    const sid = p.purchase_orders?.supplier_id;
+    if (!sid) return;
+    if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
+    balances[sid].debit += parseFloat(p.amount||0);
+  });
+  filterContacts();
+}
+
+function fmtMoney(n) {
+  if (!n || n === 0) return '—';
+  return new Intl.NumberFormat(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(n);
+}
+
 function renderContacts(list) {
   const tbody = document.getElementById('contacts-tbody');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3>${t('no_contacts') || 'Henüz cari yok'}</h3><p>${t('no_contacts_sub') || 'İlk carinizi ekleyin.'}</p><button class="btn btn-primary" onclick="openContactModal()">${t('btn_new_contact') || '+ Yeni Cari'}</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3>${t('no_contacts') || 'Henüz cari yok'}</h3><p>${t('no_contacts_sub') || 'İlk carinizi ekleyin.'}</p><button class="btn btn-primary" onclick="openContactModal()">${t('btn_new_contact') || '+ Yeni Cari'}</button></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(c => {
@@ -276,15 +367,20 @@ function renderContacts(list) {
       : c.is_customer
         ? `<span class="badge badge-green">${t('lbl_customer') || 'Müşteri'}</span>`
         : `<span class="badge badge-blue">${t('lbl_supplier') || 'Tedarikçi'}</span>`;
-    return `<tr>
+    const b = balances[c.id] || { debit:0, credit:0 };
+    const bal = b.debit - b.credit;
+    const balColor = bal > 0 ? 'var(--red)' : bal < 0 ? 'var(--green)' : 'var(--gray400)';
+    return `<tr style="cursor:pointer" onclick="openStatement('${c.id}')">
       <td><strong>${c.name}</strong></td>
       <td>${typeBadge}</td>
-      <td style="color:var(--gray500)">${c.email || '—'}</td>
+      <td style="text-align:right;color:var(--red);font-weight:600">${b.debit ? fmtMoney(b.debit) : '—'}</td>
+      <td style="text-align:right;color:var(--green);font-weight:600">${b.credit ? fmtMoney(b.credit) : '—'}</td>
+      <td style="text-align:right;font-weight:700;color:${balColor}">${bal !== 0 ? fmtMoney(Math.abs(bal)) : '—'}</td>
       <td style="color:var(--gray500)">${c.phone || '—'}</td>
       <td style="color:var(--gray500)">${c.city || '—'}</td>
-      <td style="color:var(--gray500)">${c.tax_number || '—'}</td>
       <td>
-        <div style="display:flex;gap:4px">
+        <div style="display:flex;gap:4px" onclick="event.stopPropagation()">
+          <button class="btn btn-outline btn-icon btn-sm" onclick="openStatement('${c.id}')" title="Hesap Ekstresi">📋</button>
           <button class="btn btn-outline btn-icon btn-sm" onclick="editContact('${c.id}')">✏️</button>
           <button class="btn btn-danger btn-icon btn-sm" onclick="deleteContact('${c.id}')">✕</button>
         </div>
@@ -400,6 +496,144 @@ function showToast(msg, type) {
   document.body.appendChild(el);
   requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===== HESAP EKSTRESİ =====
+function openStatement(contactId) {
+  stmtContactId = contactId;
+  const c = contacts.find(x => x.id === contactId);
+  document.getElementById('stmt-title').textContent = (c?.name || '') + ' — Hesap Ekstresi';
+  // Default: son 1 yıl
+  const now = new Date();
+  const yearAgo = new Date(now.getFullYear()-1, now.getMonth(), now.getDate());
+  document.getElementById('stmt-from').value = yearAgo.toISOString().split('T')[0];
+  document.getElementById('stmt-to').value = now.toISOString().split('T')[0];
+  openModal('statement-modal');
+  loadStatement();
+}
+
+async function loadStatement() {
+  if (!stmtContactId) return;
+  const from = document.getElementById('stmt-from').value;
+  const to = document.getElementById('stmt-to').value;
+  const tbody = document.getElementById('stmt-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--gray400)">Yükleniyor...</td></tr>';
+
+  const lines = [];
+  const c = contacts.find(x => x.id === stmtContactId);
+
+  // Sales invoices (customer)
+  if (c?.is_customer) {
+    let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status')
+      .eq('company_id', companyId).eq('customer_id', stmtContactId).eq('is_active', true)
+      .in('status', ['invoiced','paid','overdue']);
+    if (from) q = q.gte('issue_date', from);
+    if (to) q = q.lte('issue_date', to);
+    const { data: sales } = await q.order('issue_date');
+    (sales||[]).forEach(o => {
+      lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total||0), credit: 0, status: o.status });
+    });
+  }
+
+  // Purchase invoices (supplier)
+  if (c?.is_supplier) {
+    let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status')
+      .eq('company_id', companyId).eq('supplier_id', stmtContactId).eq('is_active', true)
+      .in('status', ['invoiced','paid','overdue']);
+    if (from) q = q.gte('issue_date', from);
+    if (to) q = q.lte('issue_date', to);
+    const { data: purchases } = await q.order('issue_date');
+    (purchases||[]).forEach(o => {
+      lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status });
+    });
+  }
+
+  // Payments for sales orders
+  if (c?.is_customer) {
+    let q = sb.from('payments').select('id,amount,payment_date,reference,sales_orders!inner(customer_id,order_number,company_id)')
+      .eq('sales_orders.company_id', companyId).eq('sales_orders.customer_id', stmtContactId);
+    if (from) q = q.gte('payment_date', from);
+    if (to) q = q.lte('payment_date', to);
+    const { data: sp } = await q;
+    (sp||[]).forEach(p => {
+      lines.push({ date: p.payment_date, doc: p.reference || p.sales_orders?.order_number || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0) });
+    });
+  }
+
+  // Payments for purchase orders
+  if (c?.is_supplier) {
+    let q = sb.from('payments').select('id,amount,payment_date,reference,purchase_orders!inner(supplier_id,order_number,company_id)')
+      .eq('purchase_orders.company_id', companyId).eq('purchase_orders.supplier_id', stmtContactId);
+    if (from) q = q.gte('payment_date', from);
+    if (to) q = q.lte('payment_date', to);
+    const { data: pp } = await q;
+    (pp||[]).forEach(p => {
+      lines.push({ date: p.payment_date, doc: p.reference || p.purchase_orders?.order_number || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0 });
+    });
+  }
+
+  // Sort by date
+  lines.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  // Calculate running balance and totals
+  let totalDebit = 0, totalCredit = 0, runBal = 0;
+  lines.forEach(l => {
+    totalDebit += l.debit;
+    totalCredit += l.credit;
+    runBal += l.debit - l.credit;
+    l.balance = runBal;
+  });
+
+  document.getElementById('stmt-debit').textContent = fmtMoney(totalDebit);
+  document.getElementById('stmt-credit').textContent = fmtMoney(totalCredit);
+  const finalBal = totalDebit - totalCredit;
+  const balEl = document.getElementById('stmt-balance');
+  balEl.textContent = fmtMoney(Math.abs(finalBal));
+  balEl.style.color = finalBal > 0 ? 'var(--red)' : finalBal < 0 ? 'var(--green)' : 'var(--gray600)';
+
+  if (!lines.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--gray400)">Bu dönemde işlem bulunamadı</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lines.map(l => `<tr>
+    <td style="padding:6px 12px;white-space:nowrap">${l.date || '—'}</td>
+    <td style="padding:6px 12px;font-weight:500">${l.doc}</td>
+    <td style="padding:6px 12px;color:var(--gray500)">${l.desc}</td>
+    <td style="padding:6px 12px;text-align:right;color:var(--red);font-weight:600">${l.debit ? fmtMoney(l.debit) : ''}</td>
+    <td style="padding:6px 12px;text-align:right;color:var(--green);font-weight:600">${l.credit ? fmtMoney(l.credit) : ''}</td>
+    <td style="padding:6px 12px;text-align:right;font-weight:700;color:${l.balance>0?'var(--red)':l.balance<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(l.balance))}</td>
+  </tr>`).join('') + `<tr style="background:var(--gray50);font-weight:700;border-top:2px solid var(--gray300)">
+    <td colspan="3" style="padding:8px 12px">TOPLAM</td>
+    <td style="padding:8px 12px;text-align:right;color:var(--red)">${fmtMoney(totalDebit)}</td>
+    <td style="padding:8px 12px;text-align:right;color:var(--green)">${fmtMoney(totalCredit)}</td>
+    <td style="padding:8px 12px;text-align:right;color:${finalBal>0?'var(--red)':finalBal<0?'var(--green)':'var(--gray600)'}">${fmtMoney(Math.abs(finalBal))}</td>
+  </tr>`;
+}
+
+function printStatement() {
+  const c = contacts.find(x => x.id === stmtContactId);
+  const from = document.getElementById('stmt-from').value;
+  const to = document.getElementById('stmt-to').value;
+  const tableHTML = document.querySelector('#statement-modal table').outerHTML;
+  const summary = document.getElementById('stmt-summary').innerHTML;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Hesap Ekstresi — ${c?.name||''}</title>
+    <style>body{font-family:Arial,sans-serif;padding:20px;color:#333}
+    h2{margin:0 0 4px}h3{margin:0 0 16px;color:#666;font-weight:400;font-size:14px}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px}
+    th{background:#f3f4f6;padding:8px 10px;text-align:left;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase}
+    td{padding:6px 10px;border-bottom:1px solid #eee}
+    .summary{display:flex;gap:40px;margin-bottom:10px;font-size:13px}
+    .summary div{flex:1}
+    .summary strong{display:block;font-size:16px;margin-top:2px}
+    @media print{body{padding:0}}</style></head><body>
+    <h2>${c?.name||''}</h2>
+    <h3>Hesap Ekstresi: ${from} — ${to}</h3>
+    <div class="summary">${summary}</div>
+    ${tableHTML}
+    <script>window.print();<\/script></body></html>`);
+  w.document.close();
 }
 
 async function handleLogout() { await sb.auth.signOut(); window.location.href = 'auth.html'; }
