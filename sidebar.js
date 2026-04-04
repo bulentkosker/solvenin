@@ -9,7 +9,7 @@
   const CSS = `
     :root {
       --sidebar-w: 220px;
-      --sb-bg:       #1e293b;
+      --sb-bg:       #334155;
       --sb-accent:   #38bdf8;
       --sb-accent2:  #0ea5e9;
       --font-display: 'Outfit', sans-serif;
@@ -219,7 +219,7 @@
     }
     #ai-chat-panel.open { display: flex; }
     .ai-chat-header {
-      background: linear-gradient(135deg, #1e40af 0%, #1e293b 100%);
+      background: linear-gradient(135deg, #1e40af 0%, #334155 100%);
       padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
     .ai-chat-header-icon { font-size: 20px; }
@@ -285,7 +285,7 @@
       font-size: 13px; font-weight: 600; cursor: pointer;
       transition: all .15s; white-space: nowrap; flex-shrink: 0;
     }
-    #ai-send-btn:hover:not(:disabled) { background: #1e293b; }
+    #ai-send-btn:hover:not(:disabled) { background: #334155; }
     #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── New company modal ── */
@@ -321,7 +321,7 @@
       background: #1e40af; color: #fff; font-size: 13px;
       font-weight: 600; cursor: pointer; transition: background .15s;
     }
-    .new-company-box .btn-create:hover { background: #1e293b; }
+    .new-company-box .btn-create:hover { background: #334155; }
     .new-company-box .btn-create:disabled { opacity:.6; cursor:not-allowed; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
