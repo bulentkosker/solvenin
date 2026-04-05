@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<script src="utils.js"></script>
+<style>
+:root{--primary:#1e40af;--primary-dark:#1a2744;--white:#fff;--bg:#f5f7fb;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1a2744;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#8b5cf6;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif;--sidebar-w:220px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+.topbar{height:56px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:40}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.content{padding:16px;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#1a3a9e}
+.btn-outline{background:var(--white);border:1px solid var(--gray200);color:var(--gray600)}.btn-outline:hover{background:var(--gray50)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.view-toggle{display:flex;border:1px solid var(--gray200);border-radius:8px;overflow:hidden}
+.view-toggle button{padding:6px 14px;border:none;background:var(--white);font-size:11px;cursor:pointer;font-weight:500;color:var(--gray500)}
+.view-toggle button.active{background:var(--primary);color:#fff}
+
+/* KANBAN */
+.kanban{display:flex;gap:10px;flex:1;overflow-x:auto;padding-bottom:8px}
+.kanban-col{min-width:220px;width:220px;flex-shrink:0;background:var(--gray50);border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 160px)}
+.kanban-col-header{padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.kanban-col-header .badge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600}
+.kanban-col-body{flex:1;overflow-y:auto;padding:4px 8px 8px;display:flex;flex-direction:column;gap:6px}
+.kanban-col-footer{padding:6px 12px;font-size:10px;color:var(--gray400);text-align:center;border-top:1px solid var(--gray200);flex-shrink:0}
+
+.opp-card{background:var(--white);border:1px solid var(--gray200);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.opp-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);border-color:var(--gray300)}
+.opp-card.today{border-left-color:var(--orange)}
+.opp-card.overdue{border-left-color:var(--red)}
+.opp-card.won{background:#f0fdf4;border-left-color:var(--green)}
+.opp-card.lost{background:var(--gray50);border-left-color:var(--gray300);opacity:.7}
+.opp-card-company{font-size:10px;color:var(--gray400);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.opp-card-title{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.3}
+.opp-card-value{font-size:12px;font-weight:700;color:var(--primary)}
+.opp-card-meta{display:flex;gap:8px;font-size:10px;color:var(--gray400);margin-top:4px}
+.opp-card-action{font-size:10px;color:var(--orange);margin-top:4px;font-weight:500}
+.opp-card-action.overdue{color:var(--red)}
+
+/* LIST VIEW */
+.list-view{display:none}
+.list-view table{width:100%;border-collapse:collapse;font-size:12px}
+.list-view th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200);background:var(--gray50)}
+.list-view td{padding:8px 12px;border-bottom:1px solid var(--gray100)}
+.list-view tr:hover td{background:var(--gray50)}
+.stage-badge{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;display:inline-block}
+
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;right:-480px;width:480px;max-width:95vw;height:100vh;background:var(--white);z-index:201;transition:right .25s;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.1)}
+.drawer.open{right:0}
+.drawer-header{padding:16px 20px;border-bottom:1px solid var(--gray200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-body{flex:1;overflow-y:auto;padding:16px 20px}
+.drawer-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:var(--white);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+
+.timeline{margin-top:16px}
+.tl-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray100)}
+.tl-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--gray100)}
+.tl-content{flex:1;min-width:0}
+.tl-meta{font-size:10px;color:var(--gray400);margin-bottom:2px}
+.tl-desc{font-size:12px;line-height:1.4}
+.tl-next{font-size:11px;color:var(--orange);margin-top:3px;font-weight:500}
+
+.act-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
+.act-btn{padding:5px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;cursor:pointer;background:var(--white);transition:all .15s}
+.act-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:16px;padding:0;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.08)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--gray100)}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:var(--white);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px 24px}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 24px 20px;border-top:1px solid var(--gray100)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field label{font-size:11px;font-weight:600;color:var(--gray500);display:block;margin-bottom:3px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none}
+.field.full{grid-column:1/-1}
+
+#loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:#38bdf8}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:10px!important}.kanban-col{min-width:180px;width:180px}}
+</style>
+<script src="sidebar.js"></script>
+<link rel="stylesheet" href="theme.css">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KPXCV8FEZB"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-KPXCV8FEZB');</script>
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">🎯 CRM — Satış Pipeline</div>
+    <div style="flex:1"></div>
+    <div class="view-toggle">
+      <button class="active" onclick="setView('kanban',this)">Kanban</button>
+      <button onclick="setView('list',this)">Liste</button>
+    </div>
+    <button class="btn btn-primary" onclick="openOppModal()">+ Yeni Fırsat</button>
+  </header>
+
+  <div class="content">
+    <div class="toolbar">
+      <input type="text" id="crm-search" placeholder="🔍 Fırsat ara..." oninput="renderAll()" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:200px">
+      <select id="crm-filter-assigned" onchange="renderAll()" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:12px"><option value="">Tüm Temsilciler</option></select>
+    </div>
+
+    <!-- KANBAN -->
+    <div class="kanban" id="kanban-view"></div>
+
+    <!-- LIST -->
+    <div class="list-view" id="list-view" style="overflow:auto;flex:1">
+      <table>
+        <thead><tr>
+          <th>MÜŞTERİ</th><th>FIRSAT</th><th>AŞAMA</th><th>DEĞER</th><th>OLASILIK</th><th>TEMSİLCİ</th><th>KAPANIŞ</th><th>SON AKTİVİTE</th>
+        </tr></thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div id="dr-company" style="font-size:11px;color:var(--gray400);font-weight:600;text-transform:uppercase"></div>
+      <div id="dr-title" style="font-size:16px;font-weight:700;margin-top:2px"></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="dr-stage" onchange="updateStage()" style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;font-weight:600"></select>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div><div style="font-size:10px;color:var(--gray400)">DEĞER</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)">OLASILIK</div><div id="dr-prob" style="font-size:18px;font-weight:800"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)">TEMSİLCİ</div><div id="dr-assigned" style="font-size:12px;font-weight:500"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)">KAPANIŞ</div><div id="dr-close" style="font-size:12px;font-weight:500"></div></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="btn btn-outline btn-sm" onclick="createQuote()">📄 Teklif Oluştur</button>
+      <button class="btn btn-outline btn-sm" onclick="convertToOrder()">🛒 Siparişe Dönüştür</button>
+      <button class="btn btn-outline btn-sm" onclick="editOpp()">✏️ Düzenle</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">Aktiviteler</div>
+    <div class="act-btns">
+      <button class="act-btn" onclick="addActivity('call')">📞 Arama</button>
+      <button class="act-btn" onclick="addActivity('email')">📧 Email</button>
+      <button class="act-btn" onclick="addActivity('meeting')">🤝 Toplantı</button>
+      <button class="act-btn" onclick="addActivity('whatsapp')">💬 WhatsApp</button>
+      <button class="act-btn" onclick="addActivity('note')">📝 Not</button>
+    </div>
+    <div id="act-form" style="display:none;margin-top:10px;padding:10px;background:var(--gray50);border-radius:8px">
+      <input type="hidden" id="act-type">
+      <textarea id="act-desc" placeholder="Açıklama..." rows="2" style="width:100%;padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;margin-bottom:6px"></textarea>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="act-next" placeholder="Sonraki adım..." style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
+        <input type="date" id="act-next-date" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
+        <button class="btn btn-primary btn-sm" onclick="saveActivity()">Kaydet</button>
+      </div>
+    </div>
+    <div class="timeline" id="dr-timeline"></div>
+  </div>
+</div>
+
+<!-- OPP MODAL -->
+<div class="modal-overlay" id="opp-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="opp-modal-title">Yeni Fırsat</span>
+      <button class="modal-close" onclick="closeModal('opp-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full"><label>Müşteri *</label><select id="opp-contact"><option value="">Seç...</option></select></div>
+        <div class="field full"><label>Fırsat Başlığı *</label><input type="text" id="opp-title" placeholder="Örn: Mercimek ihracatı"></div>
+        <div class="field"><label>Değer</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
+        <div class="field"><label>Olasılık %</label><input type="number" id="opp-prob" value="10" min="0" max="100"></div>
+        <div class="field"><label>Beklenen Kapanış</label><input type="date" id="opp-close"></div>
+        <div class="field"><label>Aşama</label>
+          <select id="opp-stage">
+            <option value="lead">Lead</option><option value="contacted">İletişimde</option>
+            <option value="proposal">Teklif Verildi</option><option value="negotiation">Müzakerede</option>
+            <option value="won">Kazanıldı</option><option value="lost">Kaybedildi</option>
+            <option value="postponed">Ertelendi</option>
+          </select>
+        </div>
+        <div class="field full"><label>Notlar</label><textarea id="opp-notes" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('opp-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveOpp()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+let companyId = null, currentUser = null;
+let opps = [], contacts = [], activities = {};
+let currentView = 'kanban', selectedOppId = null, editingOppId = null;
+
+const STAGES = [
+  {key:'lead',label:'Lead',color:'#3b82f6',bg:'#eff6ff'},
+  {key:'contacted',label:'İletişimde',color:'#8b5cf6',bg:'#f5f3ff'},
+  {key:'proposal',label:'Teklif Verildi',color:'#f59e0b',bg:'#fffbeb'},
+  {key:'negotiation',label:'Müzakerede',color:'#f97316',bg:'#fff7ed'},
+  {key:'won',label:'Kazanıldı',color:'#22c55e',bg:'#f0fdf4'},
+  {key:'lost',label:'Kaybedildi',color:'#6b7280',bg:'#f9fafb'},
+  {key:'postponed',label:'Ertelendi',color:'#94a3b8',bg:'#f8fafc'}
+];
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+  const { data: companies } = await sb.rpc('get_my_companies');
+  if (!companies?.length) return;
+  const saved = localStorage.getItem('currentCompanyId');
+  const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
+  companyId = active.company_id;
+
+  await Promise.all([loadOpps(), loadContacts()]);
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
+}
+
+async function loadOpps() {
+  const { data } = await sb.from('crm_opportunities').select('*, contacts(name)').eq('company_id', companyId).order('created_at', { ascending: false });
+  opps = data || [];
+  // Load last activity for each
+  const ids = opps.map(o => o.id);
+  if (ids.length) {
+    const { data: acts } = await sb.from('crm_activities').select('opportunity_id,type,description,next_action,next_action_date,created_at').eq('company_id', companyId).order('created_at', { ascending: false });
+    activities = {};
+    (acts || []).forEach(a => { if (!activities[a.opportunity_id]) activities[a.opportunity_id] = a; });
+  }
+  renderAll();
+}
+
+async function loadContacts() {
+  const { data } = await sb.from('contacts').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name');
+  contacts = data || [];
+  const sel = document.getElementById('opp-contact');
+  sel.innerHTML = '<option value="">Seç...</option>' + contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function F(n) { return fmt(n); }
+function relTime(d) {
+  if (!d) return '';
+  const diff = Math.floor((Date.now() - new Date(d)) / 86400000);
+  if (diff === 0) return 'Bugün';
+  if (diff === 1) return 'Dün';
+  if (diff < 0) return Math.abs(diff) + ' gün sonra';
+  return diff + ' gün önce';
+}
+
+function renderAll() {
+  const q = (document.getElementById('crm-search')?.value || '').toLowerCase();
+  const assignFilter = document.getElementById('crm-filter-assigned')?.value || '';
+  const filtered = opps.filter(o => {
+    if (q && !o.title.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
+    if (assignFilter && o.assigned_to !== assignFilter) return false;
+    return true;
+  });
+  renderKanban(filtered);
+  renderList(filtered);
+}
+
+function renderKanban(list) {
+  const kanban = document.getElementById('kanban-view');
+  const today = new Date().toISOString().split('T')[0];
+  kanban.innerHTML = STAGES.map(s => {
+    const items = list.filter(o => o.stage === s.key);
+    const totalVal = items.reduce((sum, o) => sum + parseFloat(o.value || 0), 0);
+    return `<div class="kanban-col">
+      <div class="kanban-col-header" style="color:${s.color}">
+        <span>${s.label}</span>
+        <span class="badge" style="background:${s.bg};color:${s.color}">${items.length}</span>
+      </div>
+      <div class="kanban-col-body" ondragover="event.preventDefault()" ondrop="dropCard(event,'${s.key}')">
+        ${items.map(o => {
+          const act = activities[o.id];
+          const nextDate = act?.next_action_date;
+          let cardClass = '';
+          if (s.key === 'won') cardClass = 'won';
+          else if (s.key === 'lost') cardClass = 'lost';
+          else if (nextDate && nextDate < today) cardClass = 'overdue';
+          else if (nextDate && nextDate === today) cardClass = 'today';
+          return `<div class="opp-card ${cardClass}" draggable="true" ondragstart="dragCard(event,'${o.id}')" onclick="openDrawer('${o.id}')">
+            <div class="opp-card-company">${o.contacts?.name || '—'}</div>
+            <div class="opp-card-title">${o.title}</div>
+            <div class="opp-card-value">${F(o.value)} <span style="font-size:10px;font-weight:400;color:var(--gray400)">${o.probability}%</span></div>
+            <div class="opp-card-meta">
+              ${o.expected_close_date ? '📅 ' + o.expected_close_date.substring(5) : ''}
+            </div>
+            ${act?.next_action ? `<div class="opp-card-action ${nextDate && nextDate < today ? 'overdue' : ''}">⚡ ${act.next_action} ${nextDate ? '(' + relTime(nextDate) + ')' : ''}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="kanban-col-footer">${totalVal > 0 ? F(totalVal) : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderList(list) {
+  const tbody = document.getElementById('list-tbody');
+  const stageMap = {}; STAGES.forEach(s => stageMap[s.key] = s);
+  tbody.innerHTML = list.map(o => {
+    const s = stageMap[o.stage] || {};
+    const act = activities[o.id];
+    return `<tr onclick="openDrawer('${o.id}')" style="cursor:pointer">
+      <td><strong>${o.contacts?.name || '—'}</strong></td>
+      <td>${o.title}</td>
+      <td><span class="stage-badge" style="background:${s.bg};color:${s.color}">${s.label}</span></td>
+      <td class="text-right" style="font-weight:600">${F(o.value)}</td>
+      <td class="text-right">${o.probability}%</td>
+      <td style="color:var(--gray500)">—</td>
+      <td style="color:var(--gray500)">${o.expected_close_date || '—'}</td>
+      <td style="color:var(--gray400);font-size:11px">${act ? relTime(act.created_at) : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// VIEW
+function setView(v, btn) {
+  currentView = v;
+  document.getElementById('kanban-view').style.display = v === 'kanban' ? 'flex' : 'none';
+  document.getElementById('list-view').style.display = v === 'list' ? 'block' : 'none';
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// DRAG & DROP
+let draggedOppId = null;
+function dragCard(e, id) { draggedOppId = id; e.dataTransfer.effectAllowed = 'move'; }
+async function dropCard(e, stage) {
+  e.preventDefault();
+  if (!draggedOppId) return;
+  await sb.from('crm_opportunities').update({ stage, updated_at: new Date().toISOString() }).eq('id', draggedOppId);
+  const opp = opps.find(o => o.id === draggedOppId);
+  if (opp) opp.stage = stage;
+  draggedOppId = null;
+  renderAll();
+}
+
+// MODAL
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+function openOppModal() {
+  editingOppId = null;
+  document.getElementById('opp-modal-title').textContent = 'Yeni Fırsat';
+  document.getElementById('opp-contact').value = '';
+  document.getElementById('opp-title').value = '';
+  document.getElementById('opp-value').value = '';
+  document.getElementById('opp-prob').value = '10';
+  document.getElementById('opp-close').value = '';
+  document.getElementById('opp-stage').value = 'lead';
+  document.getElementById('opp-notes').value = '';
+  openModal('opp-modal');
+}
+
+function editOpp() {
+  const o = opps.find(x => x.id === selectedOppId);
+  if (!o) return;
+  editingOppId = o.id;
+  document.getElementById('opp-modal-title').textContent = 'Fırsatı Düzenle';
+  document.getElementById('opp-contact').value = o.contact_id || '';
+  document.getElementById('opp-title').value = o.title;
+  document.getElementById('opp-value').value = o.value || '';
+  document.getElementById('opp-prob').value = o.probability || 0;
+  document.getElementById('opp-close').value = o.expected_close_date || '';
+  document.getElementById('opp-stage').value = o.stage;
+  document.getElementById('opp-notes').value = o.notes || '';
+  openModal('opp-modal');
+}
+
+async function saveOpp() {
+  const title = document.getElementById('opp-title').value.trim();
+  const contactId = document.getElementById('opp-contact').value;
+  if (!title) { showToast('Başlık giriniz', 'error'); return; }
+  const payload = {
+    company_id: companyId,
+    contact_id: contactId || null,
+    title,
+    value: parseFloat(document.getElementById('opp-value').value) || 0,
+    probability: parseInt(document.getElementById('opp-prob').value) || 0,
+    expected_close_date: document.getElementById('opp-close').value || null,
+    stage: document.getElementById('opp-stage').value,
+    notes: document.getElementById('opp-notes').value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  if (editingOppId) {
+    await sb.from('crm_opportunities').update(payload).eq('id', editingOppId);
+  } else {
+    payload.created_by = currentUser.id;
+    payload.assigned_to = currentUser.id;
+    await sb.from('crm_opportunities').insert(payload);
+  }
+  closeModal('opp-modal');
+  await loadOpps();
+  showToast('Fırsat kaydedildi', 'success');
+}
+
+// DRAWER
+function openDrawer(id) {
+  selectedOppId = id;
+  const o = opps.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('dr-company').textContent = o.contacts?.name || '—';
+  document.getElementById('dr-title').textContent = o.title;
+  document.getElementById('dr-value').textContent = F(o.value);
+  document.getElementById('dr-prob').textContent = o.probability + '%';
+  document.getElementById('dr-assigned').textContent = '—';
+  document.getElementById('dr-close').textContent = o.expected_close_date || '—';
+  // Stage dropdown
+  const stageSel = document.getElementById('dr-stage');
+  stageSel.innerHTML = STAGES.map(s => `<option value="${s.key}" ${s.key===o.stage?'selected':''}>${s.label}</option>`).join('');
+  document.getElementById('act-form').style.display = 'none';
+  loadTimeline(id);
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  selectedOppId = null;
+}
+
+async function updateStage() {
+  const stage = document.getElementById('dr-stage').value;
+  await sb.from('crm_opportunities').update({ stage, updated_at: new Date().toISOString() }).eq('id', selectedOppId);
+  const opp = opps.find(o => o.id === selectedOppId);
+  if (opp) opp.stage = stage;
+  renderAll();
+}
+
+async function loadTimeline(oppId) {
+  const { data } = await sb.from('crm_activities').select('*').eq('opportunity_id', oppId).order('created_at', { ascending: false });
+  const icons = { call:'📞', email:'📧', meeting:'🤝', whatsapp:'💬', note:'📝' };
+  const tl = document.getElementById('dr-timeline');
+  if (!data?.length) { tl.innerHTML = '<div style="color:var(--gray400);font-size:12px;padding:10px 0">Henüz aktivite yok</div>'; return; }
+  tl.innerHTML = data.map(a => `<div class="tl-item">
+    <div class="tl-icon">${icons[a.type]||'📝'}</div>
+    <div class="tl-content">
+      <div class="tl-meta">${relTime(a.created_at)}</div>
+      <div class="tl-desc">${a.description || '—'}</div>
+      ${a.next_action ? `<div class="tl-next">⚡ ${a.next_action} ${a.next_action_date ? '→ ' + a.next_action_date : ''}</div>` : ''}
+    </div>
+  </div>`).join('');
+}
+
+// ACTIVITY
+function addActivity(type) {
+  document.getElementById('act-type').value = type;
+  document.getElementById('act-desc').value = '';
+  document.getElementById('act-next').value = '';
+  document.getElementById('act-next-date').value = '';
+  document.getElementById('act-form').style.display = '';
+  document.getElementById('act-desc').focus();
+}
+
+async function saveActivity() {
+  const type = document.getElementById('act-type').value;
+  const desc = document.getElementById('act-desc').value.trim();
+  if (!desc) { showToast('Açıklama giriniz', 'error'); return; }
+  const nextAction = document.getElementById('act-next').value.trim() || null;
+  const nextDate = document.getElementById('act-next-date').value || null;
+  await sb.from('crm_activities').insert({
+    company_id: companyId, opportunity_id: selectedOppId,
+    type, description: desc, next_action: nextAction,
+    next_action_date: nextDate, created_by: currentUser.id
+  });
+  // Auto-reminder
+  if (nextDate) {
+    await sb.from('crm_reminders').insert({
+      company_id: companyId, opportunity_id: selectedOppId,
+      user_id: currentUser.id, reminder_date: nextDate,
+      message: nextAction || desc
+    });
+  }
+  document.getElementById('act-form').style.display = 'none';
+  await loadOpps();
+  loadTimeline(selectedOppId);
+  showToast('Aktivite kaydedildi', 'success');
+}
+
+// QUOTE & ORDER
+function createQuote() {
+  const o = opps.find(x => x.id === selectedOppId);
+  if (!o) return;
+  window.location.href = `sales.html?action=new&customer=${o.contact_id}&type=quote&opp=${o.id}`;
+}
+function convertToOrder() {
+  const o = opps.find(x => x.id === selectedOppId);
+  if (!o) return;
+  window.location.href = `sales.html?action=new&customer=${o.contact_id}&type=sale&opp=${o.id}`;
+}
+
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;background:${type === 'error' ? '#dc2626' : '#1e40af'}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>

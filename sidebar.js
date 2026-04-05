@@ -414,6 +414,7 @@
           ]
         },
         { icon: '👤', key: 'nav_contacts', href: 'contacts.html' },
+        { icon: '🎯', key: 'nav_crm', href: 'crm.html' },
         { icon: '🖥️', key: 'nav_pos', href: 'pos.html' },
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
