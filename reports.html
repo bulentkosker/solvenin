@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Raporlar</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="i18n.js"></script>
+<script src="utils.js"></script>
+<style>
+:root{--primary:#1e40af;--primary-dark:#1a2744;--white:#fff;--bg:#f8f9fa;
+--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;
+--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1a2744;
+--green:#22c55e;--red:#ef4444;--orange:#f59e0b;
+--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif;
+--sidebar-w:220px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:56px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:40}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.content{padding:20px;flex:1;display:flex;gap:16px}
+
+/* Report nav */
+.report-nav{width:200px;flex-shrink:0}
+.report-nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray600);transition:all .15s;margin-bottom:2px;font-weight:500}
+.report-nav-item:hover{background:var(--gray100);color:var(--gray800)}
+.report-nav-item.active{background:rgba(30,64,175,0.08);color:var(--primary);font-weight:600}
+.report-nav-icon{font-size:15px;width:20px;text-align:center}
+.report-nav-section{font-size:10px;font-weight:700;color:var(--gray400);text-transform:uppercase;letter-spacing:1px;padding:12px 12px 4px;margin-top:8px}
+.report-nav-section:first-child{margin-top:0}
+
+/* Report content */
+.report-content{flex:1;min-width:0}
+.report-card{background:var(--white);border:1px solid var(--gray200);border-radius:10px;overflow:hidden}
+.report-header{padding:16px 20px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.report-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.report-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.report-filters input,.report-filters select{padding:6px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:var(--font-body)}
+.report-filters input[type=date]{width:130px}
+.btn-run{padding:6px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-run:hover{background:#1a3a9e}
+.btn-export{padding:5px 12px;border:1px solid var(--gray200);background:var(--white);border-radius:6px;font-size:11px;cursor:pointer;color:var(--gray600);font-weight:500}
+.btn-export:hover{border-color:var(--primary);color:var(--primary)}
+
+.report-body{overflow-x:auto}
+.report-body table{width:100%;border-collapse:collapse;font-size:12px}
+.report-body th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gray200);background:var(--gray50);white-space:nowrap;position:sticky;top:0}
+.report-body td{padding:6px 12px;border-bottom:1px solid var(--gray100);white-space:nowrap}
+.report-body tr:hover td{background:var(--gray50)}
+.report-body .total-row{background:var(--gray50);font-weight:700;border-top:2px solid var(--gray300)}
+.report-body .total-row td{padding:8px 12px}
+.text-right{text-align:right}
+.text-red{color:var(--red)}
+.text-green{color:var(--green)}
+.text-orange{color:var(--orange)}
+.report-empty{padding:40px 20px;text-align:center;color:var(--gray400);font-size:13px}
+.report-loading{padding:40px 20px;text-align:center;color:var(--gray400);font-size:13px}
+.overdue-row td{background:#fef2f2!important}
+
+#loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:#38bdf8}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:12px!important;flex-direction:column}.report-nav{width:100%;display:flex;gap:4px;overflow-x:auto;flex-shrink:0}.report-nav-section{display:none}.report-nav-item{white-space:nowrap;padding:6px 10px;font-size:11px}}
+</style>
+<script src="sidebar.js"></script>
+<link rel="stylesheet" href="theme.css">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KPXCV8FEZB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-KPXCV8FEZB');
+</script>
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">📊 Raporlar</div>
+    <div style="flex:1"></div>
+  </header>
+
+  <div class="content">
+    <!-- Sol: Rapor menüsü -->
+    <nav class="report-nav" id="report-nav">
+      <div class="report-nav-section">STOK & SATIŞ</div>
+      <div class="report-nav-item active" onclick="switchReport('stock',this)"><span class="report-nav-icon">📦</span> Stok Durumu</div>
+      <div class="report-nav-item" onclick="switchReport('receivables',this)"><span class="report-nav-icon">💰</span> Borçlu Listesi</div>
+      <div class="report-nav-item" onclick="switchReport('payables',this)"><span class="report-nav-icon">🛒</span> Alacaklı Listesi</div>
+      <div class="report-nav-item" onclick="switchReport('sales',this)"><span class="report-nav-icon">📈</span> Satış Özeti</div>
+      <div class="report-nav-section">FİNANS</div>
+      <div class="report-nav-item" onclick="switchReport('cashbank',this)"><span class="report-nav-icon">🏦</span> Kasa/Banka</div>
+      <div class="report-nav-item" onclick="switchReport('statement',this)"><span class="report-nav-icon">👥</span> Cari Ekstre</div>
+      <div class="report-nav-section">MUHASEBE</div>
+      <div class="report-nav-item" onclick="switchReport('journal',this)"><span class="report-nav-icon">📋</span> Yevmiye Defteri</div>
+      <div class="report-nav-item" onclick="switchReport('trial',this)"><span class="report-nav-icon">📊</span> Mizan</div>
+    </nav>
+
+    <!-- Sağ: Rapor içeriği -->
+    <div class="report-content">
+      <div class="report-card">
+        <div class="report-header">
+          <div class="report-title" id="report-title">📦 Stok Durumu</div>
+          <div class="report-filters" id="report-filters"></div>
+        </div>
+        <div class="report-header" id="report-actions" style="padding:8px 20px;border-bottom:1px solid var(--gray100);display:none">
+          <div id="report-summary" style="font-size:12px;color:var(--gray500)"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-export" onclick="exportPDF()">📄 PDF</button>
+            <button class="btn-export" onclick="exportExcel()">📊 Excel</button>
+          </div>
+        </div>
+        <div class="report-body" id="report-body" style="max-height:calc(100vh - 220px);overflow-y:auto">
+          <div class="report-empty">Rapor seçin ve "Getir" butonuna tıklayın</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+let companyId = null, baseCurrency = 'KZT';
+let currentReport = 'stock';
+let lastReportData = { headers: [], rows: [], title: '' };
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  const { data: companies } = await sb.rpc('get_my_companies');
+  if (!companies?.length) return;
+  const saved = localStorage.getItem('currentCompanyId');
+  const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
+  companyId = active.company_id;
+  localStorage.setItem('currentCompanyId', companyId);
+
+  const { data: comp } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
+  baseCurrency = comp?.base_currency || 'KZT';
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
+
+  switchReport('stock', document.querySelector('.report-nav-item.active'));
+}
+
+function F(n) { return fmt(n); }
+function sym() { return window.getCurrencySymbol ? window.getCurrencySymbol() : '₸'; }
+
+// Default dates: this month
+function defaultFrom() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
+function defaultTo() { return new Date().toISOString().split('T')[0]; }
+
+function switchReport(key, el) {
+  currentReport = key;
+  document.querySelectorAll('.report-nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('report-actions').style.display = 'none';
+  document.getElementById('report-body').innerHTML = '<div class="report-empty">Filtreleri ayarlayın ve "Getir" butonuna tıklayın</div>';
+
+  const titles = { stock:'📦 Stok Durumu', receivables:'💰 Borçlu Listesi', payables:'🛒 Alacaklı Listesi', sales:'📈 Satış Özeti', cashbank:'🏦 Kasa/Banka Hareketleri', statement:'👥 Cari Ekstre', journal:'📋 Yevmiye Defteri', trial:'📊 Mizan' };
+  document.getElementById('report-title').textContent = titles[key] || key;
+
+  const f = document.getElementById('report-filters');
+  const df = defaultFrom(), dt = defaultTo();
+
+  if (key === 'stock') {
+    f.innerHTML = `<select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadWarehouses();
+  } else if (key === 'receivables' || key === 'payables') {
+    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+  } else if (key === 'sales') {
+    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-group"><option value="daily">Günlük</option><option value="monthly">Aylık</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+  } else if (key === 'cashbank') {
+    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-account"><option value="">Tüm Hesaplar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadAccounts();
+  } else if (key === 'statement') {
+    f.innerHTML = `<select id="f-contact" style="min-width:160px"><option value="">Cari Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadContacts();
+  } else if (key === 'journal') {
+    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+  } else if (key === 'trial') {
+    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+  }
+}
+
+async function loadWarehouses() {
+  const { data } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).order('name');
+  const sel = document.getElementById('f-warehouse');
+  if (sel) sel.innerHTML = '<option value="">Tüm Depolar</option>' + (data||[]).map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+}
+async function loadAccounts() {
+  const [cr, ba] = await Promise.all([
+    sb.from('cash_registers').select('id,name').eq('company_id', companyId).eq('is_active', true),
+    sb.from('bank_accounts').select('id,account_name').eq('company_id', companyId).eq('is_active', true)
+  ]);
+  const sel = document.getElementById('f-account');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Tüm Hesaplar</option>' +
+    (cr.data||[]).map(r => `<option value="cash:${r.id}">💵 ${r.name}</option>`).join('') +
+    (ba.data||[]).map(a => `<option value="bank:${a.id}">🏦 ${a.account_name}</option>`).join('');
+}
+async function loadContacts() {
+  const { data } = await sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true).order('name');
+  const sel = document.getElementById('f-contact');
+  if (sel) sel.innerHTML = '<option value="">Cari Seç...</option>' + (data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function runReport() {
+  const body = document.getElementById('report-body');
+  body.innerHTML = '<div class="report-loading">⏳ Yükleniyor...</div>';
+  const r = currentReport;
+  if (r === 'stock') reportStock();
+  else if (r === 'receivables') reportReceivables();
+  else if (r === 'payables') reportPayables();
+  else if (r === 'sales') reportSales();
+  else if (r === 'cashbank') reportCashBank();
+  else if (r === 'statement') reportStatement();
+  else if (r === 'journal') reportJournal();
+  else if (r === 'trial') reportTrial();
+}
+
+function renderTable(headers, rows, footerRow) {
+  lastReportData = { headers, rows, title: document.getElementById('report-title').textContent };
+  document.getElementById('report-actions').style.display = 'flex';
+  document.getElementById('report-summary').textContent = rows.length + ' kayıt';
+  const body = document.getElementById('report-body');
+  if (!rows.length) { body.innerHTML = '<div class="report-empty">Bu filtrelere uygun veri bulunamadı</div>'; return; }
+  let html = '<table><thead><tr>' + headers.map(h => `<th class="${h.align||''}">${h.label}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(row => {
+    const cls = row._class || '';
+    html += `<tr class="${cls}">` + headers.map(h => `<td class="${h.align||''} ${row._cellClass?.[h.key]||''}">${row[h.key] ?? '—'}</td>`).join('') + '</tr>';
+  });
+  if (footerRow) {
+    html += `<tr class="total-row">` + headers.map(h => `<td class="${h.align||''}">${footerRow[h.key] ?? ''}</td>`).join('') + '</tr>';
+  }
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+// ===== RAPOR 1: STOK DURUMU =====
+async function reportStock() {
+  const whId = document.getElementById('f-warehouse')?.value;
+  let q = sb.from('products').select('id,name,sku,unit,cost_price,quantity,categories(name)').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await q;
+  const headers = [
+    {key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'category',label:'KATEGORİ'},
+    {key:'unit',label:'BİRİM'},{key:'qty',label:'STOK',align:'text-right'},
+    {key:'cost',label:'MALİYET',align:'text-right'},{key:'value',label:'DEĞER',align:'text-right'}
+  ];
+  let totalValue = 0;
+  const rows = (data||[]).map(p => {
+    const val = (p.quantity||0) * (p.cost_price||0);
+    totalValue += val;
+    return { sku: p.sku||'—', name: p.name, category: p.categories?.name||'—', unit: p.unit||'—', qty: p.quantity||0, cost: F(p.cost_price||0), value: F(val) };
+  });
+  renderTable(headers, rows, { sku:'', name:'', category:'', unit:'TOPLAM', qty:'', cost:'', value: F(totalValue) });
+}
+
+// ===== RAPOR 2: BORÇLU LİSTESİ =====
+async function reportReceivables() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let q = sb.from('sales_orders').select('id,order_number,issue_date,due_date,total,status,contacts(name)')
+    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','overdue']);
+  if (from) q = q.gte('issue_date', from);
+  if (to) q = q.lte('issue_date', to);
+  const { data } = await q.order('due_date');
+  // Get payments
+  const orderIds = (data||[]).map(o => o.id);
+  let paymentMap = {};
+  if (orderIds.length) {
+    const { data: pays } = await sb.from('payments').select('order_id,amount').in('order_id', orderIds);
+    (pays||[]).forEach(p => { paymentMap[p.order_id] = (paymentMap[p.order_id]||0) + parseFloat(p.amount); });
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    {key:'customer',label:'MÜŞTERİ'},{key:'doc',label:'FATURA NO'},{key:'date',label:'TARİH'},
+    {key:'due',label:'VADE'},{key:'total',label:'TUTAR',align:'text-right'},
+    {key:'remaining',label:'KALAN',align:'text-right'},{key:'overdue',label:'GECİKME',align:'text-right'}
+  ];
+  let totalRemaining = 0;
+  const rows = (data||[]).map(o => {
+    const paid = paymentMap[o.id] || 0;
+    const rem = parseFloat(o.total) - paid;
+    if (rem <= 0) return null;
+    totalRemaining += rem;
+    const daysOverdue = o.due_date && o.due_date < today ? Math.floor((new Date(today) - new Date(o.due_date)) / 86400000) : 0;
+    return {
+      customer: o.contacts?.name||'—', doc: o.order_number, date: o.issue_date, due: o.due_date||'—',
+      total: F(o.total), remaining: F(rem), overdue: daysOverdue > 0 ? daysOverdue + ' gün' : '—',
+      _class: daysOverdue > 0 ? 'overdue-row' : '',
+      _cellClass: daysOverdue > 0 ? { overdue: 'text-red' } : {}
+    };
+  }).filter(Boolean);
+  renderTable(headers, rows, { customer:'', doc:'', date:'', due:'TOPLAM', total:'', remaining: F(totalRemaining), overdue:'' });
+}
+
+// ===== RAPOR 3: ALACAKLI LİSTESİ =====
+async function reportPayables() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let q = sb.from('purchase_orders').select('id,order_number,issue_date,expected_date,total,status,contacts(name)')
+    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','overdue']);
+  if (from) q = q.gte('issue_date', from);
+  if (to) q = q.lte('issue_date', to);
+  const { data } = await q.order('expected_date');
+  const orderIds = (data||[]).map(o => o.id);
+  let paymentMap = {};
+  if (orderIds.length) {
+    const { data: pays } = await sb.from('payments').select('order_id,amount').in('order_id', orderIds);
+    (pays||[]).forEach(p => { paymentMap[p.order_id] = (paymentMap[p.order_id]||0) + parseFloat(p.amount); });
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const headers = [
+    {key:'supplier',label:'TEDARİKÇİ'},{key:'doc',label:'FATURA NO'},{key:'date',label:'TARİH'},
+    {key:'due',label:'VADE'},{key:'total',label:'TUTAR',align:'text-right'},
+    {key:'remaining',label:'KALAN',align:'text-right'},{key:'overdue',label:'GECİKME',align:'text-right'}
+  ];
+  let totalRemaining = 0;
+  const rows = (data||[]).map(o => {
+    const paid = paymentMap[o.id] || 0;
+    const rem = parseFloat(o.total) - paid;
+    if (rem <= 0) return null;
+    totalRemaining += rem;
+    const dueDate = o.expected_date || o.due_date;
+    const daysOverdue = dueDate && dueDate < today ? Math.floor((new Date(today) - new Date(dueDate)) / 86400000) : 0;
+    return {
+      supplier: o.contacts?.name||'—', doc: o.order_number, date: o.issue_date, due: dueDate||'—',
+      total: F(o.total), remaining: F(rem), overdue: daysOverdue > 0 ? daysOverdue + ' gün' : '—',
+      _class: daysOverdue > 0 ? 'overdue-row' : '',
+      _cellClass: daysOverdue > 0 ? { overdue: 'text-red' } : {}
+    };
+  }).filter(Boolean);
+  renderTable(headers, rows, { supplier:'', doc:'', date:'', due:'TOPLAM', total:'', remaining: F(totalRemaining), overdue:'' });
+}
+
+// ===== RAPOR 4: SATIŞ ÖZETİ =====
+async function reportSales() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const group = document.getElementById('f-group')?.value || 'daily';
+  let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status,contacts(name)')
+    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+  if (from) q = q.gte('issue_date', from);
+  if (to) q = q.lte('issue_date', to);
+  const { data } = await q.order('issue_date');
+
+  if (group === 'monthly') {
+    const grouped = {};
+    (data||[]).forEach(o => {
+      const key = o.issue_date ? o.issue_date.substring(0, 7) : 'Bilinmiyor';
+      if (!grouped[key]) grouped[key] = { count: 0, total: 0 };
+      grouped[key].count++;
+      grouped[key].total += parseFloat(o.total||0);
+    });
+    const headers = [{key:'period',label:'DÖNEM'},{key:'count',label:'FATURA',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'}];
+    let grandTotal = 0;
+    const rows = Object.entries(grouped).map(([k,v]) => { grandTotal += v.total; return { period: k, count: v.count, total: F(v.total) }; });
+    renderTable(headers, rows, { period:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), total: F(grandTotal) });
+  } else {
+    const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'FATURA NO'},{key:'customer',label:'MÜŞTERİ'},{key:'status',label:'DURUM'},{key:'total',label:'TUTAR',align:'text-right'}];
+    let grandTotal = 0;
+    const rows = (data||[]).map(o => { grandTotal += parseFloat(o.total||0); return { date: o.issue_date, doc: o.order_number, customer: o.contacts?.name||'—', status: o.status, total: F(o.total) }; });
+    renderTable(headers, rows, { date:'', doc:'', customer:'TOPLAM', status: rows.length + ' fatura', total: F(grandTotal) });
+  }
+}
+
+// ===== RAPOR 5: KASA/BANKA =====
+async function reportCashBank() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const account = document.getElementById('f-account')?.value;
+  let allTx = [];
+
+  if (!account || account.startsWith('cash:')) {
+    let q = sb.from('cash_transactions').select('id,transaction_date,description,type,amount,register_id,cash_registers(name)').eq('company_id', companyId);
+    if (account) q = q.eq('register_id', account.split(':')[1]);
+    if (from) q = q.gte('transaction_date', from);
+    if (to) q = q.lte('transaction_date', to);
+    const { data } = await q.order('transaction_date');
+    (data||[]).forEach(t => allTx.push({ date: t.transaction_date, desc: t.description||'—', account: '💵 '+(t.cash_registers?.name||'Kasa'), type: t.type, amount: parseFloat(t.amount) }));
+  }
+  if (!account || account.startsWith('bank:')) {
+    let q = sb.from('bank_transactions').select('id,transaction_date,description,type,amount,account_id,bank_accounts(account_name)').eq('company_id', companyId);
+    if (account) q = q.eq('account_id', account.split(':')[1]);
+    if (from) q = q.gte('transaction_date', from);
+    if (to) q = q.lte('transaction_date', to);
+    const { data } = await q.order('transaction_date');
+    (data||[]).forEach(t => allTx.push({ date: t.transaction_date, desc: t.description||'—', account: '🏦 '+(t.bank_accounts?.account_name||'Banka'), type: t.type, amount: parseFloat(t.amount) }));
+  }
+
+  allTx.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  const headers = [{key:'date',label:'TARİH'},{key:'account',label:'HESAP'},{key:'desc',label:'AÇIKLAMA'},{key:'inflow',label:'GİRİŞ',align:'text-right'},{key:'outflow',label:'ÇIKIŞ',align:'text-right'},{key:'balance',label:'BAKİYE',align:'text-right'}];
+  let bal = 0, totalIn = 0, totalOut = 0;
+  const rows = allTx.map(t => {
+    const inf = t.type === 'in' ? t.amount : 0;
+    const out = t.type === 'out' ? t.amount : 0;
+    totalIn += inf; totalOut += out;
+    bal += inf - out;
+    return { date: t.date, account: t.account, desc: t.desc, inflow: inf ? F(inf) : '', outflow: out ? F(out) : '', balance: F(bal),
+      _cellClass: { inflow: 'text-green', outflow: 'text-red' }
+    };
+  });
+  renderTable(headers, rows, { date:'', account:'', desc:'TOPLAM', inflow: F(totalIn), outflow: F(totalOut), balance: F(bal) });
+}
+
+// ===== RAPOR 6: CARİ EKSTRE =====
+async function reportStatement() {
+  const contactId = document.getElementById('f-contact')?.value;
+  if (!contactId) { document.getElementById('report-body').innerHTML = '<div class="report-empty">Lütfen bir cari seçin</div>'; return; }
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const { data: contact } = await sb.from('contacts').select('name,is_customer,is_supplier').eq('id', contactId).single();
+  const lines = [];
+
+  if (contact?.is_customer) {
+    let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('customer_id', contactId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    if (from) q = q.gte('issue_date', from);
+    if (to) q = q.lte('issue_date', to);
+    const { data } = await q;
+    (data||[]).forEach(o => lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Satış Faturası', debit: parseFloat(o.total), credit: 0 }));
+    // Payments
+    const soIds = (data||[]).map(o => o.id);
+    if (soIds.length) {
+      const { data: pays } = await sb.from('payments').select('amount,paid_at,order_id').eq('company_id', companyId).in('order_id', soIds);
+      (pays||[]).forEach(p => {
+        const d = p.paid_at ? p.paid_at.split('T')[0] : '';
+        if (from && d < from) return; if (to && d > to) return;
+        lines.push({ date: d, doc: '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount) });
+      });
+    }
+  }
+  if (contact?.is_supplier) {
+    let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('supplier_id', contactId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    if (from) q = q.gte('issue_date', from);
+    if (to) q = q.lte('issue_date', to);
+    const { data } = await q;
+    (data||[]).forEach(o => lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total) }));
+    const poIds = (data||[]).map(o => o.id);
+    if (poIds.length) {
+      const { data: pays } = await sb.from('payments').select('amount,paid_at,order_id').eq('company_id', companyId).in('order_id', poIds);
+      (pays||[]).forEach(p => {
+        const d = p.paid_at ? p.paid_at.split('T')[0] : '';
+        if (from && d < from) return; if (to && d > to) return;
+        lines.push({ date: d, doc: '—', desc: 'Ödeme', debit: parseFloat(p.amount), credit: 0 });
+      });
+    }
+  }
+  // Manual transactions
+  let mq = sb.from('contact_transactions').select('*').eq('company_id', companyId).eq('contact_id', contactId).eq('is_active', true);
+  if (from) mq = mq.gte('date', from);
+  if (to) mq = mq.lte('date', to);
+  const { data: mtx } = await mq;
+  (mtx||[]).forEach(tx => lines.push({ date: tx.date, doc: tx.reference||'—', desc: tx.description, debit: tx.type==='debit'?parseFloat(tx.amount):0, credit: tx.type==='credit'?parseFloat(tx.amount):0 }));
+
+  lines.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  let totalD = 0, totalC = 0, bal = 0;
+  const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'BELGE'},{key:'desc',label:'AÇIKLAMA'},{key:'debit',label:'BORÇ',align:'text-right'},{key:'credit',label:'ALACAK',align:'text-right'},{key:'balance',label:'BAKİYE',align:'text-right'}];
+  const rows = lines.map(l => {
+    totalD += l.debit; totalC += l.credit; bal += l.debit - l.credit;
+    return { date: l.date, doc: l.doc, desc: l.desc, debit: l.debit ? F(l.debit) : '', credit: l.credit ? F(l.credit) : '', balance: F(Math.abs(bal)),
+      _cellClass: { debit: 'text-red', credit: 'text-green', balance: bal > 0 ? 'text-red' : 'text-green' }
+    };
+  });
+  document.getElementById('report-title').textContent = '👥 ' + (contact?.name||'') + ' — Cari Ekstre';
+  renderTable(headers, rows, { date:'', doc:'', desc:'TOPLAM', debit: F(totalD), credit: F(totalC), balance: F(Math.abs(bal)) });
+}
+
+// ===== RAPOR 7: YEVMİYE DEFTERİ =====
+async function reportJournal() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let q = sb.from('journal_entries').select('id,entry_number,entry_date,description,journal_lines(debit,credit,account_id,chart_of_accounts(code,name))')
+    .eq('company_id', companyId);
+  if (from) q = q.gte('entry_date', from);
+  if (to) q = q.lte('entry_date', to);
+  const { data } = await q.order('entry_date');
+  const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'FİŞ NO'},{key:'desc',label:'AÇIKLAMA'},{key:'code',label:'HESAP KODU'},{key:'account',label:'HESAP ADI'},{key:'debit',label:'BORÇ',align:'text-right'},{key:'credit',label:'ALACAK',align:'text-right'}];
+  let totalD = 0, totalC = 0;
+  const rows = [];
+  (data||[]).forEach(e => {
+    (e.journal_lines||[]).forEach(l => {
+      totalD += parseFloat(l.debit||0); totalC += parseFloat(l.credit||0);
+      rows.push({ date: e.entry_date, doc: e.entry_number, desc: e.description, code: l.chart_of_accounts?.code||'—', account: l.chart_of_accounts?.name||'—',
+        debit: l.debit > 0 ? F(l.debit) : '', credit: l.credit > 0 ? F(l.credit) : '',
+        _cellClass: { debit: 'text-red', credit: 'text-green' }
+      });
+    });
+  });
+  renderTable(headers, rows, { date:'', doc:'', desc:'TOPLAM', code:'', account:'', debit: F(totalD), credit: F(totalC) });
+}
+
+// ===== RAPOR 8: MİZAN =====
+async function reportTrial() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const { data: accounts } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).order('code');
+  let q = sb.from('journal_lines').select('account_id,debit,credit,journal_entries!inner(company_id,entry_date)')
+    .eq('journal_entries.company_id', companyId);
+  if (from) q = q.gte('journal_entries.entry_date', from);
+  if (to) q = q.lte('journal_entries.entry_date', to);
+  const { data: lines } = await q;
+
+  const accMap = {};
+  (accounts||[]).forEach(a => { accMap[a.id] = { code: a.code, name: a.name, debit: 0, credit: 0 }; });
+  (lines||[]).forEach(l => {
+    if (accMap[l.account_id]) {
+      accMap[l.account_id].debit += parseFloat(l.debit||0);
+      accMap[l.account_id].credit += parseFloat(l.credit||0);
+    }
+  });
+
+  const headers = [{key:'code',label:'HESAP KODU'},{key:'name',label:'HESAP ADI'},{key:'debitTotal',label:'BORÇ TOPLAMI',align:'text-right'},{key:'creditTotal',label:'ALACAK TOPLAMI',align:'text-right'},{key:'debitBal',label:'BORÇ BAKİYE',align:'text-right'},{key:'creditBal',label:'ALACAK BAKİYE',align:'text-right'}];
+  let gd = 0, gc = 0, gdb = 0, gcb = 0;
+  const rows = Object.values(accMap).filter(a => a.debit > 0 || a.credit > 0).map(a => {
+    const bal = a.debit - a.credit;
+    gd += a.debit; gc += a.credit;
+    if (bal > 0) gdb += bal; else gcb += Math.abs(bal);
+    return { code: a.code, name: a.name, debitTotal: a.debit ? F(a.debit) : '', creditTotal: a.credit ? F(a.credit) : '',
+      debitBal: bal > 0 ? F(bal) : '', creditBal: bal < 0 ? F(Math.abs(bal)) : '' };
+  });
+  renderTable(headers, rows, { code:'', name:'TOPLAM', debitTotal: F(gd), creditTotal: F(gc), debitBal: F(gdb), creditBal: F(gcb) });
+}
+
+// ===== EXPORT: PDF =====
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4');
+  doc.setFontSize(14);
+  doc.text(lastReportData.title, 14, 15);
+  doc.setFontSize(9);
+  doc.text('Tarih: ' + new Date().toLocaleDateString(), 14, 21);
+
+  const head = [lastReportData.headers.map(h => h.label)];
+  const body = lastReportData.rows.map(r => lastReportData.headers.map(h => {
+    let v = r[h.key] ?? '';
+    return typeof v === 'string' ? v.replace(/<[^>]*>/g, '') : v;
+  }));
+  doc.autoTable({ head, body, startY: 25, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [30,64,175] } });
+  doc.save(lastReportData.title.replace(/[^\w]/g, '_') + '.pdf');
+}
+
+// ===== EXPORT: EXCEL =====
+function exportExcel() {
+  const wsData = [lastReportData.headers.map(h => h.label)];
+  lastReportData.rows.forEach(r => {
+    wsData.push(lastReportData.headers.map(h => {
+      let v = r[h.key] ?? '';
+      return typeof v === 'string' ? v.replace(/<[^>]*>/g, '') : v;
+    }));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Rapor');
+  XLSX.writeFile(wb, lastReportData.title.replace(/[^\w]/g, '_') + '.xlsx');
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
