@@ -1043,11 +1043,11 @@
       const okBtn = document.getElementById('solvenin-confirm-ok');
       const cancelBtn = document.getElementById('solvenin-confirm-cancel');
       if (!overlay) { resolve(false); return; }
-      titleEl.textContent = title || (window.t && window.t('lbl_confirm')) || 'Onay';
+      titleEl.textContent = title || 'Onay';
       msg.textContent = message;
-      okBtn.textContent = confirmLabel || (window.t && window.t('btn_ok')) || 'Tamam';
+      okBtn.textContent = confirmLabel || 'Tamam';
       if (cancelBtn) {
-        cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'İptal';
+        cancelBtn.textContent = 'İptal';
         cancelBtn.style.display = '';
       }
       overlay.classList.add('open');
@@ -1065,9 +1065,9 @@
       const okBtn = document.getElementById('solvenin-confirm-ok');
       const cancelBtn = document.getElementById('solvenin-confirm-cancel');
       if (!overlay) { resolve(); return; }
-      titleEl.textContent = title || (window.t && window.t('lbl_info')) || 'Bilgi';
+      titleEl.textContent = title || 'Bilgi';
       msg.textContent = message;
-      okBtn.textContent = (window.t && window.t('btn_ok')) || 'Tamam';
+      okBtn.textContent = 'Tamam';
       if (cancelBtn) cancelBtn.style.display = 'none';
       overlay.classList.add('open');
       okBtn.onclick = () => { overlay.classList.remove('open'); if (cancelBtn) cancelBtn.style.display = ''; resolve(); };
@@ -1082,9 +1082,9 @@
       const okBtn = document.getElementById('solvenin-confirm-ok');
       const cancelBtn = document.getElementById('solvenin-confirm-cancel');
       if (!overlay) { resolve(null); return; }
-      titleEl.textContent = title || (window.t && window.t('lbl_input')) || 'Giriş';
+      titleEl.textContent = title || 'Giriş';
       msg.innerHTML = message + '<br><input id="solvenin-prompt-input" type="text" value="' + (defaultValue || '').replace(/"/g, '&quot;') + '" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
-      okBtn.textContent = (window.t && window.t('btn_ok')) || 'Tamam';
+      okBtn.textContent = 'Tamam';
       if (cancelBtn) {
         cancelBtn.textContent = (window.t && window.t('btn_cancel')) || 'İptal';
         cancelBtn.style.display = '';
