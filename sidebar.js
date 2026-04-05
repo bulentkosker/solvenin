@@ -444,7 +444,7 @@
             { key: 'nav_accounting',      href: 'accounting.html' },
           ]
         },
-        { icon: '📊', key: 'nav_reports', href: '#' },
+        { icon: '📊', key: 'nav_reports', href: 'reports.html' },
       ]
     },
     {
