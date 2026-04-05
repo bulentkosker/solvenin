@@ -275,18 +275,7 @@ textarea{min-height:60px;resize:vertical}
         <div class="field"><label data-i18n="col_tax_no">Vergi No</label><input type="text" id="c-taxno"></div>
         <div class="field"><label data-i18n="col_contact_person">Yetkili</label><input type="text" id="c-contact"></div>
         <div class="field"><label>Para Birimi</label>
-          <select id="c-currency">
-            <option value="">Şirket para birimi</option>
-            <option value="USD">USD — Amerikan Doları</option>
-            <option value="EUR">EUR — Euro</option>
-            <option value="GBP">GBP — İngiliz Sterlini</option>
-            <option value="TRY">TRY — Türk Lirası</option>
-            <option value="RUB">RUB — Rus Rublesi</option>
-            <option value="KZT">KZT — Kazak Tengesi</option>
-            <option value="CNY">CNY — Çin Yuanı</option>
-            <option value="AED">AED — BAE Dirhemi</option>
-            <option value="SAR">SAR — Suudi Riyali</option>
-          </select>
+          <select id="c-currency"></select>
         </div>
         <div class="field"><label data-i18n="col_payment_terms">Ödeme Vadesi (gün)</label><input type="number" id="c-terms" value="30" min="0"></div>
         <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" id="c-credit" value="0" min="0" step="0.01"></div>
@@ -322,6 +311,11 @@ async function init() {
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
+
+  // Load company base currency
+  const { data: compInfo } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
+  const baseCur = compInfo?.base_currency || 'KZT';
+  initCurrencySelect(baseCur);
 
   // URL filter
   const params = new URLSearchParams(window.location.search);
@@ -466,6 +460,23 @@ function renderContacts(list) {
       </td>
     </tr>`;
   }).join('');
+}
+
+let _baseCurrency = 'KZT';
+const CURRENCY_LIST = [
+  {code:'USD',name:'Amerikan Doları'},{code:'EUR',name:'Euro'},{code:'GBP',name:'İngiliz Sterlini'},
+  {code:'TRY',name:'Türk Lirası'},{code:'RUB',name:'Rus Rublesi'},{code:'KZT',name:'Kazak Tengesi'},
+  {code:'CNY',name:'Çin Yuanı'},{code:'AED',name:'BAE Dirhemi'},{code:'SAR',name:'Suudi Riyali'},
+  {code:'JPY',name:'Japon Yeni'},{code:'CHF',name:'İsviçre Frangı'}
+];
+
+function initCurrencySelect(baseCur) {
+  _baseCurrency = baseCur || 'KZT';
+  const sel = document.getElementById('c-currency');
+  if (!sel) return;
+  const others = CURRENCY_LIST.filter(c => c.code !== _baseCurrency);
+  sel.innerHTML = `<option value="">Varsayılan (${_baseCurrency})</option>` +
+    others.map(c => `<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
 }
 
 function openContactModal() {

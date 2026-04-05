@@ -1146,10 +1146,9 @@ async function onCurrencyChange() {
 
 function setContactCurrency(contactId) {
   const contact = customers.find(c => c.id === contactId);
-  if (contact?.currency_code) {
-    document.getElementById('o-currency').value = contact.currency_code;
-    onCurrencyChange();
-  }
+  const cur = contact?.currency_code || baseCurrency;
+  document.getElementById('o-currency').value = cur;
+  onCurrencyChange();
 }
 
 function openOrderModal() {
