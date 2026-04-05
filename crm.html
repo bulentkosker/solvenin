@@ -150,36 +150,48 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     </div>
   </div>
   <div class="drawer-body">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div><div style="font-size:10px;color:var(--gray400)">TAHMİNİ TUTAR</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">OLASILIK</div><div id="dr-prob" style="font-size:18px;font-weight:800"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">TEMSİLCİ</div><div id="dr-assigned" style="font-size:12px;font-weight:500"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">KAPANIŞ</div><div id="dr-close" style="font-size:12px;font-weight:500"></div></div>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:16px">
-      <button class="btn btn-outline btn-sm" onclick="createQuote()">📄 Teklif Oluştur</button>
-      <button class="btn btn-outline btn-sm" onclick="convertToOrder()">🛒 Siparişe Dönüştür</button>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
       <button class="btn btn-outline btn-sm" onclick="editOpp()">✏️ Düzenle</button>
     </div>
 
-    <div style="font-size:12px;font-weight:700;margin-bottom:8px">Aktiviteler</div>
-    <div class="act-btns">
-      <button class="act-btn" onclick="addActivity('call')">📞 Arama</button>
-      <button class="act-btn" onclick="addActivity('email')">📧 Email</button>
-      <button class="act-btn" onclick="addActivity('meeting')">🤝 Toplantı</button>
-      <button class="act-btn" onclick="addActivity('whatsapp')">💬 WhatsApp</button>
-      <button class="act-btn" onclick="addActivity('note')">📝 Not</button>
+    <!-- Drawer Tabs -->
+    <div style="display:flex;border-bottom:2px solid var(--gray200);margin-bottom:12px">
+      <button class="dr-tab active" onclick="switchDrawerTab('quotes',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px">📄 Teklifler</button>
+      <button class="dr-tab" onclick="switchDrawerTab('activities',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px">⚡ Aktiviteler</button>
     </div>
-    <div id="act-form" style="display:none;margin-top:10px;padding:10px;background:var(--gray50);border-radius:8px">
-      <input type="hidden" id="act-type">
-      <textarea id="act-desc" placeholder="Açıklama..." rows="2" style="width:100%;padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;margin-bottom:6px"></textarea>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="text" id="act-next" placeholder="Sonraki adım..." style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
-        <input type="date" id="act-next-date" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
-        <button class="btn btn-primary btn-sm" onclick="saveActivity()">Kaydet</button>
+
+    <!-- TAB: Teklifler -->
+    <div id="dr-tab-quotes">
+      <button class="btn btn-primary btn-sm" onclick="openQuoteModal()" style="margin-bottom:10px">+ Yeni Teklif</button>
+      <div id="dr-quotes-list" style="font-size:12px"></div>
+    </div>
+
+    <!-- TAB: Aktiviteler -->
+    <div id="dr-tab-activities" style="display:none">
+      <div class="act-btns">
+        <button class="act-btn" onclick="addActivity('call')">📞 Arama</button>
+        <button class="act-btn" onclick="addActivity('email')">📧 Email</button>
+        <button class="act-btn" onclick="addActivity('meeting')">🤝 Toplantı</button>
+        <button class="act-btn" onclick="addActivity('whatsapp')">💬 WhatsApp</button>
+        <button class="act-btn" onclick="addActivity('note')">📝 Not</button>
       </div>
+      <div id="act-form" style="display:none;margin-top:10px;padding:10px;background:var(--gray50);border-radius:8px">
+        <input type="hidden" id="act-type">
+        <textarea id="act-desc" placeholder="Açıklama..." rows="2" style="width:100%;padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;margin-bottom:6px"></textarea>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="act-next" placeholder="Sonraki adım..." style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
+          <input type="date" id="act-next-date" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
+          <button class="btn btn-primary btn-sm" onclick="saveActivity()">Kaydet</button>
+        </div>
+      </div>
+      <div class="timeline" id="dr-timeline"></div>
     </div>
-    <div class="timeline" id="dr-timeline"></div>
   </div>
 </div>
 
@@ -211,6 +223,47 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('opp-modal')">İptal</button>
       <button class="btn btn-primary" onclick="saveOpp()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUOTE MODAL -->
+<div class="modal-overlay" id="quote-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head">
+      <span class="modal-title">Yeni Teklif</span>
+      <button class="modal-close" onclick="closeModal('quote-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Müşteri</label><select id="q-contact"></select></div>
+        <div class="field"><label>Teklif No</label><input type="text" id="q-number" readonly style="background:var(--gray50)"></div>
+        <div class="field"><label>Geçerlilik Tarihi</label><input type="date" id="q-valid"></div>
+        <div class="field"><label>Para Birimi</label>
+          <select id="q-currency"><option value="KZT">KZT</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="RUB">RUB</option><option value="TRY">TRY</option></select>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;margin-bottom:6px">Kalemler</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+        <thead><tr style="background:var(--gray50)">
+          <th style="padding:6px 8px;text-align:left;font-size:10px;border:none">ÜRÜN</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:70px">MİKTAR</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px">BİRİM FİYAT</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px">TOPLAM</th>
+          <th style="width:30px;border:none"></th>
+        </tr></thead>
+        <tbody id="q-items-body"></tbody>
+      </table>
+      <button onclick="addQuoteItem()" style="background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;font-weight:500;margin-bottom:10px">+ Kalem Ekle</button>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="field full"><label>Ödeme Koşulları</label><input type="text" id="q-terms" placeholder="30 gün vadeli"></div>
+        <div class="field full"><label>Notlar</label><textarea id="q-notes" rows="2"></textarea></div>
+      </div>
+      <div style="text-align:right;margin-top:10px;font-size:14px;font-weight:800;color:var(--primary)" id="q-total-display">TOPLAM: ₸0</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('quote-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveQuote()">Kaydet</button>
     </div>
   </div>
 </div>
@@ -446,6 +499,11 @@ function openDrawer(id) {
   const stageSel = document.getElementById('dr-stage');
   stageSel.innerHTML = STAGES.map(s => `<option value="${s.key}" ${s.key===o.stage?'selected':''}>${s.label}</option>`).join('');
   document.getElementById('act-form').style.display = 'none';
+  // Reset to quotes tab
+  document.getElementById('dr-tab-quotes').style.display = '';
+  document.getElementById('dr-tab-activities').style.display = 'none';
+  document.querySelectorAll('.dr-tab').forEach((b,i) => { b.style.color = i===0?'var(--primary)':'var(--gray500)'; b.style.fontWeight = i===0?'600':'500'; b.style.borderBottomColor = i===0?'var(--primary)':'transparent'; });
+  loadQuotes(id);
   loadTimeline(id);
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
@@ -515,16 +573,234 @@ async function saveActivity() {
   showToast('Aktivite kaydedildi', 'success');
 }
 
-// QUOTE & ORDER
-function createQuote() {
-  const o = opps.find(x => x.id === selectedOppId);
-  if (!o) return;
-  window.location.href = `sales.html?action=new&customer=${o.contact_id}&type=quote&opp=${o.id}`;
+// ===== DRAWER TABS =====
+function switchDrawerTab(tab, btn) {
+  document.getElementById('dr-tab-quotes').style.display = tab === 'quotes' ? '' : 'none';
+  document.getElementById('dr-tab-activities').style.display = tab === 'activities' ? '' : 'none';
+  document.querySelectorAll('.dr-tab').forEach(b => { b.style.color = 'var(--gray500)'; b.style.fontWeight = '500'; b.style.borderBottomColor = 'transparent'; });
+  btn.style.color = 'var(--primary)'; btn.style.fontWeight = '600'; btn.style.borderBottomColor = 'var(--primary)';
 }
-function convertToOrder() {
+
+// ===== QUOTE SYSTEM =====
+let quoteItems = [], products = [];
+
+async function loadProducts() {
+  if (products.length) return;
+  const { data } = await sb.from('products').select('id,name,sale_price,unit').eq('company_id', companyId).eq('is_active', true).order('name');
+  products = data || [];
+}
+
+async function openQuoteModal() {
+  await loadProducts();
   const o = opps.find(x => x.id === selectedOppId);
-  if (!o) return;
-  window.location.href = `sales.html?action=new&customer=${o.contact_id}&type=sale&opp=${o.id}`;
+  // Contact dropdown
+  const sel = document.getElementById('q-contact');
+  sel.innerHTML = contacts.map(c => `<option value="${c.id}" ${c.id === o?.contact_id ? 'selected' : ''}>${c.name}</option>`).join('');
+  // Quote number
+  const { data: existing } = await sb.from('crm_quotes').select('quote_number').eq('company_id', companyId).order('created_at', { ascending: false }).limit(1);
+  const lastNum = existing?.[0]?.quote_number ? parseInt(existing[0].quote_number.replace(/\D/g, '')) || 0 : 0;
+  document.getElementById('q-number').value = 'QUO-' + String(lastNum + 1).padStart(4, '0');
+  // Valid until: 30 days
+  const valid = new Date(); valid.setDate(valid.getDate() + 30);
+  document.getElementById('q-valid').value = valid.toISOString().split('T')[0];
+  document.getElementById('q-terms').value = '';
+  document.getElementById('q-notes').value = '';
+  quoteItems = [{ product_id: '', description: '', qty: 1, price: 0, unit: '' }];
+  renderQuoteItems();
+  openModal('quote-modal');
+}
+
+function renderQuoteItems() {
+  const tbody = document.getElementById('q-items-body');
+  const inputS = 'padding:4px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box;';
+  tbody.innerHTML = quoteItems.map((it, i) => `<tr>
+    <td style="padding:4px"><select onchange="onQuoteProductSelect(${i},this.value)" style="${inputS}">
+      <option value="">Seç...</option>${products.map(p => `<option value="${p.id}" ${p.id === it.product_id ? 'selected' : ''}>${p.name}</option>`).join('')}
+    </select></td>
+    <td style="padding:4px"><input type="number" value="${it.qty || 1}" min="0.001" step="0.001" onchange="quoteItems[${i}].qty=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
+    <td style="padding:4px"><input type="number" value="${it.price || 0}" min="0" step="0.01" onchange="quoteItems[${i}].price=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
+    <td style="padding:4px;text-align:right;font-weight:600" id="qi-total-${i}">${F(it.qty * it.price)}</td>
+    <td style="padding:4px;text-align:center"><button onclick="quoteItems.splice(${i},1);renderQuoteItems()" style="background:none;border:none;color:var(--red);cursor:pointer">✕</button></td>
+  </tr>`).join('');
+  recalcQuote();
+}
+
+function onQuoteProductSelect(idx, pid) {
+  const p = products.find(x => x.id === pid);
+  quoteItems[idx].product_id = pid;
+  quoteItems[idx].description = p?.name || '';
+  quoteItems[idx].price = parseFloat(p?.sale_price) || 0;
+  quoteItems[idx].unit = p?.unit || '';
+  renderQuoteItems();
+}
+
+function addQuoteItem() {
+  quoteItems.push({ product_id: '', description: '', qty: 1, price: 0, unit: '' });
+  renderQuoteItems();
+}
+
+function recalcQuote() {
+  let total = 0;
+  quoteItems.forEach((it, i) => {
+    const lt = (it.qty || 0) * (it.price || 0);
+    total += lt;
+    const el = document.getElementById('qi-total-' + i);
+    if (el) el.textContent = F(lt);
+  });
+  document.getElementById('q-total-display').textContent = 'TOPLAM: ' + F(total);
+}
+
+async function saveQuote() {
+  const contactId = document.getElementById('q-contact').value;
+  if (!contactId) { showToast('Müşteri seçin', 'error'); return; }
+  const validItems = quoteItems.filter(it => it.qty > 0 && (it.product_id || it.description));
+  if (!validItems.length) { showToast('En az bir kalem ekleyin', 'error'); return; }
+  const subtotal = validItems.reduce((s, it) => s + it.qty * it.price, 0);
+  const { error, data: quote } = await sb.from('crm_quotes').insert({
+    company_id: companyId, opportunity_id: selectedOppId, contact_id: contactId,
+    quote_number: document.getElementById('q-number').value,
+    status: 'draft', valid_until: document.getElementById('q-valid').value || null,
+    currency_code: document.getElementById('q-currency').value || null,
+    subtotal, total: subtotal,
+    terms: document.getElementById('q-terms').value.trim() || null,
+    notes: document.getElementById('q-notes').value.trim() || null,
+    created_by: currentUser.id
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  // Save items
+  const items = validItems.map(it => ({
+    quote_id: quote.id, product_id: it.product_id || null,
+    description: it.description || products.find(p => p.id === it.product_id)?.name || '',
+    quantity: it.qty, unit: it.unit, unit_price: it.price,
+    total: it.qty * it.price
+  }));
+  await sb.from('crm_quote_items').insert(items);
+  closeModal('quote-modal');
+  loadQuotes(selectedOppId);
+  showToast('Teklif kaydedildi: ' + quote.quote_number, 'success');
+}
+
+async function loadQuotes(oppId) {
+  const { data } = await sb.from('crm_quotes').select('*').eq('opportunity_id', oppId).order('created_at', { ascending: false });
+  const list = document.getElementById('dr-quotes-list');
+  const statusColors = { draft:'var(--gray500)', sent:'var(--primary)', accepted:'var(--green)', rejected:'var(--red)', expired:'var(--orange)' };
+  const statusLabels = { draft:'Taslak', sent:'Gönderildi', accepted:'Kabul', rejected:'Red', expired:'Süresi Doldu' };
+  if (!data?.length) { list.innerHTML = '<div style="color:var(--gray400);font-size:12px;padding:8px 0">Henüz teklif yok</div>'; return; }
+  list.innerHTML = data.map(q => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray100)">
+    <div>
+      <div style="font-weight:600">${q.quote_number}</div>
+      <div style="font-size:11px;color:var(--gray400)">${q.created_at ? new Date(q.created_at).toLocaleDateString() : ''} · ${F(q.total)}</div>
+    </div>
+    <div style="display:flex;gap:4px;align-items:center">
+      <span style="font-size:10px;font-weight:600;color:${statusColors[q.status]||'var(--gray500)'}">${statusLabels[q.status]||q.status}</span>
+      <button class="btn btn-outline btn-sm" onclick="viewQuotePDF('${q.id}')" title="PDF">📄</button>
+      ${q.status === 'accepted' && !q.converted_to_order_id ? `<button class="btn btn-primary btn-sm" onclick="convertQuoteToOrder('${q.id}')">🛒</button>` : ''}
+      ${q.status === 'draft' ? `<select onchange="updateQuoteStatus('${q.id}',this.value);this.value=''" style="padding:2px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:10px">
+        <option value="">Durum</option><option value="sent">Gönderildi</option><option value="accepted">Kabul</option><option value="rejected">Red</option>
+      </select>` : ''}
+      ${q.status === 'sent' ? `<select onchange="updateQuoteStatus('${q.id}',this.value);this.value=''" style="padding:2px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:10px">
+        <option value="">Durum</option><option value="accepted">Kabul</option><option value="rejected">Red</option>
+      </select>` : ''}
+    </div>
+  </div>`).join('');
+}
+
+async function updateQuoteStatus(quoteId, status) {
+  if (!status) return;
+  await sb.from('crm_quotes').update({ status }).eq('id', quoteId);
+  loadQuotes(selectedOppId);
+  showToast('Teklif durumu güncellendi', 'success');
+}
+
+async function convertQuoteToOrder(quoteId) {
+  const { data: quote } = await sb.from('crm_quotes').select('*').eq('id', quoteId).single();
+  if (!quote) return;
+  const { data: items } = await sb.from('crm_quote_items').select('*').eq('quote_id', quoteId);
+  // Get next order number
+  const { data: lastOrder } = await sb.from('sales_orders').select('order_number').eq('company_id', companyId).order('created_at', { ascending: false }).limit(1);
+  const lastNum = lastOrder?.[0]?.order_number ? parseInt(lastOrder[0].order_number.replace(/\D/g, '')) || 0 : 0;
+  const orderNumber = 'INV-' + String(lastNum + 1).padStart(4, '0');
+  // Create order
+  const { data: order, error } = await sb.from('sales_orders').insert({
+    company_id: companyId, customer_id: quote.contact_id, order_number: orderNumber,
+    order_type: 'sale', status: 'confirmed',
+    issue_date: new Date().toISOString().split('T')[0],
+    subtotal: quote.subtotal, tax_amount: quote.tax_amount || 0,
+    discount: quote.discount || 0, total: quote.total,
+    currency_code: quote.currency_code, exchange_rate: quote.exchange_rate,
+    opportunity_id: quote.opportunity_id,
+    notes: quote.notes, created_by: currentUser.id
+  }).select().single();
+  if (error) { showToast(error.message, 'error'); return; }
+  // Copy items
+  if (items?.length) {
+    await sb.from('sales_order_items').insert(items.map(it => ({
+      order_id: order.id, product_id: it.product_id,
+      description: it.description, quantity: it.quantity,
+      unit_price: it.unit_price, discount: it.discount_percent || 0,
+      total: it.total, tax_rate_value: it.tax_rate || 0
+    })));
+  }
+  // Update quote + opportunity
+  await sb.from('crm_quotes').update({ converted_to_order_id: order.id, status: 'accepted' }).eq('id', quoteId);
+  await sb.from('crm_opportunities').update({ stage: 'won', updated_at: new Date().toISOString() }).eq('id', quote.opportunity_id);
+  const opp = opps.find(o => o.id === quote.opportunity_id);
+  if (opp) opp.stage = 'won';
+  renderAll();
+  loadQuotes(selectedOppId);
+  showToast('Teklif siparişe dönüştürüldü! ' + orderNumber, 'success');
+}
+
+async function viewQuotePDF(quoteId) {
+  const { data: q } = await sb.from('crm_quotes').select('*, contacts(name,address,tax_number,email,phone)').eq('id', quoteId).single();
+  const { data: items } = await sb.from('crm_quote_items').select('*, products(name,unit)').eq('quote_id', quoteId);
+  if (!q) return;
+  const w = window.open('', '_blank');
+  const rows = (items||[]).map((it,i) => `<tr><td>${i+1}</td><td>${it.products?.name||it.description||'—'}</td><td style="text-align:right">${it.quantity} ${it.products?.unit||it.unit||''}</td><td style="text-align:right">${F(it.unit_price)}</td><td style="text-align:right;font-weight:700">${F(it.total)}</td></tr>`).join('');
+  w.document.write(`<!DOCTYPE html><html><head><title>Teklif ${q.quote_number}</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;color:#333;max-width:800px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;margin-bottom:30px}
+  .stamp{background:#166534;color:#fff;padding:8px 24px;border-radius:6px;font-size:22px;font-weight:800;letter-spacing:2px;display:inline-block}
+  .info{font-size:12px;color:#666;line-height:1.6}
+  .info strong{color:#333}
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+  th{background:#f3f4f6;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;border-bottom:2px solid #ddd}
+  td{padding:8px 10px;border-bottom:1px solid #eee}
+  .totals{float:right;width:250px;font-size:13px}
+  .totals div{display:flex;justify-content:space-between;padding:4px 0}
+  .totals .grand{border-top:2px solid #166534;margin-top:4px;padding-top:6px;font-size:16px;font-weight:800;color:#166534}
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;font-size:11px;color:#888}
+  .sig-box{border:1px dashed #ccc;width:200px;height:80px;margin-top:30px;display:flex;align-items:flex-end;justify-content:center;padding:8px;font-size:11px;color:#999}
+  @media print{body{padding:0}}</style></head><body>
+  <div class="header">
+    <div><div class="stamp">TEKLİF</div><div style="margin-top:8px;font-size:12px;color:#666">${q.quote_number}</div></div>
+    <div class="info" style="text-align:right">
+      <strong>Tarih:</strong> ${new Date(q.created_at).toLocaleDateString()}<br>
+      <strong>Geçerlilik:</strong> ${q.valid_until || '—'}<br>
+      ${q.currency_code ? '<strong>Para Birimi:</strong> ' + q.currency_code : ''}
+    </div>
+  </div>
+  <div class="info" style="margin-bottom:20px">
+    <strong>${q.contacts?.name || '—'}</strong><br>
+    ${q.contacts?.address || ''}${q.contacts?.tax_number ? '<br>VKN: ' + q.contacts.tax_number : ''}
+    ${q.contacts?.email ? '<br>' + q.contacts.email : ''}${q.contacts?.phone ? ' · ' + q.contacts.phone : ''}
+  </div>
+  <table><thead><tr><th>#</th><th>Ürün</th><th style="text-align:right">Miktar</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">Toplam</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="totals">
+    <div><span>Ara Toplam</span><span>${F(q.subtotal)}</span></div>
+    ${q.tax_amount > 0 ? `<div><span>Vergi</span><span>${F(q.tax_amount)}</span></div>` : ''}
+    ${q.discount > 0 ? `<div><span>İndirim</span><span>-${F(q.discount)}</span></div>` : ''}
+    <div class="grand"><span>TOPLAM</span><span>${F(q.total)}</span></div>
+  </div>
+  <div style="clear:both"></div>
+  ${q.terms ? `<div style="margin-top:20px;padding:10px;background:#f8f9fa;border-radius:6px;font-size:12px"><strong>Ödeme Koşulları:</strong> ${q.terms}</div>` : ''}
+  ${q.notes ? `<div style="margin-top:8px;font-size:12px;color:#666">📝 ${q.notes}</div>` : ''}
+  <div class="footer">
+    ${q.valid_until ? `Bu teklif <strong>${q.valid_until}</strong> tarihine kadar geçerlidir.` : ''}
+    <div class="sig-box">Yetkili İmza / Kaşe</div>
+  </div>
+  <script>window.print();<\/script></body></html>`);
+  w.document.close();
 }
 
 function showToast(msg, type) {
