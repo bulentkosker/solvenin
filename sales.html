@@ -1415,6 +1415,7 @@ async function saveOrder() {
   }
 
   showToast(editingOrderId ? t('order_updated') : t('order_created'), 'success');
+  _originalFormData = null; // Skip dirty check on close
   closeOrderForm();
   await loadOrders();
 }

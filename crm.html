@@ -128,7 +128,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     <div class="list-view" id="list-view" style="overflow:auto;flex:1">
       <table>
         <thead><tr>
-          <th>MÜŞTERİ</th><th>FIRSAT</th><th>AŞAMA</th><th>DEĞER</th><th>OLASILIK</th><th>TEMSİLCİ</th><th>KAPANIŞ</th><th>SON AKTİVİTE</th>
+          <th>MÜŞTERİ</th><th>FIRSAT</th><th>AŞAMA</th><th>TAHMİNİ TUTAR</th><th>OLASILIK</th><th>TEMSİLCİ</th><th>KAPANIŞ</th><th>SON AKTİVİTE</th>
         </tr></thead>
         <tbody id="list-tbody"></tbody>
       </table>
@@ -151,7 +151,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   </div>
   <div class="drawer-body">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <div><div style="font-size:10px;color:var(--gray400)">DEĞER</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)">TAHMİNİ TUTAR</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">OLASILIK</div><div id="dr-prob" style="font-size:18px;font-weight:800"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">TEMSİLCİ</div><div id="dr-assigned" style="font-size:12px;font-weight:500"></div></div>
       <div><div style="font-size:10px;color:var(--gray400)">KAPANIŞ</div><div id="dr-close" style="font-size:12px;font-weight:500"></div></div>
@@ -194,7 +194,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
       <div class="form-grid">
         <div class="field full"><label>Müşteri *</label><select id="opp-contact"><option value="">Seç...</option></select></div>
         <div class="field full"><label>Fırsat Başlığı *</label><input type="text" id="opp-title" placeholder="Örn: Mercimek ihracatı"></div>
-        <div class="field"><label>Değer</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
+        <div class="field"><label>Tahmini Tutar</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
         <div class="field"><label>Olasılık %</label><input type="number" id="opp-prob" value="10" min="0" max="100"></div>
         <div class="field"><label>Beklenen Kapanış</label><input type="date" id="opp-close"></div>
         <div class="field"><label>Aşama</label>
