@@ -21,6 +21,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 .pos-header .info{display:flex;gap:12px;align-items:center;font-size:12px;color:rgba(255,255,255,.6)}
 .pos-header .info strong{color:#fff}
 .pos-exit{background:rgba(255,255,255,.1);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.pos-lang{position:relative;display:inline-block}
+.pos-lang-btn{background:rgba(255,255,255,.1);border:none;color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:6px}
+.pos-lang-menu{position:absolute;top:100%;right:0;margin-top:6px;background:#1a2744;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px;min-width:170px;display:none;z-index:1000;max-height:340px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.pos-lang.open .pos-lang-menu{display:block}
+.pos-lang-opt{padding:7px 12px;border-radius:6px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;white-space:nowrap}
+.pos-lang-opt:hover{background:rgba(255,255,255,.08);color:#fff}
+.pos-lang-opt.active{color:#fff;font-weight:600}
 
 /* MAIN LAYOUT */
 .pos-main{display:flex;flex:1;overflow:hidden}
@@ -119,13 +126,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
     <span>|</span>
     <span id="pos-session-time">—</span>
   </div>
-  <button class="pos-exit" onclick="exitPOS()">✕ Çıkış</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="pos-lang" id="pos-lang">
+      <button class="pos-lang-btn" onclick="document.getElementById('pos-lang').classList.toggle('open')">
+        <span id="pos-lang-code">TR</span> ▾
+      </button>
+      <div class="pos-lang-menu" id="pos-lang-menu"></div>
+    </div>
+    <button class="pos-exit" onclick="exitPOS()"><span>✕</span> <span data-i18n="pos_exit">Çıkış</span></button>
+  </div>
 </div>
 
 <div class="pos-main">
   <div class="pos-left">
     <div class="pos-barcode">
-      <input type="text" id="barcode-input" placeholder="📦 Barkod okutun veya yazın..." autofocus>
+      <input type="text" id="barcode-input" data-i18n-placeholder="pos_barcode_placeholder" placeholder="📦 Barkod okutun veya yazın..." autofocus>
     </div>
     <div class="pos-categories" id="pos-categories"></div>
     <div class="pos-grid" id="pos-grid"></div>
@@ -133,23 +148,23 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 
   <div class="pos-cart">
     <div class="cart-header">
-      <h3>🛒 Sepet <span id="cart-count" style="color:var(--gray400);font-weight:400;font-size:13px">(0)</span></h3>
+      <h3>🛒 <span data-i18n="pos_cart">Sepet</span> <span id="cart-count" style="color:var(--gray400);font-weight:400;font-size:13px">(0)</span></h3>
       <div style="display:flex;gap:8px;align-items:center">
-        <button onclick="clearCart()" style="background:none;border:1px solid var(--gray200);color:var(--red);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;display:none" id="btn-clear-cart">🗑 Temizle</button>
-        <div class="cart-customer" id="cart-customer" onclick="selectCustomer()">👤 Misafir</div>
+        <button onclick="clearCart()" style="background:none;border:1px solid var(--gray200);color:var(--red);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;display:none" id="btn-clear-cart">🗑 <span data-i18n="pos_clear">Temizle</span></button>
+        <div class="cart-customer" id="cart-customer" onclick="selectCustomer()">👤 <span data-i18n="pos_guest">Misafir</span></div>
       </div>
     </div>
-    <div class="cart-items" id="cart-items"><div class="cart-empty">Barkod okutarak ürün ekleyin</div></div>
+    <div class="cart-items" id="cart-items"><div class="cart-empty" data-i18n="pos_scan_to_add">Barkod okutarak ürün ekleyin</div></div>
     <div class="cart-summary">
-      <div class="sr"><span>Ara Toplam</span><span id="s-sub">—</span></div>
-      <div class="sr"><span>KDV</span><span id="s-tax">—</span></div>
-      <div class="sr total"><span>TOPLAM</span><span id="s-total">—</span></div>
+      <div class="sr"><span data-i18n="pos_subtotal">Ara Toplam</span><span id="s-sub">—</span></div>
+      <div class="sr"><span data-i18n="pos_tax">KDV</span><span id="s-tax">—</span></div>
+      <div class="sr total"><span data-i18n="pos_total">TOPLAM</span><span id="s-total">—</span></div>
     </div>
     <div class="cart-actions">
       <div class="pay-row">
-        <button class="pay-btn cash" onclick="openPayment('cash')">💵 Nakit</button>
-        <button class="pay-btn card" onclick="openPayment('card')">💳 Kart</button>
-        <button class="pay-btn bank" onclick="openPayment('bank')">🏦 Transfer</button>
+        <button class="pay-btn cash" onclick="openPayment('cash')">💵 <span data-i18n="pos_cash">Nakit</span></button>
+        <button class="pay-btn card" onclick="openPayment('card')">💳 <span data-i18n="pos_card">Kart</span></button>
+        <button class="pay-btn bank" onclick="openPayment('bank')">🏦 <span data-i18n="pos_transfer">Transfer</span></button>
       </div>
     </div>
   </div>
@@ -158,13 +173,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 <!-- REGISTER SELECT MODAL -->
 <div class="pm" id="register-modal">
   <div class="pmc">
-    <h3>🏪 Kasa Seçin</h3>
-    <div class="pf"><label>Hangi kasada çalışacaksınız?</label>
+    <h3>🏪 <span data-i18n="pos_select_register">Kasa Seçin</span></h3>
+    <div class="pf"><label data-i18n="pos_register_label">Hangi kasada çalışacaksınız?</label>
       <select id="sel-register"></select>
     </div>
     <div class="pm-actions">
-      <button onclick="window.location.href='dashboard.html'" style="background:var(--gray100);color:var(--gray600)">İptal</button>
-      <button onclick="startSession()" style="background:var(--primary);color:#fff">Başlat</button>
+      <button onclick="window.location.href='dashboard.html'" style="background:var(--gray100);color:var(--gray600)" data-i18n="btn_cancel">İptal</button>
+      <button onclick="startSession()" style="background:var(--primary);color:#fff" data-i18n="pos_start_session">Başlat</button>
     </div>
   </div>
 </div>
@@ -173,20 +188,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 <div class="pm" id="payment-modal">
   <div class="pmc">
     <h3 id="pay-title">💵 Nakit Ödeme</h3>
-    <div class="pf"><label>Toplam</label>
+    <div class="pf"><label data-i18n="pos_total">Toplam</label>
       <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--primary)" id="pay-total">—</div>
     </div>
     <div id="cash-section">
-      <div class="pf"><label>Alınan Tutar</label><input type="number" id="pay-received" step="0.01" oninput="calcChange()"></div>
+      <div class="pf"><label data-i18n="pos_received_amount">Alınan Tutar</label><input type="number" id="pay-received" step="0.01" oninput="calcChange()"></div>
       <div class="quick-amounts" id="quick-amounts"></div>
-      <div class="change-box"><div class="lbl">Para Üstü</div><div class="amt" id="pay-change">—</div></div>
+      <div class="change-box"><div class="lbl" data-i18n="pos_change">Para Üstü</div><div class="amt" id="pay-change">—</div></div>
     </div>
     <div id="account-section" style="display:none">
-      <div class="pf"><label>Hesap</label><select id="pay-account"></select></div>
+      <div class="pf"><label data-i18n="pos_account">Hesap</label><select id="pay-account"></select></div>
     </div>
     <div class="pm-actions">
-      <button onclick="closePayment()" style="background:var(--gray100);color:var(--gray600)">İptal</button>
-      <button onclick="completeSale()" style="background:var(--primary);color:#fff" id="btn-pay">Ödemeyi Tamamla</button>
+      <button onclick="closePayment()" style="background:var(--gray100);color:var(--gray600)" data-i18n="btn_cancel">İptal</button>
+      <button onclick="completeSale()" style="background:var(--primary);color:#fff" id="btn-pay" data-i18n="pos_complete_payment">Ödemeyi Tamamla</button>
     </div>
   </div>
 </div>
@@ -194,12 +209,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 <!-- PIN MODAL (for manager approval) -->
 <div class="pm" id="pin-modal">
   <div class="pmc" style="text-align:center">
-    <h3>🔒 Yönetici Onayı</h3>
-    <p style="font-size:13px;color:var(--gray500);margin-bottom:12px" id="pin-reason">Bu işlem yönetici onayı gerektirir</p>
+    <h3>🔒 <span data-i18n="pos_manager_pin">Yönetici Onayı</span></h3>
+    <p style="font-size:13px;color:var(--gray500);margin-bottom:12px" id="pin-reason">—</p>
     <div class="pin-dots" id="pin-dots"></div>
     <div class="pin-pad" id="pin-pad"></div>
     <div class="pm-actions" style="margin-top:16px">
-      <button onclick="closePin()" style="background:var(--gray100);color:var(--gray600)">İptal</button>
+      <button onclick="closePin()" style="background:var(--gray100);color:var(--gray600)" data-i18n="btn_cancel">İptal</button>
     </div>
   </div>
 </div>
@@ -208,10 +223,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 <div class="pm" id="receipt-modal">
   <div class="pmc" style="text-align:center">
     <div style="font-size:48px;margin-bottom:8px">✅</div>
-    <h3>Satış Tamamlandı</h3>
+    <h3 data-i18n="pos_sale_completed">Satış Tamamlandı</h3>
     <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--primary);margin:8px 0" id="r-total">—</div>
     <div id="r-change" style="font-size:14px;color:var(--gray500);margin-bottom:16px"></div>
-    <div class="pm-actions"><button onclick="closeReceipt()" style="background:var(--primary);color:#fff;flex:1">Yeni Satış</button></div>
+    <div class="pm-actions"><button onclick="closeReceipt()" style="background:var(--primary);color:#fff;flex:1" data-i18n="pos_new_sale">Yeni Satış</button></div>
   </div>
 </div>
 
@@ -257,7 +272,7 @@ async function init() {
     document.getElementById('sel-register').innerHTML = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
     document.getElementById('register-modal').classList.add('open');
   } else {
-    showToast('Kasa tanımlı değil. Ayarlar > Kasa & Banka\'dan ekleyin.', 'error');
+    showToast(t('pos_toast_no_register'), 'error');
   }
 }
 
@@ -270,7 +285,7 @@ async function startSession() {
     company_id: companyId, cash_register_id: regId,
     cashier_id: currentUser.id, opened_by: currentUser.id, status: 'open',
   }).select('id').single();
-  if (error) { showToast('Oturum açılamadı: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('pos_toast_session_failed') + ': ' + error.message, 'error'); return; }
   sessionId = ses.id;
 
   document.getElementById('pos-register-name').textContent = selectedRegister.name;
@@ -308,7 +323,7 @@ let activeCat = '';
 function renderCategories() {
   const qbCatIds = [...new Set(quickButtons.map(b => b.products?.category_id).filter(Boolean))];
   const visibleCats = categories.filter(c => qbCatIds.includes(c.id));
-  document.getElementById('pos-categories').innerHTML = `<button class="cat-btn active" onclick="filterCat(this,'')">Tümü</button>` +
+  document.getElementById('pos-categories').innerHTML = `<button class="cat-btn active" onclick="filterCat(this,'')">${t('pos_all_categories')}</button>` +
     visibleCats.map(c => `<button class="cat-btn" onclick="filterCat(this,'${c.id}')">${c.name}</button>`).join('');
 }
 function filterCat(btn, id) {
@@ -323,7 +338,7 @@ function renderQuickButtons() {
   const grid = document.getElementById('pos-grid');
   const filtered = quickButtons.filter(b => !activeCat || b.products?.category_id === activeCat);
   if (!filtered.length) {
-    grid.innerHTML = `<div class="pos-empty">Hızlı erişim butonu tanımlı değil.<br><a href="settings.html" style="color:var(--primary);font-weight:600">Settings → POS Ayarları</a>'ndan ekleyin.</div>`;
+    grid.innerHTML = `<div class="pos-empty">${t('pos_no_quick_buttons')}.<br><a href="settings.html" style="color:var(--primary);font-weight:600">Settings → POS</a></div>`;
     return;
   }
   grid.innerHTML = filtered.map(b => `
@@ -356,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       if (p) { addToCart(p.id); }
-      else { showToast('Barkod bulunamadı: ' + code, 'error'); }
+      else { showToast(t('pos_toast_barcode_not_found') + ': ' + code, 'error'); }
     }
   });
   // Always refocus barcode after any click (unless in modal)
@@ -400,14 +415,14 @@ function loadCartFromStorage() {
       cart = data.items;
       selectedCustomerId = data.customerId || null;
       renderCart();
-      showToast('Önceki fiş geri yüklendi (' + cart.length + ' kalem)', 'info');
+      showToast(t('pos_toast_cart_restored') + ' (' + cart.length + ')', 'info');
     }
   } catch(e) { localStorage.removeItem(key); }
 }
 
 function cartQty(idx, delta) {
   if (delta < 0) {
-    requireManager('Miktar azaltma yönetici onayı gerektirir', () => {
+    requireManager(t('pos_qty_decrease_pin'), () => {
       cart[idx].qty += delta;
       if (cart[idx].qty <= 0) cart.splice(idx, 1);
       renderCart();
@@ -422,7 +437,7 @@ function cartQty(idx, delta) {
 }
 
 function removeItem(idx) {
-  requireManager('Ürün silme yönetici onayı gerektirir', () => {
+  requireManager(t('pos_remove_item_pin'), () => {
     cart.splice(idx, 1);
     renderCart();
     saveCartToStorage();
@@ -430,7 +445,7 @@ function removeItem(idx) {
 }
 
 function editQty(idx) {
-  requireManager('Miktar değiştirme yönetici onayı gerektirir', () => {
+  requireManager(t('pos_edit_qty_pin'), () => {
     const span = document.getElementById('qty-val-' + idx);
     if (!span) return;
     const input = document.createElement('input');
@@ -453,17 +468,17 @@ function applyQty(idx, input) {
 
 function clearCart() {
   if (!cart.length) return;
-  requireManager('Tüm sepeti temizlemek için yönetici PIN\'i girin', async () => {
+  requireManager(t('pos_clear_cart_pin'), async () => {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const { data: { user } } = await sb.auth.getUser();
     await sb.from('pos_cancelled_carts').insert({
       company_id: companyId, session_id: sessionId, cancelled_by: user?.id,
-      items: cart, total, reason: 'Sepet temizlendi (yönetici onayı)'
+      items: cart, total, reason: 'cart cleared (manager approval)'
     });
     cart = [];
     renderCart();
     saveCartToStorage();
-    showToast('Sepet temizlendi', 'info');
+    showToast(t('pos_toast_cart_cleared'), 'info');
   });
 }
 
@@ -471,7 +486,7 @@ function renderCart() {
   const el = document.getElementById('cart-items');
   const clearBtn = document.getElementById('btn-clear-cart');
   if (clearBtn) clearBtn.style.display = cart.length > 0 ? '' : 'none';
-  if (!cart.length) { el.innerHTML = '<div class="cart-empty">Barkod okutarak ürün ekleyin</div>'; }
+  if (!cart.length) { el.innerHTML = '<div class="cart-empty">'+t('pos_scan_to_add')+'</div>'; }
   else {
     el.innerHTML = cart.map((c,i) => `<div class="ci">
       <div class="ci-name">${c.name}</div>
@@ -530,10 +545,10 @@ function updateManagerTimer() {
     ind.style.display = 'none';
     managerSession = { userId: null, expiresAt: 0 };
     if (_sessionTimer) { clearInterval(_sessionTimer); _sessionTimer = null; }
-    showToast('Yönetici oturumu sona erdi', 'info');
+    showToast(t('pos_toast_manager_session_ended'), 'info');
     return;
   }
-  ind.innerHTML = '🔓 Yönetici <span style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:4px">' + remaining + 's</span>';
+  ind.innerHTML = '🔓 <span style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:4px">' + remaining + 's</span>';
 }
 
 function requestPin(reason, callback) {
@@ -571,7 +586,7 @@ async function pinKey(k) {
       closePin();
       if (cb) cb();
     } else {
-      showToast('Yanlış PIN', 'error');
+      showToast(t('pos_toast_wrong_pin'), 'error');
       pinValue = '';
       renderPinDots();
     }
@@ -584,7 +599,7 @@ function closePin() { document.getElementById('pin-modal').classList.remove('ope
 function selectCustomer() {
   // Simple prompt for now — could be a modal with search
   selectedCustomerId = null;
-  document.getElementById('cart-customer').textContent = '👤 Misafir';
+  document.getElementById('cart-customer').textContent = '👤 ' + t('pos_guest');
 }
 
 // ===== PAYMENT =====
@@ -593,7 +608,7 @@ function openPayment(method) {
   selectedPayMethod = method;
   const total = getTotal();
   document.getElementById('pay-total').textContent = F(total);
-  document.getElementById('pay-title').textContent = method === 'cash' ? '💵 Nakit Ödeme' : method === 'card' ? '💳 Kart Ödeme' : '🏦 Transfer';
+  document.getElementById('pay-title').textContent = method === 'cash' ? '💵 ' + t('pos_cash_payment') : method === 'card' ? '💳 ' + t('pos_card_payment') : '🏦 ' + t('pos_transfer');
   document.getElementById('cash-section').style.display = method === 'cash' ? '' : 'none';
   document.getElementById('account-section').style.display = method !== 'cash' ? '' : 'none';
 
@@ -603,10 +618,10 @@ function openPayment(method) {
     // Quick amount buttons
     const amounts = [1000, 5000, 10000, 50000, 100000].filter(a => a >= total * 0.5);
     document.getElementById('quick-amounts').innerHTML =
-      `<button class="qa" onclick="setReceived(${total})">Tam</button>` +
+      `<button class="qa" onclick="setReceived(${total})">${t('pos_exact_payment')}</button>` +
       amounts.slice(0,4).map(a => `<button class="qa" onclick="setReceived(${a})">+${F(a)}</button>`).join('');
   } else {
-    document.getElementById('pay-account').innerHTML = `<option value="">Hesap seç...</option>` +
+    document.getElementById('pay-account').innerHTML = `<option value="">${t('pos_select_account')}</option>` +
       bankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('');
   }
   document.getElementById('payment-modal').classList.add('open');
@@ -625,10 +640,10 @@ async function completeSale() {
   const total = getTotal();
   if (selectedPayMethod === 'cash') {
     const recv = parseFloat(document.getElementById('pay-received').value) || 0;
-    if (recv < total) { showToast('Yetersiz tutar', 'error'); return; }
+    if (recv < total) { showToast(t('pos_toast_insufficient'), 'error'); return; }
   }
   if ((selectedPayMethod === 'card' || selectedPayMethod === 'bank') && !document.getElementById('pay-account').value) {
-    showToast('Hesap seçin', 'error'); return;
+    showToast(t('pos_toast_select_account'), 'error'); return;
   }
 
   const btn = document.getElementById('btn-pay');
@@ -698,16 +713,16 @@ async function completeSale() {
     // Receipt
     const change = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) - total : 0;
     document.getElementById('r-total').textContent = F(total);
-    document.getElementById('r-change').textContent = change > 0 ? `Para üstü: ${F(change)}` : '';
+    document.getElementById('r-change').textContent = change > 0 ? `${t('pos_change')}: ${F(change)}` : '';
     closePayment();
     document.getElementById('receipt-modal').classList.add('open');
     cart = [];
     renderCart();
     saveCartToStorage();
   } catch (e) {
-    showToast('Hata: ' + e.message, 'error');
+    showToast(t('pos_toast_error_prefix') + ': ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = 'Ödemeyi Tamamla';
+    btn.disabled = false; btn.textContent = t('pos_complete_payment');
   }
 }
 
@@ -718,13 +733,13 @@ function closeReceipt() {
 
 function exitPOS() {
   if (cart.length === 0) { window.location.href = 'dashboard.html'; return; }
-  requestPin('Fişi iptal etmek için yönetici PIN\'i girin', async () => {
+  requestPin(t('pos_cancel_receipt_pin'), async () => {
     // Log cancelled cart
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const { data: { user } } = await sb.auth.getUser();
     await sb.from('pos_cancelled_carts').insert({
       company_id: companyId, session_id: sessionId, cancelled_by: user?.id,
-      items: cart, total, reason: 'Yönetici onayı ile fiş iptal'
+      items: cart, total, reason: 'receipt cancelled by manager'
     });
     cart = [];
     saveCartToStorage();
@@ -741,7 +756,7 @@ window.addEventListener('beforeunload', (e) => {
 history.pushState(null, '', location.href);
 window.addEventListener('popstate', () => {
   history.pushState(null, '', location.href);
-  if (cart.length > 0) showToast('Sepette ürün var — önce fişi tamamlayın veya iptal edin', 'error');
+  if (cart.length > 0) showToast(t('pos_toast_cart_not_empty'), 'error');
 });
 
 function showToast(msg, type) {
@@ -762,6 +777,37 @@ document.addEventListener('keydown', e => {
     // ESC ile POS'tan çıkış engelle
   }
 });
+
+// ===== LANG SWITCHER =====
+function buildPosLangMenu() {
+  const menu = document.getElementById('pos-lang-menu');
+  if (!menu || typeof LANG_META === 'undefined') return;
+  const order = ['ar','az','de','en','es','fr','ja','kg','kz','pl','pt','ru','tm','tr','uz','zh'];
+  const cur = (typeof detectLang === 'function') ? detectLang() : 'tr';
+  menu.innerHTML = order.map(code => {
+    const m = LANG_META[code]; if (!m) return '';
+    return `<div class="pos-lang-opt ${code===cur?'active':''}" onclick="posSelectLang('${code}')">${m.code} &nbsp; ${m.name}</div>`;
+  }).join('');
+  document.getElementById('pos-lang-code').textContent = (LANG_META[cur]?.code) || cur.toUpperCase();
+}
+function posSelectLang(code) {
+  if (typeof setLang === 'function') setLang(code);
+  document.getElementById('pos-lang').classList.remove('open');
+  buildPosLangMenu();
+  // Re-render dynamic JS strings (cart-empty, totals etc.)
+  try { renderCart(); } catch(e){}
+  // Refresh placeholder header label
+  try { document.getElementById('cart-customer').textContent = '👤 ' + t('pos_guest'); } catch(e){}
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('pos-lang');
+  if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open');
+});
+document.addEventListener('langChanged', () => {
+  buildPosLangMenu();
+  try { renderCart(); } catch(e){}
+});
+document.addEventListener('DOMContentLoaded', buildPosLangMenu);
 
 init();
 </script>
