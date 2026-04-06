@@ -703,9 +703,21 @@
 
       // Fetch company info and user plan in parallel
       const [compRes, profileRes] = await Promise.all([
-        sb.from('companies').select('name, base_currency').eq('id', companyId).single(),
+        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason').eq('id', companyId).single(),
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
+
+      // Freeze check
+      if (compRes.data?.is_frozen) {
+        document.body.innerHTML = `<div style="position:fixed;inset:0;background:#1a2744;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px;text-align:center;color:#fff;font-family:'DM Sans',sans-serif;z-index:99999">
+          <div style="font-size:64px">🔒</div>
+          <h2 style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:800">Hesabınız Askıya Alınmıştır</h2>
+          <p style="font-size:14px;color:rgba(255,255,255,.7);max-width:500px;line-height:1.6">${compRes.data.freeze_reason || 'Hesabınız yönetici tarafından askıya alınmıştır.'}</p>
+          <p style="font-size:13px;color:rgba(255,255,255,.5);margin-top:20px">Detaylar için: <a href="mailto:support@solvenin.com" style="color:#38bdf8">support@solvenin.com</a></p>
+          <button onclick="supabase.createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9').auth.signOut().then(()=>location.href='auth.html')" style="margin-top:20px;padding:10px 24px;background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">Çıkış Yap</button>
+        </div>`;
+        return;
+      }
 
       const company = compRes.data;
       const userPlan = profileRes.data?.plan || 'free';

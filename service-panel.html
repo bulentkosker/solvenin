@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Servis Paneli</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFhMjc0NCIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#1e40af;--primary-dark:#1a2744;--white:#fff;--bg:#f5f7fb;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1a2744;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif;--sb-w:220px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh}
+
+/* LOGIN */
+.login-page{position:fixed;inset:0;background:var(--primary-dark);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--white);border-radius:14px;padding:36px 32px;width:380px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo h1{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--primary-dark)}
+.login-logo h1 span{color:#38bdf8}
+.login-logo p{font-size:12px;color:var(--gray400);margin-top:4px;text-transform:uppercase;letter-spacing:2px;font-weight:600}
+.login-box input{width:100%;padding:11px 14px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:var(--font-body);margin-bottom:10px;outline:none}
+.login-box input:focus{border-color:var(--primary)}
+.login-box button{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+.login-box button:hover{background:#1a3a9e}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center}
+
+/* PANEL LAYOUT */
+.panel-wrap{display:flex;min-height:100vh}
+.sp-sidebar{width:var(--sb-w);background:var(--primary-dark);color:#fff;position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;flex-shrink:0;z-index:50}
+.sp-sidebar-logo{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sp-sidebar-logo h2{font-family:var(--font-display);font-size:20px;font-weight:800;color:#fff}
+.sp-sidebar-logo h2 span{color:#38bdf8}
+.sp-sidebar-logo p{font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;font-weight:600}
+.sp-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.sp-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.8);margin-bottom:2px;transition:all .15s}
+.sp-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sp-nav-item.active{background:rgba(56,189,248,.15);color:#38bdf8;font-weight:600}
+.sp-nav-icon{width:18px;text-align:center}
+.sp-sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px}
+.sp-user-name{color:#fff;font-weight:600;margin-bottom:2px}
+.sp-user-role{color:rgba(255,255,255,.5);text-transform:uppercase;font-size:9px;letter-spacing:1px;margin-bottom:6px}
+.sp-logout{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.2);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;width:100%;font-weight:600}
+.sp-logout:hover{background:rgba(239,68,68,.25)}
+
+.sp-main{flex:1;margin-left:var(--sb-w);min-height:100vh}
+.sp-topbar{height:56px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:40}
+.sp-title{font-family:var(--font-display);font-size:18px;font-weight:700}
+.sp-content{padding:20px 24px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border:1px solid var(--gray200);border-radius:10px;padding:14px 18px}
+.stat-label{font-size:10px;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;margin-top:4px}
+.stat-sub{font-size:11px;color:var(--gray400);margin-top:2px}
+
+.card{background:var(--white);border:1px solid var(--gray200);border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.card h3{font-family:var(--font-display);font-size:14px;font-weight:700;margin-bottom:12px}
+
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+.bar-label{width:100px;font-weight:600}
+.bar-track{flex:1;height:14px;background:var(--gray100);border-radius:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:7px}
+.bar-value{width:120px;text-align:right;color:var(--gray500);font-size:11px}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gray200);background:var(--gray50)}
+td{padding:8px 12px;border-bottom:1px solid var(--gray100)}
+tr:hover td{background:var(--gray50)}
+.text-right{text-align:right}
+.badge{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;display:inline-block}
+.badge-gray{background:var(--gray100);color:var(--gray500)}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-purple{background:#f3e8ff;color:#6b21a8}
+
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:7px 11px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;font-family:var(--font-body)}
+.btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-outline{background:var(--white);border:1px solid var(--gray200);color:var(--gray600)}
+.btn-danger{background:#fee2e2;color:var(--red);border:1px solid #fecaca}
+.btn-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;right:-560px;width:560px;max-width:95vw;height:100vh;background:var(--white);z-index:201;transition:right .25s;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.1)}
+.drawer.open{right:0}
+.drawer-head{padding:18px 22px;border-bottom:1px solid var(--gray200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 22px}
+.drawer-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--gray200);background:var(--white);cursor:pointer;font-size:16px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:14px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.modal-body{padding:18px 22px}
+.modal-footer{padding:12px 22px 18px;border-top:1px solid var(--gray100);display:flex;gap:8px;justify-content:flex-end}
+.field{margin-bottom:12px}
+.field label{font-size:11px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:var(--font-body)}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--primary);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(10px);transition:all .3s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+.toast.success{background:var(--green)}
+
+@media(max-width:768px){.sp-sidebar{transform:translateX(-100%);transition:transform .25s}.sp-sidebar.open{transform:translateX(0)}.sp-main{margin-left:0}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>solvenin<span>.</span></h1>
+      <p>Servis Paneli</p>
+    </div>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+    <input type="password" id="login-password" placeholder="Şifre" autocomplete="current-password">
+    <button onclick="doLogin()">Giriş Yap</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel-wrap" id="panel-wrap" style="display:none">
+  <aside class="sp-sidebar">
+    <div class="sp-sidebar-logo">
+      <h2>solvenin<span>.</span></h2>
+      <p>Servis Paneli</p>
+    </div>
+    <nav class="sp-nav" id="sp-nav"></nav>
+    <div class="sp-sidebar-footer">
+      <div class="sp-user-name" id="sp-user-name"></div>
+      <div class="sp-user-role" id="sp-user-role"></div>
+      <button class="sp-logout" onclick="doLogout()">🚪 Çıkış</button>
+    </div>
+  </aside>
+
+  <div class="sp-main">
+    <header class="sp-topbar">
+      <div class="sp-title" id="sp-title">Dashboard</div>
+    </header>
+    <div class="sp-content" id="sp-content"></div>
+  </div>
+</div>
+
+<!-- DRAWER: Company Detail -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div id="dr-name" style="font-family:var(--font-display);font-size:18px;font-weight:700"></div>
+      <div id="dr-meta" style="font-size:11px;color:var(--gray400);margin-top:2px"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="dr-body"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Başlık</span>
+      <button class="drawer-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+
+let user = null; // {id, email, name, role}
+let currentPage = 'dashboard';
+let companies = [], allUsers = [], demos = [], panelUsers = [], logs = [];
+let selectedCompany = null;
+
+// ===== AUTH =====
+function getToken() {
+  try {
+    const t = localStorage.getItem('sp_token');
+    if (!t) return null;
+    const data = JSON.parse(atob(t));
+    if (data.exp < Date.now()) { localStorage.removeItem('sp_token'); return null; }
+    return data;
+  } catch(e) { return null; }
+}
+
+function setToken(u) {
+  const data = { ...u, exp: Date.now() + 8*3600*1000 };
+  localStorage.setItem('sp_token', btoa(JSON.stringify(data)));
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Email ve şifre gerekli'; return; }
+  const { data, error } = await sb.rpc('sp_login', { p_email: email, p_password: password });
+  if (error) { errEl.textContent = error.message; return; }
+  if (!data?.ok) { errEl.textContent = 'Geçersiz email veya şifre'; return; }
+  user = { id: data.id, email: data.email, name: data.name, role: data.role };
+  setToken(user);
+  showPanel();
+}
+
+function doLogout() {
+  localStorage.removeItem('sp_token');
+  user = null;
+  document.getElementById('panel-wrap').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+function showPanel() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('panel-wrap').style.display = 'flex';
+  document.getElementById('sp-user-name').textContent = user.name;
+  document.getElementById('sp-user-role').textContent = user.role;
+  buildNav();
+  switchPage('dashboard');
+}
+
+function buildNav() {
+  const items = [
+    { key: 'dashboard', icon: '🏠', label: 'Dashboard', roles: ['superadmin','support','partner','partner_manager'] },
+    { key: 'companies', icon: '🏢', label: 'Şirketler', roles: ['superadmin','support','partner','partner_manager'] },
+    { key: 'users', icon: '👥', label: 'Kullanıcılar', roles: ['superadmin','support'] },
+    { key: 'demos', icon: '🎯', label: 'Demolar', roles: ['superadmin','support','partner'] },
+    { key: 'panel_users', icon: '👤', label: 'Panel Kullanıcıları', roles: ['superadmin'] },
+    { key: 'logs', icon: '📋', label: 'Loglar', roles: ['superadmin','support'] }
+  ];
+  const nav = document.getElementById('sp-nav');
+  nav.innerHTML = items.filter(i => i.roles.includes(user.role)).map(i =>
+    `<div class="sp-nav-item ${i.key === currentPage ? 'active' : ''}" onclick="switchPage('${i.key}')"><span class="sp-nav-icon">${i.icon}</span>${i.label}</div>`
+  ).join('');
+}
+
+function switchPage(key) {
+  currentPage = key;
+  buildNav();
+  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', users:'👥 Kullanıcılar', demos:'🎯 Demolar', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
+  document.getElementById('sp-title').textContent = titles[key] || key;
+  if (key === 'dashboard') renderDashboard();
+  else if (key === 'companies') renderCompanies();
+  else if (key === 'users') renderUsers();
+  else if (key === 'demos') renderDemos();
+  else if (key === 'panel_users') renderPanelUsers();
+  else if (key === 'logs') renderLogs();
+}
+
+// ===== HELPERS =====
+function fmt(n) { return (parseFloat(n)||0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('tr-TR'); }
+function fmtDateTime(d) { if (!d) return '—'; return new Date(d).toLocaleString('tr-TR'); }
+function fmtRel(d) {
+  if (!d) return '—';
+  const diff = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (diff < 60) return 'az önce';
+  if (diff < 3600) return Math.floor(diff/60) + ' dk önce';
+  if (diff < 86400) return Math.floor(diff/3600) + ' saat önce';
+  return Math.floor(diff/86400) + ' gün önce';
+}
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===== DASHBOARD =====
+async function renderDashboard() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data: stats } = await sb.rpc('sp_dashboard_stats');
+  const { data: recentLogs } = await sb.rpc('sp_recent_logs', { p_limit: 10 });
+  const totalPlans = (stats.plan_free||0) + (stats.plan_standard||0) + (stats.plan_pro||0);
+  const mrr = (stats.plan_standard||0) * 8.99 + (stats.plan_pro||0) * 12.99;
+  content.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Toplam Şirket</div><div class="stat-val">${stats.companies}</div></div>
+      <div class="stat-card"><div class="stat-label">Toplam Kullanıcı</div><div class="stat-val">${stats.users}</div></div>
+      <div class="stat-card"><div class="stat-label">Aktif Demo</div><div class="stat-val">${stats.demos}</div></div>
+      <div class="stat-card"><div class="stat-label">Partnerler</div><div class="stat-val">${stats.partners}</div></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Toplam Fatura</div><div class="stat-val">${fmt(stats.invoices)}</div></div>
+      <div class="stat-card"><div class="stat-label">Cari Kaydı</div><div class="stat-val">${fmt(stats.contacts)}</div></div>
+      <div class="stat-card"><div class="stat-label">Stok Hareketi</div><div class="stat-val">${fmt(stats.movements)}</div></div>
+      <div class="stat-card"><div class="stat-label">Tahmini MRR</div><div class="stat-val">$${fmt(mrr.toFixed(0))}</div></div>
+    </div>
+
+    <div class="card">
+      <h3>📊 Plan Dağılımı</h3>
+      <div class="bar-chart">
+        ${renderBar('Free', stats.plan_free, totalPlans, '#94a3b8')}
+        ${renderBar('Standard', stats.plan_standard, totalPlans, '#3b82f6')}
+        ${renderBar('Professional', stats.plan_pro, totalPlans, '#8b5cf6')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📈 Son 30 Gün</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div><div style="font-size:11px;color:var(--gray400)">YENİ ŞİRKET</div><div style="font-size:22px;font-weight:800;color:var(--primary)">${stats.new_companies_30d}</div></div>
+        <div><div style="font-size:11px;color:var(--gray400)">YENİ KULLANICI</div><div style="font-size:22px;font-weight:800;color:var(--green)">${stats.new_users_30d}</div></div>
+        <div><div style="font-size:11px;color:var(--gray400)">YENİ DEMO</div><div style="font-size:22px;font-weight:800;color:var(--orange)">${stats.new_demos_30d}</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Son Aktiviteler</h3>
+      <table>
+        <thead><tr><th>Zaman</th><th>Kullanıcı</th><th>İşlem</th><th>Şirket</th></tr></thead>
+        <tbody>
+          ${(recentLogs||[]).map(l => `<tr>
+            <td style="color:var(--gray500)">${fmtRel(l.created_at)}</td>
+            <td>${l.user_email || '—'}</td>
+            <td>${l.action}</td>
+            <td>${l.company_name || '—'}</td>
+          </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--gray400);padding:20px">Henüz aktivite yok</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderBar(label, value, total, color) {
+  const pct = total > 0 ? Math.round(value / total * 100) : 0;
+  return `<div class="bar-row">
+    <div class="bar-label">${label}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <div class="bar-value">${value} şirket (%${pct})</div>
+  </div>`;
+}
+
+// ===== COMPANIES =====
+async function renderCompanies() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data } = await sb.rpc('sp_companies');
+  companies = data || [];
+  renderCompaniesTable();
+}
+
+function renderCompaniesTable() {
+  const q = (document.getElementById('co-search')?.value || '').toLowerCase();
+  const planFilter = document.getElementById('co-filter-plan')?.value || '';
+  const statusFilter = document.getElementById('co-filter-status')?.value || '';
+  const filtered = companies.filter(c => {
+    if (q && !(c.name||'').toLowerCase().includes(q)) return false;
+    if (planFilter && (c.plan||'free') !== planFilter) return false;
+    if (statusFilter === 'active' && c.is_frozen) return false;
+    if (statusFilter === 'frozen' && !c.is_frozen) return false;
+    return true;
+  });
+
+  document.getElementById('sp-content').innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="co-search" placeholder="🔍 Şirket ara..." oninput="renderCompaniesTable()" value="${q}">
+      <select id="co-filter-plan" onchange="renderCompaniesTable()">
+        <option value="">Tüm Planlar</option>
+        <option value="free" ${planFilter==='free'?'selected':''}>Free</option>
+        <option value="standard" ${planFilter==='standard'?'selected':''}>Standard</option>
+        <option value="professional" ${planFilter==='professional'?'selected':''}>Professional</option>
+      </select>
+      <select id="co-filter-status" onchange="renderCompaniesTable()">
+        <option value="">Tüm Durumlar</option>
+        <option value="active" ${statusFilter==='active'?'selected':''}>Aktif</option>
+        <option value="frozen" ${statusFilter==='frozen'?'selected':''}>Dondurulmuş</option>
+      </select>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:var(--gray500)">${filtered.length} şirket</span>
+    </div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr>
+          <th>ŞİRKET</th><th>ÜLKE</th><th class="text-right">KULL</th><th>PLAN</th>
+          <th class="text-right">FAT</th><th class="text-right">STOK</th>
+          <th>PARTNER</th><th>DURUM</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map(c => {
+            const planBadge = { free:'badge-gray', standard:'badge-blue', professional:'badge-purple' }[c.plan||'free'] || 'badge-gray';
+            return `<tr>
+              <td><strong>${c.name || '—'}</strong><div style="font-size:10px;color:var(--gray400)">${fmtDate(c.created_at)}</div></td>
+              <td>${c.country_code || '—'}</td>
+              <td class="text-right">${c.user_count || 0}</td>
+              <td><span class="badge ${planBadge}">${c.plan || 'free'}</span></td>
+              <td class="text-right">${c.invoice_count || 0}</td>
+              <td class="text-right">${c.stock_count || 0}</td>
+              <td style="color:var(--gray500)">${c.partner_name || '—'}</td>
+              <td>${c.is_frozen ? '<span class="badge badge-red">🔴 Dondu</span>' : '<span class="badge badge-green">✅ Aktif</span>'}</td>
+              <td><button class="btn btn-outline btn-sm" onclick="openCompanyDrawer('${c.id}')">Detay →</button></td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--gray400);padding:30px">Şirket bulunamadı</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function openCompanyDrawer(id) {
+  selectedCompany = companies.find(c => c.id === id);
+  if (!selectedCompany) return;
+  const c = selectedCompany;
+  document.getElementById('dr-name').textContent = c.name;
+  document.getElementById('dr-meta').textContent = `${c.country_code || '—'} · ${c.plan || 'free'} · ${fmtDate(c.created_at)}`;
+
+  const { data: users } = await sb.rpc('sp_company_users', { p_company_id: id });
+  const isSuperadmin = user.role === 'superadmin';
+  const isSupport = user.role === 'support';
+  const body = document.getElementById('dr-body');
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div class="stat-card" style="padding:10px 14px"><div class="stat-label">KULLANICI</div><div class="stat-val" style="font-size:20px">${c.user_count||0}</div></div>
+      <div class="stat-card" style="padding:10px 14px"><div class="stat-label">FATURA</div><div class="stat-val" style="font-size:20px">${c.invoice_count||0}</div></div>
+      <div class="stat-card" style="padding:10px 14px"><div class="stat-label">STOK HAR.</div><div class="stat-val" style="font-size:20px">${c.stock_count||0}</div></div>
+    </div>
+
+    <div style="margin-bottom:14px;padding:12px;background:var(--gray50);border-radius:8px">
+      <div style="font-size:11px;color:var(--gray500);margin-bottom:4px">Durum: ${c.is_frozen ? '🔴 <strong>Dondurulmuş</strong>' : '✅ <strong>Aktif</strong>'}</div>
+      ${c.is_frozen && c.freeze_reason ? `<div style="font-size:11px;color:var(--red)">${c.freeze_reason}</div>` : ''}
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
+      ${isSuperadmin ? `
+        <button class="btn btn-outline btn-sm" onclick="showPlanModal('${c.id}', '${c.plan||'free'}')">💼 Plan</button>
+        <button class="btn btn-outline btn-sm" onclick="showLimitModal('${c.id}')">📊 Fatura Limiti</button>
+        <button class="btn btn-outline btn-sm" onclick="showTrialModal('${c.id}')">📅 Deneme</button>
+        ${c.is_frozen ? `<button class="btn btn-success btn-sm" onclick="unfreezeCompany('${c.id}')">✅ Aktif Et</button>` : `<button class="btn btn-danger btn-sm" onclick="showFreezeModal('${c.id}')">🔴 Dondur</button>`}
+      ` : ''}
+      ${(isSuperadmin || isSupport) ? `<button class="btn btn-outline btn-sm" onclick="showNoteModal('${c.id}')">📝 Not Ekle</button>` : ''}
+    </div>
+
+    <h4 style="font-family:var(--font-display);font-size:13px;margin-bottom:8px">👥 Kullanıcılar</h4>
+    <table style="margin-bottom:16px">
+      <thead><tr><th>Ad</th><th>Email</th><th>Rol</th></tr></thead>
+      <tbody>
+        ${(users||[]).map(u => `<tr>
+          <td>${u.full_name || '—'}</td>
+          <td style="color:var(--gray500);font-size:11px">${u.email || '—'}</td>
+          <td><span class="badge badge-gray">${u.role || '—'}</span></td>
+        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--gray400)">Kullanıcı yok</td></tr>'}
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  selectedCompany = null;
+}
+
+// ===== COMPANY ACTIONS =====
+function showPlanModal(companyId, currentPlan) {
+  openModal('Plan Değiştir', `
+    <div class="field"><label>Mevcut Plan</label><div style="padding:6px 0;font-weight:600">${currentPlan}</div></div>
+    <div class="field"><label>Yeni Plan</label>
+      <select id="m-plan">
+        <option value="free" ${currentPlan==='free'?'selected':''}>Free</option>
+        <option value="standard" ${currentPlan==='standard'?'selected':''}>Standard</option>
+        <option value="professional" ${currentPlan==='professional'?'selected':''}>Professional</option>
+      </select>
+    </div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `savePlan('${companyId}')` }
+  ]);
+}
+
+async function savePlan(companyId) {
+  const plan = document.getElementById('m-plan').value;
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'plan', p_value: plan });
+  closeModal();
+  showToast('Plan değiştirildi', 'success');
+  await renderCompanies();
+  if (selectedCompany) openCompanyDrawer(selectedCompany.id);
+}
+
+function showLimitModal(companyId) {
+  openModal('Fatura Limiti', `
+    <div class="field"><label>Özel Limit (boş=varsayılan)</label><input type="number" id="m-limit" placeholder="30" min="0"></div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveLimit('${companyId}')` }
+  ]);
+}
+
+async function saveLimit(companyId) {
+  const limit = document.getElementById('m-limit').value || '';
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'invoice_limit_override', p_value: limit });
+  closeModal();
+  showToast('Limit güncellendi', 'success');
+  await renderCompanies();
+}
+
+function showTrialModal(companyId) {
+  const defDate = new Date(); defDate.setDate(defDate.getDate() + 14);
+  openModal('Deneme Süresi', `
+    <div class="field"><label>Bitiş Tarihi</label><input type="date" id="m-trial" value="${defDate.toISOString().split('T')[0]}"></div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveTrial('${companyId}')` }
+  ]);
+}
+
+async function saveTrial(companyId) {
+  const date = document.getElementById('m-trial').value;
+  if (!date) { showToast('Tarih seçin', 'error'); return; }
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'trial_ends_at', p_value: date + 'T00:00:00Z' });
+  closeModal();
+  showToast('Deneme süresi güncellendi', 'success');
+}
+
+function showFreezeModal(companyId) {
+  openModal('Şirketi Dondur', `
+    <div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:12px;color:var(--red);margin-bottom:12px">⚠️ Bu şirketin tüm kullanıcılarına erişim engeli gelir.</div>
+    <div class="field"><label>Sebep *</label><textarea id="m-reason" rows="3" placeholder="Dondurma sebebi..."></textarea></div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: '🔴 Dondur', cls: 'btn-danger', onclick: `freezeCompany('${companyId}')` }
+  ]);
+}
+
+async function freezeCompany(companyId) {
+  const reason = document.getElementById('m-reason').value.trim();
+  if (!reason) { showToast('Sebep girin', 'error'); return; }
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'is_frozen', p_value: 'true' });
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'freeze_reason', p_value: reason });
+  closeModal();
+  closeDrawer();
+  showToast('Şirket donduruldu', 'success');
+  await renderCompanies();
+}
+
+async function unfreezeCompany(companyId) {
+  if (!confirm('Şirketi tekrar aktif etmek istediğinize emin misiniz?')) return;
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'is_frozen', p_value: 'false' });
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'freeze_reason', p_value: '' });
+  showToast('Şirket aktif edildi', 'success');
+  await renderCompanies();
+  if (selectedCompany) openCompanyDrawer(selectedCompany.id);
+}
+
+function showNoteModal(companyId) {
+  openModal('Servis Notu Ekle', `
+    <div class="field"><label>Not</label><textarea id="m-note" rows="4" placeholder="Destek notu..."></textarea></div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveNote('${companyId}')` }
+  ]);
+}
+
+async function saveNote(companyId) {
+  const note = document.getElementById('m-note').value.trim();
+  if (!note) { showToast('Not girin', 'error'); return; }
+  const stamp = new Date().toLocaleString('tr-TR');
+  const fullNote = `[${stamp} — ${user.name}] ${note}`;
+  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'service_notes', p_value: fullNote });
+  closeModal();
+  showToast('Not kaydedildi', 'success');
+}
+
+// ===== USERS =====
+async function renderUsers() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data } = await sb.rpc('sp_users');
+  allUsers = data || [];
+  renderUsersTable();
+}
+
+function renderUsersTable() {
+  const q = (document.getElementById('u-search')?.value || '').toLowerCase();
+  const filtered = allUsers.filter(u => {
+    if (q && !(u.full_name||'').toLowerCase().includes(q) && !(u.email||'').toLowerCase().includes(q) && !(u.company_name||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('sp-content').innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="u-search" placeholder="🔍 Kullanıcı ara..." oninput="renderUsersTable()" value="${q}">
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:var(--gray500)">${filtered.length} kullanıcı</span>
+    </div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>AD</th><th>EMAIL</th><th>ŞİRKET</th><th>PLAN</th><th>ROL</th><th>KAYIT</th></tr></thead>
+        <tbody>
+          ${filtered.map(u => `<tr>
+            <td><strong>${u.full_name || '—'}</strong></td>
+            <td style="color:var(--gray500);font-size:11px">${u.email || '—'}</td>
+            <td>${u.company_name || '—'}</td>
+            <td><span class="badge badge-gray">${u.plan || 'free'}</span></td>
+            <td><span class="badge badge-gray">${u.company_role || '—'}</span></td>
+            <td style="color:var(--gray500);font-size:11px">${fmtDate(u.created_at)}</td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray400);padding:30px">Kullanıcı bulunamadı</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ===== DEMOS =====
+async function renderDemos() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data } = await sb.rpc('sp_demos');
+  demos = data || [];
+  const active = demos.filter(d => d.is_active && new Date(d.expires_at) > new Date());
+  content.innerHTML = `
+    <div class="card">
+      <h3>➕ Yeni Demo Oluştur</h3>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div class="field" style="margin:0">
+          <label>Dil</label>
+          <select id="demo-lang"><option value="en">EN</option><option value="tr">TR</option><option value="ru">RU</option></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Süre</label>
+          <select id="demo-dur"><option value="1">24 saat</option><option value="2">48 saat</option><option value="7" selected>7 gün</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="createDemo()">🎯 Demo Oluştur</button>
+      </div>
+      <div style="font-size:11px;color:var(--gray400);margin-top:8px">Demo hesabı örnek veriyle birlikte oluşturulur. Süresi dolunca otomatik silinir.</div>
+    </div>
+    <div class="card" style="padding:0">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--gray100)"><h3 style="margin:0">Aktif Demolar (${active.length})</h3></div>
+      <table>
+        <thead><tr><th>EMAIL</th><th>ŞİRKET</th><th>DİL</th><th>ŞİFRE</th><th>OLUŞTURAN</th><th>BİTİŞ</th><th></th></tr></thead>
+        <tbody>
+          ${demos.map(d => {
+            const expired = new Date(d.expires_at) < new Date();
+            return `<tr style="${expired || !d.is_active ? 'opacity:.5' : ''}">
+              <td style="font-size:11px"><code>${d.email || '—'}</code></td>
+              <td>${d.company_name || '—'}</td>
+              <td><span class="badge badge-blue">${d.language?.toUpperCase() || '—'}</span></td>
+              <td style="font-size:11px"><code>${d.password || 'Demo1234!'}</code></td>
+              <td style="color:var(--gray500);font-size:11px">${d.creator_name || '—'}</td>
+              <td style="font-size:11px">${fmtDateTime(d.expires_at)}</td>
+              <td>${expired ? '<span class="badge badge-red">Süresi doldu</span>' : '<span class="badge badge-green">Aktif</span>'}</td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--gray400);padding:30px">Henüz demo yok</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function createDemo() {
+  const lang = document.getElementById('demo-lang').value;
+  const durDays = parseInt(document.getElementById('demo-dur').value);
+  showToast('Demo oluşturuluyor...', 'success');
+
+  const randId = Math.random().toString(36).substring(2, 10);
+  const email = `demo_${randId}@solvenin.com`;
+  const expires = new Date(); expires.setDate(expires.getDate() + durDays);
+
+  const companyNames = { en: 'Demo Company Ltd', tr: 'Demo Ticaret A.Ş.', ru: 'Демо Компания ООО' };
+  const currencies = { en: 'USD', tr: 'TRY', ru: 'KZT' };
+
+  // Create company (without actual auth user — visible via impersonation)
+  const { data: company, error: compErr } = await sb.from('companies').insert({
+    name: companyNames[lang] || companyNames.en,
+    base_currency: currencies[lang] || 'USD',
+    country_code: lang === 'tr' ? 'TR' : lang === 'ru' ? 'KZ' : 'US',
+    plan: 'professional',
+    status: 'active'
+  }).select().single();
+
+  if (compErr) { showToast('Hata: ' + compErr.message, 'error'); return; }
+
+  // Create demo data in parallel
+  const demoProducts = [
+    { name: 'Office Chair', sku: 'CHAIR001', unit: 'PCS', cost_price: 45, sale_price: 89, quantity: 500 },
+    { name: 'Laptop Stand', sku: 'STAND001', unit: 'PCS', cost_price: 15, sale_price: 29, quantity: 200 },
+    { name: 'Wireless Mouse', sku: 'MOUSE001', unit: 'PCS', cost_price: 8, sale_price: 18, quantity: 300 },
+    { name: 'USB Hub', sku: 'HUB001', unit: 'PCS', cost_price: 12, sale_price: 25, quantity: 150 },
+    { name: 'Monitor 27inch', sku: 'MON001', unit: 'PCS', cost_price: 180, sale_price: 349, quantity: 80 },
+    { name: 'Desk Lamp', sku: 'LAMP001', unit: 'PCS', cost_price: 22, sale_price: 45, quantity: 200 },
+    { name: 'Mechanical Keyboard', sku: 'KEY001', unit: 'PCS', cost_price: 35, sale_price: 69, quantity: 120 },
+    { name: 'Webcam HD', sku: 'CAM001', unit: 'PCS', cost_price: 28, sale_price: 55, quantity: 90 }
+  ];
+  const productsInsert = demoProducts.map(p => ({ ...p, company_id: company.id, is_active: true }));
+
+  const demoContacts = [
+    { name: 'Alpha Trading Co', email: 'alpha@demo.com', is_customer: true, is_supplier: false },
+    { name: 'Beta Retail Group', email: 'beta@demo.com', is_customer: true, is_supplier: false },
+    { name: 'Gamma Import Export', email: 'gamma@demo.com', is_customer: true, is_supplier: false },
+    { name: 'Delta Wholesale Ltd', email: 'delta@demo.com', is_customer: true, is_supplier: false },
+    { name: 'Global Supply Co', email: 'global@demo.com', is_customer: false, is_supplier: true },
+    { name: 'Prime Logistics Ltd', email: 'prime@demo.com', is_customer: false, is_supplier: true }
+  ];
+  const contactsInsert = demoContacts.map(c => ({ ...c, company_id: company.id, is_active: true, type: c.is_customer ? 'customer' : 'supplier' }));
+
+  await Promise.all([
+    sb.from('products').insert(productsInsert),
+    sb.from('contacts').insert(contactsInsert),
+    sb.from('warehouses').insert({ company_id: company.id, name: 'Main Warehouse', is_default: true, is_active: true })
+  ]);
+
+  // Save demo account record
+  await sb.from('demo_accounts').insert({
+    company_id: company.id, email, password: 'Demo1234!',
+    language: lang, expires_at: expires.toISOString(), created_by: user.id
+  });
+
+  await sb.rpc('sp_log', { p_user_id: user.id, p_action: 'create_demo', p_company_id: company.id, p_details: { email, lang, duration: durDays } });
+
+  openModal('✅ Demo Hazır!', `
+    <div style="padding:12px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;margin-bottom:14px">Demo hesap başarıyla oluşturuldu. Bilgileri müşteriye iletebilirsiniz.</div>
+    <div class="field"><label>Email</label><input type="text" readonly value="${email}" id="demo-email-copy"></div>
+    <div class="field"><label>Şifre</label><input type="text" readonly value="Demo1234!" id="demo-pwd-copy"></div>
+    <div class="field"><label>Süre</label><div style="padding:6px 0;font-weight:600">${durDays} gün (${fmtDateTime(expires)})</div></div>
+    <div style="font-size:11px;color:var(--gray400);padding:8px;background:var(--gray50);border-radius:6px">ℹ️ Not: Gerçek login için Supabase admin üzerinden auth.users kaydı gerekir. Şimdilik şirket verisi hazır, impersonation ile erişilebilir.</div>
+  `, [
+    { text: '📋 Bilgileri Kopyala', cls: 'btn-outline', onclick: 'copyDemoInfo()' },
+    { text: 'Kapat', cls: 'btn-primary', onclick: 'closeModal();renderDemos()' }
+  ]);
+}
+
+function copyDemoInfo() {
+  const email = document.getElementById('demo-email-copy').value;
+  const pwd = document.getElementById('demo-pwd-copy').value;
+  navigator.clipboard.writeText(`Email: ${email}\nŞifre: ${pwd}`);
+  showToast('Kopyalandı', 'success');
+}
+
+// ===== PANEL USERS =====
+async function renderPanelUsers() {
+  const { data } = await sb.rpc('sp_panel_users');
+  panelUsers = data || [];
+  document.getElementById('sp-content').innerHTML = `
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="showAddPanelUserModal()">+ Kullanıcı Ekle</button>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:var(--gray500)">${panelUsers.length} kullanıcı</span>
+    </div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>AD</th><th>EMAIL</th><th>ROL</th><th>SON GİRİŞ</th><th>DURUM</th></tr></thead>
+        <tbody>
+          ${panelUsers.map(u => `<tr>
+            <td><strong>${u.name}</strong></td>
+            <td style="color:var(--gray500);font-size:11px">${u.email}</td>
+            <td><span class="badge badge-blue">${u.role}</span></td>
+            <td style="color:var(--gray500);font-size:11px">${fmtDateTime(u.last_login) || 'Hiç'}</td>
+            <td>${u.is_active ? '<span class="badge badge-green">Aktif</span>' : '<span class="badge badge-gray">Pasif</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function showAddPanelUserModal() {
+  const tempPwd = Math.random().toString(36).substring(2, 10);
+  openModal('Panel Kullanıcısı Ekle', `
+    <div class="field"><label>Ad</label><input type="text" id="pu-name"></div>
+    <div class="field"><label>Email</label><input type="email" id="pu-email"></div>
+    <div class="field"><label>Rol</label>
+      <select id="pu-role">
+        <option value="support">Destek</option>
+        <option value="partner">Partner</option>
+        <option value="partner_manager">Partner Yöneticisi</option>
+      </select>
+    </div>
+    <div class="field"><label>Geçici Şifre (otomatik)</label><input type="text" id="pu-pwd" value="${tempPwd}" readonly style="font-family:monospace"></div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: 'savePanelUser()' }
+  ]);
+}
+
+async function savePanelUser() {
+  const name = document.getElementById('pu-name').value.trim();
+  const email = document.getElementById('pu-email').value.trim();
+  const role = document.getElementById('pu-role').value;
+  const pwd = document.getElementById('pu-pwd').value;
+  if (!name || !email) { showToast('Ad ve email gerekli', 'error'); return; }
+  const { error } = await sb.from('service_panel_users').insert({ name, email, role, password_hash: pwd, is_active: true });
+  if (error) { showToast(error.message, 'error'); return; }
+  await sb.rpc('sp_log', { p_user_id: user.id, p_action: 'create_panel_user', p_details: { email, role } });
+  closeModal();
+  showToast('Kullanıcı eklendi. Şifre: ' + pwd, 'success');
+  renderPanelUsers();
+}
+
+// ===== LOGS =====
+async function renderLogs() {
+  const { data } = await sb.rpc('sp_recent_logs', { p_limit: 200 });
+  logs = data || [];
+  document.getElementById('sp-content').innerHTML = `
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>TARİH</th><th>KULLANICI</th><th>İŞLEM</th><th>ŞİRKET</th><th>DETAY</th></tr></thead>
+        <tbody>
+          ${logs.map(l => `<tr>
+            <td style="color:var(--gray500);font-size:11px">${fmtDateTime(l.created_at)}</td>
+            <td>${l.user_email || '—'}</td>
+            <td>${l.action}</td>
+            <td>${l.company_name || '—'}</td>
+            <td style="font-size:10px;color:var(--gray400)">${l.details ? JSON.stringify(l.details) : '—'}</td>
+          </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--gray400);padding:30px">Log yok</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ===== MODAL HELPERS =====
+function openModal(title, bodyHTML, buttons) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-footer').innerHTML = buttons.map(b => `<button class="btn ${b.cls}" onclick="${b.onclick}">${b.text}</button>`).join('');
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ===== INIT =====
+(function init() {
+  const t = getToken();
+  if (t) {
+    user = { id: t.id, email: t.email, name: t.name, role: t.role };
+    showPanel();
+  } else {
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('panel-wrap').style.display = 'none';
+  }
+})();
+
+// Enter key on login
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
