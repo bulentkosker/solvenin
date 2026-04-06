@@ -191,15 +191,18 @@ function getToken() {
   try {
     const t = localStorage.getItem('sp_token');
     if (!t) return null;
-    const data = JSON.parse(atob(t));
+    const data = JSON.parse(decodeURIComponent(atob(t).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
     if (data.exp < Date.now()) { localStorage.removeItem('sp_token'); return null; }
     return data;
-  } catch(e) { return null; }
+  } catch(e) { localStorage.removeItem('sp_token'); return null; }
 }
 
 function setToken(u) {
   const data = { ...u, exp: Date.now() + 8*3600*1000 };
-  localStorage.setItem('sp_token', btoa(JSON.stringify(data)));
+  // Unicode-safe base64 encoding
+  const json = JSON.stringify(data);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  localStorage.setItem('sp_token', b64);
 }
 
 async function doLogin() {
