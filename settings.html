@@ -300,6 +300,7 @@ tr:hover .action-btns { opacity:1; }
 .tax-row:last-child { border-bottom:none; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="i18n.js"></script>
     <style>
     .main { margin-left: 220px; }
@@ -347,6 +348,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('integrations', this)"><span class="settings-nav-icon">🔗</span> <span data-i18n="nav_integrations">Entegrasyonlar</span></button>
         <button class="settings-nav-item" onclick="switchSection('pos-settings', this)"><span class="settings-nav-icon">🖥️</span> <span data-i18n="nav_pos_settings">POS Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
+        <button class="settings-nav-item" onclick="switchSection('data', this)"><span class="settings-nav-icon">💾</span> Veri Yönetimi</button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -868,6 +870,128 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- ===== VERİ YÖNETİMİ ===== -->
+      <div class="settings-section" id="section-data">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title">📤 Dışa Aktar</div>
+              <div class="settings-card-desc">Verilerinizi Excel formatında indirin</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">📦</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Ürünler</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Stok listesi, fiyatlar dahil</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('products')" style="width:100%">İndir →</button>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">👥</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Cariler</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Müşteri & Tedarikçiler</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('contacts')" style="width:100%">İndir →</button>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">💰</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Satışlar</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Siparişler & Faturalar</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('sales')" style="width:100%">İndir →</button>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">🛒</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Satın Alma</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Alış siparişleri & faturalar</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('purchases')" style="width:100%">İndir →</button>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">🏦</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Finans</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Kasa & Banka hareketleri</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('finance')" style="width:100%">İndir →</button>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:22px;margin-bottom:6px">📊</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">Muhasebe</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Yevmiye defteri & mizan</div>
+                <button class="btn btn-outline btn-sm" onclick="exportData('accounting')" style="width:100%">İndir →</button>
+              </div>
+            </div>
+            <div style="margin-top:16px;padding:14px;background:var(--blue-light, #eff6ff);border:1px solid var(--blue, #3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:2px">💾 Tam Yedek</div>
+                <div style="font-size:11px;color:var(--gray500)">Tüm veriler tek Excel dosyasında, her modül ayrı sekme</div>
+                <div style="font-size:10px;color:var(--gray400);margin-top:3px" id="last-backup-info">Yedek geçmişi yükleniyor...</div>
+              </div>
+              <button class="btn btn-primary" onclick="exportData('full')">Tam Yedek İndir</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:20px">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title">📥 İçe Aktar</div>
+              <div class="settings-card-desc">Excel şablonu indirin, doldurun, yükleyin</div>
+            </div>
+          </div>
+          <div class="settings-card-body">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+              ${['products','contacts','opening_stock','opening_balances'].map(() => '').join('')}
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:20px;margin-bottom:4px">📦</div>
+                <div style="font-weight:700;font-size:13px">Ürün Listesi</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Ürünlerinizi toplu olarak ekleyin</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-outline btn-sm" onclick="downloadTemplate('products')">📄 Şablon</button>
+                  <label class="btn btn-primary btn-sm" style="cursor:pointer"><input type="file" accept=".xlsx,.csv" onchange="handleImport(event,'products')" style="display:none">📤 Yükle</label>
+                </div>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:20px;margin-bottom:4px">👥</div>
+                <div style="font-weight:700;font-size:13px">Cari Listesi</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Müşteri & tedarikçileri ekleyin</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-outline btn-sm" onclick="downloadTemplate('contacts')">📄 Şablon</button>
+                  <label class="btn btn-primary btn-sm" style="cursor:pointer"><input type="file" accept=".xlsx,.csv" onchange="handleImport(event,'contacts')" style="display:none">📤 Yükle</label>
+                </div>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:20px;margin-bottom:4px">📦</div>
+                <div style="font-weight:700;font-size:13px">Açılış Stok Bakiyeleri</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Mevcut stok miktarları</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-outline btn-sm" onclick="downloadTemplate('opening_stock')">📄 Şablon</button>
+                  <label class="btn btn-primary btn-sm" style="cursor:pointer"><input type="file" accept=".xlsx,.csv" onchange="handleImport(event,'opening_stock')" style="display:none">📤 Yükle</label>
+                </div>
+              </div>
+              <div style="padding:14px;border:1px solid var(--gray200);border-radius:10px">
+                <div style="font-size:20px;margin-bottom:4px">💰</div>
+                <div style="font-weight:700;font-size:13px">Açılış Cari Bakiyeleri</div>
+                <div style="font-size:11px;color:var(--gray500);margin-bottom:10px">Mevcut borç/alacak bakiyeleri</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-outline btn-sm" onclick="downloadTemplate('opening_balances')">📄 Şablon</button>
+                  <label class="btn btn-primary btn-sm" style="cursor:pointer"><input type="file" accept=".xlsx,.csv" onchange="handleImport(event,'opening_balances')" style="display:none">📤 Yükle</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:20px">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title">🗂️ Yedek Geçmişi</div>
+              <div class="settings-card-desc">Son yedeklemeler (en fazla 20 kayıt)</div>
+            </div>
+          </div>
+          <div class="settings-card-body" id="backup-history">
+            <div style="padding:20px;text-align:center;color:var(--gray400);font-size:12px">Yükleniyor...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -1155,6 +1279,7 @@ function switchSection(name, el) {
   if (name === 'recycle') loadRecycleBin();
   if (name === 'users') loadUsers();
   if (name === 'currency') loadExchangeRates();
+  if (name === 'data') loadBackupHistory();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
@@ -2198,6 +2323,289 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // ===== RECYCLE BIN =====
 let allDeletedRecords = [];
+
+// ===== VERİ YÖNETİMİ =====
+function dateStr() {
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
+}
+
+async function loadBackupHistory() {
+  const el = document.getElementById('backup-history');
+  if (!el) return;
+  const { data } = await sb.from('data_backups').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(20);
+  const lastEl = document.getElementById('last-backup-info');
+  if (lastEl) {
+    const last = (data||[]).find(b => b.status === 'completed');
+    if (last) {
+      const diff = Math.floor((Date.now() - new Date(last.created_at)) / 86400000);
+      lastEl.textContent = 'Son yedek: ' + (diff === 0 ? 'bugün' : diff === 1 ? 'dün' : diff + ' gün önce');
+    } else lastEl.textContent = 'Henüz yedek alınmadı';
+  }
+  if (!data?.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray400);font-size:12px">Henüz yedek kaydı yok</div>'; return; }
+  el.innerHTML = `<table style="width:100%;font-size:12px">
+    <thead><tr style="background:var(--gray50)">
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">TARİH</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">TÜR</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">DOSYA</th>
+      <th style="padding:8px;text-align:right;font-size:10px;color:var(--gray500)">BOYUT</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">DURUM</th>
+    </tr></thead>
+    <tbody>
+      ${data.map(b => `<tr>
+        <td style="padding:8px;border-top:1px solid var(--gray100)">${new Date(b.created_at).toLocaleString('tr-TR')}</td>
+        <td style="padding:8px;border-top:1px solid var(--gray100)"><span class="badge ${b.backup_type==='auto'?'badge-blue':'badge-gray'}">${b.backup_type==='auto'?'Otomatik':'Manuel'}</span></td>
+        <td style="padding:8px;border-top:1px solid var(--gray100);color:var(--gray500)">${b.file_name||'—'}</td>
+        <td style="padding:8px;border-top:1px solid var(--gray100);text-align:right;color:var(--gray500)">${b.file_size?(b.file_size/1024).toFixed(0)+' KB':'—'}</td>
+        <td style="padding:8px;border-top:1px solid var(--gray100)"><span class="badge ${b.status==='completed'?'badge-green':b.status==='failed'?'badge-red':'badge-gray'}">${b.status}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function logBackup(type, fileName, size, status) {
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('data_backups').insert({
+    company_id: companyId, backup_type: 'manual', file_name: fileName,
+    file_size: size, status, created_by: user?.id
+  });
+  loadBackupHistory();
+}
+
+async function exportData(type) {
+  showToast('Hazırlanıyor...', 'info');
+  try {
+    const wb = XLSX.utils.book_new();
+
+    if (type === 'products' || type === 'full') {
+      const { data: products } = await sb.from('products').select('*, categories(name)').eq('company_id', companyId).eq('is_active', true);
+      const rows = (products||[]).map(p => ({
+        'Ürün Kodu': p.sku || '', 'Barkod': p.barcode || '', 'Ürün Adı': p.name,
+        'Kategori': p.categories?.name || '', 'Birim': p.unit || '',
+        'Alış Fiyatı': p.cost_price || 0, 'Satış Fiyatı': p.sale_price || 0,
+        'Stok Miktarı': p.quantity || 0, 'Min Stok': p.min_stock || 0,
+        'Açıklama': p.notes || ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Ürünler');
+    }
+
+    if (type === 'contacts' || type === 'full') {
+      const { data: contacts } = await sb.from('contacts').select('*').eq('company_id', companyId).eq('is_active', true);
+      const rows = (contacts||[]).map(c => ({
+        'Tür': c.is_customer && c.is_supplier ? 'Her İkisi' : c.is_customer ? 'Müşteri' : 'Tedarikçi',
+        'Ad': c.name, 'Email': c.email || '', 'Telefon': c.phone || '',
+        'Şehir': c.city || '', 'Ülke': c.country || '', 'Vergi No': c.tax_number || '',
+        'Para Birimi': c.currency_code || '', 'Kredi Limiti': c.credit_limit || 0,
+        'Ödeme Vadesi': c.payment_terms || 0
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Cariler');
+    }
+
+    if (type === 'sales' || type === 'full') {
+      const { data: orders } = await sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('issue_date', { ascending: false });
+      const orderRows = (orders||[]).map(o => ({
+        'Sipariş No': o.order_number, 'Müşteri': o.contacts?.name || '', 'Tarih': o.issue_date,
+        'Vade': o.due_date || '', 'Durum': o.status, 'Ara Toplam': o.subtotal || 0,
+        'Vergi': o.tax_amount || 0, 'İndirim': o.discount || 0, 'Toplam': o.total || 0,
+        'Para Birimi': o.currency_code || ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'Satışlar');
+      // Items
+      const orderIds = (orders||[]).map(o => o.id);
+      if (orderIds.length) {
+        const { data: items } = await sb.from('sales_order_items').select('*, products(name)').in('order_id', orderIds);
+        const orderMap = {}; (orders||[]).forEach(o => orderMap[o.id] = o.order_number);
+        const itemRows = (items||[]).map(i => ({
+          'Sipariş No': orderMap[i.order_id] || '', 'Ürün': i.products?.name || i.description || '',
+          'Miktar': i.quantity, 'Birim Fiyat': i.unit_price, 'İndirim%': i.discount || 0,
+          'Vergi%': i.tax_rate_value || 0, 'Toplam': i.total || 0
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows), 'Satış Kalemleri');
+      }
+    }
+
+    if (type === 'purchases' || type === 'full') {
+      const { data: orders } = await sb.from('purchase_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true);
+      const orderRows = (orders||[]).map(o => ({
+        'Sipariş No': o.order_number, 'Tedarikçi': o.contacts?.name || '', 'Tarih': o.issue_date,
+        'Beklenen': o.expected_date || '', 'Durum': o.status, 'Ara Toplam': o.subtotal || 0,
+        'Vergi': o.tax_amount || 0, 'Toplam': o.total || 0, 'Para Birimi': o.currency_code || ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'Alışlar');
+      const orderIds = (orders||[]).map(o => o.id);
+      if (orderIds.length) {
+        const { data: items } = await sb.from('purchase_order_items').select('*, products(name)').in('order_id', orderIds);
+        const orderMap = {}; (orders||[]).forEach(o => orderMap[o.id] = o.order_number);
+        const itemRows = (items||[]).map(i => ({
+          'Sipariş No': orderMap[i.order_id] || '', 'Ürün': i.products?.name || i.description || '',
+          'Miktar': i.quantity, 'Birim Fiyat': i.unit_price, 'Toplam': i.total || 0
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows), 'Alış Kalemleri');
+      }
+    }
+
+    if (type === 'finance' || type === 'full') {
+      const { data: cashTx } = await sb.from('cash_transactions').select('*, cash_registers(name)').eq('company_id', companyId).order('transaction_date', { ascending: false });
+      const cashRows = (cashTx||[]).map(t => ({
+        'Tarih': t.transaction_date, 'Kasa': t.cash_registers?.name || '', 'Tür': t.type,
+        'Açıklama': t.description || '', 'Giriş': t.type === 'in' ? t.amount : '',
+        'Çıkış': t.type === 'out' ? t.amount : ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cashRows), 'Kasa Hareketleri');
+
+      const { data: bankTx } = await sb.from('bank_transactions').select('*, bank_accounts(account_name)').eq('company_id', companyId).order('transaction_date', { ascending: false });
+      const bankRows = (bankTx||[]).map(t => ({
+        'Tarih': t.transaction_date, 'Hesap': t.bank_accounts?.account_name || '', 'Tür': t.type,
+        'Açıklama': t.description || '', 'Giriş': t.type === 'in' ? t.amount : '',
+        'Çıkış': t.type === 'out' ? t.amount : ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bankRows), 'Banka Hareketleri');
+    }
+
+    if (type === 'accounting' || type === 'full') {
+      const { data: entries } = await sb.from('journal_entries').select('*, journal_lines(*, chart_of_accounts(code,name))').eq('company_id', companyId);
+      const jRows = [];
+      (entries||[]).forEach(e => {
+        (e.journal_lines||[]).forEach(l => {
+          jRows.push({
+            'Fiş No': e.entry_number, 'Tarih': e.entry_date, 'Açıklama': e.description || '',
+            'Hesap Kodu': l.chart_of_accounts?.code || '', 'Hesap Adı': l.chart_of_accounts?.name || '',
+            'Borç': l.debit || 0, 'Alacak': l.credit || 0
+          });
+        });
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(jRows), 'Yevmiye');
+    }
+
+    if (type === 'full') {
+      const { data: moves } = await sb.from('stock_movements').select('*, products(name), warehouses(name)').eq('company_id', companyId).eq('is_active', true);
+      const moveRows = (moves||[]).map(m => ({
+        'Tarih': m.created_at, 'Ürün': m.products?.name || '', 'Depo': m.warehouses?.name || '',
+        'Tür': m.type, 'Miktar': m.quantity, 'Referans': m.reference || ''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(moveRows), 'Stok Hareketleri');
+    }
+
+    const names = { products:'urunler', contacts:'cariler', sales:'satislar', purchases:'alislar', finance:'finans', accounting:'muhasebe', full:'tam_yedek' };
+    const fileName = `solvenin_${names[type]||type}_${dateStr()}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    const blob = new Blob(['dummy']);
+    logBackup(type, fileName, 0, 'completed');
+    showToast('✅ ' + fileName + ' indirildi', 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('İndirme başarısız: ' + e.message, 'error');
+  }
+}
+
+function downloadTemplate(type) {
+  const wb = XLSX.utils.book_new();
+  let rows, name;
+  if (type === 'products') {
+    rows = [
+      { 'Ürün Adı': 'Örnek Ürün', 'Ürün Kodu': 'SKU001', 'Barkod': '8690000000001', 'Kategori': '', 'Birim': 'ADET', 'Alış Fiyatı': 50, 'Satış Fiyatı': 89, 'Başlangıç Stoku': 100, 'Min Stok': 10, 'Açıklama': 'Örnek açıklama' }
+    ];
+    name = 'urun_sablonu';
+  } else if (type === 'contacts') {
+    rows = [
+      { 'Ad': 'Örnek Müşteri', 'Tür': 'Müşteri', 'Email': 'ornek@mail.com', 'Telefon': '5551234567', 'Şehir': 'İstanbul', 'Ülke': 'TR', 'Vergi No': '', 'Para Birimi': '', 'Kredi Limiti': 0, 'Ödeme Vadesi': 30 }
+    ];
+    name = 'cari_sablonu';
+  } else if (type === 'opening_stock') {
+    rows = [{ 'Ürün Kodu': 'SKU001', 'Ürün Adı': 'Örnek Ürün', 'Mevcut Stok': 100 }];
+    name = 'acilis_stok';
+  } else if (type === 'opening_balances') {
+    rows = [{ 'Cari Adı': 'Örnek Cari', 'Tür': 'Müşteri', 'Borç': 1000, 'Alacak': 0, 'Para Birimi': 'TRY', 'Tarih': '2026-01-01' }];
+    name = 'acilis_bakiye';
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Şablon');
+  XLSX.writeFile(wb, `solvenin_${name}.xlsx`);
+  showToast('Şablon indirildi', 'success');
+}
+
+async function handleImport(e, type) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Dosya 5MB\\'tan büyük', 'error'); return; }
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    if (rows.length === 0) { showToast('Dosya boş', 'error'); return; }
+    if (rows.length > 1000) { showToast('En fazla 1000 satır', 'error'); return; }
+
+    // Validate & parse
+    const valid = []; const errors = [];
+    if (type === 'products') {
+      rows.forEach((r, i) => {
+        const name = (r['Ürün Adı']||'').toString().trim();
+        if (!name) { errors.push({row: i+2, error: 'Ürün Adı boş'}); return; }
+        valid.push({
+          company_id: companyId, name,
+          sku: r['Ürün Kodu']?.toString().trim() || null,
+          barcode: r['Barkod']?.toString().trim() || null,
+          unit: r['Birim']?.toString().trim() || null,
+          cost_price: parseFloat(r['Alış Fiyatı']) || 0,
+          sale_price: parseFloat(r['Satış Fiyatı']) || 0,
+          quantity: parseFloat(r['Başlangıç Stoku']) || 0,
+          min_stock: parseInt(r['Min Stok']) || 0,
+          notes: r['Açıklama']?.toString() || null,
+          is_active: true
+        });
+      });
+    } else if (type === 'contacts') {
+      rows.forEach((r, i) => {
+        const name = (r['Ad']||'').toString().trim();
+        if (!name) { errors.push({row: i+2, error: 'Ad boş'}); return; }
+        const tur = (r['Tür']||'').toString().toLowerCase();
+        const isCust = tur.includes('müşteri') || tur.includes('customer') || tur.includes('her');
+        const isSupp = tur.includes('tedarik') || tur.includes('supplier') || tur.includes('her');
+        if (!isCust && !isSupp) { errors.push({row: i+2, error: 'Tür geçersiz (Müşteri/Tedarikçi)'}); return; }
+        valid.push({
+          company_id: companyId, name, is_customer: isCust, is_supplier: isSupp,
+          type: isCust && isSupp ? 'both' : isCust ? 'customer' : 'supplier',
+          email: r['Email']?.toString().trim() || null,
+          phone: r['Telefon']?.toString().trim() || null,
+          city: r['Şehir']?.toString().trim() || null,
+          country: r['Ülke']?.toString().trim() || null,
+          tax_number: r['Vergi No']?.toString().trim() || null,
+          currency_code: r['Para Birimi']?.toString().trim() || null,
+          credit_limit: parseFloat(r['Kredi Limiti']) || 0,
+          payment_terms: parseInt(r['Ödeme Vadesi']) || 30,
+          is_active: true
+        });
+      });
+    } else {
+      showToast('Bu tür henüz desteklenmiyor', 'error'); return;
+    }
+
+    const preview = `Toplam: ${rows.length} satır\\nGeçerli: ${valid.length}\\nHatalı: ${errors.length}` +
+      (errors.length ? '\\n\\nHatalar:\\n' + errors.slice(0,5).map(er => `Satır ${er.row}: ${er.error}`).join('\\n') + (errors.length > 5 ? `\\n...ve ${errors.length-5} tane daha` : '') : '');
+    if (!await showConfirm(preview + '\\n\\nGeçerli satırları içe aktarmak istiyor musunuz?', 'İçe Aktarım Önizleme', 'İçe Aktar')) {
+      e.target.value = ''; return;
+    }
+
+    // Insert
+    if (valid.length) {
+      const tableName = type === 'products' ? 'products' : 'contacts';
+      const { error } = await sb.from(tableName).insert(valid);
+      if (error) { showToast('Hata: ' + error.message, 'error'); return; }
+    }
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('data_imports').insert({
+      company_id: companyId, import_type: type, file_name: file.name,
+      total_rows: rows.length, success_rows: valid.length, error_rows: errors.length,
+      errors: errors.length ? errors : null, status: 'completed', created_by: user?.id
+    });
+    showToast(`✅ ${valid.length} kayıt eklendi${errors.length ? ', ' + errors.length + ' hata' : ''}`, 'success');
+    e.target.value = '';
+  } catch (err) {
+    console.error(err);
+    showToast('İçe aktarım hatası: ' + err.message, 'error');
+    e.target.value = '';
+  }
+}
 
 async function loadRecycleBin() {
   if (!companyId) return;
