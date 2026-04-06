@@ -1,7 +1,7 @@
 // ===== SOLVENIN i18n SYSTEM =====
 // Auto-detects browser language, respects user preference saved in localStorage
 
-const SUPPORTED_LANGS = ['en','tr','de','fr','es','ar','zh','ru','pt','ja'];
+const SUPPORTED_LANGS = ['en','tr','de','fr','es','ar','zh','ru','pt','ja','kz','ky','uz','tk','az'];
 
 const LANG_META = {
   en: { code:'EN', name:'English', dir:'ltr' },
@@ -1163,6 +1163,11 @@ const LANG_META = {
     confirm_delete_tax: 'Delete tax rate',
     err_delete_subcategories_first: 'Delete sub-categories first',
   ja: { code:'JA', name:'日本語', dir:'ltr' },
+  kz: { code:'KZ', name:'Қазақ тілі', dir:'ltr' },
+  ky: { code:'KY', name:'Кыргыз тили', dir:'ltr' },
+  uz: { code:'UZ', name:"O'zbek tili", dir:'ltr' },
+  tk: { code:'TK', name:'Türkmen dili', dir:'ltr' },
+  az: { code:'AZ', name:'Azərbaycan dili', dir:'ltr' },
 };
 
 const T = window.T = {
@@ -7662,6 +7667,166 @@ const T = window.T = {
     lbl_apply_regime:'税制を適用', confirm_apply_regime:'"{0}"を税制として適用しますか？',
     toast_regime_applied:'税制を適用しました：{0}',
     confirm_delete_regime:'税制「{0}」を削除しますか？', err_cannot_delete_active_regime:'適用中の税制は削除できません。',
+  },
+  kz: {
+    // NAV
+    nav_dashboard:'Басты бет', nav_inventory:'Қойма', nav_sales:'Сатылым', nav_purchasing:'Сатып алу',
+    nav_production:'Өндіріс', nav_hr:'Қызметкерлер', nav_company:'Компания', nav_crm:'CRM',
+    nav_products:'Өнімдер', nav_stock_movements:'Қойма қозғалысы', nav_warehouses:'Қоймалар',
+    nav_reports:'Есептер', nav_categories:'Санаттар', nav_settings:'Параметрлер',
+    nav_accounting:'Бухгалтерия', nav_finance:'Қаржы', nav_contacts:'Контактілер',
+    // LABELS
+    label_company_name:'Компания атауы', label_tax_number:'Салық нөмірі', label_email:'Email',
+    label_phone:'Телефон', label_website:'Веб-сайт', label_address:'Мекенжай',
+    label_base_currency:'Негізгі валюта', label_warehouse_name:'Қойма атауы',
+    label_location:'Орналасуы', label_notes:'Ескертпелер', label_name:'Атауы', label_type:'Түрі',
+    label_categories:'Санаттар', label_warehouses:'Қоймалар',
+    // BUTTONS
+    btn_save:'Сақтау', btn_save_changes:'Өзгерістерді сақтау', btn_cancel:'Болдырмау',
+    btn_delete:'Жою', btn_edit:'Өзгерту', btn_new:'+ Жаңа', btn_ok:'Жарайды',
+    btn_close:'Жабу', btn_search:'Іздеу', btn_add_warehouse:'+ Қойма қосу',
+    btn_add_category:'+ Санат қосу',
+    // CORE TERMS
+    invoice:'Шот-фактура', order:'Тапсырыс', customer:'Клиент', supplier:'Жеткізуші',
+    product:'Өнім', category:'Санат', warehouse:'Қойма', quantity:'Саны', unit:'Бірлік',
+    price:'Бағасы', date:'Күні', due_date:'Төлем мерзімі', subtotal:'Аралық қорытынды',
+    tax:'Салық', discount:'Жеңілдік', total:'Барлығы', description:'Сипаттама',
+    // STATUS
+    status_draft:'Жоба', status_confirmed:'Расталды', status_invoiced:'Шот жасалды',
+    status_paid:'Төленді', status_overdue:'Мерзімі өтті', status_cancelled:'Бас тартылды',
+    // TOASTS
+    customer_added:'Клиент қосылды ✓', customer_updated:'Клиент жаңартылды ✓',
+    customer_deleted:'Клиент жойылды', supplier_added:'Жеткізуші қосылды ✓',
+    supplier_updated:'Жеткізуші жаңартылды ✓', supplier_deleted:'Жеткізуші жойылды',
+    order_deleted:'Тапсырыс жойылды', err_generic:'Қате орын алды',
+  },
+  ky: {
+    // NAV
+    nav_dashboard:'Башкы бет', nav_inventory:'Кампа', nav_sales:'Сатуу', nav_purchasing:'Сатып алуу',
+    nav_production:'Өндүрүш', nav_hr:'Кызматкерлер', nav_company:'Компания', nav_crm:'CRM',
+    nav_products:'Өнүмдөр', nav_stock_movements:'Кампа кыймылы', nav_warehouses:'Кампалар',
+    nav_reports:'Отчёттор', nav_categories:'Категориялар', nav_settings:'Жөндөөлөр',
+    nav_accounting:'Бухгалтерия', nav_finance:'Финансы', nav_contacts:'Байланыштар',
+    // LABELS
+    label_company_name:'Компаниянын аты', label_tax_number:'Салык номери', label_email:'Email',
+    label_phone:'Телефон', label_website:'Веб-сайт', label_address:'Дареги',
+    label_base_currency:'Негизги валюта', label_warehouse_name:'Кампанын аты',
+    label_location:'Жайгашуусу', label_notes:'Эскертүүлөр', label_name:'Аты', label_type:'Түрү',
+    label_categories:'Категориялар', label_warehouses:'Кампалар',
+    // BUTTONS
+    btn_save:'Сактоо', btn_save_changes:'Өзгөртүүлөрдү сактоо', btn_cancel:'Жокко чыгаруу',
+    btn_delete:'Өчүрүү', btn_edit:'Өзгөртүү', btn_new:'+ Жаңы', btn_ok:'Жарайт',
+    btn_close:'Жабуу', btn_search:'Издөө', btn_add_warehouse:'+ Кампа кошуу',
+    btn_add_category:'+ Категория кошуу',
+    // CORE TERMS
+    invoice:'Эсеп-фактура', order:'Заказ', customer:'Кардар', supplier:'Жеткирүүчү',
+    product:'Өнүм', category:'Категория', warehouse:'Кампа', quantity:'Саны', unit:'Бирдик',
+    price:'Баасы', date:'Күнү', due_date:'Төлөм мөөнөтү', subtotal:'Аралык жыйынтык',
+    tax:'Салык', discount:'Арзандатуу', total:'Жалпы', description:'Сүрөттөмө',
+    // STATUS
+    status_draft:'Долбоор', status_confirmed:'Тастыкталды', status_invoiced:'Эсеп жазылды',
+    status_paid:'Төлөндү', status_overdue:'Мөөнөтү өттү', status_cancelled:'Жокко чыгарылды',
+    // TOASTS
+    customer_added:'Кардар кошулду ✓', customer_updated:'Кардар жаңыртылды ✓',
+    customer_deleted:'Кардар өчүрүлдү', supplier_added:'Жеткирүүчү кошулду ✓',
+    supplier_updated:'Жеткирүүчү жаңыртылды ✓', supplier_deleted:'Жеткирүүчү өчүрүлдү',
+    order_deleted:'Заказ өчүрүлдү', err_generic:'Ката кетти',
+  },
+  uz: {
+    // NAV
+    nav_dashboard:'Bosh sahifa', nav_inventory:'Ombor', nav_sales:'Sotuv', nav_purchasing:'Xarid',
+    nav_production:'Ishlab chiqarish', nav_hr:'Xodimlar', nav_company:'Kompaniya', nav_crm:'CRM',
+    nav_products:'Mahsulotlar', nav_stock_movements:'Ombor harakati', nav_warehouses:'Omborlar',
+    nav_reports:'Hisobotlar', nav_categories:'Toifalar', nav_settings:'Sozlamalar',
+    nav_accounting:'Buxgalteriya', nav_finance:'Moliya', nav_contacts:'Kontaktlar',
+    // LABELS
+    label_company_name:'Kompaniya nomi', label_tax_number:'Soliq raqami', label_email:'Email',
+    label_phone:'Telefon', label_website:'Veb-sayt', label_address:'Manzil',
+    label_base_currency:'Asosiy valyuta', label_warehouse_name:'Ombor nomi',
+    label_location:'Joylashuvi', label_notes:'Izohlar', label_name:'Nomi', label_type:'Turi',
+    label_categories:'Toifalar', label_warehouses:'Omborlar',
+    // BUTTONS
+    btn_save:'Saqlash', btn_save_changes:"O'zgarishlarni saqlash", btn_cancel:'Bekor qilish',
+    btn_delete:"O'chirish", btn_edit:'Tahrirlash', btn_new:'+ Yangi', btn_ok:'OK',
+    btn_close:'Yopish', btn_search:'Qidirish', btn_add_warehouse:"+ Ombor qo'shish",
+    btn_add_category:"+ Toifa qo'shish",
+    // CORE TERMS
+    invoice:'Hisob-faktura', order:'Buyurtma', customer:'Mijoz', supplier:'Yetkazib beruvchi',
+    product:'Mahsulot', category:'Toifa', warehouse:'Ombor', quantity:'Miqdor', unit:'Birlik',
+    price:'Narx', date:'Sana', due_date:"To'lov muddati", subtotal:"Oraliq jami",
+    tax:'Soliq', discount:'Chegirma', total:'Jami', description:'Tavsif',
+    // STATUS
+    status_draft:'Qoralama', status_confirmed:'Tasdiqlandi', status_invoiced:'Hisob yozildi',
+    status_paid:"To'landi", status_overdue:'Muddati o\'tdi', status_cancelled:'Bekor qilindi',
+    // TOASTS
+    customer_added:"Mijoz qo'shildi ✓", customer_updated:'Mijoz yangilandi ✓',
+    customer_deleted:"Mijoz o'chirildi", supplier_added:"Yetkazib beruvchi qo'shildi ✓",
+    supplier_updated:'Yetkazib beruvchi yangilandi ✓', supplier_deleted:"Yetkazib beruvchi o'chirildi",
+    order_deleted:"Buyurtma o'chirildi", err_generic:'Xatolik yuz berdi',
+  },
+  tk: {
+    // NAV
+    nav_dashboard:'Baş sahypa', nav_inventory:'Ammar', nav_sales:'Satuw', nav_purchasing:'Satyn alyş',
+    nav_production:'Önümçilik', nav_hr:'Işgärler', nav_company:'Kompaniýa', nav_crm:'CRM',
+    nav_products:'Önümler', nav_stock_movements:'Ammar hereketi', nav_warehouses:'Ammarlar',
+    nav_reports:'Hasabatlar', nav_categories:'Kategoriýalar', nav_settings:'Sazlamalar',
+    nav_accounting:'Buhgalteriýa', nav_finance:'Maliýe', nav_contacts:'Aragatnaşyklar',
+    // LABELS
+    label_company_name:'Kompaniýanyň ady', label_tax_number:'Salgyt belgisi', label_email:'Email',
+    label_phone:'Telefon', label_website:'Web-sahypa', label_address:'Salgy',
+    label_base_currency:'Esasy walýuta', label_warehouse_name:'Ammaryň ady',
+    label_location:'Ýerleşýän ýeri', label_notes:'Bellikler', label_name:'Ady', label_type:'Görnüşi',
+    label_categories:'Kategoriýalar', label_warehouses:'Ammarlar',
+    // BUTTONS
+    btn_save:'Ýatda sakla', btn_save_changes:'Üýtgeşmeleri ýatda sakla', btn_cancel:'Ýatyr',
+    btn_delete:'Poz', btn_edit:'Üýtget', btn_new:'+ Täze', btn_ok:'Bolýar',
+    btn_close:'Ýap', btn_search:'Gözle', btn_add_warehouse:'+ Ammar goş',
+    btn_add_category:'+ Kategoriýa goş',
+    // CORE TERMS
+    invoice:'Hasap-faktura', order:'Sargyt', customer:'Müşderi', supplier:'Üpjün ediji',
+    product:'Önüm', category:'Kategoriýa', warehouse:'Ammar', quantity:'Mukdar', unit:'Birlik',
+    price:'Baha', date:'Sene', due_date:'Töleg möhleti', subtotal:'Aralyk jemi',
+    tax:'Salgyt', discount:'Arzanladyş', total:'Jemi', description:'Düşündiriş',
+    // STATUS
+    status_draft:'Taslama', status_confirmed:'Tassyklandy', status_invoiced:'Hasap çykaryldy',
+    status_paid:'Tölendi', status_overdue:'Möhleti geçdi', status_cancelled:'Ýatyryldy',
+    // TOASTS
+    customer_added:'Müşderi goşuldy ✓', customer_updated:'Müşderi täzelendi ✓',
+    customer_deleted:'Müşderi pozuldy', supplier_added:'Üpjün ediji goşuldy ✓',
+    supplier_updated:'Üpjün ediji täzelendi ✓', supplier_deleted:'Üpjün ediji pozuldy',
+    order_deleted:'Sargyt pozuldy', err_generic:'Ýalňyşlyk ýüze çykdy',
+  },
+  az: {
+    // NAV
+    nav_dashboard:'Ana səhifə', nav_inventory:'Anbar', nav_sales:'Satış', nav_purchasing:'Alış',
+    nav_production:'İstehsal', nav_hr:'İşçi heyəti', nav_company:'Şirkət', nav_crm:'CRM',
+    nav_products:'Məhsullar', nav_stock_movements:'Anbar hərəkəti', nav_warehouses:'Anbarlar',
+    nav_reports:'Hesabatlar', nav_categories:'Kateqoriyalar', nav_settings:'Tənzimləmələr',
+    nav_accounting:'Mühasibat', nav_finance:'Maliyyə', nav_contacts:'Əlaqələr',
+    // LABELS
+    label_company_name:'Şirkət adı', label_tax_number:'Vergi nömrəsi', label_email:'Email',
+    label_phone:'Telefon', label_website:'Veb-sayt', label_address:'Ünvan',
+    label_base_currency:'Əsas valyuta', label_warehouse_name:'Anbar adı',
+    label_location:'Yerləşmə', label_notes:'Qeydlər', label_name:'Ad', label_type:'Növ',
+    label_categories:'Kateqoriyalar', label_warehouses:'Anbarlar',
+    // BUTTONS
+    btn_save:'Yadda saxla', btn_save_changes:'Dəyişiklikləri yadda saxla', btn_cancel:'Ləğv et',
+    btn_delete:'Sil', btn_edit:'Düzəliş et', btn_new:'+ Yeni', btn_ok:'Tamam',
+    btn_close:'Bağla', btn_search:'Axtar', btn_add_warehouse:'+ Anbar əlavə et',
+    btn_add_category:'+ Kateqoriya əlavə et',
+    // CORE TERMS
+    invoice:'Hesab-faktura', order:'Sifariş', customer:'Müştəri', supplier:'Təchizatçı',
+    product:'Məhsul', category:'Kateqoriya', warehouse:'Anbar', quantity:'Miqdar', unit:'Vahid',
+    price:'Qiymət', date:'Tarix', due_date:'Ödəniş tarixi', subtotal:'Aralıq cəm',
+    tax:'Vergi', discount:'Endirim', total:'Cəmi', description:'Təsvir',
+    // STATUS
+    status_draft:'Qaralama', status_confirmed:'Təsdiqləndi', status_invoiced:'Hesab kəsildi',
+    status_paid:'Ödənildi', status_overdue:'Vaxtı keçdi', status_cancelled:'Ləğv edildi',
+    // TOASTS
+    customer_added:'Müştəri əlavə edildi ✓', customer_updated:'Müştəri yeniləndi ✓',
+    customer_deleted:'Müştəri silindi', supplier_added:'Təchizatçı əlavə edildi ✓',
+    supplier_updated:'Təchizatçı yeniləndi ✓', supplier_deleted:'Təchizatçı silindi',
+    order_deleted:'Sifariş silindi', err_generic:'Xəta baş verdi',
   },
 };
 
