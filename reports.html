@@ -92,21 +92,50 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   <div class="content">
     <!-- Sol: Rapor menüsü -->
     <nav class="report-nav" id="report-nav">
-      <div class="report-nav-section">STOK</div>
-      <div class="report-nav-item active" onclick="switchReport('stock',this)"><span class="report-nav-icon">📦</span> Stok Durumu</div>
-      <div class="report-nav-item" onclick="switchReport('stock_movements',this)"><span class="report-nav-icon">🔄</span> Ürün Hareketleri</div>
-      <div class="report-nav-item" onclick="switchReport('low_stock',this)"><span class="report-nav-icon">⚠️</span> Düşük Stok</div>
-      <div class="report-nav-item" onclick="switchReport('stock_value',this)"><span class="report-nav-icon">💎</span> Stok Değeri</div>
-      <div class="report-nav-section">SATIŞ & SATIN ALMA</div>
-      <div class="report-nav-item" onclick="switchReport('receivables',this)"><span class="report-nav-icon">💰</span> Borçlu Listesi</div>
-      <div class="report-nav-item" onclick="switchReport('payables',this)"><span class="report-nav-icon">🛒</span> Alacaklı Listesi</div>
-      <div class="report-nav-item" onclick="switchReport('sales',this)"><span class="report-nav-icon">📈</span> Satış Özeti</div>
-      <div class="report-nav-section">FİNANS</div>
-      <div class="report-nav-item" onclick="switchReport('cashbank',this)"><span class="report-nav-icon">🏦</span> Kasa/Banka</div>
-      <div class="report-nav-item" onclick="switchReport('statement',this)"><span class="report-nav-icon">👥</span> Cari Ekstre</div>
-      <div class="report-nav-section">MUHASEBE</div>
-      <div class="report-nav-item" onclick="switchReport('journal',this)"><span class="report-nav-icon">📋</span> Yevmiye Defteri</div>
-      <div class="report-nav-item" onclick="switchReport('trial',this)"><span class="report-nav-icon">📊</span> Mizan</div>
+      <div class="report-nav-section">📦 STOK</div>
+      <div class="report-nav-item active" onclick="switchReport('stock',this)">Stok Durumu</div>
+      <div class="report-nav-item" onclick="switchReport('stock_movements',this)">Ürün Hareketleri</div>
+      <div class="report-nav-item" onclick="switchReport('low_stock',this)">Düşük Stok</div>
+      <div class="report-nav-item" onclick="switchReport('stock_value',this)">Stok Değeri</div>
+      <div class="report-nav-item" onclick="switchReport('stock_by_category',this)">Kategori Bazlı</div>
+      <div class="report-nav-item" onclick="switchReport('product_profitability',this)">Ürün Karlılığı</div>
+
+      <div class="report-nav-section">💰 SATIŞ</div>
+      <div class="report-nav-item" onclick="switchReport('sales',this)">Satış Özeti</div>
+      <div class="report-nav-item" onclick="switchReport('sales_by_customer',this)">Müşteri Bazlı</div>
+      <div class="report-nav-item" onclick="switchReport('sales_by_product',this)">Ürün Bazlı</div>
+      <div class="report-nav-item" onclick="switchReport('top_products',this)">En Çok Satan</div>
+      <div class="report-nav-item" onclick="switchReport('top_customers',this)">En Çok Alan</div>
+      <div class="report-nav-item" onclick="switchReport('sales_by_rep',this)">Temsilci Raporu</div>
+
+      <div class="report-nav-section">🛒 SATIN ALMA</div>
+      <div class="report-nav-item" onclick="switchReport('purchase_summary',this)">Alış Özeti</div>
+      <div class="report-nav-item" onclick="switchReport('purchase_by_supplier',this)">Tedarikçi Bazlı</div>
+      <div class="report-nav-item" onclick="switchReport('purchase_by_product',this)">Ürün Bazlı</div>
+      <div class="report-nav-item" onclick="switchReport('top_suppliers',this)">En Çok Alınan</div>
+
+      <div class="report-nav-section">👥 CARİ</div>
+      <div class="report-nav-item" onclick="switchReport('receivables',this)">Borçlu Listesi</div>
+      <div class="report-nav-item" onclick="switchReport('payables',this)">Alacaklı Listesi</div>
+      <div class="report-nav-item" onclick="switchReport('statement',this)">Cari Ekstre</div>
+      <div class="report-nav-item" onclick="switchReport('contact_aging',this)">Cari Yaşlandırma</div>
+      <div class="report-nav-item" onclick="switchReport('contact_summary',this)">Cari Özet</div>
+
+      <div class="report-nav-section">🏦 FİNANS</div>
+      <div class="report-nav-item" onclick="switchReport('cashbank',this)">Kasa/Banka Hareket</div>
+      <div class="report-nav-item" onclick="switchReport('cash_flow',this)">Nakit Akışı</div>
+      <div class="report-nav-item" onclick="switchReport('balances',this)">Hesap Bakiyeleri</div>
+      <div class="report-nav-item" onclick="switchReport('payment_methods',this)">Ödeme Yöntemleri</div>
+
+      <div class="report-nav-section">📊 MUHASEBE</div>
+      <div class="report-nav-item" onclick="switchReport('journal',this)">Yevmiye Defteri</div>
+      <div class="report-nav-item" onclick="switchReport('ledger',this)">Büyük Defter</div>
+      <div class="report-nav-item" onclick="switchReport('trial',this)">Mizan</div>
+
+      <div class="report-nav-section">🎯 CRM</div>
+      <div class="report-nav-item" onclick="switchReport('crm_pipeline',this)">Pipeline Özeti</div>
+      <div class="report-nav-item" onclick="switchReport('crm_won_lost',this)">Kazanılan/Kaybedilen</div>
+      <div class="report-nav-item" onclick="switchReport('crm_rep_performance',this)">Temsilci Performansı</div>
     </nav>
 
     <!-- Sağ: Rapor içeriği -->
@@ -176,7 +205,19 @@ function switchReport(key, el) {
   document.getElementById('report-actions').style.display = 'none';
   document.getElementById('report-body').innerHTML = '<div class="report-empty">Filtreleri ayarlayın ve "Getir" butonuna tıklayın</div>';
 
-  const titles = { stock:'📦 Stok Durumu', stock_movements:'🔄 Ürün Stok Hareketleri', low_stock:'⚠️ Düşük Stok Raporu', stock_value:'💎 Stok Değeri Raporu', receivables:'💰 Borçlu Listesi', payables:'🛒 Alacaklı Listesi', sales:'📈 Satış Özeti', cashbank:'🏦 Kasa/Banka Hareketleri', statement:'👥 Cari Ekstre', journal:'📋 Yevmiye Defteri', trial:'📊 Mizan' };
+  const titles = {
+    stock:'📦 Stok Durumu', stock_movements:'🔄 Ürün Stok Hareketleri', low_stock:'⚠️ Düşük Stok', stock_value:'💎 Stok Değeri',
+    stock_by_category:'📦 Kategori Bazlı Stok', product_profitability:'💵 Ürün Karlılığı',
+    sales:'📈 Satış Özeti', sales_by_customer:'👤 Müşteri Bazlı Satış', sales_by_product:'📦 Ürün Bazlı Satış',
+    top_products:'🏆 En Çok Satan Ürünler', top_customers:'⭐ En Çok Alan Müşteriler', sales_by_rep:'👨‍💼 Satış Temsilcisi Raporu',
+    purchase_summary:'🛒 Alış Özeti', purchase_by_supplier:'🏭 Tedarikçi Bazlı', purchase_by_product:'📦 Ürün Bazlı Alış',
+    top_suppliers:'🏅 En Çok Alınan Tedarikçiler',
+    receivables:'💰 Borçlu Listesi', payables:'🛒 Alacaklı Listesi', statement:'👥 Cari Ekstre',
+    contact_aging:'📆 Cari Yaşlandırma', contact_summary:'👥 Cari Özet',
+    cashbank:'🏦 Kasa/Banka', cash_flow:'💸 Nakit Akışı', balances:'💼 Hesap Bakiyeleri', payment_methods:'💳 Ödeme Yöntemleri',
+    journal:'📋 Yevmiye Defteri', ledger:'📒 Büyük Defter', trial:'📊 Mizan',
+    crm_pipeline:'🎯 CRM Pipeline Özeti', crm_won_lost:'🏆 Kazanılan/Kaybedilen', crm_rep_performance:'📈 Temsilci Performansı'
+  };
   document.getElementById('report-title').textContent = titles[key] || key;
 
   const f = document.getElementById('report-filters');
@@ -208,7 +249,19 @@ function switchReport(key, el) {
     f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
   } else if (key === 'trial') {
     f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+  } else if (['stock_by_category','product_profitability','sales_by_customer','sales_by_product','top_products','top_customers','sales_by_rep','purchase_summary','purchase_by_supplier','purchase_by_product','top_suppliers','contact_aging','contact_summary','cash_flow','balances','payment_methods','crm_pipeline','crm_won_lost','crm_rep_performance'].includes(key)) {
+    const needsDate = !['balances','crm_pipeline'].includes(key);
+    f.innerHTML = (needsDate ? `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> ` : '') + `<button class="btn-run" onclick="runReport()">Getir</button>`;
+  } else if (key === 'ledger') {
+    f.innerHTML = `<select id="f-account" style="min-width:200px"><option value="">Hesap Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadAccountsCoa();
   }
+}
+
+async function loadAccountsCoa() {
+  const { data } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).order('code');
+  const sel = document.getElementById('f-account');
+  if (sel) sel.innerHTML = '<option value="">Hesap Seç...</option>' + (data||[]).map(a => `<option value="${a.id}">${a.code} — ${a.name}</option>`).join('');
 }
 
 async function loadWarehouses() {
@@ -247,17 +300,22 @@ function runReport() {
   const body = document.getElementById('report-body');
   body.innerHTML = '<div class="report-loading">⏳ Yükleniyor...</div>';
   const r = currentReport;
-  if (r === 'stock') reportStock();
-  else if (r === 'stock_movements') reportStockMovements();
-  else if (r === 'low_stock') reportLowStock();
-  else if (r === 'stock_value') reportStockValue();
-  else if (r === 'receivables') reportReceivables();
-  else if (r === 'payables') reportPayables();
-  else if (r === 'sales') reportSales();
-  else if (r === 'cashbank') reportCashBank();
-  else if (r === 'statement') reportStatement();
-  else if (r === 'journal') reportJournal();
-  else if (r === 'trial') reportTrial();
+  const dispatch = {
+    stock: reportStock, stock_movements: reportStockMovements, low_stock: reportLowStock, stock_value: reportStockValue,
+    stock_by_category: reportStockByCategory, product_profitability: reportProductProfitability,
+    sales: reportSales, sales_by_customer: reportSalesByCustomer, sales_by_product: reportSalesByProduct,
+    top_products: reportTopProducts, top_customers: reportTopCustomers, sales_by_rep: reportSalesByRep,
+    purchase_summary: reportPurchaseSummary, purchase_by_supplier: reportPurchaseBySupplier,
+    purchase_by_product: reportPurchaseByProduct, top_suppliers: reportTopSuppliers,
+    receivables: reportReceivables, payables: reportPayables, statement: reportStatement,
+    contact_aging: reportContactAging, contact_summary: reportContactSummary,
+    cashbank: reportCashBank, cash_flow: reportCashFlow, balances: reportBalances, payment_methods: reportPaymentMethods,
+    journal: reportJournal, ledger: reportLedger, trial: reportTrial,
+    crm_pipeline: reportCrmPipeline, crm_won_lost: reportCrmWonLost, crm_rep_performance: reportCrmRepPerformance
+  };
+  const fn = dispatch[r];
+  if (fn) fn();
+  else body.innerHTML = '<div class="report-empty">Bu rapor henüz uygulanmadı</div>';
 }
 
 function renderTable(headers, rows, footerRow) {
@@ -736,6 +794,441 @@ async function reportTrial() {
 }
 
 // ===== EXPORT: PDF =====
+// ===== HELPER: Get orders with items =====
+async function _getSalesOrders(from, to) {
+  let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status,customer_id,assigned_to,contacts(name)')
+    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+  if (from) q = q.gte('issue_date', from);
+  if (to) q = q.lte('issue_date', to);
+  const { data } = await q;
+  return data || [];
+}
+
+async function _getPurchaseOrders(from, to) {
+  let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status,supplier_id,contacts(name)')
+    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue','received']);
+  if (from) q = q.gte('issue_date', from);
+  if (to) q = q.lte('issue_date', to);
+  const { data } = await q;
+  return data || [];
+}
+
+// ===== STOK: Kategori Bazlı =====
+async function reportStockByCategory() {
+  const { data } = await sb.from('products').select('quantity,cost_price,category_id,categories(name)').eq('company_id', companyId).eq('is_active', true);
+  const groups = {};
+  (data||[]).forEach(p => {
+    const name = p.categories?.name || '(Kategorisiz)';
+    if (!groups[name]) groups[name] = { count: 0, qty: 0, value: 0 };
+    groups[name].count++;
+    groups[name].qty += parseFloat(p.quantity||0);
+    groups[name].value += (parseFloat(p.quantity||0)) * (parseFloat(p.cost_price||0));
+  });
+  const headers = [{key:'cat',label:'KATEGORİ'},{key:'count',label:'ÜRÜN',align:'text-right'},{key:'qty',label:'TOPLAM MİKTAR',align:'text-right'},{key:'value',label:'TOPLAM DEĞER',align:'text-right'}];
+  let totalValue = 0;
+  const rows = Object.entries(groups).map(([cat, g]) => { totalValue += g.value; return { cat, count: g.count, qty: fmt(g.qty), value: fmt(g.value) }; });
+  renderTable(headers, rows, { cat:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), qty:'', value: fmt(totalValue) });
+}
+
+// ===== STOK: Ürün Karlılığı =====
+async function reportProductProfitability() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getSalesOrders(from, to);
+  const orderIds = orders.map(o => o.id);
+  if (!orderIds.length) { renderTable([{key:'msg',label:'Sonuç'}], [], null); return; }
+  const { data: items } = await sb.from('sales_order_items').select('product_id,quantity,unit_price,products(name,cost_price,sku)').in('order_id', orderIds);
+  const products = {};
+  (items||[]).forEach(it => {
+    const pid = it.product_id;
+    if (!pid || !it.products) return;
+    if (!products[pid]) products[pid] = { name: it.products.name, sku: it.products.sku, qty: 0, revenue: 0, cost: 0 };
+    const q = parseFloat(it.quantity||0);
+    products[pid].qty += q;
+    products[pid].revenue += q * parseFloat(it.unit_price||0);
+    products[pid].cost += q * parseFloat(it.products.cost_price||0);
+  });
+  const headers = [{key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'qty',label:'ADET',align:'text-right'},{key:'cost',label:'MALİYET',align:'text-right'},{key:'revenue',label:'GELİR',align:'text-right'},{key:'profit',label:'KAR',align:'text-right'},{key:'margin',label:'MARJ %',align:'text-right'}];
+  let totalProfit = 0, totalRev = 0;
+  const rows = Object.values(products).sort((a,b) => (b.revenue - b.cost) - (a.revenue - a.cost)).map(p => {
+    const profit = p.revenue - p.cost;
+    totalProfit += profit; totalRev += p.revenue;
+    const margin = p.revenue > 0 ? (profit / p.revenue * 100) : 0;
+    return { sku: p.sku||'—', name: p.name, qty: fmt(p.qty), cost: fmt(p.cost), revenue: fmt(p.revenue), profit: fmt(profit), margin: margin.toFixed(1) + '%' };
+  });
+  renderTable(headers, rows, { sku:'', name:'TOPLAM', qty:'', cost:'', revenue: fmt(totalRev), profit: fmt(totalProfit), margin: totalRev > 0 ? (totalProfit/totalRev*100).toFixed(1)+'%' : '—' });
+}
+
+// ===== SATIŞ: Müşteri Bazlı =====
+async function reportSalesByCustomer() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getSalesOrders(from, to);
+  const customers = {};
+  orders.forEach(o => {
+    const cid = o.customer_id;
+    if (!cid) return;
+    if (!customers[cid]) customers[cid] = { name: o.contacts?.name || '—', count: 0, total: 0, lastDate: null };
+    customers[cid].count++;
+    customers[cid].total += parseFloat(o.total||0);
+    if (!customers[cid].lastDate || o.issue_date > customers[cid].lastDate) customers[cid].lastDate = o.issue_date;
+  });
+  const headers = [{key:'name',label:'MÜŞTERİ'},{key:'count',label:'SİPARİŞ',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'},{key:'avg',label:'ORT. SİPARİŞ',align:'text-right'},{key:'last',label:'SON ALIM'}];
+  let grand = 0;
+  const rows = Object.values(customers).sort((a,b) => b.total - a.total).map(c => {
+    grand += c.total;
+    return { name: c.name, count: c.count, total: fmt(c.total), avg: fmt(c.total/c.count), last: c.lastDate || '—' };
+  });
+  renderTable(headers, rows, { name:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), total: fmt(grand), avg:'', last:'' });
+}
+
+// ===== SATIŞ: Ürün Bazlı =====
+async function reportSalesByProduct() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getSalesOrders(from, to);
+  const orderIds = orders.map(o => o.id);
+  if (!orderIds.length) { renderTable([{key:'msg',label:'Sonuç'}], [], null); return; }
+  const { data: items } = await sb.from('sales_order_items').select('product_id,quantity,unit_price,total,products(name,sku,unit,categories(name))').in('order_id', orderIds);
+  const products = {};
+  (items||[]).forEach(it => {
+    const pid = it.product_id;
+    if (!pid) return;
+    if (!products[pid]) products[pid] = { name: it.products?.name||'—', sku: it.products?.sku||'—', category: it.products?.categories?.name||'—', unit: it.products?.unit||'', qty: 0, total: 0 };
+    products[pid].qty += parseFloat(it.quantity||0);
+    products[pid].total += parseFloat(it.total||0);
+  });
+  const headers = [{key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'category',label:'KATEGORİ'},{key:'qty',label:'ADET',align:'text-right'},{key:'avg',label:'ORT. FİYAT',align:'text-right'},{key:'total',label:'TUTAR',align:'text-right'}];
+  let grand = 0;
+  const rows = Object.values(products).sort((a,b) => b.total - a.total).map(p => {
+    grand += p.total;
+    return { sku: p.sku, name: p.name, category: p.category, qty: fmt(p.qty) + ' ' + p.unit, avg: fmt(p.qty > 0 ? p.total/p.qty : 0), total: fmt(p.total) };
+  });
+  renderTable(headers, rows, { sku:'', name:'TOPLAM', category:'', qty:'', avg:'', total: fmt(grand) });
+}
+
+// ===== SATIŞ: En Çok Satan Ürünler =====
+async function reportTopProducts() {
+  await reportSalesByProduct(); // Same data, already sorted
+}
+
+// ===== SATIŞ: En Çok Alan Müşteriler =====
+async function reportTopCustomers() {
+  await reportSalesByCustomer();
+}
+
+// ===== SATIŞ: Temsilci Raporu =====
+async function reportSalesByRep() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getSalesOrders(from, to);
+  const reps = {};
+  const uniqueCustomers = {};
+  orders.forEach(o => {
+    const rid = o.assigned_to || 'unassigned';
+    if (!reps[rid]) { reps[rid] = { count: 0, total: 0 }; uniqueCustomers[rid] = new Set(); }
+    reps[rid].count++;
+    reps[rid].total += parseFloat(o.total||0);
+    if (o.customer_id) uniqueCustomers[rid].add(o.customer_id);
+  });
+  // Load names
+  const repIds = Object.keys(reps).filter(id => id !== 'unassigned');
+  const nameMap = { unassigned: '— Atanmamış —' };
+  if (repIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id,full_name').in('id', repIds);
+    (profiles||[]).forEach(p => nameMap[p.id] = p.full_name || p.id.substring(0,8));
+  }
+  const headers = [{key:'name',label:'TEMSİLCİ'},{key:'count',label:'SİPARİŞ',align:'text-right'},{key:'customers',label:'MÜŞTERİ',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'},{key:'avg',label:'ORT. SİPARİŞ',align:'text-right'}];
+  let grand = 0;
+  const rows = Object.entries(reps).sort((a,b) => b[1].total - a[1].total).map(([id, r]) => {
+    grand += r.total;
+    return { name: nameMap[id] || id.substring(0,8), count: r.count, customers: uniqueCustomers[id].size, total: fmt(r.total), avg: fmt(r.total/r.count) };
+  });
+  renderTable(headers, rows, { name:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), customers:'', total: fmt(grand), avg:'' });
+}
+
+// ===== SATIN ALMA: Özet =====
+async function reportPurchaseSummary() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getPurchaseOrders(from, to);
+  const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'FATURA NO'},{key:'supplier',label:'TEDARİKÇİ'},{key:'status',label:'DURUM'},{key:'total',label:'TUTAR',align:'text-right'}];
+  let grand = 0;
+  const rows = orders.map(o => { grand += parseFloat(o.total||0); return { date: o.issue_date, doc: o.order_number, supplier: o.contacts?.name||'—', status: o.status, total: fmt(o.total) }; });
+  renderTable(headers, rows, { date:'', doc:'', supplier:'TOPLAM', status: rows.length+' fatura', total: fmt(grand) });
+}
+
+// ===== SATIN ALMA: Tedarikçi Bazlı =====
+async function reportPurchaseBySupplier() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getPurchaseOrders(from, to);
+  const suppliers = {};
+  orders.forEach(o => {
+    const sid = o.supplier_id;
+    if (!sid) return;
+    if (!suppliers[sid]) suppliers[sid] = { name: o.contacts?.name || '—', count: 0, total: 0, lastDate: null };
+    suppliers[sid].count++;
+    suppliers[sid].total += parseFloat(o.total||0);
+    if (!suppliers[sid].lastDate || o.issue_date > suppliers[sid].lastDate) suppliers[sid].lastDate = o.issue_date;
+  });
+  const headers = [{key:'name',label:'TEDARİKÇİ'},{key:'count',label:'SİPARİŞ',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'},{key:'last',label:'SON ALIM'}];
+  let grand = 0;
+  const rows = Object.values(suppliers).sort((a,b) => b.total - a.total).map(s => { grand += s.total; return { name: s.name, count: s.count, total: fmt(s.total), last: s.lastDate || '—' }; });
+  renderTable(headers, rows, { name:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), total: fmt(grand), last:'' });
+}
+
+// ===== SATIN ALMA: Ürün Bazlı =====
+async function reportPurchaseByProduct() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const orders = await _getPurchaseOrders(from, to);
+  const orderIds = orders.map(o => o.id);
+  if (!orderIds.length) { renderTable([{key:'msg',label:'Sonuç'}], [], null); return; }
+  const { data: items } = await sb.from('purchase_order_items').select('product_id,quantity,unit_price,total,products(name,sku,unit)').in('order_id', orderIds);
+  const products = {};
+  (items||[]).forEach(it => {
+    const pid = it.product_id;
+    if (!pid) return;
+    if (!products[pid]) products[pid] = { name: it.products?.name||'—', sku: it.products?.sku||'—', unit: it.products?.unit||'', qty: 0, total: 0 };
+    products[pid].qty += parseFloat(it.quantity||0);
+    products[pid].total += parseFloat(it.total||0);
+  });
+  const headers = [{key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'qty',label:'ADET',align:'text-right'},{key:'avg',label:'ORT. FİYAT',align:'text-right'},{key:'total',label:'TUTAR',align:'text-right'}];
+  let grand = 0;
+  const rows = Object.values(products).sort((a,b) => b.total - a.total).map(p => { grand += p.total; return { sku: p.sku, name: p.name, qty: fmt(p.qty)+' '+p.unit, avg: fmt(p.qty > 0 ? p.total/p.qty : 0), total: fmt(p.total) }; });
+  renderTable(headers, rows, { sku:'', name:'TOPLAM', qty:'', avg:'', total: fmt(grand) });
+}
+
+async function reportTopSuppliers() { await reportPurchaseBySupplier(); }
+
+// ===== CARİ: Yaşlandırma =====
+async function reportContactAging() {
+  const today = new Date();
+  const orders = await _getSalesOrders(null, null);
+  // Get unpaid portion
+  const orderIds = orders.map(o => o.id);
+  const payMap = {};
+  if (orderIds.length) {
+    const { data: pays } = await sb.from('payments').select('order_id,amount').in('order_id', orderIds);
+    (pays||[]).forEach(p => { payMap[p.order_id] = (payMap[p.order_id]||0) + parseFloat(p.amount); });
+  }
+  const contacts = {};
+  orders.forEach(o => {
+    const rem = parseFloat(o.total||0) - (payMap[o.id]||0);
+    if (rem <= 0) return;
+    const cid = o.customer_id;
+    if (!contacts[cid]) contacts[cid] = { name: o.contacts?.name||'—', b1:0, b2:0, b3:0, b4:0, total:0 };
+    const dueDate = new Date(o.issue_date);
+    const days = Math.floor((today - dueDate) / 86400000);
+    if (days <= 30) contacts[cid].b1 += rem;
+    else if (days <= 60) contacts[cid].b2 += rem;
+    else if (days <= 90) contacts[cid].b3 += rem;
+    else contacts[cid].b4 += rem;
+    contacts[cid].total += rem;
+  });
+  const headers = [{key:'name',label:'CARİ'},{key:'b1',label:'0-30 GÜN',align:'text-right'},{key:'b2',label:'31-60 GÜN',align:'text-right'},{key:'b3',label:'61-90 GÜN',align:'text-right'},{key:'b4',label:'90+ GÜN',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'}];
+  let tot1=0, tot2=0, tot3=0, tot4=0, grand=0;
+  const rows = Object.values(contacts).sort((a,b) => b.total - a.total).map(c => {
+    tot1 += c.b1; tot2 += c.b2; tot3 += c.b3; tot4 += c.b4; grand += c.total;
+    return { name: c.name, b1: c.b1 ? fmt(c.b1) : '—', b2: c.b2 ? fmt(c.b2) : '—', b3: c.b3 ? fmt(c.b3) : '—', b4: c.b4 ? fmt(c.b4) : '—', total: fmt(c.total),
+      _cellClass: { b4: 'text-red' } };
+  });
+  renderTable(headers, rows, { name:'TOPLAM', b1: fmt(tot1), b2: fmt(tot2), b3: fmt(tot3), b4: fmt(tot4), total: fmt(grand) });
+}
+
+// ===== CARİ: Özet =====
+async function reportContactSummary() {
+  const { data: contacts } = await sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true);
+  const { data: salesOrders } = await sb.from('sales_orders').select('customer_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+  const { data: purchaseOrders } = await sb.from('purchase_orders').select('supplier_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+
+  const salesMap = {}, purchaseMap = {};
+  (salesOrders||[]).forEach(o => { salesMap[o.customer_id] = (salesMap[o.customer_id]||0) + parseFloat(o.total||0); });
+  (purchaseOrders||[]).forEach(o => { purchaseMap[o.supplier_id] = (purchaseMap[o.supplier_id]||0) + parseFloat(o.total||0); });
+
+  const headers = [{key:'name',label:'CARİ'},{key:'type',label:'TÜR'},{key:'sales',label:'SATIŞ',align:'text-right'},{key:'purchase',label:'ALIŞ',align:'text-right'},{key:'net',label:'NET',align:'text-right'}];
+  const rows = (contacts||[]).map(c => {
+    const s = salesMap[c.id] || 0;
+    const p = purchaseMap[c.id] || 0;
+    return { name: c.name, type: c.is_customer && c.is_supplier ? 'Her İkisi' : c.is_customer ? 'Müşteri' : 'Tedarikçi', sales: s ? fmt(s) : '—', purchase: p ? fmt(p) : '—', net: fmt(s - p) };
+  }).filter(r => r.sales !== '—' || r.purchase !== '—');
+  renderTable(headers, rows, null);
+}
+
+// ===== FİNANS: Nakit Akışı =====
+async function reportCashFlow() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let cq = sb.from('cash_transactions').select('transaction_date,type,amount').eq('company_id', companyId);
+  let bq = sb.from('bank_transactions').select('transaction_date,type,amount').eq('company_id', companyId);
+  if (from) { cq = cq.gte('transaction_date', from); bq = bq.gte('transaction_date', from); }
+  if (to) { cq = cq.lte('transaction_date', to); bq = bq.lte('transaction_date', to); }
+  const [cashRes, bankRes] = await Promise.all([cq, bq]);
+  const days = {};
+  (cashRes.data||[]).forEach(t => {
+    const d = t.transaction_date;
+    if (!days[d]) days[d] = { cashIn:0, cashOut:0, bankIn:0, bankOut:0 };
+    if (t.type === 'in') days[d].cashIn += parseFloat(t.amount||0);
+    else days[d].cashOut += parseFloat(t.amount||0);
+  });
+  (bankRes.data||[]).forEach(t => {
+    const d = t.transaction_date;
+    if (!days[d]) days[d] = { cashIn:0, cashOut:0, bankIn:0, bankOut:0 };
+    if (t.type === 'in') days[d].bankIn += parseFloat(t.amount||0);
+    else days[d].bankOut += parseFloat(t.amount||0);
+  });
+  const headers = [{key:'date',label:'TARİH'},{key:'cashIn',label:'KASA GİRİŞ',align:'text-right'},{key:'cashOut',label:'KASA ÇIKIŞ',align:'text-right'},{key:'bankIn',label:'BANKA GİRİŞ',align:'text-right'},{key:'bankOut',label:'BANKA ÇIKIŞ',align:'text-right'},{key:'net',label:'NET',align:'text-right'}];
+  let totNet = 0;
+  const rows = Object.entries(days).sort().map(([d, v]) => {
+    const net = v.cashIn + v.bankIn - v.cashOut - v.bankOut;
+    totNet += net;
+    return { date: d, cashIn: v.cashIn?fmt(v.cashIn):'', cashOut: v.cashOut?fmt(v.cashOut):'', bankIn: v.bankIn?fmt(v.bankIn):'', bankOut: v.bankOut?fmt(v.bankOut):'', net: fmt(net),
+      _cellClass: { cashIn: 'text-green', bankIn: 'text-green', cashOut: 'text-red', bankOut: 'text-red' } };
+  });
+  renderTable(headers, rows, { date:'NET AKIŞ', cashIn:'', cashOut:'', bankIn:'', bankOut:'', net: fmt(totNet) });
+}
+
+// ===== FİNANS: Hesap Bakiyeleri =====
+async function reportBalances() {
+  const [cashRes, bankRes] = await Promise.all([
+    sb.from('cash_registers').select('name,currency_code,current_balance').eq('company_id', companyId).eq('is_active', true),
+    sb.from('bank_accounts').select('account_name,currency_code,current_balance').eq('company_id', companyId).eq('is_active', true)
+  ]);
+  const headers = [{key:'name',label:'HESAP'},{key:'type',label:'TÜR'},{key:'currency',label:'PARA BİRİMİ'},{key:'balance',label:'BAKİYE',align:'text-right'}];
+  let total = 0;
+  const rows = [
+    ...(cashRes.data||[]).map(c => { total += parseFloat(c.current_balance||0); return { name: c.name, type: '💵 Kasa', currency: c.currency_code||'—', balance: fmt(c.current_balance) }; }),
+    ...(bankRes.data||[]).map(b => { total += parseFloat(b.current_balance||0); return { name: b.account_name, type: '🏦 Banka', currency: b.currency_code||'—', balance: fmt(b.current_balance) }; })
+  ];
+  renderTable(headers, rows, { name:'TOPLAM', type:'', currency:'', balance: fmt(total) });
+}
+
+// ===== FİNANS: Ödeme Yöntemleri =====
+async function reportPaymentMethods() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let q = sb.from('payments').select('amount,method').eq('company_id', companyId);
+  if (from) q = q.gte('paid_at', from);
+  if (to) q = q.lte('paid_at', to + 'T23:59:59');
+  const { data } = await q;
+  const methods = {};
+  let grand = 0;
+  (data||[]).forEach(p => {
+    const m = p.method || 'other';
+    if (!methods[m]) methods[m] = { count: 0, total: 0 };
+    methods[m].count++;
+    methods[m].total += parseFloat(p.amount||0);
+    grand += parseFloat(p.amount||0);
+  });
+  const labels = { cash: '💵 Nakit', bank: '🏦 Banka', card: '💳 Kredi Kartı', check: '📋 Çek', other: '📌 Diğer' };
+  const headers = [{key:'method',label:'YÖNTEM'},{key:'count',label:'İŞLEM',align:'text-right'},{key:'total',label:'TUTAR',align:'text-right'},{key:'pct',label:'ORAN %',align:'text-right'}];
+  const rows = Object.entries(methods).sort((a,b) => b[1].total - a[1].total).map(([m, v]) => ({
+    method: labels[m] || m, count: v.count, total: fmt(v.total), pct: grand > 0 ? (v.total/grand*100).toFixed(1)+'%' : '—'
+  }));
+  renderTable(headers, rows, { method:'TOPLAM', count: rows.reduce((s,r)=>s+r.count,0), total: fmt(grand), pct:'100%' });
+}
+
+// ===== MUHASEBE: Büyük Defter =====
+async function reportLedger() {
+  const accountId = document.getElementById('f-account')?.value;
+  if (!accountId) { document.getElementById('report-body').innerHTML = '<div class="report-empty">Lütfen bir hesap seçin</div>'; return; }
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  // Opening
+  const { data: acc } = await sb.from('chart_of_accounts').select('code,name').eq('id', accountId).single();
+  let openQ = sb.from('journal_lines').select('debit,credit,journal_entries!inner(entry_date,company_id)').eq('account_id', accountId).eq('journal_entries.company_id', companyId);
+  if (from) openQ = openQ.lt('journal_entries.entry_date', from);
+  const { data: openData } = await openQ;
+  let opening = 0;
+  (openData||[]).forEach(l => { opening += parseFloat(l.debit||0) - parseFloat(l.credit||0); });
+
+  let q = sb.from('journal_lines').select('debit,credit,description,journal_entries!inner(entry_date,entry_number,description,company_id)').eq('account_id', accountId).eq('journal_entries.company_id', companyId);
+  if (from) q = q.gte('journal_entries.entry_date', from);
+  if (to) q = q.lte('journal_entries.entry_date', to);
+  const { data } = await q;
+  (data||[]).sort((a,b) => (a.journal_entries.entry_date||'').localeCompare(b.journal_entries.entry_date||''));
+  const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'FİŞ NO'},{key:'desc',label:'AÇIKLAMA'},{key:'debit',label:'BORÇ',align:'text-right'},{key:'credit',label:'ALACAK',align:'text-right'},{key:'bal',label:'BAKİYE',align:'text-right'}];
+  let bal = opening, totalD = 0, totalC = 0;
+  const rows = [];
+  rows.push({ date:'—', doc:'', desc:'Dönem Başı Bakiye', debit:'', credit:'', bal: fmt(opening), _cellClass: { desc: 'text-orange' } });
+  (data||[]).forEach(l => {
+    const d = parseFloat(l.debit||0), c = parseFloat(l.credit||0);
+    bal += d - c;
+    totalD += d; totalC += c;
+    rows.push({ date: l.journal_entries.entry_date, doc: l.journal_entries.entry_number, desc: l.description || l.journal_entries.description || '—', debit: d ? fmt(d) : '', credit: c ? fmt(c) : '', bal: fmt(bal) });
+  });
+  document.getElementById('report-title').textContent = '📒 ' + (acc?.code || '') + ' — ' + (acc?.name || '');
+  renderTable(headers, rows, { date:'', doc:'', desc:'TOPLAM', debit: fmt(totalD), credit: fmt(totalC), bal: fmt(bal) });
+}
+
+// ===== CRM: Pipeline Özeti =====
+async function reportCrmPipeline() {
+  const { data } = await sb.from('crm_opportunities').select('stage,value,probability').eq('company_id', companyId);
+  const stages = {};
+  (data||[]).forEach(o => {
+    if (!stages[o.stage]) stages[o.stage] = { count: 0, total: 0, weighted: 0 };
+    stages[o.stage].count++;
+    stages[o.stage].total += parseFloat(o.value||0);
+    stages[o.stage].weighted += parseFloat(o.value||0) * (o.probability||0)/100;
+  });
+  const labels = { lead:'Lead', contacted:'İletişimde', proposal:'Teklif Verildi', negotiation:'Müzakerede', won:'Kazanıldı', lost:'Kaybedildi', postponed:'Ertelendi' };
+  const headers = [{key:'stage',label:'AŞAMA'},{key:'count',label:'FIRSAT',align:'text-right'},{key:'total',label:'TOPLAM DEĞER',align:'text-right'},{key:'weighted',label:'AĞIRLIKLI',align:'text-right'}];
+  let gCount = 0, gTotal = 0, gWeighted = 0;
+  const rows = Object.entries(stages).map(([s, v]) => {
+    gCount += v.count; gTotal += v.total; gWeighted += v.weighted;
+    return { stage: labels[s] || s, count: v.count, total: fmt(v.total), weighted: fmt(v.weighted) };
+  });
+  renderTable(headers, rows, { stage:'TOPLAM', count: gCount, total: fmt(gTotal), weighted: fmt(gWeighted) });
+}
+
+// ===== CRM: Kazanılan/Kaybedilen =====
+async function reportCrmWonLost() {
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  let q = sb.from('crm_opportunities').select('title,value,stage,updated_at,lost_reason,contacts(name)').eq('company_id', companyId).in('stage', ['won','lost']);
+  if (from) q = q.gte('updated_at', from);
+  if (to) q = q.lte('updated_at', to + 'T23:59:59');
+  const { data } = await q.order('updated_at', { ascending: false });
+  const headers = [{key:'date',label:'TARİH'},{key:'title',label:'FIRSAT'},{key:'customer',label:'MÜŞTERİ'},{key:'value',label:'DEĞER',align:'text-right'},{key:'result',label:'SONUÇ'},{key:'reason',label:'SEBEP'}];
+  let won = 0, lost = 0, wonVal = 0;
+  const rows = (data||[]).map(o => {
+    if (o.stage === 'won') { won++; wonVal += parseFloat(o.value||0); }
+    else lost++;
+    return { date: o.updated_at ? o.updated_at.substring(0,10) : '—', title: o.title, customer: o.contacts?.name || '—', value: fmt(o.value), result: o.stage === 'won' ? '✅ Kazanıldı' : '❌ Kaybedildi', reason: o.lost_reason || '—',
+      _cellClass: { result: o.stage === 'won' ? 'text-green' : 'text-red' } };
+  });
+  const winRate = (won+lost) > 0 ? (won/(won+lost)*100).toFixed(1) + '%' : '—';
+  renderTable(headers, rows, { date:'', title:'TOPLAM', customer: `${won} kazanıldı / ${lost} kaybedildi`, value: fmt(wonVal), result: 'Oran: ' + winRate, reason:'' });
+}
+
+// ===== CRM: Temsilci Performansı =====
+async function reportCrmRepPerformance() {
+  const { data } = await sb.from('crm_opportunities').select('assigned_to,stage,value').eq('company_id', companyId);
+  const reps = {};
+  (data||[]).forEach(o => {
+    const rid = o.assigned_to || 'unassigned';
+    if (!reps[rid]) reps[rid] = { total: 0, won: 0, lost: 0, wonVal: 0, totalVal: 0 };
+    reps[rid].total++;
+    reps[rid].totalVal += parseFloat(o.value||0);
+    if (o.stage === 'won') { reps[rid].won++; reps[rid].wonVal += parseFloat(o.value||0); }
+    else if (o.stage === 'lost') reps[rid].lost++;
+  });
+  const repIds = Object.keys(reps).filter(id => id !== 'unassigned');
+  const nameMap = { unassigned: '— Atanmamış —' };
+  if (repIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id,full_name').in('id', repIds);
+    (profiles||[]).forEach(p => nameMap[p.id] = p.full_name || p.id.substring(0,8));
+  }
+  const headers = [{key:'name',label:'TEMSİLCİ'},{key:'total',label:'TOPLAM',align:'text-right'},{key:'won',label:'KAZANILDI',align:'text-right'},{key:'lost',label:'KAYBEDİLDİ',align:'text-right'},{key:'winRate',label:'KAZANMA %',align:'text-right'},{key:'wonVal',label:'KAZANILAN DEĞER',align:'text-right'}];
+  const rows = Object.entries(reps).sort((a,b) => b[1].wonVal - a[1].wonVal).map(([id, r]) => {
+    const closed = r.won + r.lost;
+    const winRate = closed > 0 ? (r.won/closed*100).toFixed(1) + '%' : '—';
+    return { name: nameMap[id] || id.substring(0,8), total: r.total, won: r.won, lost: r.lost, winRate, wonVal: fmt(r.wonVal) };
+  });
+  renderTable(headers, rows, null);
+}
+
 function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('l', 'mm', 'a4');

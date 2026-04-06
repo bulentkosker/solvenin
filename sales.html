@@ -484,6 +484,12 @@ tr:hover .row-actions{opacity:1}
         <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_discount">İndirim</div>
         <input id="o-discount" type="text" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;text-align:right;">
       </div>
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;">Satış Temsilcisi</div>
+        <select id="o-assigned" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
+          <option value="">Seç...</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -731,6 +737,7 @@ window._supabase = sb;
 
 
 let companyId = null, companyName = 'My Company', companyData = {}, userPlan = 'free';
+let currentUserId = null, currentUserRole = null;
 let invoiceSettings = { show_discount: false, show_tax: true, show_description: false, show_unit: true, invoice_language: 'company' };
 let accountingEnabled = false;
 let orders = [], customers = [], products = [], payments = [];
@@ -761,6 +768,8 @@ async function init() {
   if (!_myCompanies || _myCompanies.length === 0) { console.error('No companies found'); return; }
   const _active = _savedId ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0]) : (_myCompanies.find(c => c.is_active) || _myCompanies[0]);
   companyId = _active.company_id;
+  currentUserId = user.id;
+  currentUserRole = _active.role || null;
   companyName = _active.company_name || 'My Company';
   localStorage.setItem('currentCompanyId', companyId);
 
@@ -794,7 +803,12 @@ async function init() {
 
 // ===== LOAD =====
 async function loadOrders() {
-  const { data } = await sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  let q = sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true);
+  // Role-based filtering: employees only see own orders
+  if (currentUserRole === 'employee' || currentUserRole === 'sales_rep') {
+    q = q.eq('assigned_to', currentUserId);
+  }
+  const { data } = await q.order('created_at', { ascending: false });
   orders = data || [];
   if (currentView === 'invoices') filterInvoices();
   else filterOrders();
@@ -1159,6 +1173,18 @@ function setContactCurrency(contactId) {
   onCurrencyChange();
 }
 
+async function loadCompanyUsers() {
+  const sel = document.getElementById('o-assigned');
+  if (!sel || sel.dataset.loaded) return;
+  const { data: cu } = await sb.from('company_users').select('user_id,role').eq('company_id', companyId).eq('status', 'active');
+  const userIds = (cu||[]).map(u => u.user_id);
+  if (!userIds.length) return;
+  const { data: profiles } = await sb.from('profiles').select('id,full_name').in('id', userIds);
+  const nameMap = {}; (profiles||[]).forEach(p => nameMap[p.id] = p.full_name);
+  sel.innerHTML = '<option value="">— Temsilci Yok —</option>' + (cu||[]).map(u => `<option value="${u.user_id}">${nameMap[u.user_id] || u.user_id.substring(0,8)}</option>`).join('');
+  sel.dataset.loaded = '1';
+}
+
 function openOrderModal() {
   console.log('[sales] openOrderModal called');
   editingOrderId = null;
@@ -1166,6 +1192,14 @@ function openOrderModal() {
   document.getElementById('o-customer').value = '';
   if (customerQA) customerQA.setValue('');
   document.getElementById('o-number').value = generateNextNumber(invoiceSettings.sales_number_format || 'INV0001', orders);
+  loadCompanyUsers().then(() => {
+    const sel = document.getElementById('o-assigned');
+    if (sel && currentUserRole && ['employee','sales_rep'].includes(currentUserRole)) {
+      sel.value = currentUserId || '';
+    } else if (sel) {
+      sel.value = '';
+    }
+  });
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
   const dueDays = invoiceSettings.default_due_days ?? 30;
   const due = new Date(); due.setDate(due.getDate() + dueDays);
@@ -1361,6 +1395,7 @@ async function saveOrder() {
     currency_code: fxCur !== baseCurrency ? fxCur : null,
     exchange_rate: fxRate,
     notes: document.getElementById('o-notes').value.trim() || null,
+    assigned_to: document.getElementById('o-assigned')?.value || null,
     created_by: user.id
   };
 
@@ -1526,6 +1561,10 @@ async function editOrder(id) {
   taxSel.value = matchOpt ? matchOpt.value : '';
   document.getElementById('o-discount').value = order.discount ? fmtNum(order.discount) : '';
   document.getElementById('o-notes').value = order.notes || '';
+  loadCompanyUsers().then(() => {
+    const sel = document.getElementById('o-assigned');
+    if (sel) sel.value = order.assigned_to || '';
+  });
   // Currency
   initCurrencyDropdown();
   const fxCur = order.currency_code || baseCurrency;
