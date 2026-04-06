@@ -1013,7 +1013,8 @@
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
 
       const { data: comp, error } = await sb.from('companies').insert({
-        name, slug, plan: 'free', owner_id: currentUser.id, status: 'active', country_code: countryCode
+        name, slug, plan: 'free', owner_id: currentUser.id, status: 'active', country_code: countryCode,
+        max_users: 3
       }).select().single();
       if (error) throw error;
 

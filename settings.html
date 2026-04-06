@@ -1279,7 +1279,8 @@ async function createNewCompany() {
     const user = (await sb.auth.getSession()).data.session?.user;
     const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
     const { data: comp, error } = await sb.from('companies').insert({
-      name, slug, plan: 'professional', owner_id: user.id, status: 'active', country_code: countryCode
+      name, slug, plan: 'professional', owner_id: user.id, status: 'active', country_code: countryCode,
+      max_users: 1
     }).select().single();
     if (error) throw error;
 

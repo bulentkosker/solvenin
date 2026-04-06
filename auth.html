@@ -1123,8 +1123,10 @@ async function handleSignup() {
 
     if (data.user) {
       const slug = company.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const defaultMaxUsers = selectedPlan === 'free' ? 3 : 1;
       const { data: comp } = await sb.from('companies').insert({
-        name: company, slug: slug + '-' + Date.now(), plan: selectedPlan, country_code: countryCode
+        name: company, slug: slug + '-' + Date.now(), plan: selectedPlan, country_code: countryCode,
+        max_users: defaultMaxUsers
       }).select().single();
       if (comp) {
         await sb.from('profiles').insert({

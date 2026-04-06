@@ -511,7 +511,11 @@ async function showSubscriptionModal(companyId) {
         <option value="professional" ${info?.plan==='professional'?'selected':''}>Professional</option>
       </select>
     </div>
-    <div class="field"><label>Max Kullanıcı</label><input type="number" id="sub-max" min="1" value="${info?.max_users||1}"></div>
+    <div class="field">
+      <label>Max Kullanıcı *</label>
+      <input type="number" id="sub-max" min="1" required value="${info?.max_users||1}">
+      <div style="font-size:10px;color:var(--gray400);margin-top:3px">Kaç kullanıcı için ödeme yapıldı?</div>
+    </div>
     <div class="field"><label>Durum</label>
       <select id="sub-status">
         <option value="trial" ${info?.subscription_status==='trial'?'selected':''}>Trial (Deneme)</option>
@@ -544,11 +548,12 @@ async function showSubscriptionModal(companyId) {
 
 async function saveSubscription(companyId) {
   const plan = document.getElementById('sub-plan').value;
-  const maxUsers = parseInt(document.getElementById('sub-max').value) || 1;
+  const maxUsers = parseInt(document.getElementById('sub-max').value);
   const status = document.getElementById('sub-status').value;
   const start = document.getElementById('sub-start').value;
   const end = document.getElementById('sub-end').value;
   const note = document.getElementById('sub-note').value.trim();
+  if (!maxUsers || maxUsers < 1) { showToast('Max kullanıcı sayısı girin (zorunlu)', 'error'); return; }
   if (!note) { showToast('Not girin (zorunlu)', 'error'); return; }
   const { error } = await sb.rpc('sp_update_subscription', {
     p_user_id: user.id, p_company_id: companyId,
