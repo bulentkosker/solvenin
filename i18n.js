@@ -1,7 +1,7 @@
 // ===== SOLVENIN i18n SYSTEM =====
 // Auto-detects browser language, respects user preference saved in localStorage
 
-const SUPPORTED_LANGS = ['en','tr','de','fr','es','ar','zh','ru','pt','ja','kz','ky','uz','tk','az','pl'];
+const SUPPORTED_LANGS = ['en','tr','de','fr','es','ar','zh','ru','pt','ja','kz','ky','uz','tm','az','pl'];
 
 const LANG_META = {
   en: { code:'EN', name:'English', dir:'ltr' },
@@ -1166,7 +1166,7 @@ const LANG_META = {
   kz: { code:'KZ', name:'Қазақ тілі', dir:'ltr' },
   ky: { code:'KY', name:'Кыргыз тили', dir:'ltr' },
   uz: { code:'UZ', name:"O'zbek tili", dir:'ltr' },
-  tk: { code:'TK', name:'Türkmen dili', dir:'ltr' },
+  tm: { code:'TM', name:'Türkmen dili', dir:'ltr' },
   az: { code:'AZ', name:'Azərbaycan dili', dir:'ltr' },
   pl: { code:'PL', name:'Polski', dir:'ltr' },
 };
@@ -9136,7 +9136,7 @@ const T = window.T = {
     placeholder_optional:'Ixtiyoriy...',
     placeholder_enter_amount:'Summa kiriting...',
   },
-  tk: {
+  tm: {
     // NAV
     nav_dashboard:'Baş sahypa', nav_inventory:'Ammar', nav_sales:'Satuw', nav_purchasing:'Satyn alyş',
     nav_production:'Önümçilik', nav_hr:'Işgärler', nav_company:'Kompaniýa', nav_crm:'CRM',
@@ -9541,7 +9541,7 @@ const T = window.T = {
 // ===== LOCALE FORMATTERS =====
 const DATE_FORMATS = {
   tr:'DD.MM.YYYY', ru:'DD.MM.YYYY', kz:'DD.MM.YYYY', ky:'DD.MM.YYYY',
-  uz:'DD.MM.YYYY', tk:'DD.MM.YYYY', az:'DD.MM.YYYY', de:'DD.MM.YYYY',
+  uz:'DD.MM.YYYY', tm:'DD.MM.YYYY', az:'DD.MM.YYYY', de:'DD.MM.YYYY',
   fr:'DD/MM/YYYY', en:'MM/DD/YYYY', es:'DD/MM/YYYY', pl:'DD.MM.YYYY',
   ar:'DD/MM/YYYY', zh:'YYYY年MM月DD日', pt:'DD/MM/YYYY', ja:'YYYY/MM/DD'
 };
@@ -9550,7 +9550,7 @@ const NUMBER_FORMATS = {
   tr:{decimal:',',thousands:'.'}, en:{decimal:'.',thousands:','},
   ru:{decimal:',',thousands:' '}, kz:{decimal:',',thousands:' '},
   ky:{decimal:',',thousands:' '}, uz:{decimal:',',thousands:' '},
-  tk:{decimal:',',thousands:' '}, az:{decimal:',',thousands:'.'},
+  tm:{decimal:',',thousands:' '}, az:{decimal:',',thousands:'.'},
   de:{decimal:',',thousands:'.'}, fr:{decimal:',',thousands:' '},
   es:{decimal:',',thousands:'.'}, pl:{decimal:',',thousands:' '},
   ar:{decimal:'.',thousands:','}, zh:{decimal:'.',thousands:','},
@@ -9589,6 +9589,13 @@ if (typeof window !== 'undefined') {
 // ===== CORE FUNCTIONS =====
 
 function detectLang() {
+  // Migrate legacy 'tk' code → 'tm' (correct Turkmen code per project convention)
+  if (localStorage.getItem('solvenin_lang') === 'tk') {
+    localStorage.setItem('solvenin_lang', 'tm');
+  }
+  if (localStorage.getItem('lang') === 'tk') {
+    localStorage.setItem('lang', 'tm');
+  }
   // 1. User saved preference
   const saved = localStorage.getItem('solvenin_lang');
   if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
