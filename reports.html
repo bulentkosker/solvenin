@@ -92,8 +92,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   <div class="content">
     <!-- Sol: Rapor menüsü -->
     <nav class="report-nav" id="report-nav">
-      <div class="report-nav-section">STOK & SATIŞ</div>
+      <div class="report-nav-section">STOK</div>
       <div class="report-nav-item active" onclick="switchReport('stock',this)"><span class="report-nav-icon">📦</span> Stok Durumu</div>
+      <div class="report-nav-item" onclick="switchReport('stock_movements',this)"><span class="report-nav-icon">🔄</span> Ürün Hareketleri</div>
+      <div class="report-nav-item" onclick="switchReport('low_stock',this)"><span class="report-nav-icon">⚠️</span> Düşük Stok</div>
+      <div class="report-nav-item" onclick="switchReport('stock_value',this)"><span class="report-nav-icon">💎</span> Stok Değeri</div>
+      <div class="report-nav-section">SATIŞ & SATIN ALMA</div>
       <div class="report-nav-item" onclick="switchReport('receivables',this)"><span class="report-nav-icon">💰</span> Borçlu Listesi</div>
       <div class="report-nav-item" onclick="switchReport('payables',this)"><span class="report-nav-icon">🛒</span> Alacaklı Listesi</div>
       <div class="report-nav-item" onclick="switchReport('sales',this)"><span class="report-nav-icon">📈</span> Satış Özeti</div>
@@ -172,7 +176,7 @@ function switchReport(key, el) {
   document.getElementById('report-actions').style.display = 'none';
   document.getElementById('report-body').innerHTML = '<div class="report-empty">Filtreleri ayarlayın ve "Getir" butonuna tıklayın</div>';
 
-  const titles = { stock:'📦 Stok Durumu', receivables:'💰 Borçlu Listesi', payables:'🛒 Alacaklı Listesi', sales:'📈 Satış Özeti', cashbank:'🏦 Kasa/Banka Hareketleri', statement:'👥 Cari Ekstre', journal:'📋 Yevmiye Defteri', trial:'📊 Mizan' };
+  const titles = { stock:'📦 Stok Durumu', stock_movements:'🔄 Ürün Stok Hareketleri', low_stock:'⚠️ Düşük Stok Raporu', stock_value:'💎 Stok Değeri Raporu', receivables:'💰 Borçlu Listesi', payables:'🛒 Alacaklı Listesi', sales:'📈 Satış Özeti', cashbank:'🏦 Kasa/Banka Hareketleri', statement:'👥 Cari Ekstre', journal:'📋 Yevmiye Defteri', trial:'📊 Mizan' };
   document.getElementById('report-title').textContent = titles[key] || key;
 
   const f = document.getElementById('report-filters');
@@ -181,6 +185,15 @@ function switchReport(key, el) {
   if (key === 'stock') {
     f.innerHTML = `<select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
     loadWarehouses();
+  } else if (key === 'stock_movements') {
+    f.innerHTML = `<select id="f-product" style="min-width:200px"><option value="">Ürün Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-type"><option value="">Tümü</option><option value="in">Giriş</option><option value="out">Çıkış</option></select> <select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadProducts(); loadWarehouses();
+  } else if (key === 'low_stock') {
+    f.innerHTML = `<select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadWarehouses();
+  } else if (key === 'stock_value') {
+    f.innerHTML = `<select id="f-category"><option value="">Tüm Kategoriler</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
+    loadCategories();
   } else if (key === 'receivables' || key === 'payables') {
     f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
   } else if (key === 'sales') {
@@ -219,12 +232,25 @@ async function loadContacts() {
   const sel = document.getElementById('f-contact');
   if (sel) sel.innerHTML = '<option value="">Cari Seç...</option>' + (data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
+async function loadProducts() {
+  const { data } = await sb.from('products').select('id,name,sku,unit').eq('company_id', companyId).eq('is_active', true).order('name');
+  const sel = document.getElementById('f-product');
+  if (sel) sel.innerHTML = '<option value="">Ürün Seç...</option>' + (data||[]).map(p => `<option value="${p.id}">${p.sku ? '['+p.sku+'] ' : ''}${p.name}</option>`).join('');
+}
+async function loadCategories() {
+  const { data } = await sb.from('categories').select('id,name').eq('company_id', companyId).order('name');
+  const sel = document.getElementById('f-category');
+  if (sel) sel.innerHTML = '<option value="">Tüm Kategoriler</option>' + (data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
 
 function runReport() {
   const body = document.getElementById('report-body');
   body.innerHTML = '<div class="report-loading">⏳ Yükleniyor...</div>';
   const r = currentReport;
   if (r === 'stock') reportStock();
+  else if (r === 'stock_movements') reportStockMovements();
+  else if (r === 'low_stock') reportLowStock();
+  else if (r === 'stock_value') reportStockValue();
   else if (r === 'receivables') reportReceivables();
   else if (r === 'payables') reportPayables();
   else if (r === 'sales') reportSales();
@@ -269,6 +295,178 @@ async function reportStock() {
     return { sku: p.sku||'—', name: p.name, category: p.categories?.name||'—', unit: p.unit||'—', qty: p.quantity||0, cost: F(p.cost_price||0), value: F(val) };
   });
   renderTable(headers, rows, { sku:'', name:'', category:'', unit:'TOPLAM', qty:'', cost:'', value: F(totalValue) });
+}
+
+// ===== RAPOR: ÜRÜN STOK HAREKETLERİ =====
+async function reportStockMovements() {
+  const productId = document.getElementById('f-product')?.value;
+  if (!productId) { document.getElementById('report-body').innerHTML = '<div class="report-empty">Lütfen bir ürün seçin</div>'; return; }
+  const from = document.getElementById('f-from')?.value;
+  const to = document.getElementById('f-to')?.value;
+  const typeFilter = document.getElementById('f-type')?.value;
+  const whFilter = document.getElementById('f-warehouse')?.value;
+
+  // Product info
+  const { data: product } = await sb.from('products').select('name,sku,unit').eq('id', productId).single();
+
+  // Opening balance (before start date)
+  let openQ = sb.from('stock_movements').select('type,quantity').eq('company_id', companyId).eq('product_id', productId).eq('is_active', true);
+  if (from) openQ = openQ.lt('created_at', from);
+  const { data: openData } = await openQ;
+  let opening = 0;
+  (openData||[]).forEach(m => { opening += (m.type === 'in' || m.type === 'return') ? parseFloat(m.quantity||0) : -parseFloat(m.quantity||0); });
+
+  // Period movements
+  let q = sb.from('stock_movements').select('created_at,reference,type,notes,quantity,warehouse_id,warehouses(name)')
+    .eq('company_id', companyId).eq('product_id', productId).eq('is_active', true);
+  if (from) q = q.gte('created_at', from);
+  if (to) q = q.lte('created_at', to + 'T23:59:59');
+  if (whFilter) q = q.eq('warehouse_id', whFilter);
+  const { data: moves } = await q.order('created_at');
+
+  const filtered = (moves||[]).filter(m => {
+    if (typeFilter === 'in') return m.type === 'in' || m.type === 'return';
+    if (typeFilter === 'out') return m.type === 'out';
+    return true;
+  });
+
+  // Summary
+  let totalIn = 0, totalOut = 0;
+  filtered.forEach(m => {
+    const qty = parseFloat(m.quantity||0);
+    if (m.type === 'in' || m.type === 'return') totalIn += qty;
+    else totalOut += qty;
+  });
+  const closing = opening + totalIn - totalOut;
+  const unit = product?.unit || '';
+
+  // Headers
+  const headers = [
+    { key:'date', label:'TARİH' },
+    { key:'ref', label:'BELGE' },
+    { key:'wh', label:'DEPO' },
+    { key:'type', label:'TÜR' },
+    { key:'notes', label:'AÇIKLAMA' },
+    { key:'in', label:'GİRİŞ', align:'text-right' },
+    { key:'out', label:'ÇIKIŞ', align:'text-right' },
+    { key:'bal', label:'BAKİYE', align:'text-right' }
+  ];
+
+  let bal = opening;
+  const rows = [];
+  // Opening row
+  rows.push({ date:'—', ref:'', wh:'', type:'', notes:'Dönem Başı Bakiye', in:'', out:'', bal: fmt(opening) + ' ' + unit, _class:'', _cellClass:{ notes: 'text-orange' } });
+  filtered.forEach(m => {
+    const qty = parseFloat(m.quantity||0);
+    const isIn = m.type === 'in' || m.type === 'return';
+    if (isIn) bal += qty; else bal -= qty;
+    rows.push({
+      date: new Date(m.created_at).toLocaleDateString('tr-TR'),
+      ref: m.reference || '—',
+      wh: m.warehouses?.name || '—',
+      type: isIn ? 'Giriş' : 'Çıkış',
+      notes: m.notes || '—',
+      in: isIn ? fmt(qty) + ' ' + unit : '',
+      out: !isIn ? fmt(qty) + ' ' + unit : '',
+      bal: fmt(bal) + ' ' + unit,
+      _cellClass: { in: 'text-green', out: 'text-red' }
+    });
+  });
+
+  // Title with product name
+  document.getElementById('report-title').textContent = '🔄 ' + (product?.name || 'Ürün') + ' — Stok Hareketleri';
+
+  // Summary cards (prepended via renderTable extra content)
+  const body = document.getElementById('report-body');
+  const summaryHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 20px;background:var(--gray50);border-bottom:1px solid var(--gray100)">
+    <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase">Açılış Stok</div><div style="font-size:18px;font-weight:800;color:var(--gray600)">${fmt(opening)} ${unit}</div></div>
+    <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase">Toplam Giriş</div><div style="font-size:18px;font-weight:800;color:var(--green)">+${fmt(totalIn)} ${unit}</div></div>
+    <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase">Toplam Çıkış</div><div style="font-size:18px;font-weight:800;color:var(--red)">-${fmt(totalOut)} ${unit}</div></div>
+    <div><div style="font-size:10px;color:var(--gray400);text-transform:uppercase">Kapanış Stok</div><div style="font-size:18px;font-weight:800;color:var(--primary)">${fmt(closing)} ${unit}</div></div>
+  </div>`;
+
+  renderTable(headers, rows, { date:'', ref:'', wh:'', type:'', notes:'DÖNEM SONU', in: '+'+fmt(totalIn)+' '+unit, out: '-'+fmt(totalOut)+' '+unit, bal: fmt(closing)+' '+unit });
+  // Prepend summary cards
+  body.innerHTML = summaryHTML + body.innerHTML;
+}
+
+// ===== RAPOR: DÜŞÜK STOK =====
+async function reportLowStock() {
+  const { data } = await sb.from('products').select('id,name,sku,unit,quantity,min_stock,categories(name)')
+    .eq('company_id', companyId).eq('is_active', true).order('name');
+  const filtered = (data||[]).filter(p => {
+    const qty = parseFloat(p.quantity||0);
+    const min = parseFloat(p.min_stock||0);
+    return min > 0 && qty <= min;
+  });
+  const headers = [
+    {key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'category',label:'KATEGORİ'},
+    {key:'qty',label:'MEVCUT',align:'text-right'},{key:'min',label:'MİN',align:'text-right'},
+    {key:'diff',label:'FARK',align:'text-right'},{key:'status',label:'DURUM'}
+  ];
+  const rows = filtered.map(p => {
+    const qty = parseFloat(p.quantity||0);
+    const min = parseFloat(p.min_stock||0);
+    const diff = qty - min;
+    const isZero = qty === 0;
+    return {
+      sku: p.sku||'—', name: p.name, category: p.categories?.name||'—',
+      qty: fmt(qty) + ' ' + (p.unit||''),
+      min: fmt(min) + ' ' + (p.unit||''),
+      diff: fmt(diff) + ' ' + (p.unit||''),
+      status: isZero ? '🔴 Tükendi' : '⚠️ Düşük',
+      _cellClass: { diff: 'text-red', status: isZero ? 'text-red' : 'text-orange' }
+    };
+  });
+  renderTable(headers, rows, null);
+}
+
+// ===== RAPOR: STOK DEĞERİ =====
+async function reportStockValue() {
+  const catFilter = document.getElementById('f-category')?.value;
+  let q = sb.from('products').select('id,name,sku,unit,cost_price,quantity,category_id,categories(name)')
+    .eq('company_id', companyId).eq('is_active', true);
+  if (catFilter) q = q.eq('category_id', catFilter);
+  const { data } = await q.order('name');
+
+  // Group by category
+  const groups = {};
+  (data||[]).forEach(p => {
+    const catName = p.categories?.name || '(Kategorisiz)';
+    if (!groups[catName]) groups[catName] = { items: [], total: 0 };
+    const value = (parseFloat(p.quantity||0)) * (parseFloat(p.cost_price||0));
+    groups[catName].items.push({ ...p, value });
+    groups[catName].total += value;
+  });
+
+  const headers = [
+    {key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},
+    {key:'qty',label:'MİKTAR',align:'text-right'},
+    {key:'cost',label:'ALIŞ FİYATI',align:'text-right'},
+    {key:'value',label:'STOK DEĞERİ',align:'text-right'}
+  ];
+
+  const rows = [];
+  let grandTotal = 0;
+  Object.keys(groups).sort().forEach(catName => {
+    const g = groups[catName];
+    // Category header row
+    rows.push({
+      sku: '', name: '📁 ' + catName, qty: '', cost: '', value: fmt(g.total),
+      _class: '', _cellClass: { name: 'text-orange', value: 'text-orange' }
+    });
+    g.items.forEach(p => {
+      rows.push({
+        sku: p.sku || '—', name: '    ' + p.name,
+        qty: fmt(p.quantity||0) + ' ' + (p.unit||''),
+        cost: fmt(p.cost_price||0),
+        value: fmt(p.value)
+      });
+    });
+    grandTotal += g.total;
+  });
+
+  renderTable(headers, rows, { sku:'', name:'TOPLAM STOK DEĞERİ', qty:'', cost:'', value: fmt(grandTotal) });
 }
 
 // ===== RAPOR 2: BORÇLU LİSTESİ =====
