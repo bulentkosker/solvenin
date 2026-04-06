@@ -466,6 +466,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         <col id="col-p-product">
         <col id="col-p-desc" style="width:0px;">
         <col id="col-p-qty" style="width:90px;">
+        <col id="col-p-wh" style="width:110px;">
         <col id="col-p-price" style="width:110px;">
         <col id="col-p-total" style="width:110px;">
         <col id="col-p-del" style="width:32px;">
@@ -483,6 +484,10 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
           </th>
           <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
             <span data-i18n="col_qty">MİKTAR</span>
+            <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
+          </th>
+          <th class="resizable" style="padding:7px 4px;text-align:center;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
+            <span data-i18n="col_warehouse">DEPO</span>
             <span class="resize-handle" style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;background:rgba(255,255,255,0.2);"></span>
           </th>
           <th class="resizable" style="padding:7px 4px;text-align:right;font-size:10px;color:white;font-weight:500;letter-spacing:0.5px;user-select:none;position:relative;">
@@ -1301,6 +1306,12 @@ function renderOrderItems() {
     </td>
     <td class="desc-col" style="${dsp};padding:2px 4px;"><input type="text" value="${(item.description||'').replace(/"/g,'&quot;')}" placeholder="${t('col_description')||'Açıklama'}" oninput="orderItems[${i}].description=this.value" style="${inputS}"></td>
     <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="qty" data-row="${i}" value="${item.qty ? fmtNum(item.qty) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].qty=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'qty')" style="${inputS}text-align:right;"></td>
+    <td style="padding:2px 4px;">
+      <select onchange="orderItems[${i}].warehouse_id=this.value" style="${inputS}font-size:11px;text-align:center;">
+        <option value="">—</option>
+        ${warehouses.map(w=>`<option value="${w.id}" ${item.warehouse_id===w.id?'selected':''}>${w.name}</option>`).join('')}
+      </select>
+    </td>
     <td style="padding:2px 4px;"><input type="text" class="num-input" data-col="price" data-row="${i}" value="${item.price ? fmtNum(item.price) : ''}" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="orderItems[${i}].price=parseNum(this.value)||0;fmtInput(this);recalcOrder()" onkeydown="itemKeyNav(event,${i},'price')" style="${inputS}text-align:right;"></td>
     <td style="padding:2px 4px;text-align:right;font-weight:bold;color:#222;font-size:12px;" id="item-total-${i}">—</td>
     <td style="padding:2px 4px;text-align:center;"><button onclick="removeOrderItem(${i})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:14px;padding:0;">✕</button></td>
@@ -1461,6 +1472,7 @@ async function saveOrder() {
       unit_price_foreign: isForeign ? i.price : null,
       total: isForeign ? lineTotal * fxRate : lineTotal,
       total_foreign: isForeign ? lineTotal : null,
+      warehouse_id: i.warehouse_id || null,
       tax_rate_value: taxRateValue || 0
     };
   });
@@ -1476,7 +1488,7 @@ async function saveOrder() {
       .map(i => ({
         company_id: companyId,
         product_id: i.product_id,
-        warehouse_id: defaultWh,
+        warehouse_id: i.warehouse_id || defaultWh,
         type: 'in',
         quantity: i.qty,
         reference: orderNumber,
