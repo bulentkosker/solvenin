@@ -287,7 +287,7 @@ tr:hover .action-btns { opacity:1; }
     <!-- LOW STOCK ALERT -->
     <div class="alert-bar fade-up" id="low-stock-alert">
       <div class="alert-icon">⚠️</div>
-      <div class="alert-text" id="low-stock-alert-text" data-i18n="inv_low_stock_alert">3 items are running low on stock and need restocking.</div>
+      <div class="alert-text" id="low-stock-alert-text">3 items are running low on stock and need restocking.</div>
       <span class="alert-action" onclick="filterByStatus('low')" data-i18n="view_low_stock">View Low Stock →</span>
     </div>
 
@@ -748,6 +748,9 @@ function updateStats() {
   }
   document.getElementById('low-stock-alert').style.display = (low + out) > 0 ? 'flex' : 'none';
 }
+
+// Re-render stats when language changes so {n} placeholder gets re-applied with new locale text
+document.addEventListener('langChanged', () => { if (typeof products !== 'undefined' && products) updateStats(); });
 
 function getStockStatus(p) {
   if (p.stock === 0) return 'out';
