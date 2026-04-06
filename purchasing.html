@@ -741,6 +741,7 @@ let accountingEnabled = false;
 let cashRegisters = [];
 let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
+let _invoiceSettings = {};
 let currentView = 'orders';
 let taxRates = [];
 let editingOrderId = null, editingSupplierId = null;
@@ -776,7 +777,7 @@ async function init() {
   const { data: compSettings } = await sb.from('companies').select('accounting_enabled,invoice_settings,base_currency').eq('id', companyId).single();
   companyData = compSettings || {};
   accountingEnabled = !!compSettings?.accounting_enabled;
-  const _invoiceSettings = compSettings?.invoice_settings || {};
+  _invoiceSettings = compSettings?.invoice_settings || {};
 await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadCashBankAccounts()]);
   var savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
