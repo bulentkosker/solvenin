@@ -188,7 +188,53 @@ async function init() {
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
 
-  switchReport('stock', document.querySelector('.report-nav-item.active'));
+  // Filter by ?module= URL param (if set)
+  const moduleParam = new URLSearchParams(location.search).get('module');
+  if (moduleParam) applyModuleFilter(moduleParam);
+
+  // Auto-select first visible report
+  const firstVisible = document.querySelector('.report-nav-item:not([style*="display:none"])');
+  if (firstVisible) {
+    const onclick = firstVisible.getAttribute('onclick') || '';
+    const match = onclick.match(/switchReport\('([^']+)'/);
+    if (match) switchReport(match[1], firstVisible);
+  } else {
+    switchReport('stock', document.querySelector('.report-nav-item.active'));
+  }
+}
+
+// ===== MODULE FILTER (for per-module pages) =====
+const MODULE_MAP = {
+  stock: { title: '📦 Stok Raporları', keywords: ['STOK'] },
+  sales: { title: '💰 Satış Raporları', keywords: ['SATIŞ'] },
+  purchase: { title: '🛒 Alış Raporları', keywords: ['SATIN ALMA'] },
+  contacts: { title: '👥 Cari Raporları', keywords: ['CARİ'] },
+  finance: { title: '🏦 Finans Raporları', keywords: ['FİNANS'] },
+  accounting: { title: '📊 Muhasebe Raporları', keywords: ['MUHASEBE'] },
+  crm: { title: '🎯 CRM Raporları', keywords: ['CRM'] },
+  hr: { title: '👤 İK Raporları', keywords: ['İK'] }
+};
+
+function applyModuleFilter(moduleKey) {
+  const cfg = MODULE_MAP[moduleKey];
+  if (!cfg) return;
+  // Update page title
+  const topbarTitle = document.querySelector('.topbar-title');
+  if (topbarTitle) topbarTitle.textContent = cfg.title;
+  document.title = 'Solvenin — ' + cfg.title;
+  // Walk nav and hide sections that don't match
+  const nav = document.getElementById('report-nav');
+  if (!nav) return;
+  const children = [...nav.children];
+  let currentVisible = false;
+  children.forEach(el => {
+    if (el.classList.contains('report-nav-section')) {
+      currentVisible = cfg.keywords.some(kw => el.textContent.toUpperCase().includes(kw));
+      el.style.display = currentVisible ? '' : 'none';
+    } else if (el.classList.contains('report-nav-item')) {
+      el.style.display = currentVisible ? '' : 'none';
+    }
+  });
 }
 
 function F(n) { return fmt(n); }

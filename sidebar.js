@@ -411,10 +411,23 @@
             { key: 'nav_products',        href: 'inventory.html' },
             { key: 'nav_stock_movements', href: 'inventory.html#movements' },
             { key: 'nav_warehouses',      href: 'settings.html#warehouses' },
+            { key: 'nav_reports',         href: 'reports-stock.html' },
           ]
         },
-        { icon: '👤', key: 'nav_contacts', href: 'contacts.html' },
-        { icon: '🎯', key: 'nav_crm', href: 'crm.html' },
+        {
+          icon: '👤', key: 'nav_contacts', href: 'contacts.html',
+          children: [
+            { key: 'nav_contacts',  href: 'contacts.html' },
+            { key: 'nav_reports',   href: 'reports-contacts.html' },
+          ]
+        },
+        {
+          icon: '🎯', key: 'nav_crm', href: 'crm.html',
+          children: [
+            { key: 'nav_crm',     href: 'crm.html' },
+            { key: 'nav_reports', href: 'reports-crm.html' },
+          ]
+        },
         { icon: '🖥️', key: 'nav_pos', href: 'pos.html' },
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
@@ -422,6 +435,7 @@
             { key: 'nav_sales_orders',   href: 'sales.html?view=orders' },
             { key: 'nav_sales_invoices', href: 'sales.html?view=invoices' },
             { key: 'nav_payments',       href: 'sales.html#payments' },
+            { key: 'nav_reports',        href: 'reports-sales.html' },
           ]
         },
         {
@@ -429,6 +443,7 @@
           children: [
             { key: 'nav_purchase_orders',   href: 'purchasing.html?view=orders' },
             { key: 'nav_purchase_invoices', href: 'purchasing.html?view=invoices' },
+            { key: 'nav_reports',           href: 'reports-purchase.html' },
           ]
         },
         { icon: '🏭', key: 'nav_production', href: 'production.html' },
@@ -442,10 +457,16 @@
           children: [
             { key: 'nav_cashbank',        href: 'cashbank.html' },
             { key: 'nav_cashier_report',  href: 'cashbank.html?tab=cashier-report' },
-            { key: 'nav_accounting',      href: 'accounting.html' },
+            { key: 'nav_reports',         href: 'reports-finance.html' },
           ]
         },
-        { icon: '📊', key: 'nav_reports', href: 'reports.html' },
+        {
+          icon: '📊', key: 'nav_accounting', href: 'accounting.html',
+          children: [
+            { key: 'nav_accounting', href: 'accounting.html' },
+            { key: 'nav_reports',    href: 'reports-accounting.html' },
+          ]
+        },
       ]
     },
     {
@@ -458,6 +479,7 @@
             { key: 'nav_payroll',    href: 'hr.html#payroll' },
             { key: 'nav_leave',      href: 'hr.html#leaves' },
             { key: 'nav_attendance', href: 'hr.html#attendance' },
+            { key: 'nav_reports',    href: 'reports-hr.html' },
           ]
         },
         { icon: '🚚', key: 'nav_shipping',    href: 'shipping.html' },
