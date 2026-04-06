@@ -556,16 +556,28 @@ async function loadSubscription() {
       sb.from('company_users').select('company_id').eq('user_id', currentUser.id).eq('status', 'active').limit(1).single()
     ]);
 
-    if (profileRes.data) {
+    if (cuRes.data?.company_id) {
+      companyId = cuRes.data.company_id;
+    }
+
+    // Load plan + subscription info from COMPANIES table (source of truth)
+    if (companyId) {
+      const { data: company } = await sb.from('companies')
+        .select('plan, max_users, subscription_status, subscription_end, subscription_start')
+        .eq('id', companyId).single();
+      if (company) {
+        let rawPlan = company.plan || 'free';
+        if (rawPlan === 'pro') rawPlan = 'professional';
+        currentPlan = rawPlan;
+        window.__companySubscription = company;
+        planStartedAt = company.subscription_start || null;
+      }
+    } else if (profileRes.data) {
+      // Fallback for users without company
       let rawPlan = profileRes.data.plan || 'free';
       if (rawPlan === 'pro') rawPlan = 'professional';
       currentPlan = rawPlan;
-      planInterval = profileRes.data.plan_interval || 'monthly';
       planStartedAt = profileRes.data.plan_started_at || null;
-    }
-
-    if (cuRes.data?.company_id) {
-      companyId = cuRes.data.company_id;
     }
 
     // Load subscription status card
@@ -625,49 +637,58 @@ async function renderSubStatusCard() {
   if (!data) return;
   const card = document.getElementById('sub-status-card');
   if (!card) return;
-  const maxUsers = data.max_users || 1;
+
+  const maxUsers = data.max_users;
+  const isUnlimited = !maxUsers || maxUsers === 0;
   const userCount = data.user_count || 0;
-  const usagePct = Math.min(100, Math.round(userCount / maxUsers * 100));
+  const usagePct = isUnlimited ? 0 : Math.min(100, Math.round(userCount / maxUsers * 100));
   const daysLeft = data.days_left;
+  const hasEndDate = data.subscription_end != null;
   const status = data.subscription_status || 'trial';
-  const endDate = data.subscription_end ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
+  const endDate = hasEndDate ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
 
-  let statusColor = '#22c55e', statusIcon = '✅', statusText = 'Aktif';
-  if (daysLeft !== null && daysLeft < 0) { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = 'Süresi Doldu'; }
-  else if (status === 'trial') { statusColor = '#f59e0b'; statusIcon = '⏳'; statusText = 'Deneme'; }
-  else if (status === 'cancelled') { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = 'İptal Edildi'; }
-  else if (status === 'paused') { statusColor = '#94a3b8'; statusIcon = '⏸️'; statusText = 'Durduruldu'; }
+  let statusColor = '#22c55e', statusIcon = '✅', statusText = t('status_active') || 'Aktif';
+  if (hasEndDate && daysLeft < 0) { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = t('status_expired') || 'Süresi Doldu'; }
+  else if (status === 'trial') { statusColor = '#f59e0b'; statusIcon = '⏳'; statusText = t('status_trial') || 'Deneme'; }
+  else if (status === 'cancelled') { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = t('status_cancelled') || 'İptal Edildi'; }
+  else if (status === 'paused') { statusColor = '#94a3b8'; statusIcon = '⏸️'; statusText = t('status_paused') || 'Durduruldu'; }
 
+  // Alert logic: only show if hasEndDate
   let alertHTML = '';
-  if (daysLeft !== null && daysLeft < 0) {
+  if (hasEndDate && daysLeft < 0) {
     alertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">🔴 Aboneliğiniz sona erdi. Yenilemek için <a href="mailto:support@solvenin.com" style="color:#991b1b;text-decoration:underline">support@solvenin.com</a></div>';
-  } else if (daysLeft !== null && daysLeft <= 7) {
-    alertHTML = `<div style="background:#fffbeb;color:#92400e;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">⚠️ Aboneliğiniz <strong>${daysLeft} gün</strong> içinde sona erecek. Planınızı yenilemeyi düşünün.</div>`;
+  } else if (hasEndDate && daysLeft < 7) {
+    alertHTML = `<div style="background:#fffbeb;color:#92400e;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">⚠️ Aboneliğiniz <strong>${daysLeft} gün</strong> içinde sona erecek. support@solvenin.com</div>`;
   }
 
+  // User limit alert
   let userAlertHTML = '';
-  if (userCount >= maxUsers) {
-    userAlertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:8px">⚠️ Kullanıcı limitinize ulaştınız! Yeni kullanıcı eklemek için planınızı güncelleyin.</div>';
+  if (!isUnlimited && userCount >= maxUsers) {
+    userAlertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:8px">⚠️ Kullanıcı limitinize ulaştınız! Plan yükseltmek için support@solvenin.com</div>';
   }
+
+  const maxDisplay = isUnlimited ? (t('unlimited') || 'Sınırsız') : maxUsers;
 
   card.style.display = '';
   card.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start">
-      <div>
-        <div style="font-size:11px;color:var(--gray400);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Mevcut Planınız</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--gray400);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${t('current_plan') || 'Mevcut Planınız'}</div>
         <div style="font-family:var(--font-display);font-size:22px;font-weight:800;margin-top:4px;text-transform:capitalize">${data.plan || 'free'}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
           <div>
-            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">Kullanıcı (${userCount} / ${maxUsers})</div>
+            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">${t('users_label') || 'Kullanıcı'} (${userCount} / ${maxDisplay})</div>
+            ${isUnlimited ? '' : `
             <div style="background:var(--gray100);border-radius:6px;height:8px;overflow:hidden">
               <div style="background:${usagePct>=90?'#ef4444':usagePct>=70?'#f59e0b':'#22c55e'};height:100%;width:${usagePct}%;transition:width .3s"></div>
             </div>
-            <div style="font-size:11px;color:var(--gray500);margin-top:4px">%${usagePct} kullanılıyor</div>
+            <div style="font-size:11px;color:var(--gray500);margin-top:4px">%${usagePct}</div>
+            `}
           </div>
           <div>
-            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">Durum</div>
+            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">${t('label_sub_status') || 'Durum'}</div>
             <div style="font-size:13px;font-weight:700;color:${statusColor}">${statusIcon} ${statusText}</div>
-            <div style="font-size:11px;color:var(--gray500);margin-top:4px">Bitiş: ${endDate} ${daysLeft!==null && daysLeft>=0 ? `(${daysLeft} gün kaldı)` : ''}</div>
+            ${hasEndDate ? `<div style="font-size:11px;color:var(--gray500);margin-top:4px">${t('end_date') || 'Bitiş'}: ${endDate}${daysLeft>=0 ? ` (${daysLeft} ${t('days_left') || 'gün kaldı'})` : ''}</div>` : ''}
           </div>
         </div>
       </div>
@@ -724,53 +745,80 @@ function renderSubscription() {
   const g = id => document.getElementById(id);
   const activePlan = planDefs.find(p => p.key === currentPlan) || planDefs[0];
   const isFree = currentPlan === 'free';
-  const activeIsYearly = planInterval === 'yearly';
+  const company = window.__companySubscription || {};
+  const maxUsers = company.max_users;
+  const subStatus = company.subscription_status || 'trial';
+  const subEnd = company.subscription_end;
+  const subStart = company.subscription_start || planStartedAt;
 
-  // Hero — price per user
-  const unitPrice = isFree ? 0 : (activeIsYearly ? (activePlan.yearlyPrice / 12) : activePlan.price);
-  const totalMonthly = unitPrice * (realUserCount || 1);
+  // User count display — Sınırsız if 0/null
+  const maxUsersDisplay = (!maxUsers || maxUsers === 0) ? (t('unlimited') || 'Sınırsız') : maxUsers;
+  const usersText = `${realUserCount || 0} / ${maxUsersDisplay}`;
+
+  // Hero
   if (g('current-plan-name')) g('current-plan-name').textContent = activePlan.name;
-  if (g('current-plan-price')) g('current-plan-price').textContent = isFree ? '$0' : '$' + totalMonthly.toFixed(2);
-  if (g('current-plan-unit')) g('current-plan-unit').textContent = isFree ? '' : '/mo';
+  if (g('current-plan-price')) g('current-plan-price').style.display = 'none';
+  if (g('current-plan-unit')) g('current-plan-unit').style.display = 'none';
   if (g('current-plan-cycle')) {
-    if (isFree) {
-      g('current-plan-cycle').textContent = t('no_active_sub') || 'No active subscription';
-    } else {
-      const cycleLabel = activeIsYearly ? (t('date_yearly') || 'yearly') : (t('date_monthly') || 'monthly');
-      const userLabel = `${realUserCount || 1} ${t('users_label') || 'kullanıcı'}`;
-      g('current-plan-cycle').textContent = `${t('billed') || 'Billed'} ${cycleLabel} · ${userLabel} · $${unitPrice.toFixed(2)}/${t('user_singular') || 'user'}`;
-    }
+    g('current-plan-cycle').textContent = usersText + ' ' + (t('users_label') || 'kullanıcı');
   }
 
-  // Show/hide
-  if (g('upgrade-banner')) g('upgrade-banner').style.display = isFree ? 'flex' : 'none';
+  // Hide upgrade/cancel buttons (Paddle not active yet)
+  if (g('upgrade-banner')) g('upgrade-banner').style.display = 'none';
   const btnCancel = document.querySelector('.btn-cancel');
-  if (btnCancel) btnCancel.style.display = isFree ? 'none' : 'block';
+  if (btnCancel) btnCancel.style.display = 'none';
+  const btnManage = document.querySelector('.btn-manage');
+  if (btnManage) btnManage.style.display = 'none';
 
-  // Details card
+  // Details card — Paddle-specific rows hidden
   if (g('detail-plan')) g('detail-plan').textContent = activePlan.name;
-  if (g('detail-cycle')) g('detail-cycle').textContent = isFree ? '—' : (activeIsYearly ? (t('date_yearly') || 'Yearly') : (t('date_monthly') || 'Monthly'));
-  if (g('detail-users')) g('detail-users').textContent = `${realUserCount || 1} ${t('users_label') || 'kullanıcı'}`;
-  if (g('detail-amount')) g('detail-amount').textContent = isFree ? '$0' : `$${totalMonthly.toFixed(2)}/mo (${realUserCount || 1} × $${unitPrice.toFixed(2)})`;
+  // Hide billing cycle (Paddle)
+  const cycleRow = g('detail-cycle')?.closest('.info-row');
+  if (cycleRow) cycleRow.style.display = 'none';
+  // Hide amount (Paddle)
+  const amountRow = g('detail-amount')?.closest('.info-row');
+  if (amountRow) amountRow.style.display = 'none';
+  // Hide next billing (Paddle)
+  const nextRow = g('detail-next')?.closest('.info-row');
+  if (nextRow) nextRow.style.display = 'none';
 
-  // Status, next billing, member since
-  if (g('detail-status')) g('detail-status').textContent = isFree ? (t('plan_free') || 'Free') : (t('status_active') || 'Active');
-  if (g('plan-status-text')) g('plan-status-text').textContent = isFree ? (t('plan_free') || 'Free') : (t('status_active') || 'Active');
+  if (g('detail-users')) g('detail-users').textContent = usersText;
 
-  if (planStartedAt) {
-    const since = new Date(planStartedAt);
+  // Status mapping
+  const statusLabels = {
+    trial: t('status_trial') || 'Deneme',
+    active: t('status_active') || 'Aktif',
+    cancelled: t('status_cancelled') || 'İptal Edildi',
+    paused: t('status_paused') || 'Durduruldu',
+    expired: t('status_expired') || 'Süresi Doldu'
+  };
+  const statusText = statusLabels[subStatus] || subStatus;
+  if (g('detail-status')) {
+    g('detail-status').textContent = statusText;
+    g('detail-status').className = 'info-value ' + (subStatus === 'active' || subStatus === 'trial' ? 'green' : 'red');
+  }
+  if (g('plan-status-text')) g('plan-status-text').textContent = statusText;
+
+  // Member since
+  if (subStart) {
+    const since = new Date(subStart);
     if (g('detail-since')) g('detail-since').textContent = since.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
   } else {
     if (g('detail-since')) g('detail-since').textContent = '—';
   }
 
-  if (isFree) {
-    if (g('detail-next')) g('detail-next').textContent = '—';
-  } else {
-    const next = new Date();
-    if (activeIsYearly) { next.setFullYear(next.getFullYear() + 1); } else { next.setMonth(next.getMonth() + 1); }
-    if (g('detail-next')) g('detail-next').textContent = next.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-  }
+  // Disable plan change buttons (Paddle not active)
+  setTimeout(() => {
+    document.querySelectorAll('.btn-select-plan').forEach(btn => {
+      if (!btn.classList.contains('current-plan')) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        btn.title = 'Plan değişikliği için iletişime geçin: support@solvenin.com';
+        btn.onclick = (e) => { e.preventDefault(); showToast('Plan değişikliği için: support@solvenin.com', 'info'); };
+      }
+    });
+  }, 500);
 
   // Usage — monthly invoices
   const FREE_INVOICE_LIMIT = 30;
