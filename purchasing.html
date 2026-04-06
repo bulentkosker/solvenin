@@ -746,7 +746,7 @@ let accountingEnabled = false;
 let cashRegisters = [];
 let bankAccounts = [];
 let orders = [], suppliers = [], products = [], warehouses = [];
-let _invoiceSettings = {};
+let _invoiceSettings = {}, _originalFormData = null;
 let currentView = 'orders';
 let taxRates = [];
 let editingOrderId = null, editingSupplierId = null;
@@ -1162,7 +1162,27 @@ function showOrderFormView() {
   initColumnResize('solvenin_col_widths_purchase');
 }
 
-function closeOrderForm() {
+function getPoFormSnapshot() {
+  return {
+    supplier: document.getElementById('o-supplier')?.value || '',
+    number: document.getElementById('o-number')?.value || '',
+    date: document.getElementById('o-date')?.value || '',
+    expected: document.getElementById('o-expected')?.value || '',
+    status: document.getElementById('o-status')?.value || '',
+    discount: document.getElementById('o-discount')?.value || '',
+    notes: document.getElementById('o-notes')?.value || '',
+    items: JSON.stringify(orderItems)
+  };
+}
+
+async function closeOrderForm() {
+  if (_originalFormData) {
+    const current = getPoFormSnapshot();
+    if (JSON.stringify(current) !== JSON.stringify(_originalFormData)) {
+      if (!await showConfirm('Kaydedilmemiş değişiklikler var. Çıkmak istediğinizden emin misiniz?', 'Değişiklikleri İptal Et', 'Evet, Çık')) return;
+    }
+  }
+  _originalFormData = null;
   document.getElementById('order-form-view').style.display = 'none';
   document.getElementById('list-view').style.display = '';
   history.replaceState(null, '', 'purchasing.html');
@@ -1263,6 +1283,7 @@ function openOrderModal() {
   renderOrderItems();
   updateSupplierSelects();
   showOrderFormView();
+  setTimeout(() => { _originalFormData = getPoFormSnapshot(); }, 100);
 }
 
 function addOrderItem() {
@@ -1506,6 +1527,7 @@ async function saveOrder() {
   }
 
   showToast(editingOrderId ? t('po_updated') : t('po_created'), 'success');
+  _originalFormData = null; // Skip dirty check after save
   closeOrderForm();
   await loadOrders();
 }
@@ -1641,6 +1663,7 @@ async function editOrder(id) {
   updateSupplierSelects();
   renderOrderItems();
   showOrderFormView();
+  setTimeout(() => { _originalFormData = getPoFormSnapshot(); }, 100);
 }
 
 async function deleteOrder(id) {
