@@ -803,6 +803,9 @@ tr:hover td { background: var(--gray50); }
       <div id="t-crypto"></div>
       <div class="t-group-title">Commodities</div>
       <div id="t-commodity"></div>
+      <div class="t-group-title">Oil API Key (optional)</div>
+      <input type="text" id="t-oil-key" placeholder="oilpriceapi.com API key" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;margin-bottom:4px">
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Free key at oilpriceapi.com — without it, Brent shows last cached value.</p>
       <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()">Save</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')">Cancel</button>
     </div>
@@ -1384,6 +1387,8 @@ function tBaseCur(){
 function openTickerSettings(){
   const p = tPrefs();
   const base = tBaseCur();
+  const oilKeyEl = document.getElementById('t-oil-key');
+  if (oilKeyEl) oilKeyEl.value = localStorage.getItem('solvenin_oil_api_key') || '';
 
   // Build base currency selector
   const allCurs = [
@@ -1428,40 +1433,111 @@ function saveTickerSettings(){
   const base = document.getElementById('t-base-select').value;
   localStorage.setItem('solvenin_ticker', JSON.stringify(prefs));
   localStorage.setItem('solvenin_ticker_base', base);
+  const oilKey = document.getElementById('t-oil-key')?.value.trim();
+  if (oilKey) localStorage.setItem('solvenin_oil_api_key', oilKey);
+  else localStorage.removeItem('solvenin_oil_api_key');
+  // Force-refresh on save (clear cache)
+  localStorage.removeItem('solvenin_ticker_cache');
   document.getElementById('ticker-modal').classList.remove('open');
   loadTicker();
 }
 document.getElementById('ticker-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 
-async function loadTicker(){
+// 30-min cache TTL
+const TICKER_CACHE_TTL = 30 * 60 * 1000;
+const TICKER_CACHE_KEY = 'solvenin_ticker_cache';
+
+function readTickerCache(){
+  try{
+    const raw = localStorage.getItem(TICKER_CACHE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch{ return null; }
+}
+function writeTickerCache(payload){
+  try{ localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(payload)); }catch{}
+}
+
+async function fetchForex(){
+  const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+  if(!r.ok) throw new Error('forex http '+r.status);
+  const d = await r.json();
+  return d.rates || {};
+}
+async function fetchCrypto(ids){
+  if(!ids.length) return {};
+  const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
+  if(!r.ok) throw new Error('crypto http '+r.status);
+  return await r.json();
+}
+async function fetchOil(){
+  const key = localStorage.getItem('solvenin_oil_api_key');
+  if(!key) return null;
+  const r = await fetch('https://api.oilpriceapi.com/v1/prices/latest', {
+    headers: {'Authorization':'Token '+key, 'Content-Type':'application/json'}
+  });
+  if(!r.ok) throw new Error('oil http '+r.status);
+  const d = await r.json();
+  return d?.data?.price ?? null;
+}
+
+async function loadTicker(force){
   const prefs = tPrefs();
   const base = tBaseCur();
+
+  // 1. Try cache first (unless forced refresh)
+  const cache = readTickerCache();
+  const now = Date.now();
+  const fresh = cache && (now - (cache.fetchedAt||0) < TICKER_CACHE_TTL);
+
+  let usdRates = cache?.usdRates || null;
+  let cryptoData = cache?.cryptoData || null;
+  let oilPrice = cache?.oilPrice ?? null;
+  let fetchedAt = cache?.fetchedAt || null;
+  let stale = false;
+
+  if (!fresh || force) {
+    // 2. Refresh from APIs
+    let anyOk = false, anyFail = false;
+    try { usdRates = await fetchForex(); anyOk = true; }
+    catch(e){ console.warn('Forex fetch failed',e); anyFail = true; }
+
+    try {
+      const wantCrypto = TALL.crypto.filter(c=>prefs.includes(c.id));
+      if (wantCrypto.length) {
+        const cgMap = {btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'};
+        cryptoData = await fetchCrypto(wantCrypto.map(c=>cgMap[c.id]));
+        anyOk = true;
+      }
+    } catch(e){ console.warn('Crypto fetch failed',e); anyFail = true; }
+
+    if (prefs.includes('oil')) {
+      try {
+        const p = await fetchOil();
+        if (p != null) { oilPrice = p; anyOk = true; }
+      } catch(e){ console.warn('Oil fetch failed',e); anyFail = true; }
+    }
+
+    if (anyOk) {
+      fetchedAt = now;
+      writeTickerCache({usdRates, cryptoData, oilPrice, fetchedAt});
+    }
+    // If everything failed AND we have a cache, mark stale
+    if (anyFail && !anyOk && cache) stale = true;
+  }
+
+  // 3. Build items from (cached or fresh) data
   const items = [];
-  let rates = {};
-
-  try{
-    // Always fetch from USD base for consistent math
-    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    const d = await r.json();
-    const usdRates = d.rates || {};
-    rates = usdRates;
-
-    // Convert: show "1 [foreign] = X [base]"
-    // usdRates[X] = how many X per 1 USD
-    // 1 foreign = usdRates[base] / usdRates[foreign]
+  if (usdRates) {
     const baseRate = usdRates[base] || 1;
-
     TALL.forex.forEach(fx=>{
-      if(!prefs.includes(fx.id)) return;
-      if(fx.id === base) return;
+      if(!prefs.includes(fx.id) || fx.id === base) return;
       const foreignRate = usdRates[fx.id];
       if(!foreignRate) return;
-      const val = baseRate / foreignRate; // how many base per 1 foreign
-      const isBig = TBIG.includes(base);
+      const val = baseRate / foreignRate;
       const dp = val >= 100 ? 0 : val >= 10 ? 1 : val >= 1 ? 2 : 4;
-      items.push({lbl: '1 '+fx.id, sub: base, val: val.toFixed(dp), ch:null});
+      items.push({lbl:'1 '+fx.id, sub:base, val:val.toFixed(dp), ch:null});
     });
-
     // Auto local currency
     const langCurMap={tr:'TRY',ru:'RUB',de:'EUR',fr:'EUR',ja:'JPY',zh:'CNY',ar:'SAR',kk:'KZT'};
     const lang = localStorage.getItem('solvenin_lang') || 'en';
@@ -1471,8 +1547,6 @@ async function loadTicker(){
       const dp = val >= 100 ? 0 : val >= 10 ? 1 : val >= 1 ? 2 : 4;
       items.push({lbl:'1 '+lc, sub:base, val:val.toFixed(dp), ch:null, local:true});
     }
-
-    // Gold/Silver in base currency
     if(prefs.includes('gold') && usdRates.XAU){
       const priceInBase = (1/usdRates.XAU) * baseRate;
       items.push({lbl:'Gold', sub:'per oz · '+base, val:priceInBase.toFixed(2), ch:null, icon:'🥇'});
@@ -1481,32 +1555,40 @@ async function loadTicker(){
       const priceInBase = (1/usdRates.XAG) * baseRate;
       items.push({lbl:'Silver', sub:'per oz · '+base, val:priceInBase.toFixed(2), ch:null, icon:'🥈'});
     }
-  }catch(e){ console.warn('Forex fetch failed',e); }
+  }
 
-  // Crypto (always USD)
-  try{
-    const wantCrypto = TALL.crypto.filter(c=>prefs.includes(c.id));
-    if(wantCrypto.length){
-      const cgMap={btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'};
-      const ids = wantCrypto.map(c=>cgMap[c.id]).join(',');
-      const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-      const d = await r.json();
-      wantCrypto.forEach(c=>{
-        const cd = d[{btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'}[c.id]];
-        if(!cd) return;
-        const p = cd.usd>=1000 ? cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : cd.usd.toFixed(2);
-        items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
-      });
-    }
-  }catch(e){ console.warn('Crypto fetch failed',e); }
+  if (cryptoData) {
+    const cgMap = {btc:'bitcoin',eth:'ethereum',bnb:'binancecoin',sol:'solana'};
+    TALL.crypto.forEach(c=>{
+      if(!prefs.includes(c.id)) return;
+      const cd = cryptoData[cgMap[c.id]];
+      if(!cd) return;
+      const p = cd.usd>=1000 ? cd.usd.toLocaleString('en',{maximumFractionDigits:0}) : cd.usd.toFixed(2);
+      items.push({lbl:c.sym, sub:'USD', val:p, ch:cd.usd_24h_change?.toFixed(2), icon:'🪙'});
+    });
+  }
 
-  // Brent (USD, static fallback)
-  if(prefs.includes('oil')){
-    items.push({lbl:'Brent', sub:'USD/bbl', val:'~82', ch:null, icon:'🛢️'});
+  if (prefs.includes('oil')) {
+    const val = (oilPrice != null) ? Number(oilPrice).toFixed(2) : '~82';
+    items.push({lbl:'Brent', sub:'USD/bbl', val, ch:null, icon:'🛢️'});
+  }
+
+  // Last-updated indicator
+  if (fetchedAt) {
+    const d = new Date(fetchedAt);
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    const updLbl = (typeof t === 'function' ? t('ticker_updated') : 'Updated') || 'Updated';
+    items.push({lbl: updLbl, sub:'', val: hh+':'+mm + (stale?' ⚠️':''), ch:null, icon:'🕐'});
+  } else if (!items.length) {
+    items.push({lbl:'⚠️', sub:'', val:'No data', ch:null});
   }
 
   renderTicker(items);
 }
+
+// Auto-refresh every 30 minutes (silent)
+setInterval(() => loadTicker(true), TICKER_CACHE_TTL);
 
 function renderTicker(items){
   if(!items.length) return;
