@@ -248,7 +248,7 @@ tr:hover .action-btns { opacity:1; }
     <div class="topbar-title" data-i18n="page_inventory">Inventory</div>
     <div class="topbar-search">
       <span>🔍</span>
-      <input type="text" placeholder="Search products, SKU, category..." id="global-search" oninput="filterTable()">
+      <input type="text" placeholder="Search products, SKU, category..." data-i18n-placeholder="placeholder_search_products" id="global-search" oninput="filterTable()">
     </div>
     <div class="topbar-actions">
       <div class="topbar-btn" title="Notifications">🔔</div>
@@ -286,7 +286,7 @@ tr:hover .action-btns { opacity:1; }
     <!-- LOW STOCK ALERT -->
     <div class="alert-bar fade-up" id="low-stock-alert">
       <div class="alert-icon">⚠️</div>
-      <div class="alert-text"><strong>3 items</strong> are running low on stock and need restocking.</div>
+      <div class="alert-text" id="low-stock-alert-text" data-i18n="inv_low_stock_alert">3 items are running low on stock and need restocking.</div>
       <span class="alert-action" onclick="filterByStatus('low')" data-i18n="view_low_stock">View Low Stock →</span>
     </div>
 
@@ -339,10 +339,10 @@ tr:hover .action-btns { opacity:1; }
       <div class="toolbar-left">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" placeholder="Search products..." id="table-search" oninput="filterTable()">
+          <input type="text" placeholder="Search products..." data-i18n-placeholder="placeholder_search_products" id="table-search" oninput="filterTable()">
         </div>
         <select class="filter-btn" id="filter-category" onchange="filterTable()">
-          <option value="">All Categories</option>
+          <option value="" data-i18n="all_categories">All Categories</option>
         </select>
         <select class="filter-btn" id="filter-status" onchange="filterTable()">
           <option value="" data-i18n="all_status">All Status</option>
@@ -740,7 +740,11 @@ function updateStats() {
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
   document.getElementById('stat-out').textContent = out;
-  document.getElementById('low-stock-alert').querySelector('strong').textContent = `${low + out} items`;
+  const _alertEl = document.getElementById('low-stock-alert-text');
+  if (_alertEl) {
+    const _tpl = (typeof t === 'function' ? t('inv_low_stock_alert') : '{n} items are running low on stock and need restocking');
+    _alertEl.textContent = _tpl.replace('{n}', (low + out));
+  }
   document.getElementById('low-stock-alert').style.display = (low + out) > 0 ? 'flex' : 'none';
 }
 
