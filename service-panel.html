@@ -241,6 +241,7 @@ function buildNav() {
     { key: 'companies', icon: '🏢', label: 'Şirketler', roles: ['superadmin','support','partner','partner_manager'] },
     { key: 'users', icon: '👥', label: 'Kullanıcılar', roles: ['superadmin','support'] },
     { key: 'demos', icon: '🎯', label: 'Demolar', roles: ['superadmin','support','partner'] },
+    { key: 'repair', icon: '🔧', label: 'Veri Onarım', roles: ['superadmin','support'] },
     { key: 'panel_users', icon: '👤', label: 'Panel Kullanıcıları', roles: ['superadmin'] },
     { key: 'logs', icon: '📋', label: 'Loglar', roles: ['superadmin','support'] }
   ];
@@ -253,12 +254,13 @@ function buildNav() {
 function switchPage(key) {
   currentPage = key;
   buildNav();
-  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', users:'👥 Kullanıcılar', demos:'🎯 Demolar', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
+  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', users:'👥 Kullanıcılar', demos:'🎯 Demolar', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
   document.getElementById('sp-title').textContent = titles[key] || key;
   if (key === 'dashboard') renderDashboard();
   else if (key === 'companies') renderCompanies();
   else if (key === 'users') renderUsers();
   else if (key === 'demos') renderDemos();
+  else if (key === 'repair') renderRepair();
   else if (key === 'panel_users') renderPanelUsers();
   else if (key === 'logs') renderLogs();
 }
@@ -747,6 +749,205 @@ function copyDemoInfo() {
 }
 
 // ===== PANEL USERS =====
+// ===== VERİ ONARIM =====
+let repairCompanyId = null;
+
+async function renderRepair() {
+  const content = document.getElementById('sp-content');
+  if (!companies.length) {
+    const { data } = await sb.rpc('sp_companies');
+    companies = data || [];
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+  const yearAgoStr = yearAgo.toISOString().split('T')[0];
+
+  content.innerHTML = `
+    <div class="card">
+      <h3>🎯 Şirket ve Tarih Aralığı</h3>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px">
+        <div class="field" style="margin:0"><label>Şirket</label>
+          <select id="repair-company">
+            <option value="">Şirket seç...</option>
+            ${companies.map(c => `<option value="${c.id}">${c.name} (${c.plan||'free'})</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="margin:0"><label>Başlangıç</label><input type="date" id="repair-start" value="${yearAgoStr}"></div>
+        <div class="field" style="margin:0"><label>Bitiş</label><input type="date" id="repair-end" value="${today}"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📦 Stok Onarımı</h3>
+      ${repairTool('sales_stock', 'Eksik Stok Hareketleri (Satış)', 'Invoiced/paid satış faturalarında stok çıkış hareketi eksik olanları oluşturur.')}
+      ${repairTool('purchase_stock', 'Eksik Stok Hareketleri (Alış)', 'Invoiced/paid alış faturalarında stok giriş hareketi eksik olanları oluşturur.')}
+      ${repairTool('recalc_stock', 'Stok Bakiyelerini Yeniden Hesapla', 'Tüm stok hareketlerinden ürün bakiyelerini yeniden hesaplar.', true)}
+    </div>
+
+    <div class="card">
+      <h3>💰 Finans Onarımı</h3>
+      ${repairTool('recalc_cash', 'Kasa Bakiyelerini Yeniden Hesapla', 'Tüm kasa hareketlerinden bakiyeleri yeniden hesaplar.', true)}
+      ${repairTool('recalc_bank', 'Banka Bakiyelerini Yeniden Hesapla', 'Tüm banka hareketlerinden bakiyeleri yeniden hesaplar.', true)}
+    </div>
+
+    <div class="card">
+      <h3>📊 Muhasebe Kontrolü</h3>
+      ${repairTool('trial_balance', 'Mizan Kontrolü', 'Borç toplamı = Alacak toplamı kontrolü yapar.')}
+    </div>
+
+    <div class="card">
+      <h3>👥 Cari Onarımı</h3>
+      ${repairTool('contact_balances', 'Cari Bakiyeleri Kontrol Et', 'Her cari için açık bakiyeleri listeler.')}
+    </div>
+
+    <div class="card">
+      <h3>📜 Onarım Geçmişi</h3>
+      <div id="repair-history" style="font-size:12px;color:var(--gray500)">Şirket seçilince gösterilir</div>
+    </div>
+  `;
+
+  document.getElementById('repair-company').addEventListener('change', (e) => {
+    repairCompanyId = e.target.value;
+    loadRepairHistory();
+  });
+}
+
+function repairTool(key, title, desc, noDateAction) {
+  return `<div style="padding:12px;border:1px solid var(--gray100);border-radius:8px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${title}</div>
+        <div style="font-size:11px;color:var(--gray500);margin-top:2px">${desc}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${noDateAction
+          ? `<button class="btn btn-primary btn-sm" onclick="runRepair('${key}', true)">▶ Çalıştır</button>`
+          : `<button class="btn btn-outline btn-sm" onclick="runRepair('${key}', false)">🔍 Analiz Et</button>`
+        }
+      </div>
+    </div>
+    <div id="rt-result-${key}" style="margin-top:10px;display:none;padding:10px;border-radius:6px;font-size:12px"></div>
+  </div>`;
+}
+
+async function runRepair(key, runDirect) {
+  if (!repairCompanyId) { showToast('Önce şirket seçin', 'error'); return; }
+  const start = document.getElementById('repair-start').value;
+  const end = document.getElementById('repair-end').value;
+  const resultEl = document.getElementById('rt-result-' + key);
+  resultEl.style.display = 'block';
+  resultEl.style.background = '#f8fafc';
+  resultEl.style.color = 'var(--gray500)';
+  resultEl.innerHTML = '⏳ Çalışıyor...';
+
+  try {
+    if (key === 'sales_stock') {
+      if (runDirect) {
+        const { data } = await sb.rpc('sp_apply_missing_sales_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
+        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+        resultEl.innerHTML = `✅ ${data.created} stok hareketi oluşturuldu`;
+        loadRepairHistory();
+      } else {
+        const { data } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (data.items > 0) {
+          resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
+          resultEl.innerHTML = `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi tespit edildi<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="runRepair('sales_stock', true)">🔧 Düzelt</button>`;
+        } else {
+          resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+          resultEl.innerHTML = '✅ Eksik stok hareketi yok';
+        }
+      }
+    } else if (key === 'purchase_stock') {
+      if (runDirect) {
+        const { data } = await sb.rpc('sp_apply_missing_purchase_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
+        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+        resultEl.innerHTML = `✅ ${data.created} stok hareketi oluşturuldu`;
+        loadRepairHistory();
+      } else {
+        const { data } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (data.items > 0) {
+          resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
+          resultEl.innerHTML = `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi tespit edildi<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="runRepair('purchase_stock', true)">🔧 Düzelt</button>`;
+        } else {
+          resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+          resultEl.innerHTML = '✅ Eksik stok hareketi yok';
+        }
+      }
+    } else if (key === 'recalc_stock') {
+      if (!confirm('Tüm ürünlerin stok bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
+      const { data } = await sb.rpc('sp_recalc_product_stock', { p_user_id: user.id, p_company_id: repairCompanyId });
+      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+      resultEl.innerHTML = `✅ ${data.updated} ürünün bakiyesi güncellendi`;
+      loadRepairHistory();
+    } else if (key === 'recalc_cash') {
+      if (!confirm('Tüm kasa bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
+      const { data } = await sb.rpc('sp_recalc_cash_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
+      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+      resultEl.innerHTML = `✅ ${data.updated} kasanın bakiyesi güncellendi`;
+      loadRepairHistory();
+    } else if (key === 'recalc_bank') {
+      if (!confirm('Tüm banka bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
+      const { data } = await sb.rpc('sp_recalc_bank_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
+      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+      resultEl.innerHTML = `✅ ${data.updated} banka hesabının bakiyesi güncellendi`;
+      loadRepairHistory();
+    } else if (key === 'trial_balance') {
+      const { data } = await sb.rpc('sp_check_trial_balance', { p_company_id: repairCompanyId, p_end: end });
+      if (data.balanced) {
+        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+        resultEl.innerHTML = `✅ Mizan dengeli<br>Borç: ${fmt(data.total_debit)} — Alacak: ${fmt(data.total_credit)}`;
+      } else {
+        resultEl.style.background = '#fef2f2'; resultEl.style.color = '#991b1b';
+        resultEl.innerHTML = `⚠️ Mizan dengede değil!<br>Borç: ${fmt(data.total_debit)}<br>Alacak: ${fmt(data.total_credit)}<br>Fark: <strong>${fmt(data.difference)}</strong>`;
+      }
+    } else if (key === 'contact_balances') {
+      const { data } = await sb.rpc('sp_check_contact_balances', { p_company_id: repairCompanyId });
+      if (!data?.length) {
+        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
+        resultEl.innerHTML = '✅ Tüm cariler dengeli';
+      } else {
+        resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
+        const rows = data.slice(0, 10).map(c => {
+          const bal = c.is_customer ? c.customer_balance : c.supplier_balance;
+          return `<tr><td>${c.name}</td><td class="text-right">${fmt(bal)}</td></tr>`;
+        }).join('');
+        resultEl.innerHTML = `⚠️ <strong>${data.length}</strong> caride açık bakiye var<br><table style="margin-top:8px;font-size:11px"><thead><tr><th>Cari</th><th class="text-right">Bakiye</th></tr></thead><tbody>${rows}</tbody></table>${data.length > 10 ? '<div style="margin-top:4px;font-size:10px">...ve ' + (data.length - 10) + ' tane daha</div>' : ''}`;
+      }
+    }
+  } catch (e) {
+    resultEl.style.background = '#fef2f2'; resultEl.style.color = '#991b1b';
+    resultEl.innerHTML = '❌ Hata: ' + e.message;
+  }
+}
+
+async function loadRepairHistory() {
+  const el = document.getElementById('repair-history');
+  if (!el) return;
+  if (!repairCompanyId) { el.innerHTML = 'Şirket seçilince gösterilir'; return; }
+  const { data } = await sb.rpc('sp_repair_history', { p_company_id: repairCompanyId });
+  if (!data?.length) { el.innerHTML = '<div style="padding:10px;color:var(--gray400)">Henüz onarım kaydı yok</div>'; return; }
+  const typeLabels = {
+    missing_sales_stock: '📦 Satış Stok',
+    missing_purchase_stock: '📦 Alış Stok',
+    recalc_product_stock: '📦 Stok Bakiye',
+    recalc_cash_balances: '💰 Kasa Bakiye',
+    recalc_bank_balances: '🏦 Banka Bakiye'
+  };
+  el.innerHTML = `<table>
+    <thead><tr><th>Tarih</th><th>Onarım Türü</th><th>Yapan</th><th>Dönem</th><th class="text-right">Etkilenen</th><th class="text-right">Oluşturulan</th></tr></thead>
+    <tbody>
+      ${data.map(r => `<tr>
+        <td style="color:var(--gray500);font-size:11px">${fmtDateTime(r.created_at)}</td>
+        <td>${typeLabels[r.repair_type] || r.repair_type}</td>
+        <td>${r.performed_by_name || '—'}</td>
+        <td style="font-size:11px;color:var(--gray500)">${r.date_range_start || '—'} / ${r.date_range_end || '—'}</td>
+        <td class="text-right">${r.affected_records || 0}</td>
+        <td class="text-right">${r.created_records || 0}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
 async function renderPanelUsers() {
   const { data } = await sb.rpc('sp_panel_users');
   panelUsers = data || [];
