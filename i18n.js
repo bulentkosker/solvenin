@@ -2344,6 +2344,9 @@ const T = window.T = {
     placeholder_select:'Select...',
     placeholder_optional:'Optional...',
     placeholder_enter_amount:'Enter amount...',
+    lbl_tax_rate:'Tax Rate',
+    col_unit_price:'Unit Price',
+    lbl_total:'Total',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3291,6 +3294,9 @@ const T = window.T = {
     placeholder_select:'Seçin...',
     placeholder_optional:'İsteğe bağlı...',
     placeholder_enter_amount:'Tutar girin...',
+    lbl_tax_rate:'Vergi Oranı',
+    col_unit_price:'Birim Fiyat',
+    lbl_total:'Toplam',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4003,6 +4009,9 @@ const T = window.T = {
     placeholder_select:'Auswählen...',
     placeholder_optional:'Optional...',
     placeholder_enter_amount:'Betrag eingeben...',
+    lbl_tax_rate:'Steuersatz',
+    col_unit_price:'Stückpreis',
+    lbl_total:'Gesamt',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -4716,6 +4725,9 @@ const T = window.T = {
     placeholder_select:'Sélectionner...',
     placeholder_optional:'Facultatif...',
     placeholder_enter_amount:'Entrez le montant...',
+    lbl_tax_rate:'Taux de TVA',
+    col_unit_price:'Prix unitaire',
+    lbl_total:'Total',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -5428,6 +5440,9 @@ const T = window.T = {
     placeholder_select:'Seleccionar...',
     placeholder_optional:'Opcional...',
     placeholder_enter_amount:'Ingrese importe...',
+    lbl_tax_rate:'Tasa de impuesto',
+    col_unit_price:'Precio unitario',
+    lbl_total:'Total',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -6109,6 +6124,9 @@ const T = window.T = {
     placeholder_select:'اختر...',
     placeholder_optional:'اختياري...',
     placeholder_enter_amount:'أدخل المبلغ...',
+    lbl_tax_rate:'نسبة الضريبة',
+    col_unit_price:'سعر الوحدة',
+    lbl_total:'الإجمالي',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -6789,6 +6807,9 @@ const T = window.T = {
     placeholder_select:'请选择...',
     placeholder_optional:'可选...',
     placeholder_enter_amount:'输入金额...',
+    lbl_tax_rate:'税率',
+    col_unit_price:'单价',
+    lbl_total:'总计',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -7319,6 +7340,9 @@ const T = window.T = {
     placeholder_select:'Выберите...',
     placeholder_optional:'Необязательно...',
     placeholder_enter_amount:'Введите сумму...',
+    lbl_tax_rate:'Ставка налога',
+    col_unit_price:'Цена за единицу',
+    lbl_total:'Итого',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -8008,6 +8032,9 @@ const T = window.T = {
     placeholder_select:'Selecionar...',
     placeholder_optional:'Opcional...',
     placeholder_enter_amount:'Digite o valor...',
+    lbl_tax_rate:'Taxa de imposto',
+    col_unit_price:'Preço unitário',
+    lbl_total:'Total',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -8688,6 +8715,9 @@ const T = window.T = {
     placeholder_select:'選択...',
     placeholder_optional:'任意...',
     placeholder_enter_amount:'金額を入力...',
+    lbl_tax_rate:'税率',
+    col_unit_price:'単価',
+    lbl_total:'合計',
   },
   kz: {
     // NAV
@@ -8837,6 +8867,9 @@ const T = window.T = {
     placeholder_select:'Таңдаңыз...',
     placeholder_optional:'Міндетті емес...',
     placeholder_enter_amount:'Соманы енгізіңіз...',
+    lbl_tax_rate:'Салық мөлшерлемесі',
+    col_unit_price:'Бірлік бағасы',
+    lbl_total:'Жиыны',
   },
   kg: {
     // NAV
@@ -8986,6 +9019,9 @@ const T = window.T = {
     placeholder_select:'Тандаңыз...',
     placeholder_optional:'Милдеттүү эмес...',
     placeholder_enter_amount:'Сумманы киргизиңиз...',
+    lbl_tax_rate:'Салык чен',
+    col_unit_price:'Бирдик баасы',
+    lbl_total:'Жыйынтык',
   },
   uz: {
     // NAV
@@ -9135,6 +9171,9 @@ const T = window.T = {
     placeholder_select:'Tanlang...',
     placeholder_optional:'Ixtiyoriy...',
     placeholder_enter_amount:'Summa kiriting...',
+    lbl_tax_rate:'Soliq stavkasi',
+    col_unit_price:'Birlik narxi',
+    lbl_total:'Jami',
   },
   tm: {
     // NAV
@@ -9284,6 +9323,9 @@ const T = window.T = {
     placeholder_select:'Saýlaň...',
     placeholder_optional:'Hökmany däl...',
     placeholder_enter_amount:'Mukdaryny giriziň...',
+    lbl_tax_rate:'Salgyt derejesi',
+    col_unit_price:'Birlik bahasy',
+    lbl_total:'Jemi',
   },
   az: {
     // NAV
@@ -9433,6 +9475,9 @@ const T = window.T = {
     placeholder_select:'Seçin...',
     placeholder_optional:'İstəyə bağlı...',
     placeholder_enter_amount:'Məbləğ daxil edin...',
+    lbl_tax_rate:'Vergi dərəcəsi',
+    col_unit_price:'Vahid qiyməti',
+    lbl_total:'Cəmi',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -9535,6 +9580,9 @@ const T = window.T = {
     placeholder_select:'Wybierz...',
     placeholder_optional:'Opcjonalne...',
     placeholder_enter_amount:'Wprowadź kwotę...',
+    lbl_tax_rate:'Stawka podatku',
+    col_unit_price:'Cena jednostkowa',
+    lbl_total:'Łącznie',
   },
 };
 
