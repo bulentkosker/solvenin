@@ -9588,6 +9588,20 @@ if (typeof window !== 'undefined') {
 
 // ===== CORE FUNCTIONS =====
 
+// Browser locale → app lang mapping (handles ISO 639-1 codes that differ from project codes)
+const LANG_MAPPING = {
+  'zh':'zh','zh-cn':'zh','zh-tw':'zh','zh-hk':'zh','zh-sg':'zh',
+  'pt':'pt','pt-br':'pt','pt-pt':'pt',
+  'ar':'ar','ar-sa':'ar','ar-ae':'ar','ar-eg':'ar','ar-kw':'ar','ar-qa':'ar',
+  'ar-bh':'ar','ar-iq':'ar','ar-jo':'ar','ar-lb':'ar','ar-ly':'ar','ar-ma':'ar',
+  'ar-om':'ar','ar-sy':'ar','ar-tn':'ar','ar-ye':'ar','ar-dz':'ar',
+  'kk':'kz','kk-kz':'kz', // Kazakh ISO 639-1 'kk' → project 'kz'
+  'ky':'kg','ky-kg':'kg', // Kyrgyz ISO 639-1 'ky' → project 'kg'
+  'tk':'tm','tk-tm':'tm', // Turkmen ISO 639-1 'tk' → project 'tm'
+  'uz':'uz','uz-uz':'uz','uz-latn':'uz','uz-cyrl':'uz',
+  'az':'az','az-az':'az','az-latn':'az','az-cyrl':'az',
+};
+
 function detectLang() {
   // Migrate legacy 'tk' code → 'tm' (correct Turkmen code per project convention)
   if (localStorage.getItem('solvenin_lang') === 'tk') {
@@ -9603,12 +9617,25 @@ function detectLang() {
   if (localStorage.getItem('lang') === 'ky') {
     localStorage.setItem('lang', 'kg');
   }
+
   // 1. User saved preference
   const saved = localStorage.getItem('solvenin_lang');
   if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
-  // 2. Browser language
-  const browser = (navigator.language || 'en').split('-')[0].toLowerCase();
-  return SUPPORTED_LANGS.includes(browser) ? browser : 'en';
+
+  // 2. Get browser language
+  const browserLang = (navigator.language || navigator.userLanguage || 'en');
+  const fullLang = browserLang.toLowerCase();        // e.g. 'tr-tr'
+  const langCode = fullLang.split('-')[0];           // e.g. 'tr'
+
+  // 3. Direct match against supported langs
+  if (SUPPORTED_LANGS.includes(langCode)) return langCode;
+
+  // 4. Special mapping (ISO 639-1 → project code, regional variants → base)
+  if (LANG_MAPPING[fullLang]) return LANG_MAPPING[fullLang];
+  if (LANG_MAPPING[langCode]) return LANG_MAPPING[langCode];
+
+  // 5. Default: English
+  return 'en';
 }
 
 const _missingKeys = new Set();
@@ -9818,5 +9845,64 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// First-visit auto-detection toast
+function showLangAutoDetectToast() {
+  // Already shown OR user has explicit preference saved
+  if (localStorage.getItem('solvenin_lang_detected') === 'true') return;
+  if (localStorage.getItem('solvenin_lang')) return;
+
+  const lang = detectLang();
+  // Only show if a non-default language was actually picked from the browser
+  const browserBase = (navigator.language || 'en').split('-')[0].toLowerCase();
+  if (lang === 'en' && browserBase === 'en') {
+    localStorage.setItem('solvenin_lang_detected', 'true');
+    return;
+  }
+
+  const meta = (typeof LANG_META !== 'undefined' && LANG_META[lang]) || { name:lang.toUpperCase() };
+  const labels = {
+    tr:'Dil otomatik seçildi', en:'Language auto-selected', ru:'Язык выбран автоматически',
+    de:'Sprache automatisch ausgewählt', fr:'Langue sélectionnée automatiquement',
+    es:'Idioma seleccionado automáticamente', pt:'Idioma selecionado automaticamente',
+    ar:'تم اختيار اللغة تلقائياً', zh:'语言已自动选择', ja:'言語が自動選択されました',
+    pl:'Język wybrany automatycznie', kz:'Тіл автоматты түрде таңдалды',
+    kg:'Тил автоматтык түрдө тандалды', uz:'Til avtomatik tanlandi',
+    tm:'Dil awtomatiki saýlandy', az:'Dil avtomatik seçildi'
+  };
+  const changeLabels = {
+    tr:'Değiştir', en:'Change', ru:'Изменить', de:'Ändern', fr:'Changer',
+    es:'Cambiar', pt:'Alterar', ar:'تغيير', zh:'更改', ja:'変更',
+    pl:'Zmień', kz:'Өзгерту', kg:'Өзгөртүү', uz:'O\'zgartirish',
+    tm:'Üýtgetmek', az:'Dəyişdir'
+  };
+  const label = labels[lang] || labels.en;
+  const changeLabel = changeLabels[lang] || changeLabels.en;
+
+  // Build toast manually (showToast may not be ready yet)
+  const t = document.createElement('div');
+  t.id = 'lang-detect-toast';
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:14px 18px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:#1e40af;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-width:380px;display:flex;align-items:center;gap:12px;animation:slideUp .3s ease;';
+  t.innerHTML = `<span>🌐 ${label}: <strong>${meta.name}</strong></span>` +
+    `<button id="lang-detect-change" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">${changeLabel}</button>` +
+    `<span id="lang-detect-close" style="cursor:pointer;font-size:18px;line-height:1;opacity:0.7">×</span>`;
+  document.body.appendChild(t);
+
+  const dismiss = () => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 300);
+    localStorage.setItem('solvenin_lang_detected', 'true');
+  };
+  document.getElementById('lang-detect-change').addEventListener('click', () => {
+    dismiss();
+    if (typeof toggleLangMenu === 'function') toggleLangMenu();
+  });
+  document.getElementById('lang-detect-close').addEventListener('click', dismiss);
+  setTimeout(dismiss, 8000);
+}
+
 // Auto-apply on load
-document.addEventListener('DOMContentLoaded', applyTranslations);
+document.addEventListener('DOMContentLoaded', () => {
+  applyTranslations();
+  // Defer slightly so sidebar/toast container has a chance to mount
+  setTimeout(showLangAutoDetectToast, 600);
+});
