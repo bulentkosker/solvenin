@@ -279,6 +279,15 @@ async function saveCompanyAccess() {
 
     try {
       if (!orig.hasAccess && nowAccess) {
+        // Check subscription + user limit before adding
+        const { data: company } = await sb.from('companies').select('max_users, subscription_status, subscription_end').eq('id', cid).single();
+        if (company?.subscription_end && new Date(company.subscription_end) < new Date()) {
+          showToast('Abonelik süresi dolmuş. Yeni kullanıcı eklenemez.', 'error'); continue;
+        }
+        const { count: userCount } = await sb.from('company_users').select('id', { count: 'exact', head: true }).eq('company_id', cid);
+        if (company?.max_users && userCount >= company.max_users) {
+          showToast(`Kullanıcı limiti dolu (${userCount}/${company.max_users}). Aboneliği yükseltin.`, 'error'); continue;
+        }
         // ADD: insert company_users + default permissions
         const { error } = await sb.from('company_users').insert({
           company_id: cid, user_id: targetUserId, role: nowRole, status: 'active'

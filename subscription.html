@@ -313,6 +313,9 @@ function setLang(lang) {
 
   <div class="content">
 
+    <!-- SUBSCRIPTION STATUS CARD -->
+    <div id="sub-status-card" class="fade-up" style="display:none;background:var(--white);border:1px solid var(--gray200);border-radius:14px;padding:20px 24px;margin-bottom:20px"></div>
+
     <!-- FREE PLAN UPGRADE BANNER (hidden for paid users) -->
     <div class="upgrade-banner fade-up" id="upgrade-banner" style="display:none">
       <div>
@@ -565,6 +568,9 @@ async function loadSubscription() {
       companyId = cuRes.data.company_id;
     }
 
+    // Load subscription status card
+    if (companyId) renderSubStatusCard();
+
     console.log('[subscription] currentPlan:', currentPlan, 'interval:', planInterval, 'userId:', currentUser.id);
 
     // Fetch active user count + monthly invoice count in parallel
@@ -612,6 +618,62 @@ async function loadSubscription() {
     console.error('loadSubscription:', e);
   }
   renderSubscription();
+}
+
+async function renderSubStatusCard() {
+  const { data } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
+  if (!data) return;
+  const card = document.getElementById('sub-status-card');
+  if (!card) return;
+  const maxUsers = data.max_users || 1;
+  const userCount = data.user_count || 0;
+  const usagePct = Math.min(100, Math.round(userCount / maxUsers * 100));
+  const daysLeft = data.days_left;
+  const status = data.subscription_status || 'trial';
+  const endDate = data.subscription_end ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
+
+  let statusColor = '#22c55e', statusIcon = '✅', statusText = 'Aktif';
+  if (daysLeft !== null && daysLeft < 0) { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = 'Süresi Doldu'; }
+  else if (status === 'trial') { statusColor = '#f59e0b'; statusIcon = '⏳'; statusText = 'Deneme'; }
+  else if (status === 'cancelled') { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = 'İptal Edildi'; }
+  else if (status === 'paused') { statusColor = '#94a3b8'; statusIcon = '⏸️'; statusText = 'Durduruldu'; }
+
+  let alertHTML = '';
+  if (daysLeft !== null && daysLeft < 0) {
+    alertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">🔴 Aboneliğiniz sona erdi. Yenilemek için <a href="mailto:support@solvenin.com" style="color:#991b1b;text-decoration:underline">support@solvenin.com</a></div>';
+  } else if (daysLeft !== null && daysLeft <= 7) {
+    alertHTML = `<div style="background:#fffbeb;color:#92400e;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">⚠️ Aboneliğiniz <strong>${daysLeft} gün</strong> içinde sona erecek. Planınızı yenilemeyi düşünün.</div>`;
+  }
+
+  let userAlertHTML = '';
+  if (userCount >= maxUsers) {
+    userAlertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:8px">⚠️ Kullanıcı limitinize ulaştınız! Yeni kullanıcı eklemek için planınızı güncelleyin.</div>';
+  }
+
+  card.style.display = '';
+  card.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start">
+      <div>
+        <div style="font-size:11px;color:var(--gray400);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Mevcut Planınız</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:800;margin-top:4px;text-transform:capitalize">${data.plan || 'free'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+          <div>
+            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">Kullanıcı (${userCount} / ${maxUsers})</div>
+            <div style="background:var(--gray100);border-radius:6px;height:8px;overflow:hidden">
+              <div style="background:${usagePct>=90?'#ef4444':usagePct>=70?'#f59e0b':'#22c55e'};height:100%;width:${usagePct}%;transition:width .3s"></div>
+            </div>
+            <div style="font-size:11px;color:var(--gray500);margin-top:4px">%${usagePct} kullanılıyor</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">Durum</div>
+            <div style="font-size:13px;font-weight:700;color:${statusColor}">${statusIcon} ${statusText}</div>
+            <div style="font-size:11px;color:var(--gray500);margin-top:4px">Bitiş: ${endDate} ${daysLeft!==null && daysLeft>=0 ? `(${daysLeft} gün kaldı)` : ''}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${alertHTML}${userAlertHTML}
+  `;
 }
 
 function renderSubscription() {

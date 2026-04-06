@@ -441,15 +441,17 @@ async function openCompanyDrawer(id) {
       ${c.is_frozen && c.freeze_reason ? `<div style="font-size:11px;color:var(--red)">${c.freeze_reason}</div>` : ''}
     </div>
 
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
       ${isSuperadmin ? `
+        <button class="btn btn-primary btn-sm" onclick="showSubscriptionModal('${c.id}')">💳 Abonelik Yönet</button>
         <button class="btn btn-outline btn-sm" onclick="showPlanModal('${c.id}', '${c.plan||'free'}')">💼 Plan</button>
         <button class="btn btn-outline btn-sm" onclick="showLimitModal('${c.id}')">📊 Fatura Limiti</button>
-        <button class="btn btn-outline btn-sm" onclick="showTrialModal('${c.id}')">📅 Deneme</button>
         ${c.is_frozen ? `<button class="btn btn-success btn-sm" onclick="unfreezeCompany('${c.id}')">✅ Aktif Et</button>` : `<button class="btn btn-danger btn-sm" onclick="showFreezeModal('${c.id}')">🔴 Dondur</button>`}
       ` : ''}
       ${(isSuperadmin || isSupport) ? `<button class="btn btn-outline btn-sm" onclick="showNoteModal('${c.id}')">📝 Not Ekle</button>` : ''}
     </div>
+
+    <div id="dr-subscription-info" style="margin-bottom:16px;padding:12px 14px;background:var(--gray50);border-radius:8px;font-size:12px"></div>
 
     <h4 style="font-family:var(--font-display);font-size:13px;margin-bottom:8px">👥 Kullanıcılar</h4>
     <table style="margin-bottom:16px">
@@ -466,12 +468,98 @@ async function openCompanyDrawer(id) {
 
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
+  loadSubscriptionInfo(id);
 }
 
 function closeDrawer() {
   document.getElementById('drawer-overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
   selectedCompany = null;
+}
+
+// Load subscription info after drawer opens
+async function loadSubscriptionInfo(companyId) {
+  const el = document.getElementById('dr-subscription-info');
+  if (!el) return;
+  const { data } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
+  if (!data) { el.innerHTML = ''; return; }
+  const endStr = data.subscription_end ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
+  const startStr = data.subscription_start ? new Date(data.subscription_start).toLocaleDateString('tr-TR') : '—';
+  el.innerHTML = `
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px">💳 Abonelik Bilgisi</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+      <div><span style="color:var(--gray400)">Plan:</span> <strong>${data.plan || 'free'}</strong></div>
+      <div><span style="color:var(--gray400)">Durum:</span> <strong>${data.subscription_status || '—'}</strong></div>
+      <div><span style="color:var(--gray400)">Max Kullanıcı:</span> <strong>${data.max_users || 1}</strong> (${data.user_count} kullanılıyor)</div>
+      <div><span style="color:var(--gray400)">Kalan:</span> <strong>${data.days_left !== null ? data.days_left + ' gün' : '—'}</strong></div>
+      <div><span style="color:var(--gray400)">Başlangıç:</span> ${startStr}</div>
+      <div><span style="color:var(--gray400)">Bitiş:</span> ${endStr}</div>
+    </div>
+  `;
+}
+
+async function showSubscriptionModal(companyId) {
+  const { data: info } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
+  const { data: history } = await sb.rpc('sp_subscription_history', { p_company_id: companyId });
+  const today = new Date().toISOString().split('T')[0];
+  const endDefault = info?.subscription_end || (new Date(Date.now() + 30*86400000)).toISOString().split('T')[0];
+  openModal('💳 Abonelik Yönet', `
+    <div class="field"><label>Plan</label>
+      <select id="sub-plan">
+        <option value="free" ${info?.plan==='free'?'selected':''}>Free</option>
+        <option value="standard" ${info?.plan==='standard'?'selected':''}>Standard</option>
+        <option value="professional" ${info?.plan==='professional'?'selected':''}>Professional</option>
+      </select>
+    </div>
+    <div class="field"><label>Max Kullanıcı</label><input type="number" id="sub-max" min="1" value="${info?.max_users||1}"></div>
+    <div class="field"><label>Durum</label>
+      <select id="sub-status">
+        <option value="trial" ${info?.subscription_status==='trial'?'selected':''}>Trial (Deneme)</option>
+        <option value="active" ${info?.subscription_status==='active'?'selected':''}>Active (Aktif)</option>
+        <option value="cancelled" ${info?.subscription_status==='cancelled'?'selected':''}>Cancelled (İptal)</option>
+        <option value="paused" ${info?.subscription_status==='paused'?'selected':''}>Paused (Durduruldu)</option>
+        <option value="expired" ${info?.subscription_status==='expired'?'selected':''}>Expired (Süresi Doldu)</option>
+      </select>
+    </div>
+    <div class="field"><label>Başlangıç</label><input type="date" id="sub-start" value="${info?.subscription_start || today}"></div>
+    <div class="field"><label>Bitiş</label><input type="date" id="sub-end" value="${endDefault}"></div>
+    <div class="field"><label>Not (zorunlu)</label><textarea id="sub-note" rows="2" placeholder="Değişiklik sebebi..."></textarea></div>
+    ${history?.length ? `
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray100)">
+        <div style="font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;margin-bottom:8px">Geçmiş (${history.length})</div>
+        <div style="max-height:150px;overflow-y:auto;font-size:11px">
+          ${history.map(h => `<div style="padding:6px 0;border-bottom:1px solid var(--gray100)">
+            <div style="color:var(--gray500);font-size:10px">${fmtDate(h.created_at)} — ${h.changed_by_name || '—'}</div>
+            <div>${h.old_plan || '—'}→${h.new_plan || '—'}, ${h.old_max_users || 0}→${h.new_max_users || 0} kullanıcı${h.old_status !== h.new_status ? `, ${h.old_status||'—'}→${h.new_status||'—'}` : ''}</div>
+            ${h.note ? `<div style="color:var(--gray400);font-style:italic">"${h.note}"</div>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>
+    ` : ''}
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveSubscription('${companyId}')` }
+  ]);
+}
+
+async function saveSubscription(companyId) {
+  const plan = document.getElementById('sub-plan').value;
+  const maxUsers = parseInt(document.getElementById('sub-max').value) || 1;
+  const status = document.getElementById('sub-status').value;
+  const start = document.getElementById('sub-start').value;
+  const end = document.getElementById('sub-end').value;
+  const note = document.getElementById('sub-note').value.trim();
+  if (!note) { showToast('Not girin (zorunlu)', 'error'); return; }
+  const { error } = await sb.rpc('sp_update_subscription', {
+    p_user_id: user.id, p_company_id: companyId,
+    p_plan: plan, p_max_users: maxUsers, p_status: status,
+    p_start: start || null, p_end: end || null, p_note: note
+  });
+  if (error) { showToast(error.message, 'error'); return; }
+  closeModal();
+  showToast('Abonelik güncellendi', 'success');
+  await renderCompanies();
+  if (selectedCompany) openCompanyDrawer(selectedCompany.id);
 }
 
 // ===== COMPANY ACTIONS =====

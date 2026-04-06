@@ -683,6 +683,47 @@
   }
 
   /* ── SUPABASE DATA ───────────────────────────────────────── */
+  function showSubBanner(msg, type) {
+    if (document.getElementById('sub-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'sub-banner';
+    const bg = type === 'danger' ? '#fef2f2' : '#fffbeb';
+    const color = type === 'danger' ? '#991b1b' : '#92400e';
+    const border = type === 'danger' ? '#fecaca' : '#fde68a';
+    banner.style.cssText = `position:sticky;top:0;z-index:90;background:${bg};color:${color};padding:10px 20px;font-size:13px;font-weight:500;border-bottom:1px solid ${border};text-align:center`;
+    banner.innerHTML = msg;
+    const main = document.querySelector('.main');
+    if (main) main.insertBefore(banner, main.firstChild);
+    else document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  function disableAllSaveButtons() {
+    const patterns = [/save/i, /kaydet/i, /ekle/i, /yeni/i, /create/i, /submit/i, /\+\s*Yeni/i];
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll('button, .btn, .btn-primary').forEach(btn => {
+        const txt = (btn.textContent || '').trim();
+        if (patterns.some(p => p.test(txt)) && !btn.dataset._spDisabled) {
+          btn.dataset._spDisabled = '1';
+          btn.disabled = true;
+          btn.style.opacity = '0.4';
+          btn.style.cursor = 'not-allowed';
+          btn.title = 'Aboneliğiniz sona erdi';
+        }
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    // Run once immediately
+    setTimeout(() => observer.takeRecords().forEach(() => {}), 100);
+    document.querySelectorAll('button, .btn, .btn-primary').forEach(btn => {
+      const txt = (btn.textContent || '').trim();
+      if (patterns.some(p => p.test(txt))) {
+        btn.disabled = true;
+        btn.style.opacity = '0.4';
+        btn.style.cursor = 'not-allowed';
+      }
+    });
+  }
+
   async function loadSidebarData() {
     try {
       const sb = window._supabase || window.supabase;
@@ -703,9 +744,24 @@
 
       // Fetch company info and user plan in parallel
       const [compRes, profileRes] = await Promise.all([
-        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason').eq('id', companyId).single(),
+        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan').eq('id', companyId).single(),
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
+
+      // Subscription check
+      if (compRes.data?.subscription_end) {
+        const endDate = new Date(compRes.data.subscription_end);
+        const daysLeft = Math.ceil((endDate - new Date()) / (1000*60*60*24));
+        window.__subscriptionDaysLeft = daysLeft;
+        window.__subscriptionStatus = compRes.data.subscription_status;
+        if (daysLeft < 0) {
+          // Expired — read-only mode
+          showSubBanner('🔴 Aboneliğiniz sona erdi. Verileriniz korunuyor ancak yeni kayıt ekleyemezsiniz. Yenilemek için: support@solvenin.com', 'danger');
+          disableAllSaveButtons();
+        } else if (daysLeft <= 7) {
+          showSubBanner(`⚠️ Aboneliğiniz ${daysLeft} gün içinde sona erecek.`, 'warning');
+        }
+      }
 
       // Freeze check
       if (compRes.data?.is_frozen) {
