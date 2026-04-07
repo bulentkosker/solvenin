@@ -486,11 +486,11 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label><span data-i18n="label_unit_cost">Unit Cost ($) *</span></label>
+          <label><span data-i18n="label_unit_cost">Unit Cost</span> (<span id="lbl-cost-sym">$</span>) *</label>
           <input type="number" id="p-cost" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
-          <label><span data-i18n="label_selling_price">Selling Price ($)</span></label>
+          <label><span data-i18n="label_selling_price">Selling Price</span> (<span id="lbl-price-sym">$</span>)</label>
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
@@ -2147,12 +2147,15 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Re-render when currency loads
-document.addEventListener('currencyLoaded', function() {
-  if (typeof renderProducts === 'function') renderProducts();
+// Re-render when currency loads (sidebar fetches company.base_currency async)
+function applyCurrencySymbol() {
   const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$';
   document.querySelectorAll('#lbl-cost-sym, #lbl-price-sym').forEach(el => el.textContent = sym);
-});
+  if (typeof renderAll === 'function' && typeof products !== 'undefined' && products) renderAll();
+}
+document.addEventListener('currencyLoaded', applyCurrencySymbol);
+// Also apply if currency was already in localStorage when the page loaded
+if (window.getCurrencySymbol) applyCurrencySymbol();
 </script>
 </body>
 </html>
