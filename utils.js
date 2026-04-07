@@ -107,3 +107,190 @@ document.addEventListener('focusin', function(e) {
     setTimeout(() => el.select(), 0);
   }
 });
+
+// ===== GLOBAL THOUSAND-SEPARATOR ENHANCER =====
+// Converts every <input type="number"> (and .num-input) to a text input with
+// live thousand-separator formatting AND overrides el.value so existing
+// parseFloat(el.value) calls keep working transparently across all pages.
+(function() {
+  if (window.__numEnhancerInstalled) return;
+  window.__numEnhancerInstalled = true;
+
+  const nativeDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  const nativeGet = nativeDesc.get;
+  const nativeSet = nativeDesc.set;
+
+  function rawText(el) { return nativeGet.call(el); }
+  function setRaw(el, v) { nativeSet.call(el, v); }
+
+  // Should this input be enhanced?
+  function isCandidate(el) {
+    if (!el || el.tagName !== 'INPUT') return false;
+    if (el._numEnhanced) return false;
+    if (el.dataset.noNumFormat === '1') return false;
+    if (el.classList.contains('num-input')) return true;
+    if (el.type === 'number') return true;
+    return false;
+  }
+
+  function localeSeparators() {
+    const loc = (typeof getNumLocale === 'function') ? getNumLocale() : 'en';
+    return loc === 'tr'
+      ? { dec: ',', grp: '.' }
+      : { dec: '.', grp: ',' };
+  }
+
+  // Format text-as-typed without losing user intent (trailing dec sep, trailing zeros after dec)
+  function formatTyped(text) {
+    const { dec, grp } = localeSeparators();
+    if (text == null) return '';
+    let s = String(text);
+    // Allow only digits, separators, and leading minus
+    let neg = false;
+    if (s.startsWith('-')) { neg = true; s = s.slice(1); }
+    // Strip all chars except digits and separators
+    s = s.replace(new RegExp('[^0-9' + (dec === '.' ? '\\.' : ',') + ']', 'g'), '');
+    // Split on decimal sep — only first occurrence
+    const idx = s.indexOf(dec);
+    let intPart = idx >= 0 ? s.slice(0, idx) : s;
+    let decPart = idx >= 0 ? s.slice(idx + 1).replace(new RegExp('\\' + dec, 'g'), '') : null;
+    // Strip leading zeros in int part (but keep at least one)
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+    if (intPart === '') intPart = '0';
+    // Group thousands
+    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, grp);
+    let out = grouped;
+    if (idx >= 0) out += dec + (decPart || '');
+    if (neg) out = '-' + out;
+    return out;
+  }
+
+  // Parse formatted text → numeric string for el.value
+  function toNumeric(text) {
+    if (text == null || text === '') return '';
+    const { dec, grp } = localeSeparators();
+    let s = String(text);
+    // Remove grouping char
+    s = s.split(grp).join('');
+    // Replace decimal sep with '.'
+    if (dec !== '.') s = s.replace(dec, '.');
+    // Drop any other non-numeric noise
+    s = s.replace(/[^\d.\-]/g, '');
+    if (s === '' || s === '-' || s === '.' || s === '-.') return '';
+    return s;
+  }
+
+  function enhance(el) {
+    if (!isCandidate(el)) return;
+    el._numEnhanced = true;
+
+    // Switch to text so we can show separators
+    if (el.type === 'number') {
+      try {
+        el.type = 'text';
+        if (!el.getAttribute('inputmode')) el.setAttribute('inputmode', 'decimal');
+        if (!el.getAttribute('autocomplete')) el.setAttribute('autocomplete', 'off');
+      } catch(e) {}
+    }
+
+    // Override value getter/setter on this element
+    Object.defineProperty(el, 'value', {
+      configurable: true,
+      get() {
+        return toNumeric(rawText(this));
+      },
+      set(v) {
+        if (v === '' || v === null || v === undefined) {
+          setRaw(this, '');
+          return;
+        }
+        // Accept either a Number or a string in either format
+        let num;
+        if (typeof v === 'number') num = v;
+        else {
+          const t = String(v).trim();
+          if (t === '') { setRaw(this, ''); return; }
+          // If looks already-formatted (has grouping char), strip and parse
+          num = parseFloat(toNumeric(formatTyped(t)));
+          if (isNaN(num)) { setRaw(this, ''); return; }
+        }
+        if (isNaN(num)) { setRaw(this, ''); return; }
+        if (num === 0) { setRaw(this, ''); return; }
+        // Format with grouping; preserve up to 6 decimals from input
+        const { dec, grp } = localeSeparators();
+        const hasDec = num % 1 !== 0;
+        const parts = (Math.abs(num)).toFixed(hasDec ? Math.min(6, (String(num).split('.')[1]||'').length) : 0).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, grp);
+        let out = parts.join(dec);
+        if (num < 0) out = '-' + out;
+        setRaw(this, out);
+      }
+    });
+
+    // Format as the user types
+    el.addEventListener('input', function(ev) {
+      // Skip if synthetic event from our own setRaw call
+      const text = rawText(el);
+      if (text === '') return;
+      const start = el.selectionStart;
+      const before = text;
+      const beforeLen = before.length;
+      const formatted = formatTyped(before);
+      if (formatted !== before) {
+        setRaw(el, formatted);
+        // Best-effort cursor restore: keep distance from end stable
+        const afterLen = formatted.length;
+        const newPos = Math.max(0, (start || 0) + (afterLen - beforeLen));
+        try { el.setSelectionRange(newPos, newPos); } catch(e) {}
+      }
+    });
+
+    // Reformat / clean up on blur (drop dangling separators)
+    el.addEventListener('blur', function() {
+      const text = rawText(el);
+      if (!text) return;
+      const numeric = toNumeric(text);
+      if (numeric === '' || isNaN(parseFloat(numeric))) {
+        setRaw(el, '');
+        return;
+      }
+      // Re-set via setter to canonicalize
+      el.value = parseFloat(numeric);
+    });
+
+    // Initialize with existing value (e.g. when JS sets value before enhancement)
+    const existing = rawText(el);
+    if (existing !== '' && existing != null) {
+      setRaw(el, formatTyped(existing));
+    }
+  }
+
+  function scan(root) {
+    if (!root) return;
+    if (root.nodeType === 1) {
+      if (isCandidate(root)) enhance(root);
+      const all = root.querySelectorAll && root.querySelectorAll('input[type="number"], input.num-input');
+      if (all) all.forEach(enhance);
+    }
+  }
+
+  // Initial scan
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => scan(document.body));
+  } else {
+    scan(document.body);
+  }
+
+  // Observe DOM changes for dynamically-added inputs (modal forms etc.)
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      m.addedNodes && m.addedNodes.forEach(scan);
+    }
+  });
+  if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+  else document.addEventListener('DOMContentLoaded', () => observer.observe(document.body, { childList: true, subtree: true }));
+
+  // Public API
+  window.numFormat = formatTyped;
+  window.numParse = (t) => { const n = parseFloat(toNumeric(t)); return isNaN(n) ? 0 : n; };
+})();
