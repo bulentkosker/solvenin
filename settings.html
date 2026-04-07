@@ -378,6 +378,25 @@ tr:hover .action-btns { opacity:1; }
               <div class="form-row full">
                 <div class="form-group"><label data-i18n="label_address">Address</label><textarea id="co-address" data-i18n-placeholder="placeholder_co_address" placeholder="Street, City, Country" style="min-height:70px"></textarea></div>
               </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label data-i18n="label_company_logo">Company Logo</label>
+                  <div style="display:flex;gap:16px;align-items:center;padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px">
+                    <div id="logo-preview-wrap" style="width:96px;height:96px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+                      <div id="logo-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:32px;font-weight:700;color:#94a3b8;background:#f1f5f9">—</div>
+                      <img id="logo-preview" src="" alt="" style="width:100%;height:100%;object-fit:contain;display:none">
+                    </div>
+                    <div style="flex:1">
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none" onchange="onLogoFileSelected(event)">
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('logo-file-input').click()" style="padding:8px 16px;font-size:13px"><span data-i18n="btn_upload_logo">Upload Logo</span></button>
+                        <button type="button" class="btn-secondary" id="btn-remove-logo" onclick="removeLogo()" style="padding:8px 16px;font-size:13px;color:#ef4444;border-color:#fecaca;display:none"><span data-i18n="btn_remove_logo">Remove</span></button>
+                      </div>
+                      <div style="font-size:11px;color:#94a3b8;margin-top:6px" data-i18n="logo_help">PNG, JPG, SVG, WebP — Max 2MB. Recommended: 200×200 px square.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1494,7 +1513,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1513,6 +1532,9 @@ async function loadCompanyData() {
   document.getElementById('co-phone').value = data.phone || '';
   document.getElementById('co-website').value = data.website || '';
   document.getElementById('co-address').value = data.address || '';
+  // Logo
+  _pendingLogo = null;
+  applyLogoPreview(data.logo_url, data.name);
 
   // Set country
   const coCountry = document.getElementById('co-country');
@@ -1656,10 +1678,97 @@ async function saveCompanyInfo() {
     address: document.getElementById('co-address').value.trim() || null,
     country_code: document.getElementById('co-country').value || null,
   };
+  // Apply pending logo change ('' = remove)
+  if (_pendingLogo !== null) payload.logo_url = _pendingLogo === '' ? null : _pendingLogo;
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
   if (error) { showToast(error.message, 'error'); return; }
   companyData = { ...companyData, ...payload };
+  // Update local cache so other pages can pick it up immediately
+  if ('logo_url' in payload) {
+    try {
+      localStorage.setItem('solvenin_company_logo_'+companyId, payload.logo_url || '');
+      localStorage.setItem('solvenin_company_logo_'+companyId+'_at', String(Date.now()));
+      document.dispatchEvent(new CustomEvent('companyLogoChanged', {detail:{logo:payload.logo_url}}));
+    } catch(e) {}
+  }
+  _pendingLogo = null;
   showToast(t('toast_company_info_saved'), 'success');
+}
+
+// ===== LOGO UPLOAD (client-side resize → base64 data URL) =====
+let _pendingLogo = null;       // null = unchanged, '' = remove, 'data:...' = new
+const LOGO_MAX_FILE_SIZE = 2 * 1024 * 1024;
+const LOGO_MAX_DIMENSION = 256;
+
+function applyLogoPreview(dataUrl, companyName) {
+  const img = document.getElementById('logo-preview');
+  const ph = document.getElementById('logo-placeholder');
+  const rmBtn = document.getElementById('btn-remove-logo');
+  if (!img) return;
+  if (dataUrl) {
+    img.src = dataUrl;
+    img.style.display = '';
+    if (ph) ph.style.display = 'none';
+    if (rmBtn) rmBtn.style.display = '';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    if (ph) {
+      ph.style.display = 'flex';
+      const initials = (companyName || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase() || '—';
+      ph.textContent = initials;
+    }
+    if (rmBtn) rmBtn.style.display = 'none';
+  }
+}
+
+function onLogoFileSelected(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  if (file.size > LOGO_MAX_FILE_SIZE) {
+    showToast(t('toast_logo_too_large') || 'Logo file too large (max 2MB)', 'error');
+    ev.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (file.type === 'image/svg+xml') {
+      // SVGs we keep as-is (already small, scale-free)
+      _pendingLogo = reader.result;
+      applyLogoPreview(_pendingLogo, document.getElementById('co-name').value);
+      showToast(t('toast_logo_ready') || 'Logo ready — click Save Changes', 'info');
+      return;
+    }
+    // Raster: load into Image, draw onto canvas at LOGO_MAX_DIMENSION
+    const img = new Image();
+    img.onload = () => {
+      const max = LOGO_MAX_DIMENSION;
+      let w = img.width, h = img.height;
+      if (w > max || h > max) {
+        if (w > h) { h = Math.round(h * (max / w)); w = max; }
+        else { w = Math.round(w * (max / h)); h = max; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // PNG to preserve transparency; quality good enough
+      _pendingLogo = canvas.toDataURL('image/png');
+      applyLogoPreview(_pendingLogo, document.getElementById('co-name').value);
+      showToast(t('toast_logo_ready') || 'Logo ready — click Save Changes', 'info');
+    };
+    img.onerror = () => showToast(t('toast_logo_invalid') || 'Invalid image', 'error');
+    img.src = reader.result;
+  };
+  reader.onerror = () => showToast(t('toast_logo_invalid') || 'Invalid image', 'error');
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+
+function removeLogo() {
+  _pendingLogo = '';
+  applyLogoPreview(null, document.getElementById('co-name').value);
+  showToast(t('toast_logo_removed') || 'Logo will be removed on Save', 'info');
 }
 
 // ===== COUNTRY CHANGE =====

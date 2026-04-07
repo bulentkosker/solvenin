@@ -2438,6 +2438,15 @@ const T = window.T = {
     toast_serial_exists:'Serial number already exists',
     toast_invalid_range:'Invalid range',
     toast_serials_added:'Serial numbers added',
+    // === LOGO ===
+    label_company_logo:'Company Logo',
+    btn_upload_logo:'Upload Logo',
+    btn_remove_logo:'Remove Logo',
+    logo_help:'PNG, JPG, SVG, WebP — Max 2MB. Recommended: 200×200 px square.',
+    toast_logo_too_large:'Logo file too large (max 2MB)',
+    toast_logo_invalid:'Invalid image',
+    toast_logo_ready:'Logo ready — click Save Changes',
+    toast_logo_removed:'Logo will be removed on Save',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3479,6 +3488,15 @@ const T = window.T = {
     toast_serial_exists:'Bu seri numarası zaten var',
     toast_invalid_range:'Geçersiz aralık',
     toast_serials_added:'Seri numaraları eklendi',
+    // === LOGO ===
+    label_company_logo:'Şirket Logosu',
+    btn_upload_logo:'Logo Yükle',
+    btn_remove_logo:'Logoyu Kaldır',
+    logo_help:'PNG, JPG, SVG, WebP — Maks 2MB. Önerilen: 200×200 px kare.',
+    toast_logo_too_large:'Logo dosyası çok büyük (maks 2MB)',
+    toast_logo_invalid:'Geçersiz görüntü',
+    toast_logo_ready:'Logo hazır — Kaydet butonuna basın',
+    toast_logo_removed:'Logo Kaydet ile silinecek',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4285,6 +4303,15 @@ const T = window.T = {
     toast_serial_exists:'Seriennummer existiert bereits',
     toast_invalid_range:'Ungültiger Bereich',
     toast_serials_added:'Seriennummern hinzugefügt',
+    // === LOGO ===
+    label_company_logo:'Firmenlogo',
+    btn_upload_logo:'Logo hochladen',
+    btn_remove_logo:'Logo entfernen',
+    logo_help:'PNG, JPG, SVG, WebP — Max 2MB. Empfohlen: 200×200 px quadratisch.',
+    toast_logo_too_large:'Logo-Datei zu groß (max 2MB)',
+    toast_logo_invalid:'Ungültiges Bild',
+    toast_logo_ready:'Logo bereit — Speichern klicken',
+    toast_logo_removed:'Logo wird beim Speichern entfernt',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5092,6 +5119,15 @@ const T = window.T = {
     toast_serial_exists:'Numéro de série déjà existant',
     toast_invalid_range:'Plage invalide',
     toast_serials_added:'Numéros de série ajoutés',
+    // === LOGO ===
+    label_company_logo:'Logo de l\'entreprise',
+    btn_upload_logo:'Téléverser le logo',
+    btn_remove_logo:'Supprimer le logo',
+    logo_help:'PNG, JPG, SVG, WebP — Max 2 Mo. Recommandé : 200×200 px carré.',
+    toast_logo_too_large:'Fichier logo trop volumineux (max 2 Mo)',
+    toast_logo_invalid:'Image invalide',
+    toast_logo_ready:'Logo prêt — cliquez sur Enregistrer',
+    toast_logo_removed:'Le logo sera supprimé à l\'enregistrement',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -5898,6 +5934,15 @@ const T = window.T = {
     toast_serial_exists:'El número de serie ya existe',
     toast_invalid_range:'Rango inválido',
     toast_serials_added:'Números de serie añadidos',
+    // === LOGO ===
+    label_company_logo:'Logo de la empresa',
+    btn_upload_logo:'Subir logo',
+    btn_remove_logo:'Quitar logo',
+    logo_help:'PNG, JPG, SVG, WebP — Máx 2MB. Recomendado: 200×200 px cuadrado.',
+    toast_logo_too_large:'Archivo de logo demasiado grande (máx 2MB)',
+    toast_logo_invalid:'Imagen inválida',
+    toast_logo_ready:'Logo listo — pulse Guardar',
+    toast_logo_removed:'El logo se eliminará al guardar',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -6673,6 +6718,15 @@ const T = window.T = {
     toast_serial_exists:'الرقم التسلسلي موجود بالفعل',
     toast_invalid_range:'نطاق غير صالح',
     toast_serials_added:'تمت إضافة الأرقام التسلسلية',
+    // === LOGO ===
+    label_company_logo:'شعار الشركة',
+    btn_upload_logo:'تحميل الشعار',
+    btn_remove_logo:'إزالة الشعار',
+    logo_help:'PNG, JPG, SVG, WebP — الحد الأقصى 2 ميجابايت. موصى به: 200×200 بكسل مربع.',
+    toast_logo_too_large:'ملف الشعار كبير جداً (الحد الأقصى 2 ميجابايت)',
+    toast_logo_invalid:'صورة غير صالحة',
+    toast_logo_ready:'الشعار جاهز — انقر على حفظ',
+    toast_logo_removed:'سيتم حذف الشعار عند الحفظ',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -7447,6 +7501,15 @@ const T = window.T = {
     toast_serial_exists:'序列号已存在',
     toast_invalid_range:'无效范围',
     toast_serials_added:'序列号已添加',
+    // === LOGO ===
+    label_company_logo:'公司徽标',
+    btn_upload_logo:'上传徽标',
+    btn_remove_logo:'移除徽标',
+    logo_help:'PNG、JPG、SVG、WebP — 最大 2MB。推荐：200×200 像素正方形。',
+    toast_logo_too_large:'徽标文件过大（最大 2MB）',
+    toast_logo_invalid:'无效的图像',
+    toast_logo_ready:'徽标已就绪 — 点击保存',
+    toast_logo_removed:'保存时将移除徽标',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -8071,6 +8134,15 @@ const T = window.T = {
     toast_serial_exists:'Серийный номер уже существует',
     toast_invalid_range:'Неверный диапазон',
     toast_serials_added:'Серийные номера добавлены',
+    // === LOGO ===
+    label_company_logo:'Логотип компании',
+    btn_upload_logo:'Загрузить логотип',
+    btn_remove_logo:'Удалить логотип',
+    logo_help:'PNG, JPG, SVG, WebP — Макс 2МБ. Рекомендуется: 200×200 px квадрат.',
+    toast_logo_too_large:'Файл логотипа слишком большой (макс 2МБ)',
+    toast_logo_invalid:'Неверное изображение',
+    toast_logo_ready:'Логотип готов — нажмите Сохранить',
+    toast_logo_removed:'Логотип будет удалён при сохранении',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -8854,6 +8926,15 @@ const T = window.T = {
     toast_serial_exists:'Número de série já existe',
     toast_invalid_range:'Intervalo inválido',
     toast_serials_added:'Números de série adicionados',
+    // === LOGO ===
+    label_company_logo:'Logotipo da empresa',
+    btn_upload_logo:'Carregar logotipo',
+    btn_remove_logo:'Remover logotipo',
+    logo_help:'PNG, JPG, SVG, WebP — Máx 2MB. Recomendado: 200×200 px quadrado.',
+    toast_logo_too_large:'Arquivo de logotipo muito grande (máx 2MB)',
+    toast_logo_invalid:'Imagem inválida',
+    toast_logo_ready:'Logotipo pronto — clique em Salvar',
+    toast_logo_removed:'O logotipo será removido ao salvar',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -9628,6 +9709,15 @@ const T = window.T = {
     toast_serial_exists:'シリアル番号は既に存在します',
     toast_invalid_range:'無効な範囲',
     toast_serials_added:'シリアル番号を追加しました',
+    // === LOGO ===
+    label_company_logo:'会社ロゴ',
+    btn_upload_logo:'ロゴをアップロード',
+    btn_remove_logo:'ロゴを削除',
+    logo_help:'PNG, JPG, SVG, WebP — 最大 2MB。推奨: 200×200 px 正方形。',
+    toast_logo_too_large:'ロゴファイルが大きすぎます (最大 2MB)',
+    toast_logo_invalid:'無効な画像',
+    toast_logo_ready:'ロゴ準備完了 — 保存をクリック',
+    toast_logo_removed:'保存時にロゴが削除されます',
   },
   kz: {
     // NAV
@@ -9871,6 +9961,15 @@ const T = window.T = {
     toast_serial_exists:'Бұл сериялық нөмір бар',
     toast_invalid_range:'Жарамсыз диапазон',
     toast_serials_added:'Сериялық нөмірлер қосылды',
+    // === LOGO ===
+    label_company_logo:'Компания логотипі',
+    btn_upload_logo:'Логотип жүктеу',
+    btn_remove_logo:'Логотипті жою',
+    logo_help:'PNG, JPG, SVG, WebP — Макс 2МБ. Ұсынылады: 200×200 px шаршы.',
+    toast_logo_too_large:'Логотип файлы тым үлкен (макс 2МБ)',
+    toast_logo_invalid:'Жарамсыз сурет',
+    toast_logo_ready:'Логотип дайын — Сақтау батырмасын басыңыз',
+    toast_logo_removed:'Логотип Сақтаған кезде жойылады',
   },
   kg: {
     // NAV
@@ -10114,6 +10213,15 @@ const T = window.T = {
     toast_serial_exists:'Бул сериялык номер бар',
     toast_invalid_range:'Туура эмес диапазон',
     toast_serials_added:'Сериялык номерлер кошулду',
+    // === LOGO ===
+    label_company_logo:'Компаниянын логотиби',
+    btn_upload_logo:'Логотип жүктөө',
+    btn_remove_logo:'Логотипти өчүрүү',
+    logo_help:'PNG, JPG, SVG, WebP — Макс 2МБ. Сунушталат: 200×200 px чарчы.',
+    toast_logo_too_large:'Логотип файлы өтө чоң (макс 2МБ)',
+    toast_logo_invalid:'Туура эмес сүрөт',
+    toast_logo_ready:'Логотип даяр — Сактоону басыңыз',
+    toast_logo_removed:'Логотип Сактоо учурунда өчүрүлөт',
   },
   uz: {
     // NAV
@@ -10357,6 +10465,15 @@ const T = window.T = {
     toast_serial_exists:'Bu seriya raqami mavjud',
     toast_invalid_range:'Noto\'g\'ri diapazon',
     toast_serials_added:'Seriya raqamlari qo\'shildi',
+    // === LOGO ===
+    label_company_logo:'Kompaniya logotipi',
+    btn_upload_logo:'Logotip yuklash',
+    btn_remove_logo:'Logotipni o\'chirish',
+    logo_help:'PNG, JPG, SVG, WebP — Maks 2MB. Tavsiya: 200×200 px kvadrat.',
+    toast_logo_too_large:'Logotip fayli juda katta (maks 2MB)',
+    toast_logo_invalid:'Noto\'g\'ri tasvir',
+    toast_logo_ready:'Logotip tayyor — Saqlash tugmasini bosing',
+    toast_logo_removed:'Logotip Saqlash bosilganda o\'chiriladi',
   },
   tm: {
     // NAV
@@ -10600,6 +10717,15 @@ const T = window.T = {
     toast_serial_exists:'Bu seriýa belgisi bar',
     toast_invalid_range:'Nädogry aralyk',
     toast_serials_added:'Seriýa belgileri goşuldy',
+    // === LOGO ===
+    label_company_logo:'Kompaniýanyň logotipi',
+    btn_upload_logo:'Logotip ýüklemek',
+    btn_remove_logo:'Logotipi pozmak',
+    logo_help:'PNG, JPG, SVG, WebP — Iň köp 2MB. Maslahat: 200×200 px inedördül.',
+    toast_logo_too_large:'Logotip faýly juda uly (iň köp 2MB)',
+    toast_logo_invalid:'Nädogry surat',
+    toast_logo_ready:'Logotip taýýar — Ýatda sakla düwmesine basyň',
+    toast_logo_removed:'Logotip Ýatda saklanýarka pozular',
   },
   az: {
     // NAV
@@ -10843,6 +10969,15 @@ const T = window.T = {
     toast_serial_exists:'Bu seriya nömrəsi var',
     toast_invalid_range:'Yanlış aralıq',
     toast_serials_added:'Seriya nömrələri əlavə edildi',
+    // === LOGO ===
+    label_company_logo:'Şirkət loqosu',
+    btn_upload_logo:'Loqo yüklə',
+    btn_remove_logo:'Loqonu sil',
+    logo_help:'PNG, JPG, SVG, WebP — Maks 2MB. Tövsiyə: 200×200 px kvadrat.',
+    toast_logo_too_large:'Loqo faylı çox böyükdür (maks 2MB)',
+    toast_logo_invalid:'Yanlış şəkil',
+    toast_logo_ready:'Loqo hazırdır — Saxla düyməsini basın',
+    toast_logo_removed:'Loqo Saxla zamanı silinəcək',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -11039,6 +11174,15 @@ const T = window.T = {
     toast_serial_exists:'Numer seryjny już istnieje',
     toast_invalid_range:'Niepoprawny zakres',
     toast_serials_added:'Numery seryjne dodane',
+    // === LOGO ===
+    label_company_logo:'Logo firmy',
+    btn_upload_logo:'Prześlij logo',
+    btn_remove_logo:'Usuń logo',
+    logo_help:'PNG, JPG, SVG, WebP — Maks 2MB. Zalecane: 200×200 px kwadrat.',
+    toast_logo_too_large:'Plik logo jest za duży (maks 2MB)',
+    toast_logo_invalid:'Niepoprawny obraz',
+    toast_logo_ready:'Logo gotowe — kliknij Zapisz',
+    toast_logo_removed:'Logo zostanie usunięte przy zapisie',
   },
 };
 

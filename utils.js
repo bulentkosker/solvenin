@@ -108,6 +108,42 @@ document.addEventListener('focusin', function(e) {
   }
 });
 
+// ===== COMPANY LOGO HELPER (for PDF generators) =====
+// Returns the cached company logo data URL (synchronous), or null.
+// Pages set this cache via sidebar.js loadSidebarData / settings save.
+window.getCompanyLogo = function(companyId) {
+  try {
+    const cid = companyId || localStorage.getItem('currentCompanyId');
+    if (!cid) return null;
+    const url = localStorage.getItem('solvenin_company_logo_'+cid);
+    return url || null;
+  } catch (e) { return null; }
+};
+
+// Add the company logo to a jsPDF document. Returns the height used so the
+// caller can offset following content. Width = max 50pt, preserves aspect.
+// Returns 0 if no logo or any failure (caller should fall back to text header).
+window.addLogoToPdf = function(doc, x, y, maxWidth, maxHeight) {
+  try {
+    const logo = window.getCompanyLogo();
+    if (!logo) return 0;
+    if (!logo.startsWith('data:image/')) return 0;
+    const isPng = logo.startsWith('data:image/png');
+    const isJpeg = logo.startsWith('data:image/jpeg') || logo.startsWith('data:image/jpg');
+    const isWebp = logo.startsWith('data:image/webp');
+    const isSvg = logo.startsWith('data:image/svg');
+    if (isSvg) return 0; // jsPDF can't render SVG
+    const fmt = isPng ? 'PNG' : isJpeg ? 'JPEG' : isWebp ? 'WEBP' : 'PNG';
+    const w = maxWidth || 40;
+    const h = maxHeight || 40;
+    doc.addImage(logo, fmt, x, y, w, h, undefined, 'FAST');
+    return h;
+  } catch (e) {
+    console.warn('addLogoToPdf failed:', e);
+    return 0;
+  }
+};
+
 // ===== GLOBAL THOUSAND-SEPARATOR ENHANCER =====
 // Converts every <input type="number"> (and .num-input) to a text input with
 // live thousand-separator formatting AND overrides el.value so existing

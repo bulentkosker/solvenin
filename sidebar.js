@@ -595,7 +595,7 @@
       <div class="sidebar-sections">${sectionsHTML}</div>
       <div class="sidebar-footer">
         <div class="company-switcher" id="company-switcher" onclick="sidebarToggleCompanyMenu()">
-          <div class="company-icon">🏢</div>
+          <div class="company-icon" id="sb-company-icon" style="overflow:hidden">🏢</div>
           <div class="company-info">
             <div class="company-name" id="sb-company-name">Loading...</div>
             <div class="company-plan" id="sb-company-plan">—</div>
@@ -746,6 +746,40 @@
     });
   }
 
+  // Render company logo into the sidebar's company-switcher icon slot.
+  // Falls back to company initials if no logo, then to 🏢 emoji.
+  function applySidebarLogo(logoUrl, companyName) {
+    const slot = document.getElementById('sb-company-icon');
+    if (!slot) return;
+    if (logoUrl) {
+      slot.innerHTML = `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:6px;background:#fff;padding:2px;box-sizing:border-box">`;
+    } else if (companyName) {
+      const initials = companyName.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      slot.textContent = initials || '🏢';
+      slot.style.fontSize = '14px';
+      slot.style.fontWeight = '700';
+    } else {
+      slot.textContent = '🏢';
+    }
+  }
+  // Expose to other pages so they can re-render after companyLogoChanged
+  window.applySidebarLogo = applySidebarLogo;
+
+  // If the logo is already cached from a recent visit, render immediately
+  // (before the async loadSidebarData fetch finishes).
+  try {
+    const cachedCompanyId = localStorage.getItem('currentCompanyId');
+    if (cachedCompanyId) {
+      const cachedLogo = localStorage.getItem('solvenin_company_logo_'+cachedCompanyId);
+      if (cachedLogo) setTimeout(() => applySidebarLogo(cachedLogo, null), 0);
+    }
+  } catch(e) {}
+
+  // Live update when settings page saves a new logo
+  document.addEventListener('companyLogoChanged', (e) => {
+    applySidebarLogo(e.detail?.logo, document.getElementById('sb-company-name')?.textContent);
+  });
+
   async function loadSidebarData() {
     try {
       const sb = window._supabase || window.supabase;
@@ -766,7 +800,7 @@
 
       // Fetch company info and user plan in parallel
       const [compRes, profileRes] = await Promise.all([
-        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan').eq('id', companyId).single(),
+        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single(),
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
 
@@ -808,6 +842,14 @@
           localStorage.setItem('baseCurrency', company.base_currency);
           document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: company.base_currency }));
         }
+        // Cache logo for fast access from other pages / PDF generators
+        try {
+          localStorage.setItem('solvenin_company_logo_'+companyId, company.logo_url || '');
+          localStorage.setItem('solvenin_company_logo_'+companyId+'_at', String(Date.now()));
+        } catch(e) {}
+        // Render in sidebar header
+        applySidebarLogo(company.logo_url, company.name);
+        document.dispatchEvent(new CustomEvent('companyLogoLoaded', { detail: { logo: company.logo_url, name: company.name } }));
       }
 
       const cpEl = document.getElementById('sb-company-plan');

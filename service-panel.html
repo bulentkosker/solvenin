@@ -155,8 +155,9 @@ tr:hover td{background:var(--gray50)}
 <!-- DRAWER: Company Detail -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-head">
-    <div>
+  <div class="drawer-head" style="display:flex;align-items:center;gap:12px">
+    <div id="dr-logo" style="width:44px;height:44px;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#64748b;overflow:hidden;flex-shrink:0">—</div>
+    <div style="flex:1;min-width:0">
       <div id="dr-name" style="font-family:var(--font-display);font-size:18px;font-weight:700"></div>
       <div id="dr-meta" style="font-size:11px;color:var(--gray400);margin-top:2px"></div>
     </div>
@@ -400,8 +401,12 @@ function renderCompaniesTable() {
         <tbody>
           ${filtered.map(c => {
             const planBadge = { free:'badge-gray', standard:'badge-blue', professional:'badge-purple' }[c.plan||'free'] || 'badge-gray';
+            const initials = (c.name||'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase() || '—';
+            const thumb = c.logo_url
+              ? `<img src="${c.logo_url}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;flex-shrink:0">`
+              : `<div style="width:28px;height:28px;border-radius:6px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid #e2e8f0;flex-shrink:0">${initials}</div>`;
             return `<tr>
-              <td><strong>${c.name || '—'}</strong><div style="font-size:10px;color:var(--gray400)">${fmtDate(c.created_at)}</div></td>
+              <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><strong>${c.name || '—'}</strong><div style="font-size:10px;color:var(--gray400)">${fmtDate(c.created_at)}</div></div></div></td>
               <td>${c.country_code || '—'}</td>
               <td class="text-right">${c.user_count || 0}</td>
               <td><span class="badge ${planBadge}">${c.plan || 'free'}</span></td>
@@ -424,6 +429,14 @@ async function openCompanyDrawer(id) {
   const c = selectedCompany;
   document.getElementById('dr-name').textContent = c.name;
   document.getElementById('dr-meta').textContent = `${c.country_code || '—'} · ${c.plan || 'free'} · ${fmtDate(c.created_at)}`;
+  const drLogo = document.getElementById('dr-logo');
+  if (drLogo) {
+    if (c.logo_url) {
+      drLogo.innerHTML = `<img src="${c.logo_url}" alt="" style="width:100%;height:100%;object-fit:contain">`;
+    } else {
+      drLogo.textContent = (c.name||'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase() || '—';
+    }
+  }
 
   const { data: users } = await sb.rpc('sp_company_users', { p_company_id: id });
   const isSuperadmin = user.role === 'superadmin';

@@ -29,7 +29,7 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION sp_companies() RETURNS json LANGUAGE sql SECURITY DEFINER AS $BODY$
 SELECT COALESCE(json_agg(row_to_json(c) ORDER BY c.created_at DESC), '[]'::json) FROM (
-  SELECT c.id, c.name, c.country_code, c.plan, c.created_at, c.is_frozen, c.freeze_reason,
+  SELECT c.id, c.name, c.country_code, c.plan, c.created_at, c.is_frozen, c.freeze_reason, c.logo_url,
     (SELECT COUNT(*) FROM company_users cu WHERE cu.company_id = c.id) as user_count,
     (SELECT COUNT(*) FROM sales_orders so WHERE so.company_id = c.id AND so.status IN ('invoiced','paid','overdue') AND so.is_active=true) as invoice_count,
     (SELECT COUNT(*) FROM stock_movements sm WHERE sm.company_id = c.id AND sm.is_active=true) as stock_count,

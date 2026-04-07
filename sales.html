@@ -781,7 +781,7 @@ async function init() {
 
   // Load company details + user plan + module data in parallel
   const [cdRes, profRes] = await Promise.all([
-    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings,accounting_enabled').eq('id', companyId).single(),
+    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings,accounting_enabled,logo_url').eq('id', companyId).single(),
     sb.from('profiles').select('plan').eq('id', session.user.id).single(),
   ]);
   if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; if (cdRes.data.invoice_settings) invoiceSettings = { ...invoiceSettings, ...cdRes.data.invoice_settings }; accountingEnabled = !!cdRes.data.accounting_enabled; }
@@ -1758,13 +1758,20 @@ async function viewInvoice(orderId) {
   const IS = invoiceSettings;
   const thS = 'padding:10px 12px;font-size:11px;font-weight:600';
   const tdS = 'padding:10px 12px';
+  const _logoUrl = (window.getCompanyLogo && window.getCompanyLogo()) || companyData.logo_url || null;
+  const _logoBlock = _logoUrl
+    ? `<img src="${_logoUrl}" alt="" crossorigin="anonymous" style="width:80px;height:80px;object-fit:contain;border-radius:8px;background:#fff;flex-shrink:0">`
+    : '';
   const html = `<div class="invoice-page" id="pdf-content" style="font-family:'DM Sans',sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-      <div>
-        <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:#1e40af">${companyName}</div>
-        ${companyData.email ? `<div style="font-size:12px;color:#64748b;margin-top:4px">${companyData.email}</div>` : ''}
-        ${companyData.phone ? `<div style="font-size:12px;color:#64748b">${companyData.phone}</div>` : ''}
-        ${companyData.tax_number ? `<div style="font-size:12px;color:#64748b">${L.taxNo}: ${companyData.tax_number}</div>` : ''}
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        ${_logoBlock}
+        <div>
+          <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:#1e40af">${companyName}</div>
+          ${companyData.email ? `<div style="font-size:12px;color:#64748b;margin-top:4px">${companyData.email}</div>` : ''}
+          ${companyData.phone ? `<div style="font-size:12px;color:#64748b">${companyData.phone}</div>` : ''}
+          ${companyData.tax_number ? `<div style="font-size:12px;color:#64748b">${L.taxNo}: ${companyData.tax_number}</div>` : ''}
+        </div>
       </div>
       <div style="text-align:right">
         <div style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:900;color:#1e40af">${L.invoice}</div>
