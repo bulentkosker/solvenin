@@ -504,6 +504,67 @@ tr:hover .action-btns { opacity:1; }
           <input type="number" id="p-max-stock" placeholder="—" min="0">
         </div>
       </div>
+
+      <!-- ===== TRACKING & VARIANTS ===== -->
+      <div class="form-divider"></div>
+      <div class="form-section-title" data-i18n="section_tracking">Tracking &amp; Variants</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label data-i18n="label_tracking_type">Tracking Type</label>
+          <div id="tracking-radio" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px">
+              <input type="radio" name="tracking_type" value="none" checked onchange="onTrackingTypeChange()"> <span data-i18n="track_none">No tracking</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px">
+              <input type="radio" name="tracking_type" value="variant" onchange="onTrackingTypeChange()"> <span data-i18n="track_variant">Variants</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px">
+              <input type="radio" name="tracking_type" value="serial" onchange="onTrackingTypeChange()"> <span data-i18n="track_serial">Serial numbers</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px">
+              <input type="radio" name="tracking_type" value="lot" onchange="onTrackingTypeChange()"> <span data-i18n="track_lot">Lot / Batch (with expiry)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIANT BUILDER -->
+      <div id="variant-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <strong style="font-size:13px" data-i18n="label_attributes">Attributes</strong>
+          <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="addAttributeRow()">+ <span data-i18n="btn_add_attribute">Add attribute</span></button>
+        </div>
+        <div id="attr-rows"></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:13px" data-i18n="label_variants">Variants</strong>
+            <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="rebuildVariantMatrix()">↻ <span data-i18n="btn_regen_variants">Regenerate</span></button>
+          </div>
+          <div id="variant-matrix-wrap" style="overflow-x:auto"></div>
+        </div>
+      </div>
+
+      <!-- SERIAL NUMBERS SECTION -->
+      <div id="serial-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <strong style="font-size:13px" data-i18n="label_serial_numbers">Serial Numbers</strong>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="sn-search" placeholder="Search..." data-i18n-placeholder="placeholder_search" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:6px;font-size:12px" oninput="renderSerialList()">
+            <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="openSerialAdd()">+ <span data-i18n="btn_add_serial">Add</span></button>
+            <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="openSerialBulk()">⫶ <span data-i18n="btn_add_serial_range">Range</span></button>
+          </div>
+        </div>
+        <div id="serial-list" style="max-height:240px;overflow-y:auto"></div>
+      </div>
+
+      <!-- LOT SECTION -->
+      <div id="lot-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <strong style="font-size:13px" data-i18n="label_lots">Lots / Batches</strong>
+          <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="openLotAdd()">+ <span data-i18n="btn_add_lot">Add lot</span></button>
+        </div>
+        <div id="lot-list" style="max-height:240px;overflow-y:auto"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('product-modal')" data-i18n="btn_cancel">Cancel</button>
@@ -957,6 +1018,13 @@ function openAddModal() {
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
   resetCatSelector(null);
+  // Reset tracking
+  document.querySelector('input[name="tracking_type"][value="none"]').checked = true;
+  _attrRows = [];
+  _variantMatrix = [];
+  _serialList = [];
+  _lotList = [];
+  onTrackingTypeChange();
   openModal('product-modal');
 }
 
@@ -978,6 +1046,16 @@ function openEditModal(id) {
   document.getElementById('p-cost').value = p.unit_cost || '';
   document.getElementById('p-price').value = p.price || '';
   resetCatSelector(p.category_id);
+  // Tracking
+  const tt = p.tracking_type || 'none';
+  const radio = document.querySelector('input[name="tracking_type"][value="'+tt+'"]');
+  if (radio) radio.checked = true;
+  _attrRows = [];
+  _variantMatrix = [];
+  _serialList = [];
+  _lotList = [];
+  loadTrackingDataForProduct(id, tt);
+  onTrackingTypeChange();
   openModal('product-modal');
 }
 
@@ -986,7 +1064,7 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -1007,6 +1085,8 @@ async function loadProducts() {
     supplier: '',
     desc: p.notes || '',
     product_type: p.product_type || 'finished_good',
+    tracking_type: p.tracking_type || 'none',
+    has_variants: !!p.has_variants,
   }));
 }
 
@@ -1226,6 +1306,7 @@ function resetCatSelector(categoryId) {
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
+  const trackingType = (document.querySelector('input[name="tracking_type"]:checked')||{}).value || 'none';
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
@@ -1241,19 +1322,440 @@ async function saveProduct() {
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
     company_id: companyId,
     is_active: true,
+    tracking_type: trackingType,
+    has_variants: trackingType === 'variant',
   };
-  let error;
+  let error, savedId = editingId;
   if (editingId) {
     ({ error } = await sb.from('products').update(payload).eq('id', editingId));
-    if (!error) showToast(t('toast_saved') || 'Product updated ✓', 'success');
   } else {
-    ({ error } = await sb.from('products').insert(payload));
-    if (!error) showToast(t('toast_saved') || 'Product added ✓', 'success');
+    const ins = await sb.from('products').insert(payload).select('id').single();
+    error = ins.error;
+    if (ins.data) savedId = ins.data.id;
   }
   if (error) { showToast(error.message, 'error'); return; }
+
+  // Persist tracking sub-data
+  try {
+    if (trackingType === 'variant') await persistVariants(savedId);
+    if (trackingType === 'serial') await persistSerials(savedId);
+    if (trackingType === 'lot') await persistLots(savedId);
+  } catch (e) {
+    showToast(t('toast_error') + ': ' + e.message, 'error');
+    return;
+  }
+
+  showToast(t('toast_saved') || 'Saved ✓', 'success');
   closeModal('product-modal');
   await loadProducts();
   renderAll();
+}
+
+// ===== TRACKING / VARIANTS / SERIALS / LOTS =====
+let _attrRows = [];        // [{name:'Renk', values:['Kırmızı','Mavi']}]
+let _variantMatrix = [];   // [{combo:['Kırmızı','S'], sku:'', barcode:'', stock:0, price_extra:0, is_active:true, _id?}]
+let _serialList = [];      // [{serial_number, status, _id?, _new?}]
+let _lotList = [];         // [{lot_number, quantity, expiry_date, manufacture_date, _id?, _new?}]
+let _deletedSerialIds = [];
+let _deletedLotIds = [];
+let _deletedVariantIds = [];
+
+function onTrackingTypeChange() {
+  const tt = (document.querySelector('input[name="tracking_type"]:checked')||{}).value || 'none';
+  document.getElementById('variant-section').style.display = tt === 'variant' ? '' : 'none';
+  document.getElementById('serial-section').style.display = tt === 'serial' ? '' : 'none';
+  document.getElementById('lot-section').style.display = tt === 'lot' ? '' : 'none';
+  if (tt === 'variant') renderAttrRows();
+  if (tt === 'serial') renderSerialList();
+  if (tt === 'lot') renderLotList();
+}
+
+async function loadTrackingDataForProduct(productId, tt) {
+  if (tt === 'variant') {
+    // Load attribute lines and existing variants
+    const { data: lines } = await sb.from('product_attribute_lines')
+      .select('id,attribute_id,value_ids,product_attributes(name)')
+      .eq('product_id', productId);
+    const valIds = (lines||[]).flatMap(l => l.value_ids || []);
+    let vals = [];
+    if (valIds.length) {
+      const { data } = await sb.from('product_attribute_values')
+        .select('id,name,attribute_id').in('id', valIds);
+      vals = data || [];
+    }
+    _attrRows = (lines||[]).map(l => ({
+      _line_id: l.id,
+      attribute_id: l.attribute_id,
+      name: l.product_attributes?.name || '',
+      values: vals.filter(v => (l.value_ids||[]).includes(v.id)).map(v => ({id:v.id, name:v.name})),
+    }));
+    const { data: vars } = await sb.from('product_variants')
+      .select('id,name,sku,barcode,price_extra,quantity,is_active,product_variant_attributes(value_id,product_attribute_values(name))')
+      .eq('parent_product_id', productId);
+    _variantMatrix = (vars||[]).map(v => ({
+      _id: v.id,
+      combo: (v.product_variant_attributes||[]).map(a => a.product_attribute_values?.name).filter(Boolean),
+      sku: v.sku || '',
+      barcode: v.barcode || '',
+      stock: parseFloat(v.quantity || 0),
+      price_extra: parseFloat(v.price_extra || 0),
+      is_active: v.is_active !== false,
+    }));
+    renderAttrRows();
+    renderVariantMatrix();
+  }
+  if (tt === 'serial') {
+    const { data } = await sb.from('serial_numbers')
+      .select('id,serial_number,status,warranty_expires_at,notes')
+      .eq('product_id', productId)
+      .eq('company_id', companyId)
+      .order('serial_number');
+    _serialList = (data||[]).map(s => ({_id:s.id, serial_number:s.serial_number, status:s.status, warranty_expires_at:s.warranty_expires_at}));
+    renderSerialList();
+  }
+  if (tt === 'lot') {
+    const { data } = await sb.from('product_lots')
+      .select('id,lot_number,quantity,expiry_date,manufacture_date,notes')
+      .eq('product_id', productId)
+      .eq('company_id', companyId)
+      .order('expiry_date', {nullsFirst:false});
+    _lotList = (data||[]).map(l => ({_id:l.id, lot_number:l.lot_number, quantity:parseFloat(l.quantity||0), expiry_date:l.expiry_date, manufacture_date:l.manufacture_date}));
+    renderLotList();
+  }
+}
+
+// ----- ATTRIBUTES & VARIANT MATRIX -----
+function addAttributeRow() {
+  _attrRows.push({name:'', values:[]});
+  renderAttrRows();
+}
+function removeAttributeRow(idx) {
+  _attrRows.splice(idx, 1);
+  renderAttrRows();
+  rebuildVariantMatrix();
+}
+function addAttributeValue(rowIdx) {
+  const input = document.getElementById('attr-val-input-'+rowIdx);
+  const val = (input.value||'').trim();
+  if (!val) return;
+  if (!_attrRows[rowIdx].values.some(v => (v.name||v) === val)) {
+    _attrRows[rowIdx].values.push({name: val});
+  }
+  input.value = '';
+  renderAttrRows();
+}
+function removeAttributeValue(rowIdx, valIdx) {
+  _attrRows[rowIdx].values.splice(valIdx, 1);
+  renderAttrRows();
+  rebuildVariantMatrix();
+}
+function updateAttributeName(idx, val) {
+  _attrRows[idx].name = val;
+}
+function renderAttrRows() {
+  const wrap = document.getElementById('attr-rows');
+  if (!wrap) return;
+  if (!_attrRows.length) { wrap.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">'+(t('inv_no_attrs')||'No attributes yet')+'</div>'; return; }
+  wrap.innerHTML = _attrRows.map((r,i) => `
+    <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px">
+      <input type="text" placeholder="${t('label_name')||'Name'}" value="${(r.name||'').replace(/"/g,'&quot;')}" onchange="updateAttributeName(${i}, this.value)" style="width:120px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px">
+      <div style="flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+        ${r.values.map((v,vi) => `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:#dbeafe;color:#1e40af;border-radius:12px;font-size:11px;font-weight:600">${v.name||v}<span onclick="removeAttributeValue(${i},${vi})" style="cursor:pointer">×</span></span>`).join('')}
+        <input type="text" id="attr-val-input-${i}" placeholder="+ ${t('label_value')||'Value'}" onkeydown="if(event.key==='Enter'){event.preventDefault();addAttributeValue(${i})}" style="border:none;outline:none;font-size:12px;min-width:80px;padding:3px">
+      </div>
+      <button type="button" onclick="removeAttributeRow(${i})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px">🗑</button>
+    </div>
+  `).join('');
+}
+
+function rebuildVariantMatrix() {
+  // Cartesian product of all attribute values
+  const lists = _attrRows.filter(r => r.values.length).map(r => r.values.map(v => v.name||v));
+  if (!lists.length) { _variantMatrix = []; renderVariantMatrix(); return; }
+  let combos = [[]];
+  lists.forEach(list => {
+    const next = [];
+    combos.forEach(c => list.forEach(v => next.push([...c, v])));
+    combos = next;
+  });
+  // Preserve existing rows by combo signature
+  const prev = {};
+  _variantMatrix.forEach(v => prev[v.combo.join('|')] = v);
+  _variantMatrix = combos.map(c => {
+    const sig = c.join('|');
+    return prev[sig] || {combo: c, sku:'', barcode:'', stock:0, price_extra:0, is_active:true};
+  });
+  renderVariantMatrix();
+}
+
+function renderVariantMatrix() {
+  const wrap = document.getElementById('variant-matrix-wrap');
+  if (!wrap) return;
+  if (!_variantMatrix.length) { wrap.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">'+(t('inv_no_variants')||'Add attributes then click Regenerate')+'</div>'; return; }
+  wrap.innerHTML = `
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead>
+        <tr style="background:#fff">
+          <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_variant')||'Variant'}</th>
+          <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">SKU</th>
+          <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_barcode')||'Barcode'}</th>
+          <th style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0">${t('label_stock')||'Stock'}</th>
+          <th style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0">${t('label_price_extra')||'+Price'}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${_variantMatrix.map((v,i) => `
+          <tr>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9">${v.combo.join(' / ')}</td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9"><input type="text" value="${(v.sku||'').replace(/"/g,'&quot;')}" oninput="_variantMatrix[${i}].sku=this.value" style="width:120px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px"></td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9"><input type="text" value="${(v.barcode||'').replace(/"/g,'&quot;')}" oninput="_variantMatrix[${i}].barcode=this.value" style="width:120px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px"></td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" value="${v.stock}" oninput="_variantMatrix[${i}].stock=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" step="0.01" value="${v.price_extra}" oninput="_variantMatrix[${i}].price_extra=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function persistVariants(productId) {
+  // 1. Upsert attributes (find or create per name)
+  const attrIdMap = {}; // name → id
+  for (const row of _attrRows) {
+    if (!row.name || !row.values.length) continue;
+    let attrId = row.attribute_id;
+    if (!attrId) {
+      const { data: existing } = await sb.from('product_attributes')
+        .select('id').eq('company_id', companyId).eq('name', row.name).maybeSingle();
+      if (existing) attrId = existing.id;
+      else {
+        const { data: newAttr } = await sb.from('product_attributes')
+          .insert({company_id: companyId, name: row.name}).select('id').single();
+        attrId = newAttr.id;
+      }
+    }
+    attrIdMap[row.name] = attrId;
+    // Upsert values
+    const valIdMap = {};
+    for (const v of row.values) {
+      if (v.id) { valIdMap[v.name||v] = v.id; continue; }
+      const valName = v.name || v;
+      const { data: existVal } = await sb.from('product_attribute_values')
+        .select('id').eq('attribute_id', attrId).eq('name', valName).maybeSingle();
+      if (existVal) valIdMap[valName] = existVal.id;
+      else {
+        const { data: newVal } = await sb.from('product_attribute_values')
+          .insert({attribute_id: attrId, company_id: companyId, name: valName})
+          .select('id').single();
+        valIdMap[valName] = newVal.id;
+      }
+    }
+    row._valIdMap = valIdMap;
+    row._attr_id = attrId;
+  }
+  // 2. Replace product_attribute_lines for this product
+  await sb.from('product_attribute_lines').delete().eq('product_id', productId);
+  for (const row of _attrRows) {
+    if (!row._attr_id) continue;
+    const valueIds = row.values.map(v => row._valIdMap[v.name||v]).filter(Boolean);
+    if (!valueIds.length) continue;
+    await sb.from('product_attribute_lines').insert({
+      product_id: productId, attribute_id: row._attr_id, value_ids: valueIds,
+    });
+  }
+  // 3. Variants — delete removed, upsert kept
+  // For simplicity: delete all existing variants for this parent and recreate
+  const { data: existingVars } = await sb.from('product_variants').select('id').eq('parent_product_id', productId);
+  for (const ev of (existingVars||[])) {
+    await sb.from('product_variant_attributes').delete().eq('variant_id', ev.id);
+  }
+  await sb.from('product_variants').delete().eq('parent_product_id', productId);
+  for (const v of _variantMatrix) {
+    const variantName = v.combo.join(' / ');
+    const { data: newVar } = await sb.from('product_variants').insert({
+      company_id: companyId,
+      parent_product_id: productId,
+      name: variantName,
+      sku: v.sku || null,
+      barcode: v.barcode || null,
+      price_extra: v.price_extra || 0,
+      quantity: v.stock || 0,
+      is_active: v.is_active !== false,
+    }).select('id').single();
+    if (!newVar) continue;
+    // Link variant to attribute values
+    for (let i = 0; i < v.combo.length; i++) {
+      const row = _attrRows[i];
+      if (!row || !row._attr_id) continue;
+      const valId = row._valIdMap[v.combo[i]];
+      if (!valId) continue;
+      await sb.from('product_variant_attributes').insert({
+        variant_id: newVar.id, attribute_id: row._attr_id, value_id: valId,
+      });
+    }
+  }
+}
+
+// ----- SERIALS -----
+function renderSerialList() {
+  const wrap = document.getElementById('serial-list');
+  if (!wrap) return;
+  const q = (document.getElementById('sn-search')?.value||'').toLowerCase();
+  const visible = _serialList.filter(s => !q || (s.serial_number||'').toLowerCase().includes(q));
+  if (!visible.length) { wrap.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">'+(t('inv_no_serials')||'No serial numbers')+'</div>'; return; }
+  const statusBadge = (s) => {
+    const map = {in_stock:['🟢','#10b981'], sold:['🔵','#3b82f6'], returned:['🟡','#f59e0b'], defective:['🔴','#ef4444'], scrapped:['⚫','#64748b']};
+    const [icon,color] = map[s] || map.in_stock;
+    return `<span style="color:${color};font-size:11px;font-weight:600">${icon} ${t('sn_'+s)||s}</span>`;
+  };
+  wrap.innerHTML = `
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead>
+        <tr style="background:#fff">
+          <th style="padding:6px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_serial')||'Serial No'}</th>
+          <th style="padding:6px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_status')||'Status'}</th>
+          <th style="padding:6px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_warranty')||'Warranty'}</th>
+          <th style="padding:6px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${visible.map((s,i) => {
+          const realIdx = _serialList.indexOf(s);
+          return `<tr>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9"><strong>${s.serial_number}</strong></td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9">${statusBadge(s.status||'in_stock')}</td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9">${s.warranty_expires_at||'—'}</td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9;text-align:right"><button type="button" onclick="removeSerial(${realIdx})" style="background:none;border:none;color:#ef4444;cursor:pointer">×</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+function openSerialAdd() {
+  const sn = prompt(t('prompt_enter_serial')||'Enter serial number:');
+  if (!sn) return;
+  if (_serialList.some(s => s.serial_number === sn)) { showToast(t('toast_serial_exists')||'Serial already exists', 'error'); return; }
+  _serialList.push({serial_number: sn, status:'in_stock', _new:true});
+  renderSerialList();
+}
+function openSerialBulk() {
+  const range = prompt(t('prompt_serial_range')||'Range (e.g. 1001-1010 or PREFIX1001-PREFIX1010):');
+  if (!range) return;
+  const m = range.match(/^(.*?)(\d+)\s*-\s*\1?(\d+)$/);
+  if (!m) { showToast(t('toast_invalid_range')||'Invalid range', 'error'); return; }
+  const prefix = m[1];
+  const from = parseInt(m[2]), to = parseInt(m[3]);
+  if (to < from || (to - from) > 10000) { showToast(t('toast_invalid_range')||'Invalid range', 'error'); return; }
+  const pad = m[2].length;
+  let added = 0;
+  for (let n = from; n <= to; n++) {
+    const sn = prefix + String(n).padStart(pad, '0');
+    if (!_serialList.some(s => s.serial_number === sn)) {
+      _serialList.push({serial_number: sn, status:'in_stock', _new:true});
+      added++;
+    }
+  }
+  showToast((t('toast_serials_added')||'Serial numbers added')+': '+added, 'success');
+  renderSerialList();
+}
+function removeSerial(idx) {
+  const s = _serialList[idx];
+  if (s._id) _deletedSerialIds.push(s._id);
+  _serialList.splice(idx, 1);
+  renderSerialList();
+}
+async function persistSerials(productId) {
+  for (const id of _deletedSerialIds) {
+    await sb.from('serial_numbers').delete().eq('id', id);
+  }
+  _deletedSerialIds = [];
+  for (const s of _serialList) {
+    if (s._id) {
+      await sb.from('serial_numbers').update({
+        serial_number: s.serial_number, status: s.status, warranty_expires_at: s.warranty_expires_at || null,
+      }).eq('id', s._id);
+    } else {
+      await sb.from('serial_numbers').insert({
+        company_id: companyId, product_id: productId,
+        serial_number: s.serial_number, status: s.status || 'in_stock',
+        warranty_expires_at: s.warranty_expires_at || null,
+      });
+    }
+  }
+}
+
+// ----- LOTS -----
+function renderLotList() {
+  const wrap = document.getElementById('lot-list');
+  if (!wrap) return;
+  if (!_lotList.length) { wrap.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">'+(t('inv_no_lots')||'No lots')+'</div>'; return; }
+  const today = new Date();
+  const daysLeft = (d) => {
+    if (!d) return null;
+    const diff = Math.floor((new Date(d) - today) / 86400000);
+    return diff;
+  };
+  wrap.innerHTML = `
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead>
+        <tr style="background:#fff">
+          <th style="padding:6px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_lot_number')||'Lot No'}</th>
+          <th style="padding:6px;text-align:right;border-bottom:1px solid #e2e8f0">${t('label_quantity')||'Qty'}</th>
+          <th style="padding:6px;text-align:left;border-bottom:1px solid #e2e8f0">${t('label_expiry')||'Expiry'}</th>
+          <th style="padding:6px;text-align:right;border-bottom:1px solid #e2e8f0">${t('label_days_left')||'Days'}</th>
+          <th style="padding:6px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${_lotList.map((l,i) => {
+          const dl = daysLeft(l.expiry_date);
+          const dlColor = dl == null ? '#94a3b8' : dl < 0 ? '#ef4444' : dl < 30 ? '#f59e0b' : '#10b981';
+          return `<tr>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9"><strong>${l.lot_number}</strong></td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9;text-align:right">${l.quantity}</td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9">${l.expiry_date||'—'}</td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9;text-align:right;color:${dlColor};font-weight:600">${dl == null ? '—' : dl}</td>
+            <td style="padding:5px;border-bottom:1px solid #f1f5f9;text-align:right"><button type="button" onclick="removeLot(${i})" style="background:none;border:none;color:#ef4444;cursor:pointer">×</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+function openLotAdd() {
+  const lot = prompt(t('prompt_enter_lot')||'Enter lot number:');
+  if (!lot) return;
+  const qtyStr = prompt(t('prompt_enter_qty')||'Quantity:');
+  const qty = parseFloat(qtyStr) || 0;
+  const exp = prompt(t('prompt_enter_expiry')||'Expiry date (YYYY-MM-DD, optional):');
+  _lotList.push({lot_number: lot, quantity: qty, expiry_date: exp || null, _new:true});
+  renderLotList();
+}
+function removeLot(idx) {
+  const l = _lotList[idx];
+  if (l._id) _deletedLotIds.push(l._id);
+  _lotList.splice(idx, 1);
+  renderLotList();
+}
+async function persistLots(productId) {
+  for (const id of _deletedLotIds) {
+    await sb.from('product_lots').delete().eq('id', id);
+  }
+  _deletedLotIds = [];
+  for (const l of _lotList) {
+    if (l._id) {
+      await sb.from('product_lots').update({
+        lot_number: l.lot_number, quantity: l.quantity, expiry_date: l.expiry_date || null,
+      }).eq('id', l._id);
+    } else {
+      await sb.from('product_lots').insert({
+        company_id: companyId, product_id: productId,
+        lot_number: l.lot_number, quantity: l.quantity || 0,
+        expiry_date: l.expiry_date || null,
+      });
+    }
+  }
 }
 
 // ===== QUICK-ADD PRODUCT =====
