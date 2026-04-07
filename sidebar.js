@@ -140,7 +140,14 @@
       transition: background .15s;
     }
     .company-switcher:hover { background: rgba(56,189,248,0.1); }
-    .company-icon { font-size: 15px; flex-shrink: 0; }
+    .company-icon {
+      font-size: 13px; flex-shrink: 0;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; overflow: hidden;
+      background: rgba(255,255,255,0.06);
+    }
+    .company-icon img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; padding: 2px; box-sizing: border-box; }
     .company-info { flex: 1; min-width: 0; }
     .company-name {
       font-size: 11px; font-weight: 700; color: #fff;
@@ -752,14 +759,17 @@
     const slot = document.getElementById('sb-company-icon');
     if (!slot) return;
     if (logoUrl) {
-      slot.innerHTML = `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:6px;background:#fff;padding:2px;box-sizing:border-box">`;
+      slot.innerHTML = `<img src="${logoUrl}" alt="">`;
+      slot.style.background = '#fff';
     } else if (companyName) {
       const initials = companyName.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
       slot.textContent = initials || '🏢';
-      slot.style.fontSize = '14px';
       slot.style.fontWeight = '700';
+      slot.style.color = '#fff';
+      slot.style.background = '';
     } else {
       slot.textContent = '🏢';
+      slot.style.background = '';
     }
   }
   // Expose to other pages so they can re-render after companyLogoChanged
