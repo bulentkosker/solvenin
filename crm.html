@@ -106,19 +106,44 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
 
 <div class="main">
   <header class="topbar">
-    <div class="topbar-title">🎯 CRM — Satış Pipeline</div>
+    <div class="topbar-title">🎯 <span data-i18n="crm_title">CRM — Satış Pipeline</span></div>
     <div style="flex:1"></div>
     <div class="view-toggle">
-      <button class="active" onclick="setView('kanban',this)">Kanban</button>
-      <button onclick="setView('list',this)">Liste</button>
+      <button class="active" onclick="setView('kanban',this)" data-i18n="crm_view_kanban">Kanban</button>
+      <button onclick="setView('list',this)" data-i18n="crm_view_list">Liste</button>
     </div>
-    <button class="btn btn-primary" onclick="openOppModal()">+ Yeni Fırsat</button>
+    <div id="lang-switcher-wrap" style="position:relative">
+      <button id="lang-switcher" onclick="toggleLangMenu()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--gray200);background:var(--white);font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--gray600)">
+        <span id="lang-code">EN</span>
+        <span id="lang-name" style="color:var(--gray400);font-weight:400">English</span>
+        <span style="font-size:9px;color:var(--gray400)">▾</span>
+      </button>
+      <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a2744;border-radius:12px;padding:6px;min-width:170px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.2);max-height:340px;overflow-y:auto">
+        <div class="lang-opt" data-lang="ar" onclick="selectLang('ar')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">AR &nbsp; العربية</div>
+        <div class="lang-opt" data-lang="az" onclick="selectLang('az')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">AZ &nbsp; Azərbaycan dili</div>
+        <div class="lang-opt" data-lang="de" onclick="selectLang('de')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">DE &nbsp; Deutsch</div>
+        <div class="lang-opt" data-lang="en" onclick="selectLang('en')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">EN &nbsp; English</div>
+        <div class="lang-opt" data-lang="es" onclick="selectLang('es')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">ES &nbsp; Español</div>
+        <div class="lang-opt" data-lang="fr" onclick="selectLang('fr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">FR &nbsp; Français</div>
+        <div class="lang-opt" data-lang="ja" onclick="selectLang('ja')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">JA &nbsp; 日本語</div>
+        <div class="lang-opt" data-lang="kg" onclick="selectLang('kg')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">KG &nbsp; Кыргыз тили</div>
+        <div class="lang-opt" data-lang="kz" onclick="selectLang('kz')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">KZ &nbsp; Қазақ тілі</div>
+        <div class="lang-opt" data-lang="pl" onclick="selectLang('pl')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">PL &nbsp; Polski</div>
+        <div class="lang-opt" data-lang="pt" onclick="selectLang('pt')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">PT &nbsp; Português</div>
+        <div class="lang-opt" data-lang="ru" onclick="selectLang('ru')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">RU &nbsp; Русский</div>
+        <div class="lang-opt" data-lang="tm" onclick="selectLang('tm')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TM &nbsp; Türkmen dili</div>
+        <div class="lang-opt" data-lang="tr" onclick="selectLang('tr')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">TR &nbsp; Türkçe</div>
+        <div class="lang-opt" data-lang="uz" onclick="selectLang('uz')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">UZ &nbsp; O'zbek tili</div>
+        <div class="lang-opt" data-lang="zh" onclick="selectLang('zh')" style="padding:7px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">ZH &nbsp; 中文</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="openOppModal()" data-i18n="crm_new_opportunity">+ Yeni Fırsat</button>
   </header>
 
   <div class="content">
     <div class="toolbar">
-      <input type="text" id="crm-search" placeholder="🔍 Fırsat ara..." oninput="renderAll()" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:200px">
-      <select id="crm-filter-assigned" onchange="renderAll()" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:12px"><option value="">Tüm Temsilciler</option></select>
+      <input type="text" id="crm-search" placeholder="🔍 Fırsat ara..." data-i18n-placeholder="crm_search_placeholder" oninput="renderAll()" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:200px">
+      <select id="crm-filter-assigned" onchange="renderAll()" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:12px"><option value="" data-i18n="crm_filter_all_reps">Tüm Temsilciler</option></select>
     </div>
 
     <!-- KANBAN -->
@@ -128,7 +153,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     <div class="list-view" id="list-view" style="overflow:auto;flex:1">
       <table>
         <thead><tr>
-          <th>MÜŞTERİ</th><th>FIRSAT</th><th>AŞAMA</th><th>TAHMİNİ TUTAR</th><th>OLASILIK</th><th>TEMSİLCİ</th><th>KAPANIŞ</th><th>SON AKTİVİTE</th>
+          <th data-i18n="crm_col_customer">MÜŞTERİ</th>
+          <th data-i18n="crm_col_opportunity">FIRSAT</th>
+          <th data-i18n="crm_col_stage">AŞAMA</th>
+          <th data-i18n="crm_col_amount">TAHMİNİ TUTAR</th>
+          <th data-i18n="crm_col_probability">OLASILIK</th>
+          <th data-i18n="crm_col_assigned">TEMSİLCİ</th>
+          <th data-i18n="crm_col_close">KAPANIŞ</th>
+          <th data-i18n="crm_col_last_activity">SON AKTİVİTE</th>
         </tr></thead>
         <tbody id="list-tbody"></tbody>
       </table>
@@ -151,43 +183,43 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   </div>
   <div class="drawer-body">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div><div style="font-size:10px;color:var(--gray400)">TAHMİNİ TUTAR</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
-      <div><div style="font-size:10px;color:var(--gray400)">OLASILIK</div><div id="dr-prob" style="font-size:18px;font-weight:800"></div></div>
-      <div><div style="font-size:10px;color:var(--gray400)">TEMSİLCİ</div><div id="dr-assigned" style="font-size:12px;font-weight:500"></div></div>
-      <div><div style="font-size:10px;color:var(--gray400)">KAPANIŞ</div><div id="dr-close" style="font-size:12px;font-weight:500"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)" data-i18n="crm_dr_amount">TAHMİNİ TUTAR</div><div id="dr-value" style="font-size:18px;font-weight:800;color:var(--primary)"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)" data-i18n="crm_dr_probability">OLASILIK</div><div id="dr-prob" style="font-size:18px;font-weight:800"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)" data-i18n="crm_dr_assigned">TEMSİLCİ</div><div id="dr-assigned" style="font-size:12px;font-weight:500"></div></div>
+      <div><div style="font-size:10px;color:var(--gray400)" data-i18n="crm_dr_close_date">KAPANIŞ</div><div id="dr-close" style="font-size:12px;font-weight:500"></div></div>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="btn btn-outline btn-sm" onclick="editOpp()">✏️ Düzenle</button>
+      <button class="btn btn-outline btn-sm" onclick="editOpp()" data-i18n="crm_btn_edit">✏️ Düzenle</button>
     </div>
 
     <!-- Drawer Tabs -->
     <div style="display:flex;border-bottom:2px solid var(--gray200);margin-bottom:12px">
-      <button class="dr-tab active" onclick="switchDrawerTab('quotes',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px">📄 Teklifler</button>
-      <button class="dr-tab" onclick="switchDrawerTab('activities',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px">⚡ Aktiviteler</button>
+      <button class="dr-tab active" onclick="switchDrawerTab('quotes',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px" data-i18n="crm_tab_quotes">📄 Teklifler</button>
+      <button class="dr-tab" onclick="switchDrawerTab('activities',this)" style="padding:8px 14px;border:none;background:none;font-size:12px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px" data-i18n="crm_tab_activities">⚡ Aktiviteler</button>
     </div>
 
     <!-- TAB: Teklifler -->
     <div id="dr-tab-quotes">
-      <button class="btn btn-primary btn-sm" onclick="openQuoteModal()" style="margin-bottom:10px">+ Yeni Teklif</button>
+      <button class="btn btn-primary btn-sm" onclick="openQuoteModal()" style="margin-bottom:10px" data-i18n="crm_btn_new_quote">+ Yeni Teklif</button>
       <div id="dr-quotes-list" style="font-size:12px"></div>
     </div>
 
     <!-- TAB: Aktiviteler -->
     <div id="dr-tab-activities" style="display:none">
       <div class="act-btns">
-        <button class="act-btn" onclick="addActivity('call')">📞 Arama</button>
-        <button class="act-btn" onclick="addActivity('email')">📧 Email</button>
-        <button class="act-btn" onclick="addActivity('meeting')">🤝 Toplantı</button>
-        <button class="act-btn" onclick="addActivity('whatsapp')">💬 WhatsApp</button>
-        <button class="act-btn" onclick="addActivity('note')">📝 Not</button>
+        <button class="act-btn" onclick="addActivity('call')" data-i18n="crm_act_call">📞 Arama</button>
+        <button class="act-btn" onclick="addActivity('email')" data-i18n="crm_act_email">📧 Email</button>
+        <button class="act-btn" onclick="addActivity('meeting')" data-i18n="crm_act_meeting">🤝 Toplantı</button>
+        <button class="act-btn" onclick="addActivity('whatsapp')" data-i18n="crm_act_whatsapp">💬 WhatsApp</button>
+        <button class="act-btn" onclick="addActivity('note')" data-i18n="crm_act_note">📝 Not</button>
       </div>
       <div id="act-form" style="display:none;margin-top:10px;padding:10px;background:var(--gray50);border-radius:8px">
         <input type="hidden" id="act-type">
-        <textarea id="act-desc" placeholder="Açıklama..." rows="2" style="width:100%;padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;margin-bottom:6px"></textarea>
+        <textarea id="act-desc" placeholder="Açıklama..." data-i18n-placeholder="crm_act_desc_placeholder" rows="2" style="width:100%;padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;font-family:inherit;margin-bottom:6px"></textarea>
         <div style="display:flex;gap:6px;align-items:center">
-          <input type="text" id="act-next" placeholder="Sonraki adım..." style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
+          <input type="text" id="act-next" placeholder="Sonraki adım..." data-i18n-placeholder="crm_act_next_placeholder" style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
           <input type="date" id="act-next-date" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
-          <button class="btn btn-primary btn-sm" onclick="saveActivity()">Kaydet</button>
+          <button class="btn btn-primary btn-sm" onclick="saveActivity()" data-i18n="crm_btn_save">Kaydet</button>
         </div>
       </div>
       <div class="timeline" id="dr-timeline"></div>
@@ -199,30 +231,33 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
 <div class="modal-overlay" id="opp-modal">
   <div class="modal">
     <div class="modal-head">
-      <span class="modal-title" id="opp-modal-title">Yeni Fırsat</span>
+      <span class="modal-title" id="opp-modal-title" data-i18n="crm_modal_new_opp">Yeni Fırsat</span>
       <button class="modal-close" onclick="closeModal('opp-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field full"><label>Müşteri *</label><select id="opp-contact"><option value="">Seç...</option></select></div>
-        <div class="field full"><label>Fırsat Başlığı *</label><input type="text" id="opp-title" placeholder="Örn: Mercimek ihracatı"></div>
-        <div class="field"><label>Tahmini Tutar</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
-        <div class="field"><label>Olasılık %</label><input type="number" id="opp-prob" value="10" min="0" max="100"></div>
-        <div class="field"><label>Beklenen Kapanış</label><input type="date" id="opp-close"></div>
-        <div class="field"><label>Aşama</label>
+        <div class="field full"><label data-i18n="crm_lbl_customer_req">Müşteri *</label><select id="opp-contact"><option value="" data-i18n="crm_select_prompt">Seç...</option></select></div>
+        <div class="field full"><label data-i18n="crm_lbl_title_req">Fırsat Başlığı *</label><input type="text" id="opp-title" placeholder="Örn: Mercimek ihracatı" data-i18n-placeholder="crm_placeholder_title"></div>
+        <div class="field"><label data-i18n="crm_lbl_value">Tahmini Tutar</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="crm_lbl_probability">Olasılık %</label><input type="number" id="opp-prob" value="10" min="0" max="100"></div>
+        <div class="field"><label data-i18n="crm_lbl_close_date">Beklenen Kapanış</label><input type="date" id="opp-close"></div>
+        <div class="field"><label data-i18n="crm_lbl_stage">Aşama</label>
           <select id="opp-stage">
-            <option value="lead">Lead</option><option value="contacted">İletişimde</option>
-            <option value="proposal">Teklif Verildi</option><option value="negotiation">Müzakerede</option>
-            <option value="won">Kazanıldı</option><option value="lost">Kaybedildi</option>
-            <option value="postponed">Ertelendi</option>
+            <option value="lead" data-i18n="crm_stage_lead">Lead</option>
+            <option value="contacted" data-i18n="crm_stage_contacted">İletişimde</option>
+            <option value="proposal" data-i18n="crm_stage_proposal">Teklif Verildi</option>
+            <option value="negotiation" data-i18n="crm_stage_negotiation">Müzakerede</option>
+            <option value="won" data-i18n="crm_stage_won">Kazanıldı</option>
+            <option value="lost" data-i18n="crm_stage_lost">Kaybedildi</option>
+            <option value="postponed" data-i18n="crm_stage_postponed">Ertelendi</option>
           </select>
         </div>
-        <div class="field full"><label>Notlar</label><textarea id="opp-notes" rows="2"></textarea></div>
+        <div class="field full"><label data-i18n="crm_lbl_notes">Notlar</label><textarea id="opp-notes" rows="2"></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('opp-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveOpp()">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('opp-modal')" data-i18n="crm_btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveOpp()" data-i18n="crm_btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -231,39 +266,39 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
 <div class="modal-overlay" id="quote-modal">
   <div class="modal" style="max-width:720px">
     <div class="modal-head">
-      <span class="modal-title">Yeni Teklif</span>
+      <span class="modal-title" data-i18n="crm_modal_new_quote">Yeni Teklif</span>
       <button class="modal-close" onclick="closeModal('quote-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label>Müşteri</label><select id="q-contact"></select></div>
-        <div class="field"><label>Teklif No</label><input type="text" id="q-number" readonly style="background:var(--gray50)"></div>
-        <div class="field"><label>Geçerlilik Tarihi</label><input type="date" id="q-valid"></div>
-        <div class="field"><label>Para Birimi</label>
+        <div class="field"><label data-i18n="crm_lbl_customer">Müşteri</label><select id="q-contact"></select></div>
+        <div class="field"><label data-i18n="crm_lbl_quote_no">Teklif No</label><input type="text" id="q-number" readonly style="background:var(--gray50)"></div>
+        <div class="field"><label data-i18n="crm_lbl_valid_until">Geçerlilik Tarihi</label><input type="date" id="q-valid"></div>
+        <div class="field"><label data-i18n="crm_lbl_currency">Para Birimi</label>
           <select id="q-currency"><option value="KZT">KZT</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="RUB">RUB</option><option value="TRY">TRY</option></select>
         </div>
       </div>
-      <div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;margin-bottom:6px">Kalemler</div>
+      <div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;margin-bottom:6px" data-i18n="crm_lbl_items">Kalemler</div>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
         <thead><tr style="background:var(--gray50)">
-          <th style="padding:6px 8px;text-align:left;font-size:10px;border:none">ÜRÜN</th>
-          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:70px">MİKTAR</th>
-          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px">BİRİM FİYAT</th>
-          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px">TOPLAM</th>
+          <th style="padding:6px 8px;text-align:left;font-size:10px;border:none" data-i18n="crm_col_product">ÜRÜN</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:70px" data-i18n="crm_col_qty">MİKTAR</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px" data-i18n="crm_col_unit_price">BİRİM FİYAT</th>
+          <th style="padding:6px 8px;text-align:right;font-size:10px;border:none;width:90px" data-i18n="crm_col_total">TOPLAM</th>
           <th style="width:30px;border:none"></th>
         </tr></thead>
         <tbody id="q-items-body"></tbody>
       </table>
-      <button onclick="addQuoteItem()" style="background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;font-weight:500;margin-bottom:10px">+ Kalem Ekle</button>
+      <button onclick="addQuoteItem()" style="background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;font-weight:500;margin-bottom:10px" data-i18n="crm_btn_add_item">+ Kalem Ekle</button>
       <div class="form-grid" style="margin-top:8px">
-        <div class="field full"><label>Ödeme Koşulları</label><input type="text" id="q-terms" placeholder="30 gün vadeli"></div>
-        <div class="field full"><label>Notlar</label><textarea id="q-notes" rows="2"></textarea></div>
+        <div class="field full"><label data-i18n="crm_lbl_terms">Ödeme Koşulları</label><input type="text" id="q-terms" placeholder="30 gün vadeli" data-i18n-placeholder="crm_terms_placeholder"></div>
+        <div class="field full"><label data-i18n="crm_lbl_notes">Notlar</label><textarea id="q-notes" rows="2"></textarea></div>
       </div>
-      <div style="text-align:right;margin-top:10px;font-size:14px;font-weight:800;color:var(--primary)" id="q-total-display">TOPLAM: ₸0</div>
+      <div style="text-align:right;margin-top:10px;font-size:14px;font-weight:800;color:var(--primary)" id="q-total-display">—</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('quote-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveQuote()">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('quote-modal')" data-i18n="crm_btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveQuote()" data-i18n="crm_btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -277,15 +312,20 @@ let companyId = null, currentUser = null;
 let opps = [], contacts = [], activities = {};
 let currentView = 'kanban', selectedOppId = null, editingOppId = null;
 
+// Stages — labels resolved at render time via t() so they follow the active language
 const STAGES = [
-  {key:'lead',label:'Lead',color:'#3b82f6',bg:'#eff6ff'},
-  {key:'contacted',label:'İletişimde',color:'#8b5cf6',bg:'#f5f3ff'},
-  {key:'proposal',label:'Teklif Verildi',color:'#f59e0b',bg:'#fffbeb'},
-  {key:'negotiation',label:'Müzakerede',color:'#f97316',bg:'#fff7ed'},
-  {key:'won',label:'Kazanıldı',color:'#22c55e',bg:'#f0fdf4'},
-  {key:'lost',label:'Kaybedildi',color:'#6b7280',bg:'#f9fafb'},
-  {key:'postponed',label:'Ertelendi',color:'#94a3b8',bg:'#f8fafc'}
+  {key:'lead',i18n:'crm_stage_lead',color:'#3b82f6',bg:'#eff6ff'},
+  {key:'contacted',i18n:'crm_stage_contacted',color:'#8b5cf6',bg:'#f5f3ff'},
+  {key:'proposal',i18n:'crm_stage_proposal',color:'#f59e0b',bg:'#fffbeb'},
+  {key:'negotiation',i18n:'crm_stage_negotiation',color:'#f97316',bg:'#fff7ed'},
+  {key:'won',i18n:'crm_stage_won',color:'#22c55e',bg:'#f0fdf4'},
+  {key:'lost',i18n:'crm_stage_lost',color:'#6b7280',bg:'#f9fafb'},
+  {key:'postponed',i18n:'crm_stage_postponed',color:'#94a3b8',bg:'#f8fafc'}
 ];
+function stageLabel(key) {
+  const s = STAGES.find(x => x.key === key);
+  return s ? t(s.i18n) : key;
+}
 
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -323,17 +363,17 @@ async function loadContacts() {
   const { data } = await sb.from('contacts').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name');
   contacts = data || [];
   const sel = document.getElementById('opp-contact');
-  sel.innerHTML = '<option value="">Seç...</option>' + contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  sel.innerHTML = `<option value="">${t('crm_select_prompt')}</option>` + contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 function F(n) { return fmt(n); }
 function relTime(d) {
   if (!d) return '';
   const diff = Math.floor((Date.now() - new Date(d)) / 86400000);
-  if (diff === 0) return 'Bugün';
-  if (diff === 1) return 'Dün';
-  if (diff < 0) return Math.abs(diff) + ' gün sonra';
-  return diff + ' gün önce';
+  if (diff === 0) return t('crm_today');
+  if (diff === 1) return t('crm_yesterday');
+  if (diff < 0) return (t('crm_days_later') || '{n} days later').replace('{n}', Math.abs(diff));
+  return (t('crm_days_ago') || '{n} days ago').replace('{n}', diff);
 }
 
 function renderAll() {
@@ -356,7 +396,7 @@ function renderKanban(list) {
     const totalVal = items.reduce((sum, o) => sum + parseFloat(o.value || 0), 0);
     return `<div class="kanban-col">
       <div class="kanban-col-header" style="color:${s.color}">
-        <span>${s.label}</span>
+        <span>${t(s.i18n)}</span>
         <span class="badge" style="background:${s.bg};color:${s.color}">${items.length}</span>
       </div>
       <div class="kanban-col-body" ondragover="event.preventDefault()" ondrop="dropCard(event,'${s.key}')">
@@ -393,7 +433,7 @@ function renderList(list) {
     return `<tr onclick="openDrawer('${o.id}')" style="cursor:pointer">
       <td><strong>${o.contacts?.name || '—'}</strong></td>
       <td>${o.title}</td>
-      <td><span class="stage-badge" style="background:${s.bg};color:${s.color}">${s.label}</span></td>
+      <td><span class="stage-badge" style="background:${s.bg};color:${s.color}">${t(s.i18n)}</span></td>
       <td class="text-right" style="font-weight:600">${F(o.value)}</td>
       <td class="text-right">${o.probability}%</td>
       <td style="color:var(--gray500)">—</td>
@@ -431,7 +471,7 @@ function closeModal(id) { document.getElementById(id)?.classList.remove('open');
 
 function openOppModal() {
   editingOppId = null;
-  document.getElementById('opp-modal-title').textContent = 'Yeni Fırsat';
+  document.getElementById('opp-modal-title').textContent = t('crm_modal_new_opp');
   document.getElementById('opp-contact').value = '';
   document.getElementById('opp-title').value = '';
   document.getElementById('opp-value').value = '';
@@ -446,7 +486,7 @@ function editOpp() {
   const o = opps.find(x => x.id === selectedOppId);
   if (!o) return;
   editingOppId = o.id;
-  document.getElementById('opp-modal-title').textContent = 'Fırsatı Düzenle';
+  document.getElementById('opp-modal-title').textContent = t('crm_modal_edit_opp');
   document.getElementById('opp-contact').value = o.contact_id || '';
   document.getElementById('opp-title').value = o.title;
   document.getElementById('opp-value').value = o.value || '';
@@ -460,7 +500,7 @@ function editOpp() {
 async function saveOpp() {
   const title = document.getElementById('opp-title').value.trim();
   const contactId = document.getElementById('opp-contact').value;
-  if (!title) { showToast('Başlık giriniz', 'error'); return; }
+  if (!title) { showToast(t('crm_toast_title_required'), 'error'); return; }
   const payload = {
     company_id: companyId,
     contact_id: contactId || null,
@@ -481,7 +521,7 @@ async function saveOpp() {
   }
   closeModal('opp-modal');
   await loadOpps();
-  showToast('Fırsat kaydedildi', 'success');
+  showToast(t('crm_toast_opp_saved'), 'success');
 }
 
 // DRAWER
@@ -497,7 +537,7 @@ function openDrawer(id) {
   document.getElementById('dr-close').textContent = o.expected_close_date || '—';
   // Stage dropdown
   const stageSel = document.getElementById('dr-stage');
-  stageSel.innerHTML = STAGES.map(s => `<option value="${s.key}" ${s.key===o.stage?'selected':''}>${s.label}</option>`).join('');
+  stageSel.innerHTML = STAGES.map(s => `<option value="${s.key}" ${s.key===o.stage?'selected':''}>${t(s.i18n)}</option>`).join('');
   document.getElementById('act-form').style.display = 'none';
   // Reset to quotes tab
   document.getElementById('dr-tab-quotes').style.display = '';
@@ -527,7 +567,7 @@ async function loadTimeline(oppId) {
   const { data } = await sb.from('crm_activities').select('*').eq('opportunity_id', oppId).order('created_at', { ascending: false });
   const icons = { call:'📞', email:'📧', meeting:'🤝', whatsapp:'💬', note:'📝' };
   const tl = document.getElementById('dr-timeline');
-  if (!data?.length) { tl.innerHTML = '<div style="color:var(--gray400);font-size:12px;padding:10px 0">Henüz aktivite yok</div>'; return; }
+  if (!data?.length) { tl.innerHTML = `<div style="color:var(--gray400);font-size:12px;padding:10px 0">${t('crm_no_activities')}</div>`; return; }
   tl.innerHTML = data.map(a => `<div class="tl-item">
     <div class="tl-icon">${icons[a.type]||'📝'}</div>
     <div class="tl-content">
@@ -551,7 +591,7 @@ function addActivity(type) {
 async function saveActivity() {
   const type = document.getElementById('act-type').value;
   const desc = document.getElementById('act-desc').value.trim();
-  if (!desc) { showToast('Açıklama giriniz', 'error'); return; }
+  if (!desc) { showToast(t('crm_toast_desc_required'), 'error'); return; }
   const nextAction = document.getElementById('act-next').value.trim() || null;
   const nextDate = document.getElementById('act-next-date').value || null;
   await sb.from('crm_activities').insert({
@@ -570,7 +610,7 @@ async function saveActivity() {
   document.getElementById('act-form').style.display = 'none';
   await loadOpps();
   loadTimeline(selectedOppId);
-  showToast('Aktivite kaydedildi', 'success');
+  showToast(t('crm_toast_act_saved'), 'success');
 }
 
 // ===== DRAWER TABS =====
@@ -615,7 +655,7 @@ function renderQuoteItems() {
   const inputS = 'padding:4px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box;';
   tbody.innerHTML = quoteItems.map((it, i) => `<tr>
     <td style="padding:4px"><select onchange="onQuoteProductSelect(${i},this.value)" style="${inputS}">
-      <option value="">Seç...</option>${products.map(p => `<option value="${p.id}" ${p.id === it.product_id ? 'selected' : ''}>${p.name}</option>`).join('')}
+      <option value="">${t('crm_select_prompt')}</option>${products.map(p => `<option value="${p.id}" ${p.id === it.product_id ? 'selected' : ''}>${p.name}</option>`).join('')}
     </select></td>
     <td style="padding:4px"><input type="number" value="${it.qty || 1}" min="0.001" step="0.001" onchange="quoteItems[${i}].qty=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
     <td style="padding:4px"><input type="number" value="${it.price || 0}" min="0" step="0.01" onchange="quoteItems[${i}].price=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
@@ -647,14 +687,14 @@ function recalcQuote() {
     const el = document.getElementById('qi-total-' + i);
     if (el) el.textContent = F(lt);
   });
-  document.getElementById('q-total-display').textContent = 'TOPLAM: ' + F(total);
+  document.getElementById('q-total-display').textContent = t('crm_total_label') + ': ' + F(total);
 }
 
 async function saveQuote() {
   const contactId = document.getElementById('q-contact').value;
-  if (!contactId) { showToast('Müşteri seçin', 'error'); return; }
+  if (!contactId) { showToast(t('crm_toast_customer_required'), 'error'); return; }
   const validItems = quoteItems.filter(it => it.qty > 0 && (it.product_id || it.description));
-  if (!validItems.length) { showToast('En az bir kalem ekleyin', 'error'); return; }
+  if (!validItems.length) { showToast(t('crm_toast_add_item'), 'error'); return; }
   const subtotal = validItems.reduce((s, it) => s + it.qty * it.price, 0);
   const { error, data: quote } = await sb.from('crm_quotes').insert({
     company_id: companyId, opportunity_id: selectedOppId, contact_id: contactId,
@@ -677,15 +717,15 @@ async function saveQuote() {
   await sb.from('crm_quote_items').insert(items);
   closeModal('quote-modal');
   loadQuotes(selectedOppId);
-  showToast('Teklif kaydedildi: ' + quote.quote_number, 'success');
+  showToast(t('crm_toast_quote_saved') + ': ' + quote.quote_number, 'success');
 }
 
 async function loadQuotes(oppId) {
   const { data } = await sb.from('crm_quotes').select('*').eq('opportunity_id', oppId).order('created_at', { ascending: false });
   const list = document.getElementById('dr-quotes-list');
   const statusColors = { draft:'var(--gray500)', sent:'var(--primary)', accepted:'var(--green)', rejected:'var(--red)', expired:'var(--orange)' };
-  const statusLabels = { draft:'Taslak', sent:'Gönderildi', accepted:'Kabul', rejected:'Red', expired:'Süresi Doldu' };
-  if (!data?.length) { list.innerHTML = '<div style="color:var(--gray400);font-size:12px;padding:8px 0">Henüz teklif yok</div>'; return; }
+  const statusLabels = { draft:t('crm_qstat_draft'), sent:t('crm_qstat_sent'), accepted:t('crm_qstat_accepted'), rejected:t('crm_qstat_rejected'), expired:t('crm_qstat_expired') };
+  if (!data?.length) { list.innerHTML = `<div style="color:var(--gray400);font-size:12px;padding:8px 0">${t('crm_no_quotes')}</div>`; return; }
   list.innerHTML = data.map(q => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray100)">
     <div>
       <div style="font-weight:600">${q.quote_number}</div>
@@ -696,10 +736,10 @@ async function loadQuotes(oppId) {
       <button class="btn btn-outline btn-sm" onclick="viewQuotePDF('${q.id}')" title="PDF">📄</button>
       ${q.status === 'accepted' && !q.converted_to_order_id ? `<button class="btn btn-primary btn-sm" onclick="convertQuoteToOrder('${q.id}')">🛒</button>` : ''}
       ${q.status === 'draft' ? `<select onchange="updateQuoteStatus('${q.id}',this.value);this.value=''" style="padding:2px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:10px">
-        <option value="">Durum</option><option value="sent">Gönderildi</option><option value="accepted">Kabul</option><option value="rejected">Red</option>
+        <option value="">${t('crm_qstat_change')}</option><option value="sent">${t('crm_qstat_sent')}</option><option value="accepted">${t('crm_qstat_accepted')}</option><option value="rejected">${t('crm_qstat_rejected')}</option>
       </select>` : ''}
       ${q.status === 'sent' ? `<select onchange="updateQuoteStatus('${q.id}',this.value);this.value=''" style="padding:2px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:10px">
-        <option value="">Durum</option><option value="accepted">Kabul</option><option value="rejected">Red</option>
+        <option value="">${t('crm_qstat_change')}</option><option value="accepted">${t('crm_qstat_accepted')}</option><option value="rejected">${t('crm_qstat_rejected')}</option>
       </select>` : ''}
     </div>
   </div>`).join('');
@@ -709,7 +749,7 @@ async function updateQuoteStatus(quoteId, status) {
   if (!status) return;
   await sb.from('crm_quotes').update({ status }).eq('id', quoteId);
   loadQuotes(selectedOppId);
-  showToast('Teklif durumu güncellendi', 'success');
+  showToast(t('crm_toast_quote_status_updated'), 'success');
 }
 
 async function convertQuoteToOrder(quoteId) {
@@ -748,7 +788,7 @@ async function convertQuoteToOrder(quoteId) {
   if (opp) opp.stage = 'won';
   renderAll();
   loadQuotes(selectedOppId);
-  showToast('Teklif siparişe dönüştürüldü! ' + orderNumber, 'success');
+  showToast(t('crm_toast_quote_converted') + ': ' + orderNumber, 'success');
 }
 
 async function viewQuotePDF(quoteId) {
@@ -757,7 +797,25 @@ async function viewQuotePDF(quoteId) {
   if (!q) return;
   const w = window.open('', '_blank');
   const rows = (items||[]).map((it,i) => `<tr><td>${i+1}</td><td>${it.products?.name||it.description||'—'}</td><td style="text-align:right">${it.quantity} ${it.products?.unit||it.unit||''}</td><td style="text-align:right">${F(it.unit_price)}</td><td style="text-align:right;font-weight:700">${F(it.total)}</td></tr>`).join('');
-  w.document.write(`<!DOCTYPE html><html><head><title>Teklif ${q.quote_number}</title>
+  const L = {
+    stamp: t('crm_pdf_quote_stamp'),
+    date: t('crm_pdf_date'),
+    validity: t('crm_pdf_validity'),
+    currency: t('crm_pdf_currency'),
+    taxno: t('crm_pdf_taxno'),
+    product: t('crm_col_product'),
+    qty: t('crm_col_qty'),
+    unitPrice: t('crm_col_unit_price'),
+    total: t('crm_col_total'),
+    subtotal: t('crm_pdf_subtotal'),
+    tax: t('crm_pdf_tax'),
+    discount: t('crm_pdf_discount'),
+    grand: t('crm_total_label'),
+    terms: t('crm_pdf_terms_label'),
+    validMsg: q.valid_until ? (t('crm_pdf_valid_msg')||'').replace('{date}', `<strong>${q.valid_until}</strong>`) : '',
+    signature: t('crm_pdf_signature'),
+  };
+  w.document.write(`<!DOCTYPE html><html><head><title>${L.stamp} ${q.quote_number}</title>
   <style>body{font-family:Arial,sans-serif;padding:30px;color:#333;max-width:800px;margin:0 auto}
   .header{display:flex;justify-content:space-between;margin-bottom:30px}
   .stamp{background:#166534;color:#fff;padding:8px 24px;border-radius:6px;font-size:22px;font-weight:800;letter-spacing:2px;display:inline-block}
@@ -773,31 +831,31 @@ async function viewQuotePDF(quoteId) {
   .sig-box{border:1px dashed #ccc;width:200px;height:80px;margin-top:30px;display:flex;align-items:flex-end;justify-content:center;padding:8px;font-size:11px;color:#999}
   @media print{body{padding:0}}</style></head><body>
   <div class="header">
-    <div><div class="stamp">TEKLİF</div><div style="margin-top:8px;font-size:12px;color:#666">${q.quote_number}</div></div>
+    <div><div class="stamp">${L.stamp}</div><div style="margin-top:8px;font-size:12px;color:#666">${q.quote_number}</div></div>
     <div class="info" style="text-align:right">
-      <strong>Tarih:</strong> ${new Date(q.created_at).toLocaleDateString()}<br>
-      <strong>Geçerlilik:</strong> ${q.valid_until || '—'}<br>
-      ${q.currency_code ? '<strong>Para Birimi:</strong> ' + q.currency_code : ''}
+      <strong>${L.date}:</strong> ${new Date(q.created_at).toLocaleDateString()}<br>
+      <strong>${L.validity}:</strong> ${q.valid_until || '—'}<br>
+      ${q.currency_code ? '<strong>'+L.currency+':</strong> ' + q.currency_code : ''}
     </div>
   </div>
   <div class="info" style="margin-bottom:20px">
     <strong>${q.contacts?.name || '—'}</strong><br>
-    ${q.contacts?.address || ''}${q.contacts?.tax_number ? '<br>VKN: ' + q.contacts.tax_number : ''}
+    ${q.contacts?.address || ''}${q.contacts?.tax_number ? '<br>'+L.taxno+': ' + q.contacts.tax_number : ''}
     ${q.contacts?.email ? '<br>' + q.contacts.email : ''}${q.contacts?.phone ? ' · ' + q.contacts.phone : ''}
   </div>
-  <table><thead><tr><th>#</th><th>Ürün</th><th style="text-align:right">Miktar</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">Toplam</th></tr></thead><tbody>${rows}</tbody></table>
+  <table><thead><tr><th>#</th><th>${L.product}</th><th style="text-align:right">${L.qty}</th><th style="text-align:right">${L.unitPrice}</th><th style="text-align:right">${L.total}</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="totals">
-    <div><span>Ara Toplam</span><span>${F(q.subtotal)}</span></div>
-    ${q.tax_amount > 0 ? `<div><span>Vergi</span><span>${F(q.tax_amount)}</span></div>` : ''}
-    ${q.discount > 0 ? `<div><span>İndirim</span><span>-${F(q.discount)}</span></div>` : ''}
-    <div class="grand"><span>TOPLAM</span><span>${F(q.total)}</span></div>
+    <div><span>${L.subtotal}</span><span>${F(q.subtotal)}</span></div>
+    ${q.tax_amount > 0 ? `<div><span>${L.tax}</span><span>${F(q.tax_amount)}</span></div>` : ''}
+    ${q.discount > 0 ? `<div><span>${L.discount}</span><span>-${F(q.discount)}</span></div>` : ''}
+    <div class="grand"><span>${L.grand}</span><span>${F(q.total)}</span></div>
   </div>
   <div style="clear:both"></div>
-  ${q.terms ? `<div style="margin-top:20px;padding:10px;background:#f8f9fa;border-radius:6px;font-size:12px"><strong>Ödeme Koşulları:</strong> ${q.terms}</div>` : ''}
+  ${q.terms ? `<div style="margin-top:20px;padding:10px;background:#f8f9fa;border-radius:6px;font-size:12px"><strong>${L.terms}:</strong> ${q.terms}</div>` : ''}
   ${q.notes ? `<div style="margin-top:8px;font-size:12px;color:#666">📝 ${q.notes}</div>` : ''}
   <div class="footer">
-    ${q.valid_until ? `Bu teklif <strong>${q.valid_until}</strong> tarihine kadar geçerlidir.` : ''}
-    <div class="sig-box">Yetkili İmza / Kaşe</div>
+    ${L.validMsg}
+    <div class="sig-box">${L.signature}</div>
   </div>
   <script>window.print();<\/script></body></html>`);
   w.document.close();
