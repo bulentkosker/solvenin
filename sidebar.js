@@ -1160,22 +1160,22 @@
     try {
       const sb = window._supabase || window.supabase;
       const { data: { user: currentUser } } = await sb.auth.getUser();
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+      if (!currentUser) { toast('Not authenticated', 'error'); return; }
 
-      const { data: comp, error } = await sb.from('companies').insert({
-        name, slug, plan: 'free', owner_id: currentUser.id, status: 'active', country_code: countryCode,
-        max_users: 3
-      }).select().single();
-      if (error) throw error;
-
-      const { error: cuError } = await sb.from('company_users').insert({
-        company_id: comp.id,
-        user_id: currentUser.id,
-        role: 'owner',
-        status: 'active',
-        joined_at: new Date().toISOString()
+      // Use the SECURITY DEFINER RPC — atomic create + owner link.
+      // Bypasses the RLS edge cases that bit us when the supabase-js
+      // client connection didn't have its role elevated to authenticated.
+      const { data: rpcResult, error: rpcError } = await sb.rpc('create_company_for_user', {
+        p_name: name,
+        p_country_code: countryCode,
+        p_base_currency: 'USD',
+        p_user_id: currentUser.id,
       });
-      if (cuError) console.error('company_users insert error:', cuError);
+      if (rpcError) throw rpcError;
+      if (!rpcResult || rpcResult.success === false) {
+        throw new Error((rpcResult && rpcResult.error) || 'Failed to create company');
+      }
+      const comp = { id: rpcResult.company_id };
 
       // Copy tax rates from localization or templates
       const { data: loc } = await sb.from('localizations')
