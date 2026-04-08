@@ -725,6 +725,64 @@ tr:hover td { background: var(--gray50); }
   <div class="load-bar"><div class="load-fill"></div></div>
 </div>
 
+<!-- ONBOARDING — first company create -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(180deg,#0a0f1e 0%,#1a2744 100%);z-index:9000;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif;color:#fff;overflow-y:auto">
+  <div style="max-width:480px;width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:40px 36px;backdrop-filter:blur(8px)">
+    <div style="font-family:'Outfit',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;text-align:center;margin-bottom:8px">solvenin<span style="color:#38bdf8">.</span></div>
+    <div style="font-size:48px;text-align:center;margin:16px 0 8px">👋</div>
+    <h1 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;text-align:center;margin-bottom:8px" data-i18n="onboarding_welcome">Welcome!</h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.7);text-align:center;line-height:1.5;margin-bottom:28px" data-i18n="onboarding_create_company">Create your company to get started</p>
+
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="onboarding_company_name">Company Name</span> *</label>
+      <input type="text" id="onboarding-company-name" placeholder="Acme Corp" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="label_country">Country</span> *</label>
+      <select id="onboarding-country" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+        <option value="">—</option>
+      </select>
+    </div>
+    <div style="margin-bottom:22px">
+      <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="label_base_currency">Base Currency</span> *</label>
+      <select id="onboarding-currency" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+        <option value="">—</option>
+        <option value="USD">USD — US Dollar</option>
+        <option value="EUR">EUR — Euro</option>
+        <option value="TRY">TRY — Türk Lirası</option>
+        <option value="KZT">KZT — Tenge ₸</option>
+        <option value="RUB">RUB — Russian Ruble</option>
+        <option value="GBP">GBP — Pound Sterling</option>
+        <option value="AZN">AZN — Manat</option>
+        <option value="UZS">UZS — Uzbek Sum</option>
+        <option value="KGS">KGS — Kyrgyzstani Som</option>
+      </select>
+    </div>
+    <button id="onboarding-create-btn" onclick="createFirstCompany()" style="width:100%;padding:14px;background:#38bdf8;color:#0a0f1e;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s"><span data-i18n="onboarding_create_button">Create Company</span> →</button>
+    <p style="font-size:11px;color:rgba(255,255,255,0.45);text-align:center;margin-top:18px;line-height:1.5" data-i18n="onboarding_later_info">You can change this information later in settings.</p>
+
+    <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
+      <button onclick="(async()=>{try{await sb.auth.signOut()}catch(e){}localStorage.clear();location.href='auth.html'})()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;font-family:inherit" data-i18n="btn_logout">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETED ACCOUNT SCREEN -->
+<div id="deleted-account-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(180deg,#0a0f1e 0%,#1a2744 100%);z-index:9000;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif;color:#fff">
+  <div style="max-width:480px;width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:40px 36px;text-align:center;backdrop-filter:blur(8px)">
+    <div style="font-family:'Outfit',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:24px">solvenin<span style="color:#38bdf8">.</span></div>
+    <div style="font-size:64px;margin-bottom:16px">🗑️</div>
+    <h1 style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;margin-bottom:12px" data-i18n="onboarding_deleted_company">Account Deleted</h1>
+    <div style="font-size:15px;color:rgba(255,255,255,0.75);margin-bottom:8px"><strong id="deleted-company-name">—</strong></div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:20px"><span data-i18n="onboarding_days_left">Days remaining:</span> <strong id="deleted-days-left" style="color:#fbbf24">—</strong></div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:20px"><span data-i18n="onboarding_restore_info">To restore your account contact</span><br><a href="mailto:support@solvenin.com" style="color:#38bdf8;text-decoration:none">support@solvenin.com</a></p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="document.getElementById('deleted-account-overlay').style.display='none';showOnboarding()" style="padding:12px;background:#38bdf8;color:#0a0f1e;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit" data-i18n="onboarding_create_new">Create New Company</button>
+      <button onclick="(async()=>{try{await sb.auth.signOut()}catch(e){}localStorage.clear();location.href='auth.html'})()" style="padding:12px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit" data-i18n="btn_logout">Sign Out</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar"></aside>
 
@@ -971,11 +1029,13 @@ window._supabase = sb;
 
 let companyId = null;
 
+let currentUser = null;
+
 // ===== INIT =====
 async function init() {
-  const [sessionRes, companiesRes] = await Promise.all([
+  const [sessionRes, stateRes] = await Promise.all([
     sb.auth.getSession(),
-    sb.rpc('get_my_companies')
+    sb.rpc('get_my_account_state')
   ]);
   const session = sessionRes.data.session;
 
@@ -985,19 +1045,33 @@ async function init() {
   }
 
   const user = session.user;
+  currentUser = user;
   const meta = user.user_metadata;
 
-  // Name
+  // Name (always show, even on onboarding)
   const name = meta.full_name || meta.name || user.email.split('@')[0];
   const firstName = name.split(' ')[0];
-  document.getElementById('greeting-name').textContent = firstName;
+  const greetEl = document.getElementById('greeting-name');
+  if (greetEl) greetEl.textContent = firstName;
   (document.getElementById('sb-user-name')||{}).textContent = name;
   (document.getElementById('sb-user-avatar')||{}).textContent = firstName[0].toUpperCase();
 
-  // Company & Plan
+  // Account state gate
+  const state = stateRes.data;
+  if (!state || state.state === 'first_time') {
+    showOnboarding();
+    return;
+  }
+  if (state.state === 'all_deleted') {
+    showDeletedAccountScreen(state.companies || []);
+    return;
+  }
+
+  // Has at least one active company → continue with normal flow
+  const companiesRes = await sb.rpc('get_my_companies');
+  const companies = companiesRes.data;
   let plan = 'free';
   const savedId = localStorage.getItem('currentCompanyId');
-  const companies = companiesRes.data;
   if (companies && companies.length > 0) {
     const active = savedId ? companies.find(c => c.company_id === savedId) || companies.find(c => c.is_active) || companies[0] : companies.find(c => c.is_active) || companies[0];
     companyId = active.company_id;
@@ -1005,6 +1079,10 @@ async function init() {
     plan = active.plan || 'free';
     (document.getElementById('sb-company-name')||{}).textContent = active.company_name || '';
     (document.getElementById('sb-company-plan')||{}).textContent = plan.toUpperCase();
+  } else {
+    // RPC said active but get_my_companies returned empty — defensive fallback
+    showOnboarding();
+    return;
   }
   (document.getElementById('sb-user-plan')||{}).textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   if (plan === 'free') document.getElementById('plan-banner').style.display = 'flex';
@@ -1033,6 +1111,124 @@ async function init() {
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+}
+
+// ===== ONBOARDING / DELETED ACCOUNT GATE =====
+async function showOnboarding() {
+  // Hide loading screen and chrome
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200); }
+  document.querySelector('aside.sidebar').style.display = 'none';
+  document.querySelector('.main').style.display = 'none';
+
+  const overlay = document.getElementById('onboarding-overlay');
+  overlay.style.display = 'flex';
+
+  // Populate the country dropdown from localizations (cached)
+  try {
+    const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+    const sel = document.getElementById('onboarding-country');
+    if (data && sel) {
+      sel.innerHTML = '<option value="">—</option>' +
+        data.map(c => `<option value="${c.country_code}">${c.country_name}</option>`).join('');
+    }
+  } catch (e) { console.warn('country load failed', e); }
+
+  // Re-translate any data-i18n that just appeared
+  if (typeof applyTranslations === 'function') applyTranslations();
+}
+
+async function showDeletedAccountScreen(deletedCompanies) {
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200); }
+  document.querySelector('aside.sidebar').style.display = 'none';
+  document.querySelector('.main').style.display = 'none';
+
+  const overlay = document.getElementById('deleted-account-overlay');
+  overlay.style.display = 'flex';
+
+  if (deletedCompanies.length > 0) {
+    const c = deletedCompanies[0]; // most recent
+    document.getElementById('deleted-company-name').textContent = c.name || '—';
+    document.getElementById('deleted-days-left').textContent = c.days_left;
+  }
+  if (typeof applyTranslations === 'function') applyTranslations();
+}
+
+async function createFirstCompany() {
+  const name = document.getElementById('onboarding-company-name').value.trim();
+  const country = document.getElementById('onboarding-country').value;
+  const currency = document.getElementById('onboarding-currency').value;
+
+  if (!name || !country || !currency) {
+    showToast(t('onboarding_fill_required') || 'Please fill all required fields', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('onboarding-create-btn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ ' + (t('lbl_loading') || 'Loading...');
+
+  try {
+    // 1. Insert the company
+    const { data: company, error } = await sb.from('companies').insert({
+      name,
+      country_code: country,
+      base_currency: currency,
+      plan: 'free',
+      subscription_status: 'trial',
+      subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      max_users: 3,
+    }).select('id').single();
+
+    if (error) {
+      console.error('createFirstCompany error:', error);
+      showToast(t('onboarding_create_error') || 'Could not create company, please try again', 'error');
+      btn.disabled = false; btn.innerHTML = orig;
+      return;
+    }
+
+    // 2. Link the user as owner — this is critical, without it RLS hides the company
+    const { error: cuError } = await sb.from('company_users').insert({
+      company_id: company.id,
+      user_id: currentUser.id,
+      role: 'owner',
+      status: 'active',
+    });
+    if (cuError) {
+      console.error('company_users link error:', cuError);
+      showToast(t('onboarding_create_error') || 'Could not create company, please try again', 'error');
+      btn.disabled = false; btn.innerHTML = orig;
+      return;
+    }
+
+    // 3. Persist the new company id and reload
+    localStorage.setItem('currentCompanyId', company.id);
+    window.location.reload();
+  } catch (e) {
+    console.error(e);
+    showToast(t('onboarding_create_error') || 'Could not create company, please try again', 'error');
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
+// Lightweight toast helper for the onboarding overlay (the main toast
+// system might not be loaded yet when the overlay is showing)
+function showToast(msg, type) {
+  // Reuse existing showToast if already defined
+  if (window.__realShowToast) return window.__realShowToast(msg, type);
+  let el = document.getElementById('_ob_toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_ob_toast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s;color:#fff;font-family:DM Sans,sans-serif';
+    document.body.appendChild(el);
+  }
+  el.style.background = type === 'error' ? '#dc2626' : '#1e40af';
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 3500);
 }
 
 function applyDashboardLogo() {
