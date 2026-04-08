@@ -1071,6 +1071,44 @@
     SR:'Главно складиште', SK:'Hlavný sklad', SL:'Glavno skladišče'
   };
 
+  // Hardcoded fallback country list — used when localizations RPC fails
+  // (RLS issue, network down, etc.) so the new-company modal never gets
+  // stuck on a "Loading..." placeholder.
+  const FALLBACK_COUNTRIES = [
+    {country_code:'TR', country_name:'Türkiye'},
+    {country_code:'KZ', country_name:'Kazakhstan'},
+    {country_code:'KG', country_name:'Kyrgyzstan'},
+    {country_code:'UZ', country_name:'Uzbekistan'},
+    {country_code:'TM', country_name:'Turkmenistan'},
+    {country_code:'AZ', country_name:'Azerbaijan'},
+    {country_code:'RU', country_name:'Russia'},
+    {country_code:'US', country_name:'United States'},
+    {country_code:'GB', country_name:'United Kingdom'},
+    {country_code:'DE', country_name:'Germany'},
+    {country_code:'FR', country_name:'France'},
+    {country_code:'ES', country_name:'Spain'},
+    {country_code:'IT', country_name:'Italy'},
+    {country_code:'NL', country_name:'Netherlands'},
+    {country_code:'PL', country_name:'Poland'},
+    {country_code:'PT', country_name:'Portugal'},
+    {country_code:'BR', country_name:'Brazil'},
+    {country_code:'MX', country_name:'Mexico'},
+    {country_code:'CN', country_name:'China'},
+    {country_code:'JP', country_name:'Japan'},
+    {country_code:'KR', country_name:'South Korea'},
+    {country_code:'IN', country_name:'India'},
+    {country_code:'AE', country_name:'United Arab Emirates'},
+    {country_code:'SA', country_name:'Saudi Arabia'},
+    {country_code:'EG', country_name:'Egypt'},
+  ];
+
+  function _populateCountrySelect(sel, list) {
+    sel.innerHTML = list.map(c => `<option value="${c.country_code}">${c.country_name}</option>`).join('');
+    // Make TR default if present
+    const tr = list.find(c => c.country_code === 'TR');
+    if (tr) sel.value = 'TR';
+  }
+
   window.sidebarOpenNewCompany = async function() {
     const modal = document.getElementById('sb-new-company-modal');
     if (modal) modal.classList.add('open');
@@ -1078,14 +1116,24 @@
     if (menu) menu.style.display = 'none';
     // Load countries into dropdown
     const sel = document.getElementById('sb-new-company-country');
-    if (sel && sel.options.length <= 1) {
+    if (sel && (sel.options.length <= 1 || sel.options[0].value === '')) {
+      // Show loading state
+      sel.innerHTML = '<option value="">Loading…</option>';
       try {
         const sb = window._supabase || window.supabase;
-        const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+        const { data, error } = await sb.from('localizations').select('country_code, country_name').order('country_name');
+        if (error) throw error;
         if (data && data.length) {
-          sel.innerHTML = data.map(c => `<option value="${c.country_code}">${c.country_name}</option>`).join('');
+          _populateCountrySelect(sel, data);
+        } else {
+          // Empty result (RLS hiding rows or table empty) → fall back to hardcoded list
+          console.warn('[sidebar] localizations returned empty, using fallback country list');
+          _populateCountrySelect(sel, FALLBACK_COUNTRIES);
         }
-      } catch (e) { console.warn('Failed to load countries', e); }
+      } catch (e) {
+        console.warn('[sidebar] Failed to load countries from DB, using fallback:', e);
+        _populateCountrySelect(sel, FALLBACK_COUNTRIES);
+      }
     }
   };
 
