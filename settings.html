@@ -2051,12 +2051,28 @@ async function fetchRatesFromAPI() {
 }
 
 // ===== CATEGORIES =====
+// Active VAT-only tax rates (cached) — reused by category and product VAT pickers
+let _activeVatRates = [];
+async function loadActiveVatRates() {
+  if (!companyId) return [];
+  const { data } = await sb.from('tax_rates')
+    .select('id,name,rate,type,is_active')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .neq('type', 'withholding')
+    .order('rate');
+  _activeVatRates = (data || []).filter(r => (r.type || 'vat').toLowerCase() !== 'withholding');
+  return _activeVatRates;
+}
+
 async function loadCategories() {
   if (!companyId) return;
-  const { data, error } = await sb.from('categories')
-    .select('id,name,parent_id').eq('company_id', companyId).order('name');
-  if (error) { console.error(error); return; }
-  allCategories = data || [];
+  const [catsRes] = await Promise.all([
+    sb.from('categories').select('id,name,parent_id,tax_rate_id,tax_rate_override').eq('company_id', companyId).order('name'),
+    loadActiveVatRates(),
+  ]);
+  if (catsRes.error) { console.error(catsRes.error); return; }
+  allCategories = catsRes.data || [];
   renderCategoriesList();
 }
 
@@ -2089,10 +2105,23 @@ function renderCategoriesList() {
   container.innerHTML = html;
 }
 
+function _catVatLabel(cat) {
+  if (cat.tax_rate_id) {
+    const tr = _activeVatRates.find(r => r.id === cat.tax_rate_id);
+    return tr ? `KDV %${tr.rate}` : 'KDV';
+  }
+  if (cat.tax_rate_override != null) return `KDV %${cat.tax_rate_override}`;
+  return null;
+}
+
 function renderCatItem(cat, depth, childCount) {
   const indent = depth * 24;
   const icon = depth===0?'📁':depth===1?'📂':'📄';
   const meta = childCount ? `${childCount} sub-categor${childCount>1?'ies':'y'}` : '';
+  const vatLabel = _catVatLabel(cat);
+  const vatBadge = vatLabel
+    ? `<span onclick="openCatVatPicker('${cat.id}', this)" style="cursor:pointer;background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">${vatLabel}</span>`
+    : `<span onclick="openCatVatPicker('${cat.id}', this)" style="cursor:pointer;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">+ KDV</span>`;
   return `<div class="manage-item" style="padding-left:${indent}px">
     <div class="manage-item-icon">${icon}</div>
     <div class="manage-item-info">
@@ -2100,11 +2129,52 @@ function renderCatItem(cat, depth, childCount) {
       ${meta ? `<div class="manage-item-meta">${meta}</div>` : ''}
     </div>
     <div class="manage-item-actions">
+      ${vatBadge}
       ${depth < 2 ? `<button class="action-btn" title="Add sub-category" onclick="openAddCatForm('${cat.id}', ${depth+1})">＋</button>` : ''}
       <button class="action-btn" title="Rename" onclick="openRenameCat('${cat.id}')">✏️</button>
       <button class="action-btn danger" title="Delete" onclick="openDeleteCat('${cat.id}', '${cat.name}')">🗑️</button>
     </div>
   </div>`;
+}
+
+// Inline VAT picker for a category — opens a select dropdown right in the row
+async function openCatVatPicker(catId) {
+  if (!_activeVatRates.length) await loadActiveVatRates();
+  return _setCatVatInline(catId);
+}
+
+// Render an inline select inside the category row
+function _setCatVatInline(catId) {
+  const cat = allCategories.find(c => c.id === catId);
+  if (!cat) return;
+  const row = document.getElementById('cat-name-'+catId)?.closest('.manage-item');
+  if (!row) return;
+  // Hide actions, show inline picker
+  const actions = row.querySelector('.manage-item-actions');
+  if (!actions) return;
+  const orig = actions.innerHTML;
+  const opts = [
+    `<option value="">${t('label_no_tax')||'Vergi Yok (%0)'}</option>`,
+    ..._activeVatRates.map(r => `<option value="${r.id}" ${cat.tax_rate_id === r.id ? 'selected' : ''}>${r.name} (${r.rate}%)</option>`),
+  ].join('');
+  actions.innerHTML = `
+    <select id="_cv_${catId}" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;max-width:180px">${opts}</select>
+    <button class="action-btn" onclick="_saveCatVat('${catId}')">✓</button>
+    <button class="action-btn" onclick="renderCategoriesList()">✕</button>
+  `;
+  document.getElementById('_cv_'+catId).focus();
+}
+
+async function _saveCatVat(catId) {
+  const sel = document.getElementById('_cv_'+catId);
+  if (!sel) return;
+  const newId = sel.value || null;
+  const { error } = await sb.from('categories').update({ tax_rate_id: newId, tax_rate_override: null }).eq('id', catId);
+  if (error) { showToast(error.message, 'error'); return; }
+  const cat = allCategories.find(c => c.id === catId);
+  if (cat) { cat.tax_rate_id = newId; cat.tax_rate_override = null; }
+  renderCategoriesList();
+  showToast(t('toast_saved') || 'Saved', 'success');
 }
 
 function openAddCatForm(parentId, depth) {
@@ -3069,10 +3139,18 @@ async function loadInvoiceSettings() {
   document.getElementById('inv-purchase-prefix').value = s.purchase_number_format || '';
   document.getElementById('inv-default-due-days').value = s.default_due_days ?? 30;
   document.getElementById('inv-default-notes').value = s.default_notes || '';
-  // Populate tax rates dropdown
-  const { data: taxes } = await sb.from('tax_rates').select('id,name,rate').eq('company_id', companyId).order('rate');
+  // Populate VAT-only tax rates dropdown — exclude withholding (stopaj)
+  // and inactive rates so the invoice default never accidentally picks
+  // a withholding rate.
+  const { data: taxes } = await sb.from('tax_rates')
+    .select('id,name,rate,type,is_active')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .neq('type', 'withholding')
+    .order('rate');
   const taxSel = document.getElementById('inv-default-tax');
-  taxSel.innerHTML = '<option value="">Vergi yok</option>' + (taxes||[]).map(t => `<option value="${t.id}" ${t.id===s.default_tax_id?'selected':''}>${t.name} (${t.rate}%)</option>`).join('');
+  taxSel.innerHTML = '<option value="">' + (t('label_no_tax')||'Vergi yok') + '</option>' +
+    (taxes||[]).map(tr => `<option value="${tr.id}" ${tr.id===s.default_tax_id?'selected':''}>${tr.name} (${tr.rate}%)</option>`).join('');
   // Populate warehouses dropdown
   const { data: whs } = await sb.from('warehouses').select('id,name').eq('company_id', companyId).order('name');
   const whSel = document.getElementById('inv-default-warehouse');
@@ -3093,7 +3171,14 @@ async function saveInvoiceSettings() {
     default_warehouse_id: document.getElementById('inv-default-warehouse').value || null,
     default_notes: document.getElementById('inv-default-notes').value.trim() || null,
   };
-  const { error } = await sb.from('companies').update({ invoice_settings: settings }).eq('id', companyId);
+  // Persist BOTH the legacy invoice_settings.default_tax_id AND the new
+  // top-level companies.default_tax_rate_id so server-side RPCs
+  // (get_product_tax_rate, etc.) can read it directly.
+  const updates = {
+    invoice_settings: settings,
+    default_tax_rate_id: settings.default_tax_id || null,
+  };
+  const { error } = await sb.from('companies').update(updates).eq('id', companyId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(t('toast_settings_saved') || 'Ayarlar kaydedildi', 'success');
 }

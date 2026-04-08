@@ -792,6 +792,7 @@ async function init() {
   accountingEnabled = !!compSettings?.accounting_enabled;
   _invoiceSettings = compSettings?.invoice_settings || {};
 await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadCashBankAccounts()]);
+await loadVatRefs();
   var savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
@@ -824,14 +825,62 @@ async function loadSuppliers() {
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,cost_price,unit,product_type,is_service,quantity').eq('company_id', companyId).eq('is_active', true).order('is_service').order('name');
+  const { data } = await sb.from('products')
+    .select('id,name,cost_price,unit,product_type,is_service,quantity,category_id,tax_source,tax_rate_id,tax_rate_override')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .order('is_service').order('name');
   products = data || [];
 }
 
 async function loadTaxRates() {
-  const { data } = await sb.from('tax_rates').select('id,name,rate').eq('company_id', companyId).eq('is_active', true).order('rate');
-  taxRates = data || [];
+  // VAT-only — exclude withholding (stopaj)
+  const { data } = await sb.from('tax_rates')
+    .select('id,name,rate,type,is_active')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .neq('type', 'withholding')
+    .order('rate');
+  taxRates = (data || []).filter(r => (r.type || 'vat').toLowerCase() !== 'withholding');
   populateTaxSelect();
+}
+
+// VAT resolution refs (mirror sales.html)
+let _vatCategories = [];
+let _vatCompanyDefaultRate = 0;
+async function loadVatRefs() {
+  const [catsRes, coRes] = await Promise.all([
+    sb.from('categories').select('id,tax_rate_id,tax_rate_override').eq('company_id', companyId),
+    sb.from('companies').select('default_tax_rate_id').eq('id', companyId).single(),
+  ]);
+  _vatCategories = catsRes.data || [];
+  const defId = coRes.data?.default_tax_rate_id;
+  _vatCompanyDefaultRate = (taxRates.find(r => r.id === defId)?.rate) || 0;
+}
+
+function resolveProductTaxRate(productId) {
+  const p = products.find(x => x.id === productId);
+  if (!p) return 0;
+  const src = p.tax_source || 'category';
+  if (src === 'manual') {
+    if (p.tax_rate_id) {
+      const tr = taxRates.find(r => r.id === p.tax_rate_id);
+      if (tr) return Number(tr.rate);
+    }
+    return Number(p.tax_rate_override || 0);
+  }
+  if (src === 'fixed') return _vatCompanyDefaultRate;
+  if (p.category_id) {
+    const cat = _vatCategories.find(c => c.id === p.category_id);
+    if (cat) {
+      if (cat.tax_rate_id) {
+        const tr = taxRates.find(r => r.id === cat.tax_rate_id);
+        if (tr) return Number(tr.rate);
+      }
+      if (cat.tax_rate_override != null) return Number(cat.tax_rate_override);
+    }
+  }
+  return _vatCompanyDefaultRate;
 }
 
 function populateTaxSelect() {
@@ -1358,7 +1407,10 @@ function renderOrderItems() {
         orderItems[idx].price = parseFloat(p?._price || 0);
         orderItems[idx].description = (p?.name || '').replace(/^[📦🔧]\s/, '');
         orderItems[idx].is_service = !!p?._is_service;
+        // Auto-resolve per-line VAT rate from product/category/company default
+        orderItems[idx].tax_rate_value = resolveProductTaxRate(id);
         recalcOrder();
+        renderOrderItems();
         setTimeout(() => { const q = document.querySelector(`input[data-row="${idx}"][data-col="qty"]`); if (q) q.focus(); }, 50);
       },
       onAdd(query) { openQAProductModal(query, (prod) => { orderItems[idx].product_id = prod.id; orderItems[idx].price = prod.cost_price || 0; orderItems[idx].description = prod.name; recalcOrder(); renderOrderItems(); }); },
@@ -1413,19 +1465,24 @@ function recalcOrder() {
   const cur = document.getElementById('o-currency')?.value || baseCurrency;
   const rate = getExchangeRate();
   const isForeign = cur !== baseCurrency && rate !== 1;
+  const globalTaxRate = getSelectedTaxRate().value;
   let subtotal = 0;
+  let taxFromItems = 0;
+  let anyPerLine = false;
   orderItems.forEach((item,i) => {
     const lineTotal = item.qty * item.price;
     subtotal += lineTotal;
+    const lineRate = (item.tax_rate_value != null) ? Number(item.tax_rate_value) : globalTaxRate;
+    if (item.tax_rate_value != null) anyPerLine = true;
+    taxFromItems += lineTotal * lineRate / 100;
     const el = document.getElementById('item-total-'+i);
     if (el) {
       if (isForeign) el.innerHTML = `<div>${fmtFx(lineTotal, cur)}</div><div style="font-size:10px;color:#888;font-weight:400">${fmt(lineTotal * rate)}</div>`;
       else el.textContent = fmt(lineTotal);
     }
   });
-  const taxRate = getSelectedTaxRate().value;
   const discount = parseNum(document.getElementById('o-discount').value)||0;
-  const tax = subtotal * taxRate / 100;
+  const tax = anyPerLine ? taxFromItems : (subtotal * globalTaxRate / 100);
   const total = subtotal + tax - discount;
   const localTotal = total * rate;
   if (isForeign) {
@@ -1452,8 +1509,14 @@ async function saveOrder() {
   const selectedTax = getSelectedTaxRate();
   const taxRateValue = selectedTax.value;
   const taxRateId = selectedTax.id;
+  // Per-line tax: each item uses its own tax_rate_value (auto-resolved
+  // from product/category) or falls back to invoice-level dropdown.
+  const taxAmt = validItems.reduce((sum, i) => {
+    const lineTotal = i.qty * i.price;
+    const r = (i.tax_rate_value != null) ? Number(i.tax_rate_value) : taxRateValue;
+    return sum + (lineTotal * r / 100);
+  }, 0);
   const discount = parseNum(document.getElementById('o-discount').value)||0;
-  const taxAmt = subtotal * taxRateValue / 100;
   const total = Math.max(0, subtotal + taxAmt - discount);
   const { data: { user } } = await sb.auth.getUser();
   const status = document.getElementById('o-status').value;
@@ -1496,6 +1559,8 @@ async function saveOrder() {
 
   const itemsPayload = validItems.map(i => {
     const lineTotal = i.qty * i.price;
+    const lineRate = (i.tax_rate_value != null) ? Number(i.tax_rate_value) : (taxRateValue || 0);
+    const lineTaxAmt = lineTotal * lineRate / 100;
     return {
       order_id: orderId, product_id: i.product_id||null,
       description: i.description, quantity: i.qty,
@@ -1504,7 +1569,8 @@ async function saveOrder() {
       total: isForeign ? lineTotal * fxRate : lineTotal,
       total_foreign: isForeign ? lineTotal : null,
       warehouse_id: i.warehouse_id || null,
-      tax_rate_value: taxRateValue || 0
+      tax_rate_value: lineRate,
+      tax_amount: isForeign ? lineTaxAmt * fxRate : lineTaxAmt,
     };
   });
   const { data: savedItemsData, error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload).select();

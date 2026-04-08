@@ -515,6 +515,30 @@ tr:hover .action-btns { opacity:1; }
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
+
+      <!-- ===== VAT SOURCE ===== -->
+      <div class="form-row full">
+        <div class="form-group">
+          <label data-i18n="label_tax_source">VAT Source</label>
+          <div id="tax-source-radio" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:12px;flex:1;min-width:140px">
+              <input type="radio" name="tax_source" value="category" checked onchange="onTaxSourceChange()"> <span data-i18n="label_tax_source_category">From Category</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:12px;flex:1;min-width:140px">
+              <input type="radio" name="tax_source" value="fixed" onchange="onTaxSourceChange()"> <span data-i18n="label_tax_source_fixed">Company Default</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:12px;flex:1;min-width:140px">
+              <input type="radio" name="tax_source" value="manual" onchange="onTaxSourceChange()"> <span data-i18n="label_tax_source_manual">Manual</span>
+            </label>
+          </div>
+          <div id="p-tax-manual-wrap" style="display:none;margin-top:8px">
+            <select id="p-tax-rate-id" onchange="_updateTaxHint()" style="width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div id="p-tax-hint" style="font-size:11px;color:var(--gray500);margin-top:6px"></div>
+        </div>
+      </div>
       <div class="form-row" data-product-only>
         <div class="form-group">
           <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
@@ -1051,6 +1075,10 @@ function openAddModal() {
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
   resetCatSelector(null);
+  // Tax source → category default
+  document.querySelector('input[name="tax_source"][value="category"]').checked = true;
+  document.getElementById('p-tax-rate-id').value = '';
+  onTaxSourceChange();
   // Item type → Product
   document.querySelector('input[name="is_service"][value="false"]').checked = true;
   // Reset tracking
@@ -1082,6 +1110,13 @@ function openEditModal(id) {
   document.getElementById('p-cost').value = p.unit_cost || '';
   document.getElementById('p-price').value = p.price || '';
   resetCatSelector(p.category_id);
+  // Tax source
+  const taxSrc = p.tax_source || 'category';
+  const tsRadio = document.querySelector('input[name="tax_source"][value="'+taxSrc+'"]');
+  if (tsRadio) tsRadio.checked = true;
+  if (p.tax_rate_id) document.getElementById('p-tax-rate-id').value = p.tax_rate_id;
+  else document.getElementById('p-tax-rate-id').value = '';
+  onTaxSourceChange();
   // Item type
   const isServiceVal = p.is_service ? 'true' : 'false';
   const itemRadio = document.querySelector('input[name="is_service"][value="'+isServiceVal+'"]');
@@ -1120,7 +1155,7 @@ function onItemTypeChange() {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -1144,6 +1179,9 @@ async function loadProducts() {
     tracking_type: p.tracking_type || 'none',
     has_variants: !!p.has_variants,
     is_service: !!p.is_service,
+    tax_source: p.tax_source || 'category',
+    tax_rate_id: p.tax_rate_id || null,
+    tax_rate_override: p.tax_rate_override,
   }));
 }
 
@@ -1175,17 +1213,69 @@ async function loadWarehouses() {
   warehouses = data || [];
 }
 
-// ===== CATEGORIES =====
+// ===== CATEGORIES & VAT =====
+let _activeVatRates = [];
+let _companyDefaultTaxRateId = null;
+let _companyDefaultTaxRate = 0;
+
 async function loadCategories() {
   if (!companyId) return;
-  const { data, error } = await sb.from('categories')
-    .select('id,name,parent_id')
-    .eq('company_id', companyId)
-    .order('name');
-  if (error) { console.error('loadCategories:', error); return; }
-  categories = data || [];
+  const [catsRes, vatRes, coRes] = await Promise.all([
+    sb.from('categories').select('id,name,parent_id,tax_rate_id,tax_rate_override').eq('company_id', companyId).order('name'),
+    sb.from('tax_rates').select('id,name,rate,type,is_active').eq('company_id', companyId).eq('is_active', true).neq('type', 'withholding').order('rate'),
+    sb.from('companies').select('default_tax_rate_id').eq('id', companyId).single(),
+  ]);
+  if (catsRes.error) { console.error('loadCategories:', catsRes.error); return; }
+  categories = catsRes.data || [];
+  _activeVatRates = (vatRes.data || []).filter(r => (r.type || 'vat').toLowerCase() !== 'withholding');
+  _companyDefaultTaxRateId = coRes.data?.default_tax_rate_id || null;
+  _companyDefaultTaxRate = (_activeVatRates.find(r => r.id === _companyDefaultTaxRateId)?.rate) || 0;
   populateCategoryFilter();
   renderCatSelector(null, 0, null);
+  populateTaxRateSelect();
+}
+
+function populateTaxRateSelect() {
+  const sel = document.getElementById('p-tax-rate-id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">' + (t('label_no_tax') || 'Vergi Yok (%0)') + '</option>' +
+    _activeVatRates.map(r => `<option value="${r.id}">${r.name} (${r.rate}%)</option>`).join('');
+}
+
+function _categoryEffectiveRate(catId) {
+  if (!catId) return null;
+  const cat = categories.find(c => c.id === catId);
+  if (!cat) return null;
+  if (cat.tax_rate_id) {
+    return _activeVatRates.find(r => r.id === cat.tax_rate_id)?.rate ?? null;
+  }
+  if (cat.tax_rate_override != null) return Number(cat.tax_rate_override);
+  return null;
+}
+
+function _updateTaxHint() {
+  const hintEl = document.getElementById('p-tax-hint');
+  if (!hintEl) return;
+  const source = (document.querySelector('input[name="tax_source"]:checked') || {}).value || 'category';
+  let txt = '';
+  if (source === 'category') {
+    const catId = document.getElementById('p-category-id')?.value || null;
+    const rate = _categoryEffectiveRate(catId);
+    if (rate != null) txt = (t('label_vat_from_category') || 'From category') + ': %' + rate;
+    else txt = (t('label_vat_from_category') || 'From category') + ': — (' + (t('label_no_tax') || 'no tax') + ')';
+  } else if (source === 'fixed') {
+    txt = (t('label_default_vat_rate') || 'Default VAT') + ': %' + _companyDefaultTaxRate;
+  } else if (source === 'manual') {
+    const tr = _activeVatRates.find(r => r.id === document.getElementById('p-tax-rate-id').value);
+    txt = tr ? `${tr.name} (${tr.rate}%)` : (t('label_no_tax') || 'Vergi Yok (%0)');
+  }
+  hintEl.textContent = txt;
+}
+
+function onTaxSourceChange() {
+  const source = (document.querySelector('input[name="tax_source"]:checked') || {}).value || 'category';
+  document.getElementById('p-tax-manual-wrap').style.display = source === 'manual' ? '' : 'none';
+  _updateTaxHint();
 }
 
 function getChildren(parentId) {
@@ -1252,6 +1342,7 @@ function renderCatSelector(parentId, level, selectedId) {
       if (s && s.value) { finalVal = s.value; break; }
     }
     document.getElementById('p-category-id').value = finalVal;
+    if (typeof _updateTaxHint === 'function') _updateTaxHint();
     if (sel.value && level < 2) renderCatSelector(sel.value, level + 1, null);
   });
 
@@ -1366,6 +1457,8 @@ async function saveProduct() {
   const isService = (document.querySelector('input[name="is_service"]:checked')||{}).value === 'true';
   // Services have no tracking — force 'none'
   const trackingType = isService ? 'none' : ((document.querySelector('input[name="tracking_type"]:checked')||{}).value || 'none');
+  const taxSource = (document.querySelector('input[name="tax_source"]:checked') || {}).value || 'category';
+  const taxRateId = taxSource === 'manual' ? (document.getElementById('p-tax-rate-id').value || null) : null;
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
@@ -1384,6 +1477,9 @@ async function saveProduct() {
     is_service: isService,
     tracking_type: trackingType,
     has_variants: trackingType === 'variant',
+    tax_source: taxSource,
+    tax_rate_id: taxRateId,
+    tax_rate_override: null,
   };
   let error, savedId = editingId;
   if (editingId) {
