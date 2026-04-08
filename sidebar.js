@@ -814,6 +814,34 @@
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
 
+      // Deleted-company gate: if RLS hides this company (it's soft-deleted or
+      // the user lost access), the lookup returns no rows. In that case
+      // re-check the user's valid companies and either switch or block.
+      if (compRes.error || !compRes.data) {
+        try {
+          const { data: myCompanies } = await sb.rpc('get_my_companies');
+          const valid = (myCompanies || []).filter(c => c.company_id !== companyId);
+          if (valid.length > 0) {
+            // User has another valid company — switch silently
+            console.warn('[sidebar] currentCompanyId is no longer accessible, switching to', valid[0].company_id);
+            localStorage.setItem('currentCompanyId', valid[0].company_id);
+            location.reload();
+            return;
+          }
+          // No valid companies left — show the deleted-account screen
+          document.body.innerHTML = `<div style="position:fixed;inset:0;background:#1a2744;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px;text-align:center;color:#fff;font-family:'DM Sans',sans-serif;z-index:99999">
+            <div style="font-size:64px">🗑️</div>
+            <h2 style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:800">Şirket Çöp Kutusunda</h2>
+            <p style="font-size:14px;color:rgba(255,255,255,.75);max-width:520px;line-height:1.6">Bu şirket silindi. 30 gün içinde geri yükleyebilirsiniz. Bu süre sonunda tüm veriler kalıcı olarak silinir.</p>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);margin-top:8px">Geri yüklemek için: <a href="mailto:support@solvenin.com" style="color:#38bdf8">support@solvenin.com</a></p>
+            <button onclick="(async()=>{try{await window._supabase.auth.signOut()}catch(e){}localStorage.clear();location.href='auth.html'})()" style="margin-top:20px;padding:10px 24px;background:rgba(56,189,248,.2);color:#38bdf8;border:1px solid rgba(56,189,248,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">Çıkış Yap</button>
+          </div>`;
+          return;
+        } catch(e) {
+          console.error('[sidebar] gate check failed:', e);
+        }
+      }
+
       // Subscription check
       if (compRes.data?.subscription_end) {
         const endDate = new Date(compRes.data.subscription_end);

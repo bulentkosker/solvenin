@@ -233,6 +233,7 @@ function showPanel() {
   document.getElementById('sp-user-name').textContent = user.name;
   document.getElementById('sp-user-role').textContent = user.role;
   buildNav();
+  refreshExpiredTrashCount();
   switchPage('dashboard');
 }
 
@@ -240,6 +241,7 @@ function buildNav() {
   const items = [
     { key: 'dashboard', icon: '🏠', label: 'Dashboard', roles: ['superadmin','support','partner','partner_manager'] },
     { key: 'companies', icon: '🏢', label: 'Şirketler', roles: ['superadmin','support','partner','partner_manager'] },
+    { key: 'trash', icon: '🗑️', label: 'Çöp Kutusu', roles: ['superadmin','support'] },
     { key: 'users', icon: '👥', label: 'Kullanıcılar', roles: ['superadmin','support'] },
     { key: 'demos', icon: '🎯', label: 'Demolar', roles: ['superadmin','support','partner'] },
     { key: 'repair', icon: '🔧', label: 'Veri Onarım', roles: ['superadmin','support'] },
@@ -247,18 +249,31 @@ function buildNav() {
     { key: 'logs', icon: '📋', label: 'Loglar', roles: ['superadmin','support'] }
   ];
   const nav = document.getElementById('sp-nav');
-  nav.innerHTML = items.filter(i => i.roles.includes(user.role)).map(i =>
-    `<div class="sp-nav-item ${i.key === currentPage ? 'active' : ''}" onclick="switchPage('${i.key}')"><span class="sp-nav-icon">${i.icon}</span>${i.label}</div>`
-  ).join('');
+  nav.innerHTML = items.filter(i => i.roles.includes(user.role)).map(i => {
+    const expBadge = (i.key === 'trash' && _expiredTrashCount > 0)
+      ? ` <span style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:auto">${_expiredTrashCount}</span>` : '';
+    return `<div class="sp-nav-item ${i.key === currentPage ? 'active' : ''}" onclick="switchPage('${i.key}')"><span class="sp-nav-icon">${i.icon}</span>${i.label}${expBadge}</div>`;
+  }).join('');
+}
+
+// Cached expired count for the nav badge — refreshed on dashboard load and after trash actions
+let _expiredTrashCount = 0;
+async function refreshExpiredTrashCount() {
+  try {
+    const { data } = await sb.rpc('sp_expired_trash_count');
+    _expiredTrashCount = data || 0;
+    if (typeof buildNav === 'function') buildNav();
+  } catch(e) {}
 }
 
 function switchPage(key) {
   currentPage = key;
   buildNav();
-  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', users:'👥 Kullanıcılar', demos:'🎯 Demolar', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
+  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', trash:'🗑️ Çöp Kutusu', users:'👥 Kullanıcılar', demos:'🎯 Demolar', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
   document.getElementById('sp-title').textContent = titles[key] || key;
   if (key === 'dashboard') renderDashboard();
   else if (key === 'companies') renderCompanies();
+  else if (key === 'trash') renderTrash();
   else if (key === 'users') renderUsers();
   else if (key === 'demos') renderDemos();
   else if (key === 'repair') renderRepair();
@@ -421,6 +436,153 @@ function renderCompaniesTable() {
       </table>
     </div>
   `;
+}
+
+// ===== TRASH BIN =====
+let trashCompanies = [];
+
+async function renderTrash() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data, error } = await sb.rpc('sp_trash_companies');
+  if (error) { content.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444">Hata: '+error.message+'</div>'; return; }
+  trashCompanies = data || [];
+  await refreshExpiredTrashCount();
+  renderTrashTable();
+}
+
+function renderTrashTable() {
+  const total = trashCompanies.length;
+  const expired = trashCompanies.filter(c => c.days_left <= 0).length;
+  const realCount = trashCompanies.filter(c => !c.is_demo).length;
+  const demoCount = trashCompanies.filter(c => c.is_demo).length;
+
+  document.getElementById('sp-content').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">ÇÖPTE</div><div class="stat-val">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">GERÇEK ŞİRKET</div><div class="stat-val">${realCount}</div></div>
+      <div class="stat-card"><div class="stat-label">DEMO</div><div class="stat-val">${demoCount}</div></div>
+      <div class="stat-card" style="${expired>0?'border-color:#fecaca':''}"><div class="stat-label">SÜRESİ DOLDU</div><div class="stat-val" style="${expired>0?'color:#dc2626':''}">${expired}</div></div>
+    </div>
+    ${expired > 0 ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">⚠️</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#991b1b">${expired} şirket kalıcı silinmeye hazır</div>
+        <div style="font-size:11px;color:#7f1d1d;margin-top:2px">30 günlük bekleme süresi dolmuş şirketler aşağıda kırmızı ile gösterilir.</div>
+      </div>
+    </div>` : ''}
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr>
+          <th>ŞİRKET</th><th>SİLİNME TARİHİ</th><th>SİLEN</th><th>SEBEP</th>
+          <th class="text-right">KALAN GÜN</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${trashCompanies.map(c => {
+            const dl = c.days_left;
+            const dlColor = dl <= 0 ? '#dc2626' : dl < 7 ? '#ef4444' : dl < 15 ? '#f59e0b' : '#16a34a';
+            const dlLabel = dl <= 0 ? 'Süre doldu' : dl + ' gün';
+            const demoBadge = c.is_demo ? '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;margin-left:6px">DEMO</span>' : '';
+            return `<tr>
+              <td><strong>${c.name}</strong>${demoBadge}<div style="font-size:10px;color:var(--gray400)">${c.user_count} kullanıcı</div></td>
+              <td style="font-size:11px;color:var(--gray500)">${fmtDateTime(c.deleted_at)}</td>
+              <td style="font-size:11px;color:var(--gray500)">${c.deleted_by_email || '—'}</td>
+              <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.delete_reason||'').replace(/"/g,'&quot;')}">${c.delete_reason || '—'}</td>
+              <td class="text-right" style="color:${dlColor};font-weight:700;font-size:12px">${dlLabel}</td>
+              <td>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button class="btn btn-outline btn-sm" onclick="restoreFromTrash('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">↩️ Geri Yükle</button>
+                  ${dl <= 0 ? `<button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none" onclick="permDeleteFromTrash('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">🗑️ Kalıcı Sil</button>` : ''}
+                  <button class="btn btn-outline btn-sm" onclick="openTrashAuditLog('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">📋</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray400);padding:30px">Çöp kutusu boş 🎉</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function restoreFromTrash(id, name) {
+  if (!confirm('"' + name + '" şirketini geri yüklemek istediğinize emin misiniz?')) return;
+  const { data, error } = await sb.rpc('restore_company', {
+    p_company_id: id,
+    p_performed_by: null,
+    p_performed_by_email: user.email
+  });
+  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (!data?.success) { showToast(data?.error || 'Geri yüklenemedi', 'error'); return; }
+  showToast('Şirket geri yüklendi: '+name, 'success');
+  renderTrash();
+}
+
+async function permDeleteFromTrash(id, name) {
+  const c = trashCompanies.find(x => x.id === id);
+  if (!c) return;
+  if (c.days_left > 0) { showToast('30 gün dolmadan kalıcı silinemez', 'error'); return; }
+  if (!confirm('"' + name + '" şirketini KALICI olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+  if (!confirm('SON UYARI: Tüm veriler (siparişler, ürünler, müşteriler, vs.) kalıcı olarak silinecek. Devam edilsin mi?')) return;
+  const { data, error } = await sb.rpc('permanently_delete_company', {
+    p_company_id: id,
+    p_performed_by: null,
+    p_performed_by_email: user.email
+  });
+  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (!data?.success) { showToast(data?.error || 'Kalıcı silinemedi', 'error'); return; }
+  showToast('Şirket kalıcı silindi: '+name, 'success');
+  renderTrash();
+}
+
+async function openTrashAuditLog(id, name) {
+  const { data, error } = await sb.rpc('sp_company_audit_log', { p_company_id: id });
+  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  const logs = data || [];
+  const html = `
+    <div style="padding:24px;max-width:700px">
+      <h2 style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">📋 ${name}</h2>
+      <div style="font-size:12px;color:var(--gray500);margin-bottom:16px">Silme & geri yükleme geçmişi</div>
+      ${logs.length === 0 ? '<div style="color:var(--gray400);text-align:center;padding:30px">Kayıt yok</div>' : `
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--gray50)">
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">TARİH</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">İŞLEM</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">YAPAN</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">SEBEP</th>
+          </tr></thead>
+          <tbody>${logs.map(l => {
+            const actionLabel = {
+              soft_deleted: '<span style="color:#f59e0b;font-weight:600">🗑️ Çöpe atıldı</span>',
+              restored: '<span style="color:#16a34a;font-weight:600">↩️ Geri yüklendi</span>',
+              permanently_deleted: '<span style="color:#dc2626;font-weight:600">🔥 Kalıcı silindi</span>'
+            }[l.action] || l.action;
+            return `<tr>
+              <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;color:var(--gray500)">${fmtDateTime(l.created_at)}</td>
+              <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${actionLabel}</td>
+              <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-size:11px">${l.performed_by_email || l.performed_by_role || '—'}</td>
+              <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;color:var(--gray500)">${l.delete_reason || '—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+      <div style="text-align:right;margin-top:14px"><button class="btn btn-outline" onclick="closeTrashAuditLog()">Kapat</button></div>
+    </div>
+  `;
+  // Reuse the existing modal infra — overlay div #modal
+  let overlay = document.getElementById('trash-audit-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'trash-audit-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = '<div class="modal" style="max-width:760px;background:#fff;border-radius:14px;max-height:85vh;overflow-y:auto" id="trash-audit-modal"></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeTrashAuditLog(); });
+  }
+  document.getElementById('trash-audit-modal').innerHTML = html;
+  overlay.classList.add('open');
+}
+function closeTrashAuditLog() {
+  const o = document.getElementById('trash-audit-overlay');
+  if (o) o.classList.remove('open');
 }
 
 async function openCompanyDrawer(id) {

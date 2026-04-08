@@ -400,7 +400,7 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
 
-          <!-- DANGER ZONE (owner only) -->
+          <!-- DANGER ZONE (owner only, hidden for demo companies) -->
           <div class="settings-card danger-zone-card" id="danger-zone" style="display:none">
             <div class="settings-card-head" style="border-bottom-color:#fecaca">
               <div>
@@ -411,35 +411,79 @@ tr:hover .action-btns { opacity:1; }
             <div class="settings-card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
               <div>
                 <div style="font-size:13px;font-weight:600;color:var(--gray800)" data-i18n="delete_company_label">Delete this company</div>
-                <div style="font-size:12px;color:var(--gray500)" data-i18n="delete_company_desc">All data including orders, invoices, accounts, and users will be permanently deleted.</div>
+                <div style="font-size:12px;color:var(--gray500)" data-i18n="delete_company_soft_desc">Your company will move to the trash for 30 days. You can restore it during that period — after 30 days it is permanently deleted.</div>
               </div>
               <button class="btn-danger-solid" onclick="openDeleteCompanyModal()" data-i18n="btn_delete_company">Delete Company</button>
             </div>
           </div>
         </div>
 
-        <!-- DELETE COMPANY MODAL -->
+        <!-- DELETE COMPANY MODAL — 3-step soft delete flow -->
         <div class="modal-overlay" id="delete-company-modal">
-          <div class="modal" style="max-width:460px">
+          <div class="modal" style="max-width:520px">
             <div class="modal-header" style="border-bottom-color:#fecaca">
               <span class="modal-title" style="color:#dc2626">⚠️ <span data-i18n="delete_company_modal_title">Delete Company</span></span>
               <button class="modal-close" onclick="closeDeleteCompanyModal()">✕</button>
             </div>
             <div class="modal-body">
-              <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px">
-                <div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:4px" data-i18n="delete_company_warn_title">This action cannot be undone</div>
-                <div style="font-size:12px;color:#991b1b" data-i18n="delete_company_warn_body">All company data — orders, invoices, products, customers, chart of accounts, tax rates, and users — will be permanently deleted.</div>
+
+              <!-- STEP 1: warning -->
+              <div id="del-step-1">
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px">
+                  <div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:6px" data-i18n="del_step1_title">Are you sure you want to delete this company?</div>
+                  <div style="font-size:12px;color:#991b1b;line-height:1.6" data-i18n="del_step1_body">Your company will be kept in the trash for 30 days. You can restore it during this period. After 30 days, all data is permanently deleted.</div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end">
+                  <button class="btn-outline" onclick="closeDeleteCompanyModal()" data-i18n="btn_cancel">Cancel</button>
+                  <button class="btn-danger-solid" onclick="delGoStep(2)" data-i18n="btn_continue">Continue</button>
+                </div>
               </div>
-              <div class="form-group">
-                <label style="color:#dc2626"><span data-i18n="delete_company_confirm_label">Type the company name to confirm:</span> <strong id="delete-confirm-name"></strong></label>
-                <input type="text" id="delete-confirm-input" oninput="checkDeleteConfirm()" autocomplete="off" style="border-color:#fecaca">
+
+              <!-- STEP 2: reason picker -->
+              <div id="del-step-2" style="display:none">
+                <div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:10px" data-i18n="del_step2_title">Why are you leaving? *</div>
+                <div id="del-reason-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="not_needed" onchange="onDelReasonChange()"> <span data-i18n="del_reason_not_needed">I don't need it anymore</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="switching" onchange="onDelReasonChange()"> <span data-i18n="del_reason_switching">Switching to another product</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="too_expensive" onchange="onDelReasonChange()"> <span data-i18n="del_reason_too_expensive">Price is too high</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="missing_features" onchange="onDelReasonChange()"> <span data-i18n="del_reason_missing_features">Missing features I needed</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="technical_issues" onchange="onDelReasonChange()"> <span data-i18n="del_reason_technical_issues">Technical problems</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="del-reason" value="other" onchange="onDelReasonChange()"> <span data-i18n="del_reason_other">Other</span></label>
+                </div>
+                <label style="font-size:12px;color:var(--gray500);display:block;margin-bottom:4px" data-i18n="del_extra_note">Additional details (optional)</label>
+                <textarea id="del-extra-note" rows="2" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:var(--font-body);resize:vertical"></textarea>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+                  <button class="btn-outline" onclick="delGoStep(1)" data-i18n="btn_back">Back</button>
+                  <button class="btn-danger-solid" id="btn-del-step2-next" disabled onclick="delGoStep(3)" data-i18n="btn_continue">Continue</button>
+                </div>
               </div>
-            </div>
-            <div class="modal-footer" style="border-top-color:#fecaca">
-              <button class="btn-outline" onclick="closeDeleteCompanyModal()" data-i18n="btn_cancel">Cancel</button>
-              <button class="btn-danger-solid" id="btn-confirm-delete" disabled onclick="executeDeleteCompany()" data-i18n="btn_confirm_delete">Yes, permanently delete</button>
+
+              <!-- STEP 3: type-to-confirm -->
+              <div id="del-step-3" style="display:none">
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:14px">
+                  <div style="font-size:12px;color:#991b1b;line-height:1.6" data-i18n="del_step3_warn">This action will move your company to the trash. After 30 days all data will be permanently deleted and cannot be recovered.</div>
+                </div>
+                <div class="form-group">
+                  <label style="color:#dc2626;font-size:12px"><span data-i18n="delete_company_confirm_label">Type the company name to confirm:</span> <strong id="delete-confirm-name"></strong></label>
+                  <input type="text" id="delete-confirm-input" oninput="checkDeleteConfirm()" autocomplete="off" style="border-color:#fecaca;width:100%;padding:8px 10px;border:1px solid #fecaca;border-radius:8px;font-size:13px;margin-top:4px">
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+                  <button class="btn-outline" onclick="delGoStep(2)" data-i18n="btn_back">Back</button>
+                  <button class="btn-danger-solid" id="btn-confirm-delete" disabled onclick="executeDeleteCompany()" data-i18n="btn_delete_company">Delete Company</button>
+                </div>
+              </div>
+
             </div>
           </div>
+        </div>
+
+        <!-- DELETED CONFIRMATION SCREEN — full-screen overlay shown after successful delete -->
+        <div id="delete-success-screen" style="display:none;position:fixed;inset:0;background:#1a2744;color:#fff;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;font-family:var(--font-body)">
+          <div style="font-size:64px;margin-bottom:20px">🗑️</div>
+          <h2 style="font-family:var(--font-display);font-size:28px;font-weight:800;margin-bottom:12px" data-i18n="del_success_title">Company moved to trash</h2>
+          <p style="font-size:14px;color:rgba(255,255,255,.7);max-width:520px;line-height:1.6;margin-bottom:8px" data-i18n="del_success_body">Your company has been moved to the trash. You have 30 days to restore it before all data is permanently deleted.</p>
+          <p style="font-size:13px;color:rgba(255,255,255,.6);max-width:520px;line-height:1.6;margin-bottom:24px"><span data-i18n="del_success_contact">To restore your company contact:</span> <a href="mailto:support@solvenin.com" style="color:#38bdf8">support@solvenin.com</a></p>
+          <button onclick="window.location.href='auth.html'" style="padding:10px 24px;background:rgba(56,189,248,.2);color:#38bdf8;border:1px solid rgba(56,189,248,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600" data-i18n="btn_logout">Sign Out</button>
         </div>
 
         <!-- CURRENCY -->
@@ -1513,7 +1557,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1546,22 +1590,45 @@ async function loadCompanyData() {
 
   renderActiveCurrencies();
 
-  // Show danger zone only for owners
+  // Show danger zone only for owners — and HIDE for demo companies
+  // (demo companies are deleted from the service panel, not by end users)
   const dz = document.getElementById('danger-zone');
-  if (dz) dz.style.display = cuRes.data?.role === 'owner' ? '' : 'none';
+  if (dz) dz.style.display = (cuRes.data?.role === 'owner' && !data.is_demo) ? '' : 'none';
   console.timeEnd('[settings] loadCompanyData');
 }
 
-// ===== DELETE COMPANY =====
+// ===== DELETE COMPANY (soft-delete via RPC) =====
+let _delStep = 1;
+
 function openDeleteCompanyModal() {
-  const modal = document.getElementById('delete-company-modal');
+  // Reset modal state
+  _delStep = 1;
+  document.getElementById('del-step-1').style.display = '';
+  document.getElementById('del-step-2').style.display = 'none';
+  document.getElementById('del-step-3').style.display = 'none';
+  // Reset reason
+  document.querySelectorAll('input[name="del-reason"]').forEach(r => r.checked = false);
+  document.getElementById('del-extra-note').value = '';
+  document.getElementById('btn-del-step2-next').disabled = true;
+  // Reset confirm
   document.getElementById('delete-confirm-name').textContent = companyData?.name || '';
   document.getElementById('delete-confirm-input').value = '';
   document.getElementById('btn-confirm-delete').disabled = true;
-  modal.classList.add('open');
+  document.getElementById('delete-company-modal').classList.add('open');
 }
 function closeDeleteCompanyModal() {
   document.getElementById('delete-company-modal').classList.remove('open');
+}
+function delGoStep(n) {
+  _delStep = n;
+  document.getElementById('del-step-1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('del-step-2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('del-step-3').style.display = n === 3 ? '' : 'none';
+  if (n === 3) setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
+}
+function onDelReasonChange() {
+  const picked = document.querySelector('input[name="del-reason"]:checked');
+  document.getElementById('btn-del-step2-next').disabled = !picked;
 }
 function checkDeleteConfirm() {
   const input = document.getElementById('delete-confirm-input').value.trim().toLowerCase();
@@ -1574,92 +1641,61 @@ async function executeDeleteCompany() {
   const btn = document.getElementById('btn-confirm-delete');
   const origText = btn.textContent;
   btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle"></span> Deleting...';
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle"></span> ' + (t('lbl_loading') || 'Loading...');
 
   try {
-    const id = companyId;
-    const errors = [];
+    const reasonRadio = document.querySelector('input[name="del-reason"]:checked');
+    const reasonKey = reasonRadio?.value || 'other';
+    const extraNote = document.getElementById('del-extra-note').value.trim();
+    const fullReason = reasonKey + (extraNote ? ': ' + extraNote : '');
 
-    async function delFrom(table, filter, filterVal) {
-      console.log(`[delete] Deleting from ${table}...`);
-      const q = filter === 'in' ? sb.from(table).delete().in(filterVal.col, filterVal.ids) : sb.from(table).delete().eq(filter, filterVal);
-      const { error, count } = await q;
-      if (error) { console.error(`[delete] FAILED ${table}:`, error.message); errors.push(`${table}: ${error.message}`); }
-      else console.log(`[delete] OK ${table}`);
-      return error;
-    }
-
-    // 1. Child items (FK to parent orders/invoices, not directly to company)
-    const childTables = [
-      { items:'sales_order_items', fk:'order_id', parent:'sales_orders' },
-      { items:'purchase_order_items', fk:'order_id', parent:'purchase_orders' },
-      { items:'invoice_items', fk:'invoice_id', parent:'invoices' },
-    ];
-    for (const ct of childTables) {
-      const { data: parents } = await sb.from(ct.parent).select('id').eq('company_id', id);
-      if (parents && parents.length) {
-        console.log(`[delete] Found ${parents.length} ${ct.parent}, deleting ${ct.items}...`);
-        const ids = parents.map(p => p.id);
-        for (let i = 0; i < ids.length; i += 50) {
-          await delFrom(ct.items, 'in', { col: ct.fk, ids: ids.slice(i, i + 50) });
-        }
-      }
-    }
-
-    // 2. Journal entry lines (FK to journal_entries, not company)
-    const { data: entries } = await sb.from('journal_entries').select('id').eq('company_id', id);
-    if (entries && entries.length) {
-      console.log(`[delete] Found ${entries.length} journal_entries, deleting lines...`);
-      const entryIds = entries.map(e => e.id);
-      for (let i = 0; i < entryIds.length; i += 50) {
-        await delFrom('journal_entry_lines', 'in', { col: 'entry_id', ids: entryIds.slice(i, i + 50) });
-      }
-    }
-
-    // 3. Direct company_id tables (FK-safe order: children first)
-    const directTables = [
-      'sales_orders', 'purchase_orders', 'invoices', 'payments',
-      'journal_entries',
-      'stock_movements', 'products', 'contacts',
-      'chart_of_accounts', 'tax_rates', 'warehouses', 'categories',
-      'company_modules',
-    ];
-    for (const tbl of directTables) {
-      await delFrom(tbl, 'company_id', id);
-    }
-
-    // 4. Get remaining companies BEFORE deleting company_users (RLS depends on it)
-    const { data: otherCompanies } = await sb.rpc('get_my_companies');
-
-    // 5. Delete company_users (must be before companies, after RPC call)
-    await delFrom('company_users', 'company_id', id);
-
-    // 6. Delete company itself
-    const compErr = await delFrom('companies', 'id', id);
-    if (compErr) {
-      showToast('Failed to delete company: ' + compErr.message, 'error');
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+      showToast('Not authenticated', 'error');
       btn.disabled = false; btn.textContent = origText;
       return;
     }
 
-    if (errors.length) console.warn('[delete] Completed with errors:', errors);
-    else console.log('[delete] All tables cleaned successfully');
+    const { data, error } = await sb.rpc('soft_delete_company', {
+      p_company_id: companyId,
+      p_user_id: user.id,
+      p_user_email: user.email,
+      p_reason: fullReason
+    });
 
-    const remaining = (otherCompanies || []).filter(c => c.company_id !== id);
-
-    if (remaining.length > 0) {
-      // Switch to another company
-      const next = remaining[0];
-      localStorage.setItem('currentCompanyId', next.company_id);
-      try { await sb.rpc('switch_company', { p_company_id: next.company_id }); } catch(e) {}
-      showToast((t('toast_company_deleted_switched') || 'Company deleted. Switched to {0}').replace('{0}', next.company_name), 'success');
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
-    } else {
-      // No companies left — prompt to create one
-      localStorage.removeItem('currentCompanyId');
-      showToast(t('toast_company_deleted_create') || 'Company deleted. Please create a new one.', 'success');
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+    if (error) {
+      showToast(error.message, 'error');
+      btn.disabled = false; btn.textContent = origText;
+      return;
     }
+    if (!data?.success) {
+      showToast(data?.error || 'Failed to delete', 'error');
+      btn.disabled = false; btn.textContent = origText;
+      return;
+    }
+
+    // Clear local cache for this company
+    try {
+      if (localStorage.getItem('currentCompanyId') === companyId) {
+        localStorage.removeItem('currentCompanyId');
+      }
+      localStorage.removeItem('solvenin_company_logo_'+companyId);
+      localStorage.removeItem('solvenin_company_logo_'+companyId+'_at');
+    } catch(e) {}
+
+    // Hide the modal and show the success screen
+    closeDeleteCompanyModal();
+    const screen = document.getElementById('delete-success-screen');
+    if (screen) {
+      screen.style.display = 'flex';
+      // Re-translate the new screen content
+      if (typeof applyTranslations === 'function') applyTranslations();
+    }
+    // Sign out after a short delay so the user reads the message
+    setTimeout(async () => {
+      try { await sb.auth.signOut(); } catch(e) {}
+      window.location.href = 'auth.html';
+    }, 6000);
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
     btn.disabled = false;
