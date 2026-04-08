@@ -822,7 +822,7 @@ async function loadSuppliers() {
 }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,cost_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,cost_price,unit,product_type,is_service,quantity').eq('company_id', companyId).eq('is_active', true).order('is_service').order('name');
   products = data || [];
 }
 
@@ -1049,7 +1049,8 @@ async function confirmInvoice() {
     console.log('[purchasing] Default warehouse:', defaultWh);
     const order = orders.find(o => o.id === id);
     if (items?.length) {
-      const movements = items.filter(i => i.product_id).map(i => ({
+      const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
+      const movements = items.filter(i => i.product_id && !serviceIds.has(i.product_id)).map(i => ({
         company_id: companyId,
         product_id: i.product_id,
         warehouse_id: defaultWh,
@@ -1347,13 +1348,14 @@ function renderOrderItems() {
   tbody.querySelectorAll('.qa-wrap[data-qa-idx]').forEach(wrap => {
     const idx = parseInt(wrap.dataset.qaIdx);
     QA.create(wrap, {
-      items: products.map(p => ({ id: p.id, name: p.name, _price: p.cost_price })),
+      items: products.map(p => ({ id: p.id, name: (p.is_service ? '🔧 ' : '📦 ') + p.name, _price: p.cost_price, _is_service: p.is_service })),
       value: wrap.dataset.qaVal || '',
       placeholder: t('select_product') || 'Ürün seç...',
       onSelect(id, p) {
         orderItems[idx].product_id = id;
         orderItems[idx].price = parseFloat(p?._price || 0);
-        orderItems[idx].description = p?.name || '';
+        orderItems[idx].description = (p?.name || '').replace(/^[📦🔧]\s/, '');
+        orderItems[idx].is_service = !!p?._is_service;
         recalcOrder();
         setTimeout(() => { const q = document.querySelector(`input[data-row="${idx}"][data-col="qty"]`); if (q) q.focus(); }, 50);
       },
@@ -1510,8 +1512,9 @@ async function saveOrder() {
   if (status === 'received' && prevStatus !== 'received') {
     const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
     const orderNumber = document.getElementById('o-number').value || 'PO-'+orderId;
+    const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
     const movements = validItems
-      .filter(i => i.product_id && i.qty > 0)
+      .filter(i => i.product_id && i.qty > 0 && !serviceIds.has(i.product_id))
       .map(i => ({
         company_id: companyId,
         product_id: i.product_id,
@@ -1724,12 +1727,14 @@ async function saveReceiving() {
   const whId = document.getElementById('receive-warehouse').value;
   if (!whId) { showToast(t('toast_select_warehouse'), 'error'); return; }
 
-  const { data: items } = await sb.from('purchase_order_items').select('*, products(id)').eq('order_id', orderId);
+  const { data: items } = await sb.from('purchase_order_items').select('*, products(id,is_service)').eq('order_id', orderId);
   const { data: { user } } = await sb.auth.getUser();
 
   for (const item of items||[]) {
     const recvQty = parseFloat(document.getElementById('recv-'+item.id)?.value)||0;
     if (recvQty <= 0) continue;
+    // Skip services — they have no physical stock
+    if (item.products?.is_service) continue;
 
     // Update stock
     const { data: existing } = await sb.from('stock').select('quantity').eq('product_id', item.product_id).eq('warehouse_id', whId).single().catch(()=>({data:null}));

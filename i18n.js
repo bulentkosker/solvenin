@@ -2544,6 +2544,14 @@ const T = window.T = {
     crm_pdf_terms_label:'Payment Terms',
     crm_pdf_valid_msg:'This quote is valid until {date}.',
     crm_pdf_signature:'Authorized Signature / Stamp',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Type',
+    label_product:'Product',
+    label_service:'Service',
+    label_all_types:'All Types',
+    label_products_only:'📦 Products',
+    label_services_only:'🔧 Services',
+    title_add_service:'Add Service',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3691,6 +3699,14 @@ const T = window.T = {
     crm_pdf_terms_label:'Ödeme Koşulları',
     crm_pdf_valid_msg:'Bu teklif {date} tarihine kadar geçerlidir.',
     crm_pdf_signature:'Yetkili İmza / Kaşe',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Tür',
+    label_product:'Ürün',
+    label_service:'Hizmet',
+    label_all_types:'Tümü',
+    label_products_only:'📦 Ürünler',
+    label_services_only:'🔧 Hizmetler',
+    title_add_service:'Hizmet Ekle',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4506,6 +4522,14 @@ const T = window.T = {
     toast_logo_invalid:'Ungültiges Bild',
     toast_logo_ready:'Logo bereit — Speichern klicken',
     toast_logo_removed:'Logo wird beim Speichern entfernt',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Typ',
+    label_product:'Produkt',
+    label_service:'Dienstleistung',
+    label_all_types:'Alle',
+    label_products_only:'📦 Produkte',
+    label_services_only:'🔧 Dienstleistungen',
+    title_add_service:'Dienst hinzufügen',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5322,6 +5346,14 @@ const T = window.T = {
     toast_logo_invalid:'Image invalide',
     toast_logo_ready:'Logo prêt — cliquez sur Enregistrer',
     toast_logo_removed:'Le logo sera supprimé à l\'enregistrement',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Type',
+    label_product:'Produit',
+    label_service:'Service',
+    label_all_types:'Tous',
+    label_products_only:'📦 Produits',
+    label_services_only:'🔧 Services',
+    title_add_service:'Ajouter un service',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -6137,6 +6169,14 @@ const T = window.T = {
     toast_logo_invalid:'Imagen inválida',
     toast_logo_ready:'Logo listo — pulse Guardar',
     toast_logo_removed:'El logo se eliminará al guardar',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Tipo',
+    label_product:'Producto',
+    label_service:'Servicio',
+    label_all_types:'Todos',
+    label_products_only:'📦 Productos',
+    label_services_only:'🔧 Servicios',
+    title_add_service:'Añadir servicio',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -6921,6 +6961,14 @@ const T = window.T = {
     toast_logo_invalid:'صورة غير صالحة',
     toast_logo_ready:'الشعار جاهز — انقر على حفظ',
     toast_logo_removed:'سيتم حذف الشعار عند الحفظ',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'النوع',
+    label_product:'المنتج',
+    label_service:'الخدمة',
+    label_all_types:'الكل',
+    label_products_only:'📦 المنتجات',
+    label_services_only:'🔧 الخدمات',
+    title_add_service:'إضافة خدمة',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -7704,6 +7752,14 @@ const T = window.T = {
     toast_logo_invalid:'无效的图像',
     toast_logo_ready:'徽标已就绪 — 点击保存',
     toast_logo_removed:'保存时将移除徽标',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'类型',
+    label_product:'产品',
+    label_service:'服务',
+    label_all_types:'全部',
+    label_products_only:'📦 产品',
+    label_services_only:'🔧 服务',
+    title_add_service:'添加服务',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -8638,6 +8694,14 @@ const T = window.T = {
     toast_company_deleted:'Компания успешно удалена',
     toast_company_deleted_switched:'Компания удалена. Переключено на {0}',
     toast_company_deleted_create:'Компания удалена. Создайте новую.',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Тип',
+    label_product:'Товар',
+    label_service:'Услуга',
+    label_all_types:'Все',
+    label_products_only:'📦 Товары',
+    label_services_only:'🔧 Услуги',
+    title_add_service:'Добавить услугу',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -9430,6 +9494,14 @@ const T = window.T = {
     toast_logo_invalid:'Imagem inválida',
     toast_logo_ready:'Logotipo pronto — clique em Salvar',
     toast_logo_removed:'O logotipo será removido ao salvar',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Tipo',
+    label_product:'Produto',
+    label_service:'Serviço',
+    label_all_types:'Todos',
+    label_products_only:'📦 Produtos',
+    label_services_only:'🔧 Serviços',
+    title_add_service:'Adicionar serviço',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -10213,6 +10285,14 @@ const T = window.T = {
     toast_logo_invalid:'無効な画像',
     toast_logo_ready:'ロゴ準備完了 — 保存をクリック',
     toast_logo_removed:'保存時にロゴが削除されます',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'タイプ',
+    label_product:'製品',
+    label_service:'サービス',
+    label_all_types:'すべて',
+    label_products_only:'📦 製品',
+    label_services_only:'🔧 サービス',
+    title_add_service:'サービスを追加',
   },
   kz: {
     // NAV
@@ -10465,6 +10545,14 @@ const T = window.T = {
     toast_logo_invalid:'Жарамсыз сурет',
     toast_logo_ready:'Логотип дайын — Сақтау батырмасын басыңыз',
     toast_logo_removed:'Логотип Сақтаған кезде жойылады',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Түрі',
+    label_product:'Тауар',
+    label_service:'Қызмет',
+    label_all_types:'Барлығы',
+    label_products_only:'📦 Тауарлар',
+    label_services_only:'🔧 Қызметтер',
+    title_add_service:'Қызмет қосу',
   },
   kg: {
     // NAV
@@ -10717,6 +10805,14 @@ const T = window.T = {
     toast_logo_invalid:'Туура эмес сүрөт',
     toast_logo_ready:'Логотип даяр — Сактоону басыңыз',
     toast_logo_removed:'Логотип Сактоо учурунда өчүрүлөт',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Түрү',
+    label_product:'Товар',
+    label_service:'Кызмат',
+    label_all_types:'Баары',
+    label_products_only:'📦 Товарлар',
+    label_services_only:'🔧 Кызматтар',
+    title_add_service:'Кызмат кошуу',
   },
   uz: {
     // NAV
@@ -10969,6 +11065,14 @@ const T = window.T = {
     toast_logo_invalid:'Noto\'g\'ri tasvir',
     toast_logo_ready:'Logotip tayyor — Saqlash tugmasini bosing',
     toast_logo_removed:'Logotip Saqlash bosilganda o\'chiriladi',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Turi',
+    label_product:'Mahsulot',
+    label_service:'Xizmat',
+    label_all_types:'Barchasi',
+    label_products_only:'📦 Mahsulotlar',
+    label_services_only:'🔧 Xizmatlar',
+    title_add_service:'Xizmat qo\'shish',
   },
   tm: {
     // NAV
@@ -11221,6 +11325,14 @@ const T = window.T = {
     toast_logo_invalid:'Nädogry surat',
     toast_logo_ready:'Logotip taýýar — Ýatda sakla düwmesine basyň',
     toast_logo_removed:'Logotip Ýatda saklanýarka pozular',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Görnüşi',
+    label_product:'Haryt',
+    label_service:'Hyzmat',
+    label_all_types:'Hemmesi',
+    label_products_only:'📦 Harytlar',
+    label_services_only:'🔧 Hyzmatlar',
+    title_add_service:'Hyzmat goş',
   },
   az: {
     // NAV
@@ -11473,6 +11585,14 @@ const T = window.T = {
     toast_logo_invalid:'Yanlış şəkil',
     toast_logo_ready:'Loqo hazırdır — Saxla düyməsini basın',
     toast_logo_removed:'Loqo Saxla zamanı silinəcək',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Növü',
+    label_product:'Məhsul',
+    label_service:'Xidmət',
+    label_all_types:'Hamısı',
+    label_products_only:'📦 Məhsullar',
+    label_services_only:'🔧 Xidmətlər',
+    title_add_service:'Xidmət əlavə et',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -11678,6 +11798,14 @@ const T = window.T = {
     toast_logo_invalid:'Niepoprawny obraz',
     toast_logo_ready:'Logo gotowe — kliknij Zapisz',
     toast_logo_removed:'Logo zostanie usunięte przy zapisie',
+    // === PRODUCT/SERVICE TYPE ===
+    label_item_type:'Typ',
+    label_product:'Produkt',
+    label_service:'Usługa',
+    label_all_types:'Wszystkie',
+    label_products_only:'📦 Produkty',
+    label_services_only:'🔧 Usługi',
+    title_add_service:'Dodaj usługę',
   },
 };
 

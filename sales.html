@@ -835,7 +835,7 @@ async function loadWarehouses() {
 function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
 
 async function loadProducts() {
-  const { data } = await sb.from('products').select('id,name,sale_price,unit,product_type').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data } = await sb.from('products').select('id,name,sale_price,unit,product_type,is_service,quantity').eq('company_id', companyId).eq('is_active', true).order('is_service').order('name');
   products = data || [];
 }
 
@@ -1291,13 +1291,14 @@ function renderOrderItems() {
   tbody.querySelectorAll('.qa-wrap[data-qa-idx]').forEach(wrap => {
     const idx = parseInt(wrap.dataset.qaIdx);
     QA.create(wrap, {
-      items: products.map(p => ({ id: p.id, name: p.name, _price: p.sale_price })),
+      items: products.map(p => ({ id: p.id, name: (p.is_service ? '🔧 ' : '📦 ') + p.name, _price: p.sale_price, _unit: p.unit, _is_service: p.is_service })),
       value: wrap.dataset.qaVal || '',
       placeholder: t('select_product') || 'Ürün seç...',
       onSelect(id, p) {
         orderItems[idx].product_id = id;
         orderItems[idx].price = parseFloat(p?._price || 0);
-        orderItems[idx].description = p?.name || '';
+        orderItems[idx].description = (p?.name || '').replace(/^[📦🔧]\s/, '');
+        orderItems[idx].is_service = !!p?._is_service;
         recalcOrder();
         setTimeout(() => { const q = document.querySelector(`input[data-row="${idx}"][data-col="qty"]`); if (q) q.focus(); }, 50);
       },
@@ -1440,8 +1441,10 @@ async function saveOrder() {
       .eq('invoice_id', orderId).eq('is_active', true);
   }
   if (status !== 'cancelled') {
+    // Skip services — they have no physical stock to move
+    const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
     const movements = validItems
-      .filter(i => i.product_id && i.qty > 0)
+      .filter(i => i.product_id && i.qty > 0 && !serviceIds.has(i.product_id))
       .map(i => ({
         company_id: companyId,
         product_id: i.product_id,

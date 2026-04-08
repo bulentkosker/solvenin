@@ -351,6 +351,11 @@ tr:hover .action-btns { opacity:1; }
           <option value="low" data-i18n="status_low_stock">Low Stock</option>
           <option value="out" data-i18n="status_out_of_stock">Out of Stock</option>
         </select>
+        <select class="filter-btn" id="filter-item-type" onchange="filterTable()">
+          <option value="" data-i18n="label_all_types">All Types</option>
+          <option value="product" data-i18n="label_products_only">📦 Products</option>
+          <option value="service" data-i18n="label_services_only">🔧 Services</option>
+        </select>
       </div>
       <button class="btn-secondary" onclick="exportCSV()" data-i18n="inv_export">⬇ Export</button>
       <button class="btn-secondary" onclick="openAdjustModal()" data-i18n="inv_adjust_stock">📊 Adjust Stock</button>
@@ -424,6 +429,20 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
     </div>
     <div class="modal-body">
+      <!-- ITEM TYPE SELECTOR -->
+      <div class="form-row full">
+        <div class="form-group">
+          <label data-i18n="label_item_type">Type</label>
+          <div id="item-type-toggle" style="display:flex;gap:10px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 18px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;flex:1;justify-content:center">
+              <input type="radio" name="is_service" value="false" checked onchange="onItemTypeChange()"> 📦 <span data-i18n="label_product">Product</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 18px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;flex:1;justify-content:center">
+              <input type="radio" name="is_service" value="true" onchange="onItemTypeChange()"> 🔧 <span data-i18n="label_service">Service</span>
+            </label>
+          </div>
+        </div>
+      </div>
       <div class="form-section-title" data-i18n="section_basic">Basic Information</div>
       <div class="form-row">
         <div class="form-group">
@@ -434,7 +453,7 @@ tr:hover .action-btns { opacity:1; }
           <label><span data-i18n="label_sku">SKU</span></label>
           <input type="text" id="p-sku" placeholder="SKU">
         </div>
-        <div class="form-group">
+        <div class="form-group" data-product-only>
           <label><span data-i18n="lbl_barcode">Barkod</span></label>
           <input type="text" id="p-barcode" placeholder="Barkod">
         </div>
@@ -445,7 +464,7 @@ tr:hover .action-btns { opacity:1; }
           <div class="cat-selector" id="cat-selector"></div>
           <input type="hidden" id="p-category-id">
         </div>
-        <div class="form-group">
+        <div class="form-group" data-product-only>
           <label><span data-i18n="lbl_product_type">Product Type</span></label>
           <select id="p-type">
             <option value="finished_good" data-i18n="opt_finished_good">Mamül</option>
@@ -476,9 +495,9 @@ tr:hover .action-btns { opacity:1; }
           <textarea id="p-desc" data-i18n-placeholder="label_description" placeholder="Description"></textarea>
         </div>
       </div>
-      <div class="form-divider"></div>
-      <div class="form-section-title" data-i18n="section_stock">Stock & Pricing</div>
-      <div class="form-row full">
+      <div class="form-divider" data-product-only></div>
+      <div class="form-section-title" data-i18n="section_stock" data-product-only>Stock &amp; Pricing</div>
+      <div class="form-row full" data-product-only>
         <div class="form-group">
           <label><span data-i18n="label_current_stock">Current Stock *</span></label>
           <input type="number" id="p-stock" placeholder="0" min="0">
@@ -494,7 +513,7 @@ tr:hover .action-btns { opacity:1; }
           <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
-      <div class="form-row">
+      <div class="form-row" data-product-only>
         <div class="form-group">
           <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
           <input type="number" id="p-min-stock" placeholder="—" min="0">
@@ -506,9 +525,9 @@ tr:hover .action-btns { opacity:1; }
       </div>
 
       <!-- ===== TRACKING & VARIANTS ===== -->
-      <div class="form-divider"></div>
-      <div class="form-section-title" data-i18n="section_tracking">Tracking &amp; Variants</div>
-      <div class="form-row full">
+      <div class="form-divider" data-product-only></div>
+      <div class="form-section-title" data-i18n="section_tracking" data-product-only>Tracking &amp; Variants</div>
+      <div class="form-row full" data-product-only>
         <div class="form-group">
           <label data-i18n="label_tracking_type">Tracking Type</label>
           <div id="tracking-radio" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
@@ -529,7 +548,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
 
       <!-- VARIANT BUILDER -->
-      <div id="variant-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+      <div id="variant-section" data-product-only style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <strong style="font-size:13px" data-i18n="label_attributes">Attributes</strong>
           <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="addAttributeRow()">+ <span data-i18n="btn_add_attribute">Add attribute</span></button>
@@ -545,7 +564,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
 
       <!-- SERIAL NUMBERS SECTION -->
-      <div id="serial-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+      <div id="serial-section" data-product-only style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <strong style="font-size:13px" data-i18n="label_serial_numbers">Serial Numbers</strong>
           <div style="display:flex;gap:6px">
@@ -558,7 +577,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
 
       <!-- LOT SECTION -->
-      <div id="lot-section" style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
+      <div id="lot-section" data-product-only style="display:none;margin-top:14px;padding:14px;background:#f8fafc;border-radius:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <strong style="font-size:13px" data-i18n="label_lots">Lots / Batches</strong>
           <button type="button" class="btn-secondary" style="padding:4px 12px;font-size:12px" onclick="openLotAdd()">+ <span data-i18n="btn_add_lot">Add lot</span></button>
@@ -794,10 +813,12 @@ function renderAll() {
 }
 
 function updateStats() {
+  // Services don't count toward stock metrics
+  const physical = products.filter(p => !p.is_service);
   const total = products.length;
-  const totalValue = products.reduce((s, p) => s + p.stock * p.unit_cost, 0);
-  const low = products.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
-  const out = products.filter(p => p.stock === 0).length;
+  const totalValue = physical.reduce((s, p) => s + p.stock * p.unit_cost, 0);
+  const low = physical.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
+  const out = physical.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
@@ -823,14 +844,21 @@ function applyFilters() {
   const search = (document.getElementById('table-search')?.value || document.getElementById('global-search')?.value || '').toLowerCase();
   const cat = document.getElementById('filter-category')?.value || '';
   const statusFilter = document.getElementById('filter-status')?.value || '';
+  const itemTypeFilter = document.getElementById('filter-item-type')?.value || '';
 
   filteredProducts = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
     const matchCat = !cat || p.category_id === cat;
     const status = getStockStatus(p);
-    const matchStatus = !statusFilter || status === statusFilter;
-    const matchTab = currentTab === 'all' || (currentTab === 'low' && status === 'low') || (currentTab === 'out' && status === 'out');
-    return matchSearch && matchCat && matchStatus && matchTab;
+    // Services have no stock status — only honor status/low-stock filters for products
+    const matchStatus = !statusFilter || (p.is_service ? false : status === statusFilter);
+    const matchTab = currentTab === 'all'
+      || (currentTab === 'low' && !p.is_service && status === 'low')
+      || (currentTab === 'out' && !p.is_service && status === 'out');
+    const matchType = !itemTypeFilter
+      || (itemTypeFilter === 'product' && !p.is_service)
+      || (itemTypeFilter === 'service' && p.is_service);
+    return matchSearch && matchCat && matchStatus && matchTab && matchType;
   });
 
   // Sort
@@ -877,20 +905,23 @@ function renderTable() {
       : `<span class="badge badge-green">${t('status_in_stock')}</span>`;
     const totalVal = p.unit_cost ? fmt(p.stock * p.unit_cost) : '—';
     const catBadge = {Electronics:'badge-blue', 'Raw Material':'badge-gray', Packaging:'badge-purple', 'Finished Goods':'badge-green', Office:'badge-gray'}[p.category] || 'badge-gray';
+    const typeBadge = p.is_service
+      ? `<span class="badge" style="background:#ede9fe;color:#7c3aed;font-size:10px">🔧 ${t('label_service')||'Service'}</span>`
+      : `<span class="badge badge-gray" style="font-size:10px">📦 ${t('label_product')||'Product'}</span>`;
     return `<tr>
       <td><input type="checkbox" class="row-check" data-id="${p.id}"></td>
       <td><div class="td-name">
-        <div class="item-icon">${getCatIcon(p.category)}</div>
+        <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
         <span>${p.name}</span><span class="item-sku">${p.sku ? '— ' + p.sku : ''}</span>
       </div></td>
-      <td><span class="badge ${catBadge}">${p.category || '—'}</span> <span class="badge badge-gray" style="font-size:10px">${t('opt_' + (p.product_type||'finished_good')) || p.product_type || ''}</span></td>
-      <td><div class="stock-bar-wrap">
+      <td><span class="badge ${catBadge}">${p.category || '—'}</span> ${typeBadge}</td>
+      <td>${p.is_service ? '<span style="color:var(--gray400)">—</span>' : `<div class="stock-bar-wrap">
         <div class="stock-bar"><div class="stock-fill ${fillClass}" style="width:${pct}%"></div></div>
         <span class="stock-num">${p.stock} ${p.unit}</span>
-      </div></td>
+      </div>`}</td>
       <td>${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
-      <td style="font-weight:600;color:var(--gray800)">${totalVal}</td>
-      <td>${badge}</td>
+      <td style="font-weight:600;color:var(--gray800)">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : totalVal}</td>
+      <td>${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
         <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
@@ -1018,6 +1049,8 @@ function openAddModal() {
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
   resetCatSelector(null);
+  // Item type → Product
+  document.querySelector('input[name="is_service"][value="false"]').checked = true;
   // Reset tracking
   document.querySelector('input[name="tracking_type"][value="none"]').checked = true;
   _attrRows = [];
@@ -1025,6 +1058,7 @@ function openAddModal() {
   _serialList = [];
   _lotList = [];
   onTrackingTypeChange();
+  onItemTypeChange();
   openModal('product-modal');
 }
 
@@ -1046,6 +1080,10 @@ function openEditModal(id) {
   document.getElementById('p-cost').value = p.unit_cost || '';
   document.getElementById('p-price').value = p.price || '';
   resetCatSelector(p.category_id);
+  // Item type
+  const isServiceVal = p.is_service ? 'true' : 'false';
+  const itemRadio = document.querySelector('input[name="is_service"][value="'+isServiceVal+'"]');
+  if (itemRadio) itemRadio.checked = true;
   // Tracking
   const tt = p.tracking_type || 'none';
   const radio = document.querySelector('input[name="tracking_type"][value="'+tt+'"]');
@@ -1056,7 +1094,23 @@ function openEditModal(id) {
   _lotList = [];
   loadTrackingDataForProduct(id, tt);
   onTrackingTypeChange();
+  onItemTypeChange();
   openModal('product-modal');
+}
+
+// Toggle visibility of product-only fields when the user flips the type radio.
+function onItemTypeChange() {
+  const isService = (document.querySelector('input[name="is_service"]:checked')||{}).value === 'true';
+  document.querySelectorAll('[data-product-only]').forEach(el => {
+    el.style.display = isService ? 'none' : '';
+  });
+  // Update modal title hint
+  const titleEl = document.getElementById('modal-title');
+  if (titleEl && !editingId) {
+    titleEl.textContent = isService
+      ? (t('title_add_service') || t('title_add_product'))
+      : (t('title_add_product') || 'Add Product');
+  }
 }
 
 
@@ -1064,7 +1118,7 @@ function openEditModal(id) {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -1087,6 +1141,7 @@ async function loadProducts() {
     product_type: p.product_type || 'finished_good',
     tracking_type: p.tracking_type || 'none',
     has_variants: !!p.has_variants,
+    is_service: !!p.is_service,
   }));
 }
 
@@ -1306,22 +1361,25 @@ function resetCatSelector(categoryId) {
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
-  const trackingType = (document.querySelector('input[name="tracking_type"]:checked')||{}).value || 'none';
+  const isService = (document.querySelector('input[name="is_service"]:checked')||{}).value === 'true';
+  // Services have no tracking — force 'none'
+  const trackingType = isService ? 'none' : ((document.querySelector('input[name="tracking_type"]:checked')||{}).value || 'none');
   const payload = {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
-    barcode: document.getElementById('p-barcode').value.trim() || null,
+    barcode: isService ? null : (document.getElementById('p-barcode').value.trim() || null),
     category_id: document.getElementById('p-category-id').value || null,
     unit: document.getElementById('p-unit').value || 'pcs',
     product_type: document.getElementById('p-type').value || 'finished_good',
     notes: document.getElementById('p-desc').value.trim() || null,
-    quantity: parseFloat(document.getElementById('p-stock').value) || 0,
-    min_stock: document.getElementById('p-min-stock').value !== '' ? parseFloat(document.getElementById('p-min-stock').value) : null,
-    max_stock: document.getElementById('p-max-stock').value !== '' ? parseFloat(document.getElementById('p-max-stock').value) : null,
+    quantity: isService ? 0 : (parseFloat(document.getElementById('p-stock').value) || 0),
+    min_stock: isService ? null : (document.getElementById('p-min-stock').value !== '' ? parseFloat(document.getElementById('p-min-stock').value) : null),
+    max_stock: isService ? null : (document.getElementById('p-max-stock').value !== '' ? parseFloat(document.getElementById('p-max-stock').value) : null),
     cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
     company_id: companyId,
     is_active: true,
+    is_service: isService,
     tracking_type: trackingType,
     has_variants: trackingType === 'variant',
   };
@@ -1335,14 +1393,16 @@ async function saveProduct() {
   }
   if (error) { showToast(error.message, 'error'); return; }
 
-  // Persist tracking sub-data
-  try {
-    if (trackingType === 'variant') await persistVariants(savedId);
-    if (trackingType === 'serial') await persistSerials(savedId);
-    if (trackingType === 'lot') await persistLots(savedId);
-  } catch (e) {
-    showToast(t('toast_error') + ': ' + e.message, 'error');
-    return;
+  // Persist tracking sub-data (services skip this entirely)
+  if (!isService) {
+    try {
+      if (trackingType === 'variant') await persistVariants(savedId);
+      if (trackingType === 'serial') await persistSerials(savedId);
+      if (trackingType === 'lot') await persistLots(savedId);
+    } catch (e) {
+      showToast(t('toast_error') + ': ' + e.message, 'error');
+      return;
+    }
   }
 
   showToast(t('toast_saved') || 'Saved ✓', 'success');
