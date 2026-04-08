@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — System Maintenance</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#0a0f1e;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{max-width:560px;width:100%;text-align:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:48px 40px;backdrop-filter:blur(8px)}
+.logo{font-family:'Outfit',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:32px;color:#fff}
+.logo span{color:#38bdf8}
+.icon{font-size:80px;margin-bottom:16px;animation:spin 4s linear infinite;display:inline-block}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+h1{font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;margin-bottom:12px}
+.subtitle{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:24px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#fbbf24;margin-right:8px;animation:pulse 1.4s ease-in-out infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.status{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:24px;display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:99px}
+.contact{font-size:13px;color:rgba(255,255,255,0.5);margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)}
+.contact a{color:#38bdf8;text-decoration:none}
+.contact a:hover{text-decoration:underline}
+.last-check{font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px}
+.version{position:fixed;bottom:14px;right:14px;font-size:10px;color:rgba(255,255,255,0.25);font-family:'Outfit',sans-serif}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">solvenin<span>.</span></div>
+  <div class="icon">🔧</div>
+  <h1 data-i18n="maintenance_title">System Update in Progress</h1>
+  <div class="subtitle" data-i18n="maintenance_subtitle">We'll be back in a few minutes. Thanks for your patience.</div>
+  <div class="status"><span class="dot"></span><span data-i18n="maintenance_status">Maintenance in progress</span></div>
+  <div class="contact">
+    <span data-i18n="maintenance_contact">For urgent issues:</span> <a href="mailto:support@solvenin.com">support@solvenin.com</a>
+    <div class="last-check"><span data-i18n="maintenance_last_check">Last check:</span> <span id="last-check-time">—</span></div>
+  </div>
+</div>
+<div class="version">v<span id="app-version">1.0.0</span></div>
+<script>
+const sb = window.supabase.createClient(
+  'https://jaakjdzpdizjbzvbtcld.supabase.co',
+  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+);
+window._supabase = sb;
+
+async function checkMaintenance() {
+  try {
+    const { data: rows } = await sb.from('feature_flags')
+      .select('flag_name,is_enabled_globally,description')
+      .in('flag_name',['maintenance_mode','app_version']);
+    document.getElementById('last-check-time').textContent = new Date().toLocaleTimeString();
+    if (rows) {
+      const ver = rows.find(f => f.flag_name === 'app_version');
+      if (ver) document.getElementById('app-version').textContent = ver.description || '1.0.0';
+      const maint = rows.find(f => f.flag_name === 'maintenance_mode');
+      if (maint && maint.is_enabled_globally === false) {
+        // Maintenance lifted — return to dashboard
+        window.location.href = 'dashboard.html';
+      }
+    }
+  } catch (e) {
+    document.getElementById('last-check-time').textContent = new Date().toLocaleTimeString() + ' (offline)';
+  }
+}
+checkMaintenance();
+setInterval(checkMaintenance, 30000);
+if (typeof applyTranslations === 'function') applyTranslations();
+</script>
+</body>
+</html>

@@ -244,6 +244,7 @@ function buildNav() {
     { key: 'trash', icon: '🗑️', label: 'Çöp Kutusu', roles: ['superadmin','support'] },
     { key: 'users', icon: '👥', label: 'Kullanıcılar', roles: ['superadmin','support'] },
     { key: 'demos', icon: '🎯', label: 'Demolar', roles: ['superadmin','support','partner'] },
+    { key: 'flags', icon: '🚩', label: 'Feature Flags', roles: ['superadmin','support'] },
     { key: 'repair', icon: '🔧', label: 'Veri Onarım', roles: ['superadmin','support'] },
     { key: 'panel_users', icon: '👤', label: 'Panel Kullanıcıları', roles: ['superadmin'] },
     { key: 'logs', icon: '📋', label: 'Loglar', roles: ['superadmin','support'] }
@@ -269,13 +270,14 @@ async function refreshExpiredTrashCount() {
 function switchPage(key) {
   currentPage = key;
   buildNav();
-  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', trash:'🗑️ Çöp Kutusu', users:'👥 Kullanıcılar', demos:'🎯 Demolar', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
+  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', trash:'🗑️ Çöp Kutusu', users:'👥 Kullanıcılar', demos:'🎯 Demolar', flags:'🚩 Feature Flags', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
   document.getElementById('sp-title').textContent = titles[key] || key;
   if (key === 'dashboard') renderDashboard();
   else if (key === 'companies') renderCompanies();
   else if (key === 'trash') renderTrash();
   else if (key === 'users') renderUsers();
   else if (key === 'demos') renderDemos();
+  else if (key === 'flags') renderFlags();
   else if (key === 'repair') renderRepair();
   else if (key === 'panel_users') renderPanelUsers();
   else if (key === 'logs') renderLogs();
@@ -324,6 +326,19 @@ async function renderDashboard() {
       <div class="stat-card"><div class="stat-label">Tahmini MRR</div><div class="stat-val">$${fmt(mrr.toFixed(0))}</div></div>
     </div>
 
+    <!-- SYSTEM HEALTH WIDGET -->
+    <div class="card" id="sys-health-card">
+      <h3>🟢 <span id="sys-health-overall">Sistem Durumu</span></h3>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px"><span id="sys-db-icon">⚪</span><span style="font-size:12px;color:var(--gray500)">DB:</span><strong id="sys-db-ms">—</strong></div>
+        <div style="display:flex;align-items:center;gap:6px"><span id="sys-auth-icon">⚪</span><span style="font-size:12px;color:var(--gray500)">Auth:</span><strong id="sys-auth-ms">—</strong></div>
+        <div style="display:flex;align-items:center;gap:6px"><span id="sys-api-icon">⚪</span><span style="font-size:12px;color:var(--gray500)">API:</span><strong id="sys-api-ms">—</strong></div>
+        <div style="flex:1"></div>
+        <a href="health.html" target="_blank" style="font-size:12px;color:var(--primary);text-decoration:none">status.solvenin.com →</a>
+      </div>
+      <div style="font-size:11px;color:var(--gray400);margin-top:8px">Son kontrol: <span id="sys-last-check">—</span></div>
+    </div>
+
     <div class="card">
       <h3>📊 Plan Dağılımı</h3>
       <div class="bar-chart">
@@ -357,6 +372,32 @@ async function renderDashboard() {
       </table>
     </div>
   `;
+  // Kick off the health check now that DOM exists
+  refreshSystemHealth();
+  if (window._sysHealthTimer) clearInterval(window._sysHealthTimer);
+  window._sysHealthTimer = setInterval(refreshSystemHealth, 30000);
+}
+
+async function refreshSystemHealth() {
+  if (!document.getElementById('sys-health-card')) return;
+  const time = (fn) => { const t0 = performance.now(); return fn().then(() => ({ ms: Math.round(performance.now()-t0), ok: true })).catch(() => ({ ms: Math.round(performance.now()-t0), ok: false })); };
+  const cls = (r) => !r.ok ? 'red' : r.ms < 500 ? 'green' : r.ms < 2000 ? 'amber' : 'red';
+  const icon = (c) => c === 'green' ? '🟢' : c === 'amber' ? '🟡' : '🔴';
+  const dbR = await time(() => sb.from('feature_flags').select('flag_name').eq('flag_name','app_version').single());
+  const auR = await time(() => sb.auth.getSession());
+  const apR = await time(() => fetch('https://jaakjdzpdizjbzvbtcld.supabase.co/rest/v1/feature_flags?select=flag_name&limit=1', { headers: { apikey: 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9', Authorization: 'Bearer sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9' } }).then(r => { if (!r.ok) throw new Error(); }));
+  document.getElementById('sys-db-icon').textContent = icon(cls(dbR));
+  document.getElementById('sys-db-ms').textContent = dbR.ok ? dbR.ms+'ms' : 'error';
+  document.getElementById('sys-auth-icon').textContent = icon(cls(auR));
+  document.getElementById('sys-auth-ms').textContent = auR.ok ? auR.ms+'ms' : 'error';
+  document.getElementById('sys-api-icon').textContent = icon(cls(apR));
+  document.getElementById('sys-api-ms').textContent = apR.ok ? apR.ms+'ms' : 'error';
+  const order = { green:0, amber:1, red:2 };
+  const worst = [cls(dbR),cls(auR),cls(apR)].reduce((a,b) => order[a]>=order[b]?a:b, 'green');
+  const overall = document.getElementById('sys-health-overall');
+  overall.textContent = worst==='green'?'Sistem Durumu — Tüm Sistemler Çalışıyor' : worst==='amber'?'Sistem Durumu — Yavaşlama' : 'Sistem Durumu — Kesinti';
+  document.getElementById('sys-health-card').querySelector('h3').firstChild.textContent = (worst==='green'?'🟢 ':worst==='amber'?'🟡 ':'🔴 ');
+  document.getElementById('sys-last-check').textContent = new Date().toLocaleTimeString();
 }
 
 function renderBar(label, value, total, color) {
@@ -583,6 +624,141 @@ async function openTrashAuditLog(id, name) {
 function closeTrashAuditLog() {
   const o = document.getElementById('trash-audit-overlay');
   if (o) o.classList.remove('open');
+}
+
+// ===== FEATURE FLAGS =====
+let _flagRows = [];
+let _editingFlag = null;
+
+async function renderFlags() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data, error } = await sb.rpc('sp_feature_flags');
+  if (error) { content.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444">Hata: '+error.message+'</div>'; return; }
+  _flagRows = data || [];
+  const maint = _flagRows.find(f => f.flag_name === 'maintenance_mode');
+  const maintOn = !!(maint && maint.is_enabled_globally);
+
+  content.innerHTML = `
+    <div style="${maintOn?'background:#fef2f2;border:2px solid #fecaca':'background:#f8fafc;border:1px solid #e2e8f0'};border-radius:12px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px">
+      <div style="font-size:48px">${maintOn?'🔴':'🔧'}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;${maintOn?'color:#dc2626':'color:var(--gray800)'}">${maintOn?'BAKIM MODU AKTİF':'Bakım Modu'}</div>
+        <div style="font-size:12px;color:var(--gray500);margin-top:4px">${maintOn?'⚠️ Tüm kullanıcılar /system-maintenance.html sayfasına yönlendirildi.':'Tüm kullanıcıları sistemden kilitleyerek bakım yap.'}</div>
+      </div>
+      <button class="btn btn-sm" style="padding:10px 20px;font-size:13px;font-weight:700;background:${maintOn?'#16a34a':'#dc2626'};color:#fff;border:none;border-radius:8px;cursor:pointer" onclick="toggleMaintenance(${!maintOn})">${maintOn?'✅ Bakımı Bitir':'🔒 Bakım Modunu Aç'}</button>
+    </div>
+
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr>
+          <th>FLAG</th><th>AÇIKLAMA</th><th class="text-right">GLOBAL</th><th>PLANLAR</th><th class="text-right">ROLLOUT</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${_flagRows.map(f => {
+            const plansHtml = (f.enabled_for_plans || []).length
+              ? (f.enabled_for_plans.map(p => `<span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;margin-right:3px">${p}</span>`).join(''))
+              : '<span style="color:var(--gray400)">—</span>';
+            return `<tr>
+              <td><strong>${f.flag_name}</strong></td>
+              <td style="font-size:12px;color:var(--gray500);max-width:240px">${f.description || '—'}</td>
+              <td class="text-right">${f.is_enabled_globally?'<span class="badge badge-green">✅</span>':'<span class="badge badge-gray">❌</span>'}</td>
+              <td>${plansHtml}</td>
+              <td class="text-right">${f.rollout_percentage > 0 ? f.rollout_percentage+'%' : '—'}</td>
+              <td><button class="btn btn-outline btn-sm" onclick="openEditFlag('${f.flag_name}')">Düzenle</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function toggleMaintenance(enable) {
+  const msg = enable
+    ? '⚠️ DİKKAT: Tüm kullanıcılar sisteme erişemeyecek ve bakım sayfasına yönlendirilecek. Devam edilsin mi?'
+    : 'Bakım modunu kapatmak istediğinize emin misiniz? Kullanıcılar dashboard\'a geri yönlendirilecek.';
+  if (!confirm(msg)) return;
+  const { data, error } = await sb.rpc('sp_set_maintenance_mode', { p_enabled: enable });
+  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  showToast(enable ? '🔒 Bakım modu AKTİF' : '✅ Bakım modu kapatıldı', enable?'error':'success');
+  renderFlags();
+}
+
+function openEditFlag(name) {
+  _editingFlag = _flagRows.find(f => f.flag_name === name);
+  if (!_editingFlag) return;
+  let overlay = document.getElementById('flag-edit-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'flag-edit-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = '<div class="modal" style="max-width:520px;background:#fff;border-radius:14px" id="flag-edit-modal"></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+  }
+  const f = _editingFlag;
+  const plansSet = new Set(f.enabled_for_plans || []);
+  document.getElementById('flag-edit-modal').innerHTML = `
+    <div style="padding:24px">
+      <h2 style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">🚩 ${f.flag_name}</h2>
+      <div style="font-size:12px;color:var(--gray500);margin-bottom:20px">${f.description || ''}</div>
+
+      <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:8px;margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" id="flg-global" ${f.is_enabled_globally?'checked':''}>
+        <div>
+          <div style="font-size:13px;font-weight:600">Global olarak etkin</div>
+          <div style="font-size:11px;color:var(--gray500)">Tüm şirketler için açık</div>
+        </div>
+      </label>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:6px">Planlar</div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:13px"><input type="checkbox" class="flg-plan" value="free" ${plansSet.has('free')?'checked':''}> Free</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:13px"><input type="checkbox" class="flg-plan" value="standard" ${plansSet.has('standard')?'checked':''}> Standard</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" class="flg-plan" value="professional" ${plansSet.has('professional')?'checked':''}> Professional</label>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)">Şirket UUID listesi (her satıra bir tane)</label>
+        <textarea id="flg-companies" rows="3" style="width:100%;margin-top:4px;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-family:monospace;font-size:11px">${(f.enabled_for_companies||[]).join('\n')}</textarea>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)">Rollout: <span id="flg-rollout-val">${f.rollout_percentage||0}</span>%</label>
+        <input type="range" id="flg-rollout" min="0" max="100" value="${f.rollout_percentage||0}" oninput="document.getElementById('flg-rollout-val').textContent=this.value" style="width:100%">
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="document.getElementById('flag-edit-overlay').classList.remove('open')">İptal</button>
+        <button class="btn btn-primary" onclick="saveFlagEdit()">Kaydet</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('open');
+}
+
+async function saveFlagEdit() {
+  if (!_editingFlag) return;
+  const isGlobal = document.getElementById('flg-global').checked;
+  const plans = Array.from(document.querySelectorAll('.flg-plan:checked')).map(c => c.value);
+  const companies = document.getElementById('flg-companies').value
+    .split('\n').map(s => s.trim()).filter(s => s.length === 36); // basic uuid length filter
+  const rollout = parseInt(document.getElementById('flg-rollout').value) || 0;
+
+  const { data, error } = await sb.rpc('sp_update_feature_flag', {
+    p_flag_name: _editingFlag.flag_name,
+    p_is_enabled_globally: isGlobal,
+    p_enabled_for_plans: plans,
+    p_enabled_for_companies: companies,
+    p_rollout_percentage: rollout
+  });
+  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (!data?.success) { showToast(data?.error || 'Güncellenemedi', 'error'); return; }
+  showToast('Flag güncellendi: '+_editingFlag.flag_name, 'success');
+  document.getElementById('flag-edit-overlay').classList.remove('open');
+  _editingFlag = null;
+  renderFlags();
 }
 
 async function openCompanyDrawer(id) {
