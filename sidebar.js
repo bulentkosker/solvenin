@@ -921,18 +921,36 @@
     }
   }
 
-  const MODULE_NAV_MAP = {
+  // Sidebar visibility map — kept in sync with modules-config.js
+  // (window.ModulesConfig.MODULE_NAV_MAP). Hardcoded here as a fallback
+  // for pages that don't include modules-config.js, but the runtime
+  // value below preferentially uses the shared one when available.
+  let MODULE_NAV_MAP = {
     inventory:   ['nav_inventory'],
     sales:       ['nav_sales'],
     purchasing:  ['nav_purchasing'],
-    production:  ['nav_production'],
+    contacts:    ['nav_contacts', 'nav_cariler'],
+    finance:     ['nav_cashbank', 'nav_finance'],
     accounting:  ['nav_accounting'],
     hr:          ['nav_hr'],
-    shipping:    ['nav_shipping'],
+    production:  ['nav_production'],
     projects:    ['nav_projects'],
+    shipping:    ['nav_shipping'],
     maintenance: ['nav_maintenance'],
+    crm:         ['nav_crm'],
+    reports:     ['nav_reports'],
+    pos:         ['nav_pos'],
+    restaurant:  ['nav_restaurant'],
+    hotel:       ['nav_hotel'],
+    clinic:      ['nav_clinic'],
+    elevator:    ['nav_elevator'],
+    ecommerce:   ['nav_ecommerce'],
+    // legacy alias
     cash_bank:   ['nav_cashbank'],
   };
+  if (window.ModulesConfig && window.ModulesConfig.MODULE_NAV_MAP) {
+    MODULE_NAV_MAP = { ...MODULE_NAV_MAP, ...window.ModulesConfig.MODULE_NAV_MAP };
+  }
 
   function applyModuleVisibility(modules) {
     const disabledKeys = new Set();

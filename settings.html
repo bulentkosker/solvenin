@@ -303,6 +303,7 @@ tr:hover .action-btns { opacity:1; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="i18n.js"></script>
 <script src="feature-flags.js"></script>
+<script src="modules-config.js"></script>
     <style>
     .main { margin-left: 220px; }
   </style>
@@ -3111,13 +3112,39 @@ async function loadModules() {
   const container = document.getElementById('modules-list');
   if (!container) return;
 
-  container.innerHTML = MODULE_DEFS.map(mod => {
-    const active = moduleMap[mod.key] !== undefined ? moduleMap[mod.key] : true;
+  // Use shared modules-config.js for Standard / Sector grouping
+  const cfg = window.ModulesConfig;
+  if (!cfg) {
+    // Fallback: legacy MODULE_DEFS layout (single flat list)
+    container.innerHTML = MODULE_DEFS.map(mod => {
+      const active = moduleMap[mod.key] !== undefined ? moduleMap[mod.key] : true;
+      return `
+        <div class="module-row">
+          <div class="module-info">
+            <div class="module-icon">${mod.icon}</div>
+            <div class="module-name" data-i18n="${mod.i18n}">${_t(mod.i18n)}</div>
+          </div>
+          <label class="module-toggle">
+            <input type="checkbox" ${active ? 'checked' : ''} onchange="toggleModule('${mod.key}', this.checked)">
+            <span class="track"></span>
+            <span class="thumb"></span>
+          </label>
+        </div>`;
+    }).join('');
+    return;
+  }
+
+  const renderRow = (mod, defaultActive) => {
+    const active = moduleMap[mod.key] !== undefined ? moduleMap[mod.key] : defaultActive;
+    const desc = mod.descKey ? `<div style="font-size:11px;color:var(--gray500);margin-top:2px">${_t(mod.descKey) || ''}</div>` : '';
     return `
       <div class="module-row">
         <div class="module-info">
           <div class="module-icon">${mod.icon}</div>
-          <div class="module-name" data-i18n="${mod.i18n}">${_t(mod.i18n)}</div>
+          <div>
+            <div class="module-name" data-i18n="${mod.i18n}">${_t(mod.i18n)}</div>
+            ${desc}
+          </div>
         </div>
         <label class="module-toggle">
           <input type="checkbox" ${active ? 'checked' : ''} onchange="toggleModule('${mod.key}', this.checked)">
@@ -3125,7 +3152,14 @@ async function loadModules() {
           <span class="thumb"></span>
         </label>
       </div>`;
-  }).join('');
+  };
+
+  container.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--gray500);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase" data-i18n="module_standard_modules">Standard Modules</div>
+    ${cfg.STANDARD.map(m => renderRow(m, true)).join('')}
+    <div style="font-size:11px;font-weight:700;color:var(--gray500);letter-spacing:1px;margin:18px 0 8px;text-transform:uppercase" data-i18n="module_sector_modules">Sector Modules</div>
+    ${cfg.SECTOR.map(m => renderRow(m, false)).join('')}
+  `;
 }
 
 async function toggleModule(moduleKey, isActive) {

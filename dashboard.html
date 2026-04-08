@@ -701,6 +701,7 @@ tr:hover td { background: var(--gray50); }
 </style>
 <script src="i18n.js"></script>
 <script src="feature-flags.js"></script>
+<script src="modules-config.js"></script>
     <style>
     /* Critical sidebar CSS - prevents layout flash */
     .main { margin-left: 220px; }
@@ -764,6 +765,24 @@ tr:hover td { background: var(--gray50); }
     <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
       <button onclick="(async()=>{try{await sb.auth.signOut()}catch(e){}localStorage.clear();location.href='auth.html'})()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;font-family:inherit" data-i18n="btn_logout">Sign Out</button>
     </div>
+  </div>
+</div>
+
+<!-- MODULE PICKER (post-onboarding) -->
+<div id="module-picker-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(180deg,#0a0f1e 0%,#1a2744 100%);z-index:9000;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif;color:#fff;overflow-y:auto">
+  <div style="max-width:760px;width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px 36px;backdrop-filter:blur(8px);margin:auto">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px" data-i18n="module_select_title">Choose your modules</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6)" data-i18n="module_settings_hint">You can change modules anytime in Settings</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#38bdf8;letter-spacing:1px;margin-bottom:10px" data-i18n="module_standard_modules">STANDARD MODULES</div>
+    <div id="mp-standard-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:24px"></div>
+
+    <div style="font-size:11px;font-weight:700;color:#fbbf24;letter-spacing:1px;margin-bottom:10px" data-i18n="module_sector_modules">SECTOR MODULES</div>
+    <div id="mp-sector-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:28px"></div>
+
+    <button id="mp-start-btn" onclick="saveModuleSelectionAndContinue()" style="width:100%;padding:14px;background:#38bdf8;color:#0a0f1e;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer"><span data-i18n="module_start_button">Get Started</span> →</button>
   </div>
 </div>
 
@@ -1193,9 +1212,10 @@ async function createFirstCompany() {
       return;
     }
 
-    // Persist the new company id and reload
+    // Persist new company id, then show the module picker before reload
     localStorage.setItem('currentCompanyId', data.company_id);
-    window.location.reload();
+    document.getElementById('onboarding-overlay').style.display = 'none';
+    showModulePicker(data.company_id);
   } catch (e) {
     console.error(e);
     showToast(t('onboarding_create_error') || 'Could not create company, please try again', 'error');
@@ -1205,6 +1225,115 @@ async function createFirstCompany() {
 
 // Lightweight toast helper for the onboarding overlay (the main toast
 // system might not be loaded yet when the overlay is showing)
+// ===== MODULE PICKER (post-onboarding) =====
+let _mpCompanyId = null;
+let _mpSelections = {}; // module key → boolean
+
+function showModulePicker(companyId) {
+  _mpCompanyId = companyId;
+  // Use shared modules-config.js
+  const cfg = window.ModulesConfig;
+  if (!cfg) {
+    console.warn('ModulesConfig not loaded — skipping picker, going to dashboard');
+    window.location.reload();
+    return;
+  }
+  // Initialize selections from defaults (standard=true, sector=false)
+  _mpSelections = {};
+  cfg.STANDARD.forEach(m => { _mpSelections[m.key] = true; });
+  cfg.SECTOR.forEach(m => { _mpSelections[m.key] = false; });
+
+  const tile = (m, isStandard) => {
+    const checked = _mpSelections[m.key];
+    const desc = m.descKey ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px">${t(m.descKey) || ''}</div>` : '';
+    return `
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:${checked?'rgba(56,189,248,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${checked?'rgba(56,189,248,0.35)':'rgba(255,255,255,0.08)'};border-radius:10px;cursor:pointer;transition:all .15s" onclick="toggleMpModule('${m.key}',this)">
+        <input type="checkbox" ${checked?'checked':''} style="display:none">
+        <div style="font-size:22px;flex-shrink:0">${m.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${t(m.i18n) || m.key}</div>
+          ${desc}
+        </div>
+        <div style="font-size:14px;color:${checked?'#38bdf8':'rgba(255,255,255,0.3)'}">${checked?'✓':''}</div>
+      </label>
+    `;
+  };
+  document.getElementById('mp-standard-grid').innerHTML = cfg.STANDARD.map(m => tile(m, true)).join('');
+  document.getElementById('mp-sector-grid').innerHTML = cfg.SECTOR.map(m => tile(m, false)).join('');
+  document.getElementById('module-picker-overlay').style.display = 'flex';
+  if (typeof applyTranslations === 'function') applyTranslations();
+}
+
+function toggleMpModule(key, labelEl) {
+  _mpSelections[key] = !_mpSelections[key];
+  // Re-render in place — easier than mutating individual cells
+  const cfg = window.ModulesConfig;
+  if (!cfg) return;
+  // Find the section the label is in and re-render
+  const std = cfg.STANDARD.find(m => m.key === key);
+  if (std) {
+    showModulePickerRefresh();
+  } else {
+    showModulePickerRefresh();
+  }
+}
+
+function showModulePickerRefresh() {
+  // Save current selections, re-render
+  const cfg = window.ModulesConfig;
+  if (!cfg) return;
+  const tile = (m) => {
+    const checked = _mpSelections[m.key];
+    const desc = m.descKey ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px">${t(m.descKey) || ''}</div>` : '';
+    return `
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:${checked?'rgba(56,189,248,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${checked?'rgba(56,189,248,0.35)':'rgba(255,255,255,0.08)'};border-radius:10px;cursor:pointer;transition:all .15s" onclick="toggleMpModule('${m.key}',this)">
+        <input type="checkbox" ${checked?'checked':''} style="display:none">
+        <div style="font-size:22px;flex-shrink:0">${m.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${t(m.i18n) || m.key}</div>
+          ${desc}
+        </div>
+        <div style="font-size:14px;color:${checked?'#38bdf8':'rgba(255,255,255,0.3)'}">${checked?'✓':''}</div>
+      </label>
+    `;
+  };
+  document.getElementById('mp-standard-grid').innerHTML = cfg.STANDARD.map(tile).join('');
+  document.getElementById('mp-sector-grid').innerHTML = cfg.SECTOR.map(tile).join('');
+}
+
+async function saveModuleSelectionAndContinue() {
+  const btn = document.getElementById('mp-start-btn');
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳';
+
+  try {
+    // Update the seeded module rows for this company. The RPC already
+    // inserted defaults — we just need to flip is_active for any
+    // tile the user toggled away from default.
+    const cfg = window.ModulesConfig;
+    const updates = [];
+    cfg.all().forEach(m => {
+      const desired = !!_mpSelections[m.key];
+      const isStd = cfg.STANDARD.some(x => x.key === m.key);
+      const def = isStd; // standard default true, sector default false
+      if (desired !== def) {
+        updates.push({ company_id: _mpCompanyId, module: m.key, is_active: desired });
+      }
+    });
+    if (updates.length) {
+      // upsert one row at a time to avoid partial-batch issues
+      for (const u of updates) {
+        await sb.from('company_modules').upsert(u, { onConflict: 'company_id,module' });
+      }
+    }
+  } catch (e) {
+    console.warn('module save failed:', e);
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+    window.location.reload();
+  }
+}
+
 function showToast(msg, type) {
   // Reuse existing showToast if already defined
   if (window.__realShowToast) return window.__realShowToast(msg, type);
