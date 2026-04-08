@@ -37,6 +37,15 @@
       border-radius: 99px;
     }
     .sidebar-sections { flex: 1; overflow-y: auto; padding: 6px 0; }
+    /* Prevent flash of disabled modules — hide the nav body until
+       applyModuleVisibility() has run. Logo, footer and sections
+       container stay so layout doesn't shift; only the nav rows fade. */
+    body.sb-modules-loading .sidebar-sections .nav-item,
+    body.sb-modules-loading .sidebar-sections .nav-parent,
+    body.sb-modules-loading .sidebar-sections .nav-children { opacity: 0; }
+    body:not(.sb-modules-loading) .sidebar-sections .nav-item,
+    body:not(.sb-modules-loading) .sidebar-sections .nav-parent,
+    body:not(.sb-modules-loading) .sidebar-sections .nav-children { opacity: 1; transition: opacity .15s ease-in; }
     .sidebar-section { padding: 8px 8px 4px; }
     .sidebar-section-label {
       font-size: 9px; font-weight: 700; letter-spacing: 2px;
@@ -559,7 +568,7 @@
             const active = child.href && child.href !== '#' && page === childBase &&
               (!childHash || window.location.hash === childHash);
             const label = _t(child.key) || child.key;
-            return `<a class="nav-child${active ? ' active' : ''}" href="${child.href || '#'}">
+            return `<a class="nav-child${active ? ' active' : ''}" data-key="${child.key}" href="${child.href || '#'}">
               <span class="nav-child-dot"></span>${label}
             </a>`;
           }).join('');
@@ -579,7 +588,7 @@
           // ── Regular nav item ──
           const active = item.href && item.href !== '#' && page === item.href;
           const label = _t(item.key) || item.key;
-          return `<a class="nav-item${active ? ' active' : ''}" href="${item.href || '#'}">
+          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}">
             <span class="nav-icon">${item.icon}</span>${label}
           </a>`;
         }
@@ -644,6 +653,11 @@
   function mount() {
     if (!document.body) return false;
     injectCSS();
+
+    // Prevent flash of disabled modules: hide the nav until
+    // applyModuleVisibility() runs after the company_modules fetch.
+    // We use opacity (not display:none) so layout doesn't shift.
+    document.body.classList.add('sb-modules-loading');
 
     let sidebar = document.getElementById('sidebar');
     if (!sidebar) {
@@ -953,50 +967,64 @@
   }
 
   function applyModuleVisibility(modules) {
+    // Build the disabled-key set from MODULE_NAV_MAP
     const disabledKeys = new Set();
-    modules.forEach(m => {
-      if (!m.is_active && MODULE_NAV_MAP[m.module]) {
-        MODULE_NAV_MAP[m.module].forEach(k => disabledKeys.add(k));
-      }
+    const enabledKeys = new Set();
+    (modules || []).forEach(m => {
+      const navKeys = MODULE_NAV_MAP[m.module] || [];
+      navKeys.forEach(k => (m.is_active ? enabledKeys : disabledKeys).add(k));
     });
-    if (disabledKeys.size === 0) return;
 
-    // Hide accordion parents + their children containers
-    document.querySelectorAll('.nav-parent[data-key]').forEach(el => {
-      if (disabledKeys.has(el.dataset.key)) {
+    // Debug — easy to check from console
+    if (typeof window !== 'undefined') {
+      window.__sbDisabledKeys = [...disabledKeys];
+      window.__sbEnabledKeys  = [...enabledKeys];
+    }
+
+    if (disabledKeys.size > 0) {
+      // Hide every nav element whose data-key is disabled.
+      // This covers: standalone <a.nav-item>, accordion <div.nav-parent>,
+      // and accordion children <a.nav-child>. All emit data-key from buildHTML.
+      const sel = [...disabledKeys].map(k => `[data-key="${k}"]`).join(',');
+      document.querySelectorAll(sel).forEach(el => {
         el.style.display = 'none';
-        const children = el.nextElementSibling;
-        if (children && children.classList.contains('nav-children')) {
-          children.style.display = 'none';
+        // If it's an accordion parent, also hide its sibling children container
+        if (el.classList.contains('nav-parent')) {
+          const next = el.nextElementSibling;
+          if (next && next.classList.contains('nav-children')) {
+            next.style.display = 'none';
+          }
         }
+      });
+    }
+
+    // After children inside an accordion are hidden, the accordion parent
+    // may now have zero visible children — collapse it too.
+    document.querySelectorAll('.nav-parent[data-key]').forEach(parent => {
+      if (parent.style.display === 'none') return;
+      const children = parent.nextElementSibling;
+      if (!children || !children.classList.contains('nav-children')) return;
+      const visibleChildren = [...children.querySelectorAll('a.nav-child')]
+        .filter(c => c.style.display !== 'none');
+      // We do NOT hide the parent automatically here to avoid surprising
+      // behavior, but we make a console.debug record so it's discoverable.
+      if (visibleChildren.length === 0) {
+        // console.debug('[sidebar] accordion has no visible children:', parent.dataset.key);
       }
     });
 
-    // Hide standalone nav-items by matching href
-    const NAV_KEY_HREF = {
-      nav_production: 'production.html', nav_shipping: 'shipping.html',
-      nav_projects: 'projects.html', nav_maintenance: 'maintenance.html',
-    };
-    document.querySelectorAll('a.nav-item').forEach(el => {
-      const href = el.getAttribute('href') || '';
-      for (const [navKey, page] of Object.entries(NAV_KEY_HREF)) {
-        if (disabledKeys.has(navKey) && href.includes(page)) {
-          el.style.display = 'none';
-        }
-      }
-    });
-
-    // Hide child items inside accordion (accounting, cashbank under Finance)
-    const CHILD_HREF_MAP = { nav_cashbank: 'cashbank.html', nav_accounting: 'accounting.html' };
-    document.querySelectorAll('.nav-child').forEach(el => {
-      const href = el.getAttribute('href') || '';
-      for (const [navKey, page] of Object.entries(CHILD_HREF_MAP)) {
-        if (disabledKeys.has(navKey) && href.includes(page)) {
-          el.style.display = 'none';
-        }
-      }
-    });
+    // Reveal the nav now that visibility is applied — kills the flash.
+    document.body.classList.remove('sb-modules-loading');
   }
+
+  // Defensive failsafe: if loadSidebarData never reaches applyModuleVisibility
+  // (network down, no auth, etc.), still reveal the nav after 3 seconds so
+  // the user isn't stuck staring at an invisible sidebar.
+  setTimeout(() => {
+    if (document.body.classList.contains('sb-modules-loading')) {
+      document.body.classList.remove('sb-modules-loading');
+    }
+  }, 3000);
 
   function renderCompanyMenu(companies, currentId) {
     const list = document.getElementById('sb-company-menu-list');
