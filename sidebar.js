@@ -561,14 +561,20 @@
             const active = child.href && child.href !== '#' && page === childBase &&
               (!childHash || window.location.hash === childHash);
             const label = _t(child.key) || child.key;
-            // BAKED HIDDEN: every nav row starts with display:none. applyModuleVisibility
-            // removes this inline style only from enabled modules. No CSS race possible.
-            return `<a class="nav-child${active ? ' active' : ''}" data-key="${child.key}" href="${child.href || '#'}" style="display:none">
+            // Children are NOT baked-hidden — they inherit visibility from
+            // their parent's .nav-children container. applyModuleVisibility
+            // will hide individual children only if their own data-key
+            // belongs to a disabled cross-cutting module (e.g. nav_reports).
+            return `<a class="nav-child${active ? ' active' : ''}" data-key="${child.key}" href="${child.href || '#'}">
               <span class="nav-child-dot"></span>${label}
             </a>`;
           }).join('');
 
           const label = _t(item.key) || item.key;
+          // BAKED HIDDEN: parent + children container start with display:none.
+          // applyModuleVisibility reveals enabled parents — when revealed,
+          // the children container comes with it and the children inside
+          // become visible naturally.
           return `
             <div class="${parentClasses}" data-key="${item.key}" onclick="sidebarToggleAccordion('${item.key}')" style="display:none">
               <span class="nav-icon">${item.icon}</span>
@@ -580,7 +586,7 @@
             </div>`;
 
         } else {
-          // ── Regular nav item ──
+          // ── Regular standalone nav item — also baked hidden ──
           const active = item.href && item.href !== '#' && page === item.href;
           const label = _t(item.key) || item.key;
           return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}" style="display:none">
@@ -976,18 +982,30 @@
 
     if (enabledKeys.size === 0) return;
 
-    // Reveal every nav element whose data-key is enabled.
+    // Pass 1 — reveal every nav element whose data-key is enabled.
+    // Note: parent .nav-parent AND its sibling .nav-children share the
+    // same data-key (the parent's module key), so a single selector hits
+    // both and reveals the dropdown container too.
     const sel = [...enabledKeys].map(k => `[data-key="${k}"]`).join(',');
-    document.querySelectorAll(sel).forEach(el => {
-      el.style.display = '';
-      // If this is an accordion parent, also reveal its sibling children container
-      if (el.classList.contains('nav-parent')) {
-        const next = el.nextElementSibling;
-        if (next && next.classList.contains('nav-children')) {
-          next.style.display = '';
+    if (sel) {
+      document.querySelectorAll(sel).forEach(el => { el.style.display = ''; });
+    }
+
+    // Pass 2 — hide cross-cutting children whose own data-key belongs to
+    // a DISABLED module (e.g. nav_reports under Stok/Cariler/Satış when
+    // the reports module is off). Children inherit visibility from their
+    // parent container by default; this pass turns them off individually.
+    const disSel = [...disabledKeys].map(k => `[data-key="${k}"]`).join(',');
+    if (disSel) {
+      document.querySelectorAll(disSel).forEach(el => {
+        // Don't override a parent we just revealed in pass 1 — only hide
+        // .nav-child elements and any standalone items not in enabledKeys.
+        if (el.classList.contains('nav-child') ||
+            (!el.classList.contains('nav-parent') && !el.classList.contains('nav-children'))) {
+          el.style.display = 'none';
         }
-      }
-    });
+      });
+    }
 
     // Reveal the section labels (they have no data-key) — but only if
     // the section actually has at least one visible child.
