@@ -499,8 +499,8 @@
     {
       labelKey: 'nav_group_system',
       items: [
-        { icon: '⚙️', key: 'nav_settings',     href: 'settings.html' },
-        { icon: '💎', key: 'nav_subscription', href: 'subscription.html' },
+        { icon: '⚙️', key: 'nav_settings',     href: 'settings.html',     alwaysVisible: true },
+        { icon: '💎', key: 'nav_subscription', href: 'subscription.html', alwaysVisible: true },
       ]
     },
   ];
@@ -589,7 +589,8 @@
           // ── Regular standalone nav item — also baked hidden ──
           const active = item.href && item.href !== '#' && page === item.href;
           const label = _t(item.key) || item.key;
-          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}" style="display:none">
+          const hiddenStyle = item.alwaysVisible ? '' : ' style="display:none"';
+          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}"${hiddenStyle}>
             <span class="nav-icon">${item.icon}</span>${label}
           </a>`;
         }
