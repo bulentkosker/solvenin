@@ -3257,6 +3257,16 @@ async function toggleModule(moduleKey, isActive) {
     showToast('Error: ' + error.message, 'error');
     return;
   }
+  // Invalidate the sidebar module cache so the next page render reflects
+  // the new state. Done by removing the cache key — sidebar.js will
+  // re-fetch from company_modules on next load.
+  try { localStorage.removeItem('sb_mods_' + companyId); } catch(e) {}
+  // Also live-update the current page's sidebar if the API is exposed.
+  if (typeof window.applySidebarModules === 'function') {
+    const { data: mods } = await sb.from('company_modules')
+      .select('module, is_active').eq('company_id', companyId);
+    if (mods) window.applySidebarModules(mods);
+  }
   const _t = window.t || (k => k);
   showToast(isActive ? _t('toast_module_enabled') : _t('toast_module_disabled'), 'success');
 }

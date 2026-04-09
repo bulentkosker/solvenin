@@ -871,6 +871,9 @@
   }
   // Expose to other pages so they can re-render after companyLogoChanged
   window.applySidebarLogo = applySidebarLogo;
+  // Expose module-visibility hook so settings.html can live-update the
+  // sidebar after a module toggle (no full reload required).
+  window.applySidebarModules = applyModuleVisibility;
 
   // If the logo is already cached from a recent visit, render immediately
   // (before the async loadSidebarData fetch finishes).
@@ -1018,6 +1021,9 @@
     }
   }
 
+  // Public API for live-update from settings.html after a module toggle.
+  // Defined further down — assigned at end of IIFE.
+
   // applyModuleVisibility — takes the raw modules array (from company_modules
   // or user_permissions), updates the enabled-set state, caches it, and
   // re-renders the sidebar if the set changed.
@@ -1042,20 +1048,23 @@
       modules.forEach(m => next.delete(m.module));
     }
 
-    // Compare → if changed, update state, cache, and re-render.
     const newArr = [...next].sort();
-    const curArr = _enabledModules ? [..._enabledModules].sort() : null;
-    const changed = !curArr || curArr.length !== newArr.length ||
-                    curArr.some((k, i) => k !== newArr[i]);
-
     _enabledModules = next;
+
+    // Debug — inspect from devtools
+    window.__sbEnabledModules = newArr;
+    window.__sbNavKeyMap      = NAV_KEY_TO_MODULE;
 
     try {
       const cid = localStorage.getItem('currentCompanyId');
       if (cid) localStorage.setItem('sb_mods_' + cid, JSON.stringify(newArr));
     } catch(e) {}
 
-    if (changed) rerenderSidebar();
+    // Always rerender after a state update. The rerender only swaps the
+    // .sidebar-sections innerHTML, which is cheap and invisible to the
+    // user. Skipping it on a "no change" check turned out to be brittle
+    // because the comparison can match against a hydrated stale cache.
+    rerenderSidebar();
   }
 
   // Rebuilds ONLY the sections container so company info / user card
