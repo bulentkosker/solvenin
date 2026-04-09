@@ -534,13 +534,108 @@
     document.head.appendChild(style);
   }
 
+  /* ── MODULE VISIBILITY (cache + filter approach) ─────────
+     The sidebar is rendered ONCE with the correct set of items.
+     No bake-hide / no reveal pass. State flow:
+       1. On script load, read cached enabled-modules from localStorage
+          (per-company). If present, use it to filter NAV immediately —
+          zero flash on subsequent visits.
+       2. loadSidebarData() fetches company_modules + user permissions,
+          merges them into the enabled set, and if the set differs from
+          the cached value, re-renders the sidebar in place.
+       3. First-ever visit (no cache): render ONLY alwaysVisible items
+          (Settings/Plans). After fetch, full sidebar renders. A brief
+          minimal sidebar is better than a flash of disabled items.
+  */
+  const MODULE_NAV_MAP = {
+    inventory:   ['nav_inventory'],
+    sales:       ['nav_sales'],
+    purchasing:  ['nav_purchasing'],
+    contacts:    ['nav_contacts', 'nav_cariler'],
+    finance:     ['nav_cashbank', 'nav_finance'],
+    accounting:  ['nav_accounting'],
+    hr:          ['nav_hr'],
+    production:  ['nav_production'],
+    projects:    ['nav_projects'],
+    shipping:    ['nav_shipping'],
+    maintenance: ['nav_maintenance'],
+    crm:         ['nav_crm'],
+    reports:     ['nav_reports'],
+    pos:         ['nav_pos'],
+    restaurant:  ['nav_restaurant'],
+    hotel:       ['nav_hotel'],
+    clinic:      ['nav_clinic'],
+    elevator:    ['nav_elevator'],
+    ecommerce:   ['nav_ecommerce'],
+    cash_bank:   ['nav_cashbank'], // legacy alias
+  };
+  if (window.ModulesConfig && window.ModulesConfig.MODULE_NAV_MAP) {
+    Object.assign(MODULE_NAV_MAP, window.ModulesConfig.MODULE_NAV_MAP);
+  }
+
+  // Reverse: nav-key → module. A nav-key present here is "gated" —
+  // visible only when its module is in the enabled set.
+  const NAV_KEY_TO_MODULE = {};
+  Object.entries(MODULE_NAV_MAP).forEach(([mod, keys]) => {
+    keys.forEach(k => { NAV_KEY_TO_MODULE[k] = mod; });
+  });
+
+  // _enabledModules: Set<string> of enabled module keys, or null = "unknown"
+  // null → render only alwaysVisible items (first-ever visit).
+  let _enabledModules = null;
+  try {
+    const cid = localStorage.getItem('currentCompanyId');
+    if (cid) {
+      const raw = localStorage.getItem('sb_mods_' + cid);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) _enabledModules = new Set(arr);
+      }
+    }
+  } catch(e) {}
+
+  // Returns true if a gated nav-key should render with current state.
+  // Ungated keys (children without a module mapping, e.g. nav_products)
+  // always return true here — they inherit visibility from their parent.
+  function isNavKeyAllowed(key) {
+    const mod = NAV_KEY_TO_MODULE[key];
+    if (!mod) return true;              // ungated child
+    if (_enabledModules === null) return false; // no data yet → hide gated
+    return _enabledModules.has(mod);
+  }
+
+  // Produce a filtered NAV array by removing items/children for disabled modules.
+  function filteredNav() {
+    const out = [];
+    NAV.forEach(section => {
+      const items = [];
+      section.items.forEach(item => {
+        if (item.alwaysVisible) { items.push(item); return; }
+
+        if (item.children) {
+          // Accordion parent — gated by its own module
+          if (!isNavKeyAllowed(item.key)) return;
+          // Filter children too (for cross-cutting like nav_reports)
+          const kids = item.children.filter(c => isNavKeyAllowed(c.key));
+          if (kids.length === 0) return;
+          items.push({ ...item, children: kids });
+        } else {
+          if (!isNavKeyAllowed(item.key)) return;
+          items.push(item);
+        }
+      });
+      if (items.length > 0) out.push({ ...section, items });
+    });
+    return out;
+  }
+
   /* ── BUILD HTML ──────────────────────────────────────────── */
   function buildHTML() {
     const page = currentPage();
     const _t = window.t || (k => k);
     let sectionsHTML = '';
 
-    NAV.forEach(section => {
+    filteredNav().forEach(section => {
       let itemsHTML = section.items.map(item => {
 
         if (item.children) {
@@ -561,36 +656,27 @@
             const active = child.href && child.href !== '#' && page === childBase &&
               (!childHash || window.location.hash === childHash);
             const label = _t(child.key) || child.key;
-            // Children are NOT baked-hidden — they inherit visibility from
-            // their parent's .nav-children container. applyModuleVisibility
-            // will hide individual children only if their own data-key
-            // belongs to a disabled cross-cutting module (e.g. nav_reports).
             return `<a class="nav-child${active ? ' active' : ''}" data-key="${child.key}" href="${child.href || '#'}">
               <span class="nav-child-dot"></span>${label}
             </a>`;
           }).join('');
 
           const label = _t(item.key) || item.key;
-          // BAKED HIDDEN: parent + children container start with display:none.
-          // applyModuleVisibility reveals enabled parents — when revealed,
-          // the children container comes with it and the children inside
-          // become visible naturally.
           return `
-            <div class="${parentClasses}" data-key="${item.key}" onclick="sidebarToggleAccordion('${item.key}')" style="display:none">
+            <div class="${parentClasses}" data-key="${item.key}" onclick="sidebarToggleAccordion('${item.key}')">
               <span class="nav-icon">${item.icon}</span>
               <span class="nav-parent-label">${label}</span>
               <span class="nav-arrow">▶</span>
             </div>
-            <div class="nav-children${open ? ' open' : ''}" data-key="${item.key}" style="display:none">
+            <div class="nav-children${open ? ' open' : ''}" data-key="${item.key}">
               ${childrenHTML}
             </div>`;
 
         } else {
-          // ── Regular standalone nav item — also baked hidden ──
+          // ── Regular standalone nav item ──
           const active = item.href && item.href !== '#' && page === item.href;
           const label = _t(item.key) || item.key;
-          const hiddenStyle = item.alwaysVisible ? '' : ' style="display:none"';
-          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}"${hiddenStyle}>
+          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}">
             <span class="nav-icon">${item.icon}</span>${label}
           </a>`;
         }
@@ -932,99 +1018,101 @@
     }
   }
 
-  // Sidebar visibility map — kept in sync with modules-config.js
-  // (window.ModulesConfig.MODULE_NAV_MAP). Hardcoded here as a fallback
-  // for pages that don't include modules-config.js, but the runtime
-  // value below preferentially uses the shared one when available.
-  let MODULE_NAV_MAP = {
-    inventory:   ['nav_inventory'],
-    sales:       ['nav_sales'],
-    purchasing:  ['nav_purchasing'],
-    contacts:    ['nav_contacts', 'nav_cariler'],
-    finance:     ['nav_cashbank', 'nav_finance'],
-    accounting:  ['nav_accounting'],
-    hr:          ['nav_hr'],
-    production:  ['nav_production'],
-    projects:    ['nav_projects'],
-    shipping:    ['nav_shipping'],
-    maintenance: ['nav_maintenance'],
-    crm:         ['nav_crm'],
-    reports:     ['nav_reports'],
-    pos:         ['nav_pos'],
-    restaurant:  ['nav_restaurant'],
-    hotel:       ['nav_hotel'],
-    clinic:      ['nav_clinic'],
-    elevator:    ['nav_elevator'],
-    ecommerce:   ['nav_ecommerce'],
-    // legacy alias
-    cash_bank:   ['nav_cashbank'],
-  };
-  if (window.ModulesConfig && window.ModulesConfig.MODULE_NAV_MAP) {
-    MODULE_NAV_MAP = { ...MODULE_NAV_MAP, ...window.ModulesConfig.MODULE_NAV_MAP };
-  }
-
+  // applyModuleVisibility — takes the raw modules array (from company_modules
+  // or user_permissions), updates the enabled-set state, caches it, and
+  // re-renders the sidebar if the set changed.
   function applyModuleVisibility(modules) {
-    // BAKED-HIDDEN strategy: every nav row was emitted with style="display:none"
-    // by buildHTML. We now SHOW the rows for enabled modules. Disabled rows
-    // stay hidden naturally — no flash possible because they were never
-    // visible in the first place.
-    const enabledKeys = new Set();
-    const disabledKeys = new Set();
-    (modules || []).forEach(m => {
-      const navKeys = MODULE_NAV_MAP[m.module] || [];
-      navKeys.forEach(k => (m.is_active ? enabledKeys : disabledKeys).add(k));
-    });
+    if (!Array.isArray(modules)) return;
 
-    // Debug — inspect from devtools
-    if (typeof window !== 'undefined') {
-      window.__sbEnabledKeys  = [...enabledKeys];
-      window.__sbDisabledKeys = [...disabledKeys];
+    // Start from what we already had (so user_permissions can further
+    // restrict company_modules, not add to it).
+    const next = _enabledModules ? new Set(_enabledModules) : new Set();
+
+    // If this is the first call (from company_modules), wipe and rebuild.
+    // We detect it by checking if ALL passed modules are in a "known" shape
+    // — company_modules passes the full list. user_permissions passes only
+    // the no-view ones (always is_active:false), so we must subtract those.
+    const allPassive = modules.every(m => m.is_active === false);
+    if (!allPassive) {
+      // company_modules → authoritative list of active modules
+      next.clear();
+      modules.forEach(m => { if (m.is_active) next.add(m.module); });
+    } else {
+      // user permission subtraction
+      modules.forEach(m => next.delete(m.module));
     }
 
-    if (enabledKeys.size === 0) return;
+    // Compare → if changed, update state, cache, and re-render.
+    const newArr = [...next].sort();
+    const curArr = _enabledModules ? [..._enabledModules].sort() : null;
+    const changed = !curArr || curArr.length !== newArr.length ||
+                    curArr.some((k, i) => k !== newArr[i]);
 
-    // Pass 1 — reveal every nav element whose data-key is enabled.
-    // Note: parent .nav-parent AND its sibling .nav-children share the
-    // same data-key (the parent's module key), so a single selector hits
-    // both and reveals the dropdown container too.
-    const sel = [...enabledKeys].map(k => `[data-key="${k}"]`).join(',');
-    if (sel) {
-      document.querySelectorAll(sel).forEach(el => { el.style.display = ''; });
-    }
+    _enabledModules = next;
 
-    // Pass 2 — hide cross-cutting children whose own data-key belongs to
-    // a DISABLED module (e.g. nav_reports under Stok/Cariler/Satış when
-    // the reports module is off). Children inherit visibility from their
-    // parent container by default; this pass turns them off individually.
-    const disSel = [...disabledKeys].map(k => `[data-key="${k}"]`).join(',');
-    if (disSel) {
-      document.querySelectorAll(disSel).forEach(el => {
-        // Don't override a parent we just revealed in pass 1 — only hide
-        // .nav-child elements and any standalone items not in enabledKeys.
-        if (el.classList.contains('nav-child') ||
-            (!el.classList.contains('nav-parent') && !el.classList.contains('nav-children'))) {
-          el.style.display = 'none';
-        }
-      });
-    }
+    try {
+      const cid = localStorage.getItem('currentCompanyId');
+      if (cid) localStorage.setItem('sb_mods_' + cid, JSON.stringify(newArr));
+    } catch(e) {}
 
-    // Reveal the section labels (they have no data-key) — but only if
-    // the section actually has at least one visible child.
-    document.querySelectorAll('.sidebar-section').forEach(sec => {
-      const visible = [...sec.querySelectorAll('[data-key]')].some(el => el.style.display !== 'none');
-      const label = sec.querySelector('.sidebar-section-label');
-      if (label) label.style.display = visible ? '' : 'none';
-    });
+    if (changed) rerenderSidebar();
   }
 
-  // Defensive failsafe: if loadSidebarData never reaches applyModuleVisibility
-  // (no network, no auth, anonymous landing on a public page), still reveal
-  // every nav element after 3 seconds so the user isn't stuck.
-  setTimeout(() => {
-    document.querySelectorAll('.sidebar [data-key]').forEach(el => {
-      if (el.style.display === 'none') el.style.display = '';
+  // Rebuilds ONLY the sections container so company info / user card
+  // / modals in the footer aren't disturbed.
+  function rerenderSidebar() {
+    const sb = document.getElementById('sidebar');
+    if (!sb) return;
+    const container = sb.querySelector('.sidebar-sections');
+    if (!container) {
+      // Fallback — nuke and rebuild everything.
+      sb.innerHTML = buildHTML();
+      return;
+    }
+    // Re-render using filtered NAV
+    const page = currentPage();
+    const _t = window.t || (k => k);
+    let html = '';
+    filteredNav().forEach(section => {
+      let itemsHTML = section.items.map(item => {
+        if (item.children) {
+          const open = isGroupOpen(item.key, page);
+          const hasActive = item.children.some(c =>
+            c.href && c.href !== '#' && page === hrefBase(c.href));
+          const parentClasses = ['nav-parent', open ? 'open' : '', hasActive ? 'has-active' : ''].filter(Boolean).join(' ');
+          const childrenHTML = item.children.map(child => {
+            const childBase = hrefBase(child.href);
+            const childHash = child.href && child.href.includes('#') ? '#' + child.href.split('#')[1] : null;
+            const active = child.href && child.href !== '#' && page === childBase &&
+              (!childHash || window.location.hash === childHash);
+            const label = _t(child.key) || child.key;
+            return `<a class="nav-child${active ? ' active' : ''}" data-key="${child.key}" href="${child.href || '#'}">
+              <span class="nav-child-dot"></span>${label}
+            </a>`;
+          }).join('');
+          const label = _t(item.key) || item.key;
+          return `
+            <div class="${parentClasses}" data-key="${item.key}" onclick="sidebarToggleAccordion('${item.key}')">
+              <span class="nav-icon">${item.icon}</span>
+              <span class="nav-parent-label">${label}</span>
+              <span class="nav-arrow">▶</span>
+            </div>
+            <div class="nav-children${open ? ' open' : ''}" data-key="${item.key}">
+              ${childrenHTML}
+            </div>`;
+        } else {
+          const active = item.href && item.href !== '#' && page === item.href;
+          const label = _t(item.key) || item.key;
+          return `<a class="nav-item${active ? ' active' : ''}" data-key="${item.key}" href="${item.href || '#'}">
+            <span class="nav-icon">${item.icon}</span>${label}
+          </a>`;
+        }
+      }).join('');
+      const sectionLabel = _t(section.labelKey) || section.labelKey;
+      html += `<div class="sidebar-section"><div class="sidebar-section-label">${sectionLabel}</div>${itemsHTML}</div>`;
     });
-  }, 3000);
+    container.innerHTML = html;
+  }
 
   function renderCompanyMenu(companies, currentId) {
     const list = document.getElementById('sb-company-menu-list');
