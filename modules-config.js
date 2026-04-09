@@ -23,7 +23,6 @@
     { key: 'shipping',    icon: '🚚', i18n: 'module_shipping'    },
     { key: 'maintenance', icon: '🔧', i18n: 'module_maintenance' },
     { key: 'crm',         icon: '🎯', i18n: 'module_crm'         },
-    { key: 'reports',     icon: '📈', i18n: 'module_reports'     },
   ];
 
   const SECTOR = [
@@ -51,7 +50,7 @@
     shipping:    ['nav_shipping'],
     maintenance: ['nav_maintenance'],
     crm:         ['nav_crm'],
-    reports:     ['nav_reports'],
+    // 'reports' intentionally absent — nav_reports children inherit from parent
     pos:         ['nav_pos'],
     restaurant:  ['nav_restaurant'],
     hotel:       ['nav_hotel'],

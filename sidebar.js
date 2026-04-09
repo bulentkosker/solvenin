@@ -560,7 +560,8 @@
     shipping:    ['nav_shipping'],
     maintenance: ['nav_maintenance'],
     crm:         ['nav_crm'],
-    reports:     ['nav_reports'],
+    // reports has no top-level entry in NAV — every nav_reports child
+    // inherits visibility from its parent module (Stok, Satış, ...).
     pos:         ['nav_pos'],
     restaurant:  ['nav_restaurant'],
     hotel:       ['nav_hotel'],
