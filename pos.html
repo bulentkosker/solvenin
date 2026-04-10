@@ -101,6 +101,30 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto}
 .pin-key{padding:14px;border:1px solid var(--gray200);border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;background:#fff;text-align:center;font-family:var(--font-display)}
 .pin-key:hover{background:var(--gray50)}
+
+/* ===== RECEIPT ===== */
+.receipt-preview{background:#fff;width:280px;margin:0 auto;padding:20px 14px;font-family:'Courier New',monospace;font-size:11px;line-height:1.5;color:#000;border:1px dashed var(--gray300);border-radius:4px;max-height:60vh;overflow-y:auto}
+.receipt-preview .r-center{text-align:center}
+.receipt-preview .r-logo{max-width:80px;max-height:40px;margin:0 auto 4px}
+.receipt-preview .r-company{font-size:13px;font-weight:700}
+.receipt-preview .r-hr{border:none;border-top:1px dashed #999;margin:6px 0}
+.receipt-preview .r-row{display:flex;justify-content:space-between}
+.receipt-preview .r-item-name{font-weight:600}
+.receipt-preview .r-item-line{display:flex;justify-content:space-between;padding:1px 0}
+.receipt-preview .r-total-row{font-size:13px;font-weight:700}
+.receipt-preview .r-footer{text-align:center;color:#666;margin-top:6px;font-size:10px}
+
+/* Print: 58mm receipt */
+@media print {
+  body *{visibility:hidden!important}
+  #receipt-print-area,#receipt-print-area *{visibility:visible!important}
+  #receipt-print-area{position:fixed;left:0;top:0;width:58mm;padding:2mm;font-family:'Courier New',monospace;font-size:10pt;line-height:1.4;color:#000;background:#fff;z-index:99999}
+  #receipt-print-area .r-hr{border-top:1px dashed #000}
+  #receipt-print-area .r-logo{max-width:20mm}
+  @page{size:58mm auto;margin:0}
+}
+body.print-80mm #receipt-print-area{width:80mm!important;padding:3mm!important}
+@media print{body.print-80mm #receipt-print-area{width:80mm!important}body.print-80mm @page{size:80mm auto}}
 .pin-key:active{background:var(--gray100)}
 
 .toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;font-size:13px;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s}
@@ -225,14 +249,22 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 
 <!-- RECEIPT MODAL -->
 <div class="pm" id="receipt-modal">
-  <div class="pmc" style="text-align:center">
-    <div style="font-size:48px;margin-bottom:8px">✅</div>
-    <h3 data-i18n="pos_sale_completed">Satış Tamamlandı</h3>
-    <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--primary);margin:8px 0" id="r-total">—</div>
-    <div id="r-change" style="font-size:14px;color:var(--gray500);margin-bottom:16px"></div>
-    <div class="pm-actions"><button onclick="closeReceipt()" style="background:var(--primary);color:#fff;flex:1" data-i18n="pos_new_sale">Yeni Satış</button></div>
+  <div class="pmc" style="width:340px;padding:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:24px">✅</span><h3 style="margin:0;font-size:16px" data-i18n="pos_sale_completed">Satış Tamamlandı</h3></div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--primary)" id="r-total">—</div>
+    </div>
+    <div id="r-change" style="font-size:13px;color:var(--gray500);text-align:right;margin-bottom:8px"></div>
+    <div id="receipt-preview-container"></div>
+    <div class="pm-actions" style="margin-top:12px">
+      <button onclick="printReceipt()" style="background:var(--gray100);color:var(--gray800);flex:1"><span>🖨️</span> <span data-i18n="pos_print">Yazdır</span></button>
+      <button onclick="closeReceipt()" style="background:var(--primary);color:#fff;flex:1"><span>⏭️</span> <span data-i18n="pos_new_sale">Yeni Satış</span></button>
+    </div>
   </div>
 </div>
+
+<!-- Hidden print area — receipt HTML is cloned here for @media print -->
+<div id="receipt-print-area" style="display:none"></div>
 
 <script>
 const { createClient } = supabase;
@@ -245,6 +277,8 @@ let cashRegisters = [], bankAccounts = [];
 let selectedRegister = null, sessionId = null;
 let selectedPayMethod = 'cash', selectedCustomerId = null;
 let pinCallback = null, pinValue = '';
+let companyInfo = {}; // name, address, phone, logo_url
+let lastSaleData = null; // stored after completeSale for reprint
 
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -257,11 +291,22 @@ async function init() {
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
 
-  // Load company currency
-  const { data: comp } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
-  if (comp?.base_currency) {
+  // Load company info (currency + receipt data)
+  const { data: comp } = await sb.from('companies')
+    .select('name,address,phone,logo_url,base_currency,invoice_settings')
+    .eq('id', companyId).single();
+  if (comp) {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
     currSym = syms[comp.base_currency] || comp.base_currency + ' ';
+    companyInfo = {
+      name: comp.name || '',
+      address: comp.address || '',
+      phone: comp.phone || '',
+      logo_url: comp.logo_url || '',
+      receipt_footer: comp.invoice_settings?.receipt_footer || '',
+      receipt_show_logo: comp.invoice_settings?.receipt_show_logo !== false,
+      receipt_paper: comp.invoice_settings?.receipt_paper || '58mm',
+    };
   }
 
   document.getElementById('pos-cashier-name').textContent = currentUser.user_metadata?.full_name || currentUser.email;
@@ -710,11 +755,16 @@ async function completeSale() {
       // Show receipt — we don't update stock or cash registers offline; the sync
       // job will recreate the order online and the existing receipt-level
       // stock movement triggers will run server-side.
-      const change = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) - total : 0;
-      document.getElementById('r-total').textContent = F(total);
-      document.getElementById('r-change').textContent = change > 0 ? `${t('pos_change')}: ${F(change)}` : '';
+      const received = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) : total;
+      const change = selectedPayMethod === 'cash' ? Math.max(0, received - total) : 0;
+      const saleData = {
+        orderNumber: orderNum, date: new Date(), total, subtotal: total,
+        tax_amount: 0, items: cart.map(c => ({ name: c.name, qty: c.qty, price: c.price })),
+        payMethod: selectedPayMethod, received, change,
+        cashier: currentUser.user_metadata?.full_name || currentUser.email,
+      };
       closePayment();
-      document.getElementById('receipt-modal').classList.add('open');
+      showReceiptModal(saleData);
       cart = [];
       renderCart();
       saveCartToStorage();
@@ -781,11 +831,16 @@ async function completeSale() {
     console.log('[pos] Stock movements created for', orderNum);
 
     // Receipt
-    const change = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) - total : 0;
-    document.getElementById('r-total').textContent = F(total);
-    document.getElementById('r-change').textContent = change > 0 ? `${t('pos_change')}: ${F(change)}` : '';
+    const received = selectedPayMethod === 'cash' ? (parseFloat(document.getElementById('pay-received').value)||0) : total;
+    const change = selectedPayMethod === 'cash' ? Math.max(0, received - total) : 0;
+    const saleData = {
+      orderNumber: orderNum, date: new Date(), total, subtotal: total,
+      tax_amount: 0, items: cart.map(c => ({ name: c.name, qty: c.qty, price: c.price })),
+      payMethod: selectedPayMethod, received, change,
+      cashier: currentUser.user_metadata?.full_name || currentUser.email,
+    };
     closePayment();
-    document.getElementById('receipt-modal').classList.add('open');
+    showReceiptModal(saleData);
     cart = [];
     renderCart();
     saveCartToStorage();
@@ -794,6 +849,93 @@ async function completeSale() {
   } finally {
     btn.disabled = false; btn.textContent = t('pos_complete_payment');
   }
+}
+
+// ===== RECEIPT GENERATION =====
+function generateReceiptHTML(sale) {
+  const _t = window.t || (k => k);
+  const ci = companyInfo;
+  const now = sale.date || new Date();
+  const dateStr = now.toLocaleDateString('tr-TR');
+  const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  let logoHtml = '';
+  if (ci.receipt_show_logo && ci.logo_url) {
+    logoHtml = `<img class="r-logo" src="${ci.logo_url}" alt="">`;
+  }
+
+  const itemsHtml = (sale.items || []).map(it => {
+    const lineTotal = it.qty * it.price;
+    return `<div class="r-item-line"><span class="r-item-name">${it.name}</span><span>x${it.qty}</span></div>
+      <div class="r-item-line"><span></span><span>${F(lineTotal)}</span></div>`;
+  }).join('');
+
+  const subtotal = sale.subtotal || sale.total;
+  const taxAmt = sale.tax_amount || 0;
+  const total = sale.total;
+
+  let paymentHtml = '';
+  if (sale.payMethod === 'cash') {
+    const received = sale.received || total;
+    const change = sale.change || 0;
+    paymentHtml = `
+      <div class="r-row"><span>${_t('pos_cash')||'NAKİT'}</span><span>${F(received)}</span></div>
+      ${change > 0 ? `<div class="r-row"><span>${_t('pos_change')||'ÜSTÜ'}</span><span>${F(change)}</span></div>` : ''}`;
+  } else if (sale.payMethod === 'card') {
+    paymentHtml = `<div class="r-row"><span>${_t('pos_card')||'KART'}</span><span>${F(total)}</span></div>`;
+  } else if (sale.payMethod === 'bank') {
+    paymentHtml = `<div class="r-row"><span>${_t('pos_bank')||'HAVALE'}</span><span>${F(total)}</span></div>`;
+  }
+
+  const footer = ci.receipt_footer || (_t('pos_receipt_thanks') || 'Teşekkürler!');
+
+  return `<div class="receipt-preview">
+    <div class="r-center">
+      ${logoHtml}
+      <div class="r-company">${ci.name}</div>
+      ${ci.address ? `<div>${ci.address}</div>` : ''}
+      ${ci.phone ? `<div>${ci.phone}</div>` : ''}
+    </div>
+    <hr class="r-hr">
+    <div class="r-row"><span>${_t('pos_receipt_no')||'FİŞ'} #${sale.orderNumber}</span></div>
+    <div class="r-row"><span>${dateStr} ${timeStr}</span></div>
+    <div class="r-row"><span>${_t('pos_cashier')||'Kasiyer'}: ${sale.cashier}</span></div>
+    <hr class="r-hr">
+    ${itemsHtml}
+    <hr class="r-hr">
+    ${taxAmt > 0 ? `
+      <div class="r-row"><span>${_t('pos_subtotal')||'Ara Toplam'}</span><span>${F(subtotal)}</span></div>
+      <div class="r-row"><span>${_t('label_vat_amount')||'KDV'}</span><span>${F(taxAmt)}</span></div>
+      <hr class="r-hr">` : ''}
+    <div class="r-row r-total-row"><span>${_t('col_total')||'TOPLAM'}</span><span>${F(total)}</span></div>
+    <hr class="r-hr">
+    ${paymentHtml}
+    <hr class="r-hr">
+    <div class="r-footer">${footer}<br>solvenin.com</div>
+  </div>`;
+}
+
+function showReceiptModal(sale) {
+  lastSaleData = sale;
+  document.getElementById('r-total').textContent = F(sale.total);
+  const change = sale.change || 0;
+  document.getElementById('r-change').textContent = change > 0 ? `${t('pos_change')}: ${F(change)}` : '';
+  document.getElementById('receipt-preview-container').innerHTML = generateReceiptHTML(sale);
+  document.getElementById('receipt-modal').classList.add('open');
+}
+
+function printReceipt() {
+  const area = document.getElementById('receipt-print-area');
+  if (!area || !lastSaleData) return;
+  area.innerHTML = generateReceiptHTML(lastSaleData);
+  area.style.display = 'block';
+  // Set paper size class
+  if (companyInfo.receipt_paper === '80mm') document.body.classList.add('print-80mm');
+  else document.body.classList.remove('print-80mm');
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { area.style.display = 'none'; }, 500);
+  }, 100);
 }
 
 function closeReceipt() {

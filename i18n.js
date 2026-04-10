@@ -2648,6 +2648,16 @@ const T = window.T = {
     status_expired:'Expired',
     status_paused:'Paused',
     label_no_vat_defined:'No VAT defined',
+    // === POS RECEIPT ===
+    pos_print:'Print',
+    pos_receipt_no:'RECEIPT',
+    pos_cashier:'Cashier',
+    pos_subtotal:'Subtotal',
+    pos_receipt_thanks:'Thank you!',
+    pos_receipt_settings:'Receipt Settings',
+    pos_receipt_footer_label:'Receipt footer text',
+    pos_receipt_paper_label:'Paper size',
+    pos_receipt_show_logo:'Show logo on receipt',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3899,6 +3909,16 @@ const T = window.T = {
     status_expired:'Süresi Doldu',
     status_paused:'Duraklatıldı',
     label_no_vat_defined:'KDV tanımsız',
+    // === POS RECEIPT ===
+    pos_print:'Yazdır',
+    pos_receipt_no:'FİŞ',
+    pos_cashier:'Kasiyer',
+    pos_subtotal:'Ara Toplam',
+    pos_receipt_thanks:'Teşekkürler!',
+    pos_receipt_settings:'Fiş Ayarları',
+    pos_receipt_footer_label:'Fiş alt mesajı',
+    pos_receipt_paper_label:'Kağıt boyutu',
+    pos_receipt_show_logo:'Fişte logo göster',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4727,6 +4747,16 @@ const T = window.T = {
     status_expired:'Abgelaufen',
     status_paused:'Pausiert',
     label_no_vat_defined:'Keine MwSt.',
+    // === POS RECEIPT ===
+    pos_print:'Drucken',
+    pos_receipt_no:'BON',
+    pos_cashier:'Kassierer',
+    pos_subtotal:'Zwischensumme',
+    pos_receipt_thanks:'Danke!',
+    pos_receipt_settings:'Boneinstellungen',
+    pos_receipt_footer_label:'Bontext unten',
+    pos_receipt_paper_label:'Papiergröße',
+    pos_receipt_show_logo:'Logo auf Bon',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5556,6 +5586,16 @@ const T = window.T = {
     status_expired:'Expiré',
     status_paused:'En pause',
     label_no_vat_defined:'TVA non définie',
+    // === POS RECEIPT ===
+    pos_print:'Imprimer',
+    pos_receipt_no:'REÇU',
+    pos_cashier:'Caissier',
+    pos_subtotal:'Sous-total',
+    pos_receipt_thanks:'Merci!',
+    pos_receipt_settings:'Paramètres du reçu',
+    pos_receipt_footer_label:'Texte en bas du reçu',
+    pos_receipt_paper_label:'Taille papier',
+    pos_receipt_show_logo:'Logo sur reçu',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -6384,6 +6424,16 @@ const T = window.T = {
     status_expired:'Expirado',
     status_paused:'Pausado',
     label_no_vat_defined:'IVA no definido',
+    // === POS RECEIPT ===
+    pos_print:'Imprimir',
+    pos_receipt_no:'RECIBO',
+    pos_cashier:'Cajero',
+    pos_subtotal:'Subtotal',
+    pos_receipt_thanks:'¡Gracias!',
+    pos_receipt_settings:'Config. recibo',
+    pos_receipt_footer_label:'Texto pie de recibo',
+    pos_receipt_paper_label:'Tamaño papel',
+    pos_receipt_show_logo:'Logo en recibo',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -7181,6 +7231,16 @@ const T = window.T = {
     status_expired:'منتهي',
     status_paused:'مُعلّق',
     label_no_vat_defined:'ضريبة غير محددة',
+    // === POS RECEIPT ===
+    pos_print:'طباعة',
+    pos_receipt_no:'إيصال',
+    pos_cashier:'أمين الصندوق',
+    pos_subtotal:'المجموع الفرعي',
+    pos_receipt_thanks:'شكراً!',
+    pos_receipt_settings:'إعدادات الإيصال',
+    pos_receipt_footer_label:'نص أسفل الإيصال',
+    pos_receipt_paper_label:'حجم الورق',
+    pos_receipt_show_logo:'عرض الشعار',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -7977,6 +8037,16 @@ const T = window.T = {
     status_expired:'已过期',
     status_paused:'已暂停',
     label_no_vat_defined:'未定义增值税',
+    // === POS RECEIPT ===
+    pos_print:'打印',
+    pos_receipt_no:'收据',
+    pos_cashier:'收银员',
+    pos_subtotal:'小计',
+    pos_receipt_thanks:'谢谢！',
+    pos_receipt_settings:'收据设置',
+    pos_receipt_footer_label:'收据底部文字',
+    pos_receipt_paper_label:'纸张大小',
+    pos_receipt_show_logo:'显示Logo',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -9015,6 +9085,16 @@ const T = window.T = {
     status_expired:'Истёк',
     status_paused:'Приостановлен',
     label_no_vat_defined:'НДС не задан',
+    // === POS RECEIPT ===
+    pos_print:'Печать',
+    pos_receipt_no:'ЧЕК',
+    pos_cashier:'Кассир',
+    pos_subtotal:'Подитог',
+    pos_receipt_thanks:'Спасибо!',
+    pos_receipt_settings:'Настройки чека',
+    pos_receipt_footer_label:'Текст внизу чека',
+    pos_receipt_paper_label:'Размер бумаги',
+    pos_receipt_show_logo:'Логотип на чеке',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -9820,6 +9900,16 @@ const T = window.T = {
     status_expired:'Expirado',
     status_paused:'Pausado',
     label_no_vat_defined:'IVA não definido',
+    // === POS RECEIPT ===
+    pos_print:'Imprimir',
+    pos_receipt_no:'RECIBO',
+    pos_cashier:'Caixa',
+    pos_subtotal:'Subtotal',
+    pos_receipt_thanks:'Obrigado!',
+    pos_receipt_settings:'Config. recibo',
+    pos_receipt_footer_label:'Texto rodapé',
+    pos_receipt_paper_label:'Tamanho papel',
+    pos_receipt_show_logo:'Logo no recibo',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -10616,6 +10706,16 @@ const T = window.T = {
     status_expired:'期限切れ',
     status_paused:'一時停止',
     label_no_vat_defined:'VAT未定義',
+    // === POS RECEIPT ===
+    pos_print:'印刷',
+    pos_receipt_no:'レシート',
+    pos_cashier:'レジ',
+    pos_subtotal:'小計',
+    pos_receipt_thanks:'ありがとう！',
+    pos_receipt_settings:'レシート設定',
+    pos_receipt_footer_label:'レシートフッター',
+    pos_receipt_paper_label:'用紙サイズ',
+    pos_receipt_show_logo:'ロゴ表示',
   },
   kz: {
     // NAV
@@ -10881,6 +10981,16 @@ const T = window.T = {
     status_expired:'Мерзімі аяқталды',
     status_paused:'Тоқтатылды',
     label_no_vat_defined:'ҚҚС анықталмаған',
+    // === POS RECEIPT ===
+    pos_print:'Басып шығару',
+    pos_receipt_no:'ЧЕК',
+    pos_cashier:'Кассир',
+    pos_subtotal:'Аралық жиын',
+    pos_receipt_thanks:'Рахмет!',
+    pos_receipt_settings:'Чек баптаулары',
+    pos_receipt_footer_label:'Чек астындағы мәтін',
+    pos_receipt_paper_label:'Қағаз өлшемі',
+    pos_receipt_show_logo:'Логотипті көрсету',
   },
   kg: {
     // NAV
@@ -11146,6 +11256,16 @@ const T = window.T = {
     status_expired:'Мөөнөтү бүтүптүр',
     status_paused:'Тыныгуу',
     label_no_vat_defined:'КНС аныкталган эмес',
+    // === POS RECEIPT ===
+    pos_print:'Басып чыгаруу',
+    pos_receipt_no:'ЧЕК',
+    pos_cashier:'Кассир',
+    pos_subtotal:'Аралык жыйынтык',
+    pos_receipt_thanks:'Рахмат!',
+    pos_receipt_settings:'Чек жөндөөлөрү',
+    pos_receipt_footer_label:'Чектин алды тексти',
+    pos_receipt_paper_label:'Кагаз өлчөмү',
+    pos_receipt_show_logo:'Логотипти көрсөтүү',
   },
   uz: {
     // NAV
@@ -11411,6 +11531,16 @@ const T = window.T = {
     status_expired:'Muddati tugagan',
     status_paused:'To\'xtatilgan',
     label_no_vat_defined:'QQS belgilanmagan',
+    // === POS RECEIPT ===
+    pos_print:'Chop etish',
+    pos_receipt_no:'CHEK',
+    pos_cashier:'Kassir',
+    pos_subtotal:'Jami',
+    pos_receipt_thanks:'Rahmat!',
+    pos_receipt_settings:'Chek sozlamalari',
+    pos_receipt_footer_label:'Chek pastki matni',
+    pos_receipt_paper_label:'Qog\'oz o\'lchami',
+    pos_receipt_show_logo:'Logotipni ko\'rsatish',
   },
   tm: {
     // NAV
@@ -11676,6 +11806,16 @@ const T = window.T = {
     status_expired:'Möhleti doldy',
     status_paused:'Togtadyldy',
     label_no_vat_defined:'GBS kesgitlenmedik',
+    // === POS RECEIPT ===
+    pos_print:'Çap etmek',
+    pos_receipt_no:'ÇEK',
+    pos_cashier:'Kassir',
+    pos_subtotal:'Jemi',
+    pos_receipt_thanks:'Sag boluň!',
+    pos_receipt_settings:'Çek sazlamalary',
+    pos_receipt_footer_label:'Çek aşaky teksti',
+    pos_receipt_paper_label:'Kagyz ölçegi',
+    pos_receipt_show_logo:'Logotipi görkezmek',
   },
   az: {
     // NAV
@@ -11941,6 +12081,16 @@ const T = window.T = {
     status_expired:'Süresi Doldu',
     status_paused:'Duraklatıldy',
     label_no_vat_defined:'ƏDV müəyyən edilməyib',
+    // === POS RECEIPT ===
+    pos_print:'Çap et',
+    pos_receipt_no:'QƏBİZ',
+    pos_cashier:'Kassir',
+    pos_subtotal:'Ara cəm',
+    pos_receipt_thanks:'Təşəkkürlər!',
+    pos_receipt_settings:'Qəbiz parametrləri',
+    pos_receipt_footer_label:'Qəbiz alt yazısı',
+    pos_receipt_paper_label:'Kağız ölçüsü',
+    pos_receipt_show_logo:'Logoyu göstər',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -12159,6 +12309,16 @@ const T = window.T = {
     status_expired:'Wygasło',
     status_paused:'Wstrzymano',
     label_no_vat_defined:'VAT niezdefiniowany',
+    // === POS RECEIPT ===
+    pos_print:'Drukuj',
+    pos_receipt_no:'PARAGON',
+    pos_cashier:'Kasjer',
+    pos_subtotal:'Suma częściowa',
+    pos_receipt_thanks:'Dziękujemy!',
+    pos_receipt_settings:'Ustawienia paragonu',
+    pos_receipt_footer_label:'Tekst na dole paragonu',
+    pos_receipt_paper_label:'Rozmiar papieru',
+    pos_receipt_show_logo:'Logo na paragonie',
   },
 };
 

@@ -875,6 +875,40 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
         </div>
+
+        <!-- RECEIPT SETTINGS -->
+        <div class="settings-card" style="margin-top:20px">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="pos_receipt_settings">Fiş Ayarları</div>
+              <div class="settings-card-desc" data-i18n="pos_receipt_settings_desc">Termal yazıcı fiş görünümü</div>
+            </div>
+            <button class="btn-primary" onclick="savePosReceiptSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="pos_receipt_footer_label">Fiş Alt Mesajı</label>
+                <input type="text" id="pos-receipt-footer" placeholder="Teşekkürler! Yine bekleriz..." style="width:100%">
+              </div>
+              <div class="form-group" style="max-width:160px">
+                <label data-i18n="pos_receipt_paper_label">Kağıt Boyutu</label>
+                <select id="pos-receipt-paper">
+                  <option value="58mm">58mm</option>
+                  <option value="80mm">80mm</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="max-width:260px">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                  <input type="checkbox" id="pos-receipt-logo" checked>
+                  <span data-i18n="pos_receipt_show_logo">Fişte logo göster</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== USERS ===== -->
@@ -3163,15 +3197,40 @@ let editingPosButtonId = null;
 
 async function loadPosSettings() {
   if (!companyId) return;
-  const [btnRes, prodRes, pinRes] = await Promise.all([
+  const [btnRes, prodRes, pinRes, coRes] = await Promise.all([
     sb.from('pos_quick_buttons').select('*, products(name)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
     sb.from('products').select('id, name').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('company_users').select('pos_pin').eq('company_id', companyId).eq('user_id', currentUser.id).single(),
+    sb.from('companies').select('invoice_settings').eq('id', companyId).single(),
   ]);
   posButtons = btnRes.data || [];
   allProducts = prodRes.data || [];
   if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').value = pinRes.data.pos_pin;
+  // Receipt settings
+  const rs = coRes.data?.invoice_settings || {};
+  const footerEl = document.getElementById('pos-receipt-footer');
+  const paperEl = document.getElementById('pos-receipt-paper');
+  const logoEl = document.getElementById('pos-receipt-logo');
+  if (footerEl) footerEl.value = rs.receipt_footer || '';
+  if (paperEl) paperEl.value = rs.receipt_paper || '58mm';
+  if (logoEl) logoEl.checked = rs.receipt_show_logo !== false;
   renderPosButtons();
+}
+
+async function savePosReceiptSettings() {
+  if (!companyId) return;
+  // Read current invoice_settings first to merge
+  const { data: co } = await sb.from('companies').select('invoice_settings').eq('id', companyId).single();
+  const existing = co?.invoice_settings || {};
+  const updated = {
+    ...existing,
+    receipt_footer: document.getElementById('pos-receipt-footer')?.value.trim() || '',
+    receipt_paper: document.getElementById('pos-receipt-paper')?.value || '58mm',
+    receipt_show_logo: document.getElementById('pos-receipt-logo')?.checked !== false,
+  };
+  const { error } = await sb.from('companies').update({ invoice_settings: updated }).eq('id', companyId);
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(t('toast_saved') || 'Kaydedildi', 'success');
 }
 
 function renderPosButtons() {
