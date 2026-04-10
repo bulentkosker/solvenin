@@ -883,8 +883,7 @@ tr:hover td { background: var(--gray50); }
       <div class="t-group-title">Commodities</div>
       <div id="t-commodity"></div>
       <div class="t-group-title">Oil API Key (optional)</div>
-      <input type="text" id="t-oil-key" placeholder="oilpriceapi.com API key" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;margin-bottom:4px">
-      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Brent oil price requires a free API key from <a href="https://oilpriceapi.com" target="_blank" style="color:var(--blue)">oilpriceapi.com</a>. Without it, Brent shows N/A.</p>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Brent oil price sourced from Yahoo Finance (free, no API key required).</p>
       <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()">Save</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')">Cancel</button>
     </div>
@@ -1725,9 +1724,6 @@ function tBaseCur(){
 function openTickerSettings(){
   const p = tPrefs();
   const base = tBaseCur();
-  const oilKeyEl = document.getElementById('t-oil-key');
-  if (oilKeyEl) oilKeyEl.value = localStorage.getItem('solvenin_oil_api_key') || '';
-
   // Build base currency selector
   const allCurs = [
     'USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD',
@@ -1771,9 +1767,6 @@ function saveTickerSettings(){
   const base = document.getElementById('t-base-select').value;
   localStorage.setItem('solvenin_ticker', JSON.stringify(prefs));
   localStorage.setItem('solvenin_ticker_base', base);
-  const oilKey = document.getElementById('t-oil-key')?.value.trim();
-  if (oilKey) localStorage.setItem('solvenin_oil_api_key', oilKey);
-  else localStorage.removeItem('solvenin_oil_api_key');
   // Force-refresh on save (clear cache)
   localStorage.removeItem('solvenin_ticker_cache');
   document.getElementById('ticker-modal').classList.remove('open');
@@ -1809,14 +1802,18 @@ async function fetchCrypto(ids){
   return await r.json();
 }
 async function fetchOil(){
-  const key = localStorage.getItem('solvenin_oil_api_key');
-  if(!key) return null;
-  const r = await fetch('https://api.oilpriceapi.com/v1/prices/latest', {
-    headers: {'Authorization':'Token '+key, 'Content-Type':'application/json'}
-  });
+  // Yahoo Finance v8 — free, no API key, returns Brent Crude Futures (BZ=F)
+  const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=2d');
   if(!r.ok) throw new Error('oil http '+r.status);
   const d = await r.json();
-  return d?.data?.price ?? null;
+  const meta = d?.chart?.result?.[0]?.meta;
+  if(!meta?.regularMarketPrice) return null;
+  return {
+    price: meta.regularMarketPrice,
+    change: meta.chartPreviousClose
+      ? ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100).toFixed(2)
+      : null
+  };
 }
 
 async function loadTicker(force){
@@ -1831,6 +1828,7 @@ async function loadTicker(force){
   let usdRates = cache?.usdRates || null;
   let cryptoData = cache?.cryptoData || null;
   let oilPrice = cache?.oilPrice ?? null;
+  let oilChange = cache?.oilChange ?? null;
   let fetchedAt = cache?.fetchedAt || null;
   let stale = false;
 
@@ -1851,14 +1849,14 @@ async function loadTicker(force){
 
     if (prefs.includes('oil')) {
       try {
-        const p = await fetchOil();
-        if (p != null) { oilPrice = p; anyOk = true; }
+        const oilData = await fetchOil();
+        if (oilData != null) { oilPrice = oilData.price; oilChange = oilData.change; anyOk = true; }
       } catch(e){ console.warn('Oil fetch failed',e); anyFail = true; }
     }
 
     if (anyOk) {
       fetchedAt = now;
-      writeTickerCache({usdRates, cryptoData, oilPrice, fetchedAt});
+      writeTickerCache({usdRates, cryptoData, oilPrice, oilChange, fetchedAt});
     }
     // If everything failed AND we have a cache, mark stale
     if (anyFail && !anyOk && cache) stale = true;
@@ -1908,11 +1906,9 @@ async function loadTicker(force){
 
   if (prefs.includes('oil')) {
     if (oilPrice != null) {
-      items.push({lbl:'Brent', sub:'USD/bbl', val:Number(oilPrice).toFixed(2), ch:null, icon:'🛢️'});
+      items.push({lbl:'Brent', sub:'USD/bbl', val:Number(oilPrice).toFixed(2), ch:oilChange, icon:'🛢️'});
     } else {
-      // No API key or fetch failed — show N/A instead of fake data.
-      // Users can add an oilpriceapi.com key via the ticker settings gear.
-      items.push({lbl:'Brent', sub:'⚙ API key', val:'N/A', ch:null, icon:'🛢️'});
+      items.push({lbl:'Brent', sub:'USD/bbl', val:'N/A', ch:null, icon:'🛢️'});
     }
   }
 
