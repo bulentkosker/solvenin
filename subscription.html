@@ -558,72 +558,60 @@ async function init() {
 
 async function loadSubscription() {
   try {
-    // Get plan from profiles (user-level, single source of truth)
-    const [profileRes, cuRes] = await Promise.all([
-      sb.from('profiles').select('plan, plan_interval, plan_started_at, plan_expires_at').eq('id', currentUser.id).single(),
-      sb.from('company_users').select('company_id').eq('user_id', currentUser.id).eq('status', 'active').limit(1).single()
-    ]);
-
-    if (cuRes.data?.company_id) {
-      companyId = cuRes.data.company_id;
+    // Step 1: resolve company_id (use localStorage first, then DB)
+    companyId = localStorage.getItem('currentCompanyId') || null;
+    if (!companyId) {
+      const { data: cu } = await sb.from('company_users')
+        .select('company_id').eq('user_id', currentUser.id).eq('status', 'active').limit(1).single();
+      if (cu?.company_id) companyId = cu.company_id;
     }
 
-    // Load plan + subscription info from COMPANIES table (source of truth)
+    // Step 2: get_company_subscription RPC — single source of truth for
+    // plan, max_users, user_count, subscription_status, days_left, etc.
+    let sub = null;
     if (companyId) {
-      const { data: company } = await sb.from('companies')
-        .select('plan, max_users, subscription_status, subscription_end, subscription_start')
-        .eq('id', companyId).single();
-      if (company) {
-        let rawPlan = company.plan || 'free';
-        if (rawPlan === 'pro') rawPlan = 'professional';
-        currentPlan = rawPlan;
-        window.__companySubscription = company;
-        planStartedAt = company.subscription_start || null;
-      }
-    } else if (profileRes.data) {
-      // Fallback for users without company
-      let rawPlan = profileRes.data.plan || 'free';
+      const { data } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
+      sub = data;
+    }
+
+    if (sub) {
+      let rawPlan = sub.plan || 'free';
       if (rawPlan === 'pro') rawPlan = 'professional';
       currentPlan = rawPlan;
-      planStartedAt = profileRes.data.plan_started_at || null;
-    }
+      planStartedAt = sub.subscription_start || null;
 
-    // Load subscription status card
-    if (companyId) renderSubStatusCard();
-
-    console.log('[subscription] currentPlan:', currentPlan, 'interval:', planInterval, 'userId:', currentUser.id);
-
-    // Fetch active user count + monthly invoice count in parallel
-    const fetches = [
-      sb.rpc('get_active_user_count', { owner_uid: currentUser.id })
-    ];
-    if (companyId) {
-      fetches.push(sb.rpc('get_monthly_invoice_count', { p_company_id: companyId }));
-    }
-
-    const [userCountRes, invoiceCountRes] = await Promise.all(fetches);
-
-    console.log('[subscription] user_count:', userCountRes.data, userCountRes.error, 'invoice_count:', invoiceCountRes?.data, invoiceCountRes?.error);
-
-    // User count with fallback
-    if (userCountRes.error || !userCountRes.data) {
-      if (companyId) {
-        const { count } = await sb.from('company_users')
-          .select('id', { count: 'exact', head: true })
-          .eq('company_id', companyId);
-        realUserCount = count || 1;
+      // Derive effective status in ONE place
+      const hasEnd = sub.subscription_end != null;
+      if (hasEnd && sub.days_left < 0) {
+        sub._effectiveStatus = 'expired';
       } else {
-        realUserCount = 1;
+        sub._effectiveStatus = sub.subscription_status || 'trial';
       }
-    } else {
-      realUserCount = userCountRes.data;
-    }
-    subUserCount = realUserCount || 1;
 
-    // Monthly invoice count with fallback
-    if (invoiceCountRes?.error || invoiceCountRes?.data === null) {
-      // Fallback: count manually
-      if (companyId) {
+      realUserCount = sub.user_count || 0;
+      subUserCount = realUserCount || 1;
+      window.__companySubscription = sub;
+    } else {
+      // Fallback for users without a company: read profiles
+      const { data: profile } = await sb.from('profiles')
+        .select('plan, plan_interval, plan_started_at').eq('id', currentUser.id).single();
+      if (profile) {
+        let rawPlan = profile.plan || 'free';
+        if (rawPlan === 'pro') rawPlan = 'professional';
+        currentPlan = rawPlan;
+        planStartedAt = profile.plan_started_at || null;
+      }
+    }
+
+    console.log('[subscription] currentPlan:', currentPlan, 'userId:', currentUser.id, 'sub:', sub);
+
+    // Step 3: monthly invoice count
+    if (companyId) {
+      const { data: ic, error: icErr } = await sb.rpc('get_monthly_invoice_count', { p_company_id: companyId });
+      if (!icErr && ic !== null) {
+        realRecordCount = ic;
+      } else {
+        // Fallback manual count
         const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         const [s, p] = await Promise.all([
           sb.from('sales_orders').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true).gte('created_at', monthStart),
@@ -631,20 +619,33 @@ async function loadSubscription() {
         ]);
         realRecordCount = (s.count || 0) + (p.count || 0);
       }
-    } else {
-      realRecordCount = invoiceCountRes.data || 0;
     }
+
+    // Render both displays from the same data source
+    if (sub) renderSubStatusCard(sub);
   } catch(e) {
     console.error('loadSubscription:', e);
   }
   renderSubscription();
 }
 
-async function renderSubStatusCard() {
-  const { data } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
-  if (!data) return;
+// Helper: derive status display from the shared sub object.
+// Called by both renderSubStatusCard and renderSubscription so the status
+// label, icon, and color are always consistent.
+function getStatusDisplay(effectiveStatus) {
+  const map = {
+    active:    { color: '#22c55e', icon: '✅', label: t('status_active')    || 'Aktif' },
+    trial:     { color: '#f59e0b', icon: '⏳', label: t('status_trial')     || 'Deneme' },
+    expired:   { color: '#ef4444', icon: '🔴', label: t('status_expired')   || 'Süresi Doldu' },
+    cancelled: { color: '#ef4444', icon: '🔴', label: t('status_cancelled') || 'İptal Edildi' },
+    paused:    { color: '#94a3b8', icon: '⏸️', label: t('status_paused')    || 'Durduruldu' },
+  };
+  return map[effectiveStatus] || map.trial;
+}
+
+function renderSubStatusCard(data) {
   const card = document.getElementById('sub-status-card');
-  if (!card) return;
+  if (!card || !data) return;
 
   const maxUsers = data.max_users;
   const isUnlimited = !maxUsers || maxUsers === 0;
@@ -652,20 +653,15 @@ async function renderSubStatusCard() {
   const usagePct = isUnlimited ? 0 : Math.min(100, Math.round(userCount / maxUsers * 100));
   const daysLeft = data.days_left;
   const hasEndDate = data.subscription_end != null;
-  const status = data.subscription_status || 'trial';
   const endDate = hasEndDate ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
 
-  let statusColor = '#22c55e', statusIcon = '✅', statusText = t('status_active') || 'Aktif';
-  if (hasEndDate && daysLeft < 0) { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = t('status_expired') || 'Süresi Doldu'; }
-  else if (status === 'trial') { statusColor = '#f59e0b'; statusIcon = '⏳'; statusText = t('status_trial') || 'Deneme'; }
-  else if (status === 'cancelled') { statusColor = '#ef4444'; statusIcon = '🔴'; statusText = t('status_cancelled') || 'İptal Edildi'; }
-  else if (status === 'paused') { statusColor = '#94a3b8'; statusIcon = '⏸️'; statusText = t('status_paused') || 'Durduruldu'; }
+  const sd = getStatusDisplay(data._effectiveStatus);
 
   // Alert logic: only show if hasEndDate
   let alertHTML = '';
   if (hasEndDate && daysLeft < 0) {
     alertHTML = '<div style="background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">🔴 Aboneliğiniz sona erdi. Yenilemek için <a href="mailto:support@solvenin.com" style="color:#991b1b;text-decoration:underline">support@solvenin.com</a></div>';
-  } else if (hasEndDate && daysLeft < 7) {
+  } else if (hasEndDate && daysLeft >= 0 && daysLeft < 7) {
     alertHTML = `<div style="background:#fffbeb;color:#92400e;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px">⚠️ Aboneliğiniz <strong>${daysLeft} gün</strong> içinde sona erecek. support@solvenin.com</div>`;
   }
 
@@ -695,8 +691,8 @@ async function renderSubStatusCard() {
           </div>
           <div>
             <div style="font-size:11px;color:var(--gray400);margin-bottom:4px">${t('label_sub_status') || 'Durum'}</div>
-            <div style="font-size:13px;font-weight:700;color:${statusColor}">${statusIcon} ${statusText}</div>
-            ${hasEndDate ? `<div style="font-size:11px;color:var(--gray500);margin-top:4px">${t('end_date') || 'Bitiş'}: ${endDate}${daysLeft>=0 ? ` (${daysLeft} ${t('days_left') || 'gün kaldı'})` : ''}</div>` : ''}
+            <div style="font-size:13px;font-weight:700;color:${sd.color}">${sd.icon} ${sd.label}</div>
+            ${hasEndDate ? `<div style="font-size:11px;color:var(--gray500);margin-top:4px">${t('lbl_end_date') || 'Bitiş'}: ${endDate}${daysLeft>=0 ? ` (${daysLeft} ${t('label_days_left') || 'gün kaldı'})` : ''}</div>` : ''}
           </div>
         </div>
       </div>
@@ -753,13 +749,12 @@ function renderSubscription() {
   const g = id => document.getElementById(id);
   const activePlan = planDefs.find(p => p.key === currentPlan) || planDefs[0];
   const isFree = currentPlan === 'free';
-  const company = window.__companySubscription || {};
-  const maxUsers = company.max_users;
-  const subStatus = company.subscription_status || 'trial';
-  const subEnd = company.subscription_end;
-  const subStart = company.subscription_start || planStartedAt;
+  const sub = window.__companySubscription || {};
+  const maxUsers = sub.max_users;
+  const effectiveStatus = sub._effectiveStatus || 'trial';
+  const subStart = sub.subscription_start || planStartedAt;
 
-  // User count display — Sınırsız if 0/null
+  // User count — same source as renderSubStatusCard (from RPC)
   const maxUsersDisplay = (!maxUsers || maxUsers === 0) ? (t('unlimited') || 'Sınırsız') : maxUsers;
   const usersText = `${realUserCount || 0} / ${maxUsersDisplay}`;
 
@@ -780,32 +775,22 @@ function renderSubscription() {
 
   // Details card — Paddle-specific rows hidden
   if (g('detail-plan')) g('detail-plan').textContent = activePlan.name;
-  // Hide billing cycle (Paddle)
   const cycleRow = g('detail-cycle')?.closest('.info-row');
   if (cycleRow) cycleRow.style.display = 'none';
-  // Hide amount (Paddle)
   const amountRow = g('detail-amount')?.closest('.info-row');
   if (amountRow) amountRow.style.display = 'none';
-  // Hide next billing (Paddle)
   const nextRow = g('detail-next')?.closest('.info-row');
   if (nextRow) nextRow.style.display = 'none';
 
   if (g('detail-users')) g('detail-users').textContent = usersText;
 
-  // Status mapping
-  const statusLabels = {
-    trial: t('status_trial') || 'Deneme',
-    active: t('status_active') || 'Aktif',
-    cancelled: t('status_cancelled') || 'İptal Edildi',
-    paused: t('status_paused') || 'Durduruldu',
-    expired: t('status_expired') || 'Süresi Doldu'
-  };
-  const statusText = statusLabels[subStatus] || subStatus;
+  // Status — uses the SAME derived _effectiveStatus as renderSubStatusCard
+  const sd = getStatusDisplay(effectiveStatus);
   if (g('detail-status')) {
-    g('detail-status').textContent = statusText;
-    g('detail-status').className = 'info-value ' + (subStatus === 'active' || subStatus === 'trial' ? 'green' : 'red');
+    g('detail-status').textContent = sd.label;
+    g('detail-status').className = 'info-value ' + (effectiveStatus === 'active' || effectiveStatus === 'trial' ? 'green' : 'red');
   }
-  if (g('plan-status-text')) g('plan-status-text').textContent = statusText;
+  if (g('plan-status-text')) g('plan-status-text').textContent = sd.label;
 
   // Member since
   if (subStart) {

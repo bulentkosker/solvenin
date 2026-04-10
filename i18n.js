@@ -2643,6 +2643,10 @@ const T = window.T = {
     label_default_vat_rate:'Default VAT',
     label_vat_from_category:'Inherited from category',
     label_stopaj_note:'Withholding tax is managed in the accounting module',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Trial',
+    status_expired:'Expired',
+    status_paused:'Paused',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3889,6 +3893,10 @@ const T = window.T = {
     label_default_vat_rate:'Varsayılan KDV',
     label_vat_from_category:'Kategoriden geliyor',
     label_stopaj_note:'Stopaj muhasebe modülünden yönetilir',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Deneme',
+    status_expired:'Süresi Doldu',
+    status_paused:'Duraklatıldı',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4712,6 +4720,10 @@ const T = window.T = {
     label_products_only:'📦 Produkte',
     label_services_only:'🔧 Dienstleistungen',
     title_add_service:'Dienst hinzufügen',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Test',
+    status_expired:'Abgelaufen',
+    status_paused:'Pausiert',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5536,6 +5548,10 @@ const T = window.T = {
     label_products_only:'📦 Produits',
     label_services_only:'🔧 Services',
     title_add_service:'Ajouter un service',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Période d\'essai',
+    status_expired:'Expiré',
+    status_paused:'En pause',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -6359,6 +6375,10 @@ const T = window.T = {
     label_products_only:'📦 Productos',
     label_services_only:'🔧 Servicios',
     title_add_service:'Añadir servicio',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Prueba',
+    status_expired:'Expirado',
+    status_paused:'Pausado',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -7151,6 +7171,10 @@ const T = window.T = {
     label_products_only:'📦 المنتجات',
     label_services_only:'🔧 الخدمات',
     title_add_service:'إضافة خدمة',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'تجربة',
+    status_expired:'منتهي',
+    status_paused:'مُعلّق',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -7942,6 +7966,10 @@ const T = window.T = {
     label_products_only:'📦 产品',
     label_services_only:'🔧 服务',
     title_add_service:'添加服务',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'试用',
+    status_expired:'已过期',
+    status_paused:'已暂停',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -8975,6 +9003,10 @@ const T = window.T = {
     label_default_vat_rate:'НДС по умолчанию',
     label_vat_from_category:'Унаследовано из категории',
     label_stopaj_note:'Налог у источника управляется в модуле бухгалтерии',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Пробный',
+    status_expired:'Истёк',
+    status_paused:'Приостановлен',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -9775,6 +9807,10 @@ const T = window.T = {
     label_products_only:'📦 Produtos',
     label_services_only:'🔧 Serviços',
     title_add_service:'Adicionar serviço',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Teste',
+    status_expired:'Expirado',
+    status_paused:'Pausado',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -10566,6 +10602,10 @@ const T = window.T = {
     label_products_only:'📦 製品',
     label_services_only:'🔧 サービス',
     title_add_service:'サービスを追加',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'お試し',
+    status_expired:'期限切れ',
+    status_paused:'一時停止',
   },
   kz: {
     // NAV
@@ -10826,6 +10866,10 @@ const T = window.T = {
     label_products_only:'📦 Тауарлар',
     label_services_only:'🔧 Қызметтер',
     title_add_service:'Қызмет қосу',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Сынақ',
+    status_expired:'Мерзімі аяқталды',
+    status_paused:'Тоқтатылды',
   },
   kg: {
     // NAV
@@ -11086,6 +11130,10 @@ const T = window.T = {
     label_products_only:'📦 Товарлар',
     label_services_only:'🔧 Кызматтар',
     title_add_service:'Кызмат кошуу',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Proba',
+    status_expired:'Мөөнөтү бүтүптүр',
+    status_paused:'Тыныгуу',
   },
   uz: {
     // NAV
@@ -11346,6 +11394,10 @@ const T = window.T = {
     label_products_only:'📦 Mahsulotlar',
     label_services_only:'🔧 Xizmatlar',
     title_add_service:'Xizmat qo\'shish',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Sinov',
+    status_expired:'Muddati tugagan',
+    status_paused:'To\'xtatilgan',
   },
   tm: {
     // NAV
@@ -11606,6 +11658,10 @@ const T = window.T = {
     label_products_only:'📦 Harytlar',
     label_services_only:'🔧 Hyzmatlar',
     title_add_service:'Hyzmat goş',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Synag',
+    status_expired:'Möhleti doldy',
+    status_paused:'Togtadyldy',
   },
   az: {
     // NAV
@@ -11866,6 +11922,10 @@ const T = window.T = {
     label_products_only:'📦 Məhsullar',
     label_services_only:'🔧 Xidmətlər',
     title_add_service:'Xidmət əlavə et',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Sınama',
+    status_expired:'Süresi Doldu',
+    status_paused:'Duraklatıldy',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -12079,6 +12139,10 @@ const T = window.T = {
     label_products_only:'📦 Produkty',
     label_services_only:'🔧 Usługi',
     title_add_service:'Dodaj usługę',
+    // === SUBSCRIPTION STATUS ===
+    status_trial:'Testowy',
+    status_expired:'Wygasło',
+    status_paused:'Wstrzymano',
   },
 };
 
