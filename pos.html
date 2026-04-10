@@ -103,28 +103,32 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);heig
 .pin-key:hover{background:var(--gray50)}
 
 /* ===== RECEIPT ===== */
-.receipt-preview{background:#fff;width:280px;margin:0 auto;padding:20px 14px;font-family:'Courier New',monospace;font-size:11px;line-height:1.5;color:#000;border:1px dashed var(--gray300);border-radius:4px;max-height:60vh;overflow-y:auto}
+.receipt-preview{background:#fff;width:280px;margin:0 auto;padding:16px 12px;font-family:'Courier New',monospace;font-size:11px;line-height:1.4;color:#000;border:1px dashed var(--gray300);border-radius:4px;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
 .receipt-preview .r-center{text-align:center}
-.receipt-preview .r-logo{max-width:80px;max-height:40px;margin:0 auto 4px}
-.receipt-preview .r-company{font-size:13px;font-weight:700}
-.receipt-preview .r-hr{border:none;border-top:1px dashed #999;margin:6px 0}
-.receipt-preview .r-row{display:flex;justify-content:space-between}
-.receipt-preview .r-item-name{font-weight:600}
-.receipt-preview .r-item-line{display:flex;justify-content:space-between;padding:1px 0}
-.receipt-preview .r-total-row{font-size:13px;font-weight:700}
-.receipt-preview .r-footer{text-align:center;color:#666;margin-top:6px;font-size:10px}
+.receipt-preview .r-logo{max-width:80px;max-height:40px;margin:0 auto 4px;display:block}
+.receipt-preview .r-company{font-size:14px;font-weight:700;letter-spacing:.5px}
+.receipt-preview .r-info{font-size:10px;color:#555}
+.receipt-preview .r-sep-major{text-align:center;color:#000;margin:5px 0;letter-spacing:0;font-size:11px;overflow:hidden}
+.receipt-preview .r-sep-minor{text-align:center;color:#999;margin:4px 0;letter-spacing:0;font-size:11px;overflow:hidden}
+.receipt-preview .r-row{display:flex;justify-content:space-between;gap:4px}
+.receipt-preview .r-row .r-amt{text-align:right;flex-shrink:0;white-space:nowrap}
+.receipt-preview .r-item{margin:3px 0}
+.receipt-preview .r-item-name{font-weight:600;font-size:11px}
+.receipt-preview .r-item-detail{display:flex;justify-content:space-between;font-size:10px;color:#444;padding-left:12px}
+.receipt-preview .r-total-row{font-size:13px;font-weight:700;letter-spacing:.3px}
+.receipt-preview .r-footer{text-align:center;color:#666;margin-top:4px;font-size:9px}
 
-/* Print: 58mm receipt */
-@media print {
+/* Print: 58mm / 80mm receipt */
+@media print{
   body *{visibility:hidden!important}
   #receipt-print-area,#receipt-print-area *{visibility:visible!important}
-  #receipt-print-area{position:fixed;left:0;top:0;width:58mm;padding:2mm;font-family:'Courier New',monospace;font-size:10pt;line-height:1.4;color:#000;background:#fff;z-index:99999}
-  #receipt-print-area .r-hr{border-top:1px dashed #000}
-  #receipt-print-area .r-logo{max-width:20mm}
-  @page{size:58mm auto;margin:0}
+  #receipt-print-area{position:fixed;left:0;top:0;width:58mm;padding:2mm;font-family:'Courier New',monospace;font-size:9pt;line-height:1.3;color:#000;background:#fff;z-index:99999}
+  #receipt-print-area .r-sep-major,#receipt-print-area .r-sep-minor{color:#000}
+  #receipt-print-area .r-logo{max-width:18mm}
+  @page{size:58mm auto;margin:2mm}
 }
 body.print-80mm #receipt-print-area{width:80mm!important;padding:3mm!important}
-@media print{body.print-80mm #receipt-print-area{width:80mm!important}body.print-80mm @page{size:80mm auto}}
+@media print{body.print-80mm #receipt-print-area{width:80mm!important}}
 .pin-key:active{background:var(--gray100)}
 
 .toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;font-size:13px;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s}
@@ -298,14 +302,19 @@ async function init() {
   if (comp) {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
     currSym = syms[comp.base_currency] || comp.base_currency + ' ';
+    const rs = comp.invoice_settings || {};
     companyInfo = {
       name: comp.name || '',
       address: comp.address || '',
       phone: comp.phone || '',
       logo_url: comp.logo_url || '',
-      receipt_footer: comp.invoice_settings?.receipt_footer || '',
-      receipt_show_logo: comp.invoice_settings?.receipt_show_logo !== false,
-      receipt_paper: comp.invoice_settings?.receipt_paper || '58mm',
+      receipt_footer: rs.receipt_footer || '',
+      receipt_show_logo: rs.receipt_show_logo !== false,
+      receipt_paper: rs.receipt_paper || '58mm',
+      receipt_print_mode: rs.receipt_print_mode || 'ask',  // 'auto'|'ask'|'none'
+      receipt_show_subtotal: rs.receipt_show_subtotal !== false,
+      receipt_show_vat: rs.receipt_show_vat !== false,
+      receipt_show_cashier: rs.receipt_show_cashier !== false,
     };
   }
 
@@ -852,10 +861,13 @@ async function completeSale() {
 }
 
 // ===== RECEIPT GENERATION =====
+const SEP_MAJOR = '════════════════════════════';
+const SEP_MINOR = '────────────────────────────';
+
 function generateReceiptHTML(sale) {
   const _t = window.t || (k => k);
   const ci = companyInfo;
-  const now = sale.date || new Date();
+  const now = sale.date ? new Date(sale.date) : new Date();
   const dateStr = now.toLocaleDateString('tr-TR');
   const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
@@ -864,28 +876,40 @@ function generateReceiptHTML(sale) {
     logoHtml = `<img class="r-logo" src="${ci.logo_url}" alt="">`;
   }
 
+  // Items
   const itemsHtml = (sale.items || []).map(it => {
     const lineTotal = it.qty * it.price;
-    return `<div class="r-item-line"><span class="r-item-name">${it.name}</span><span>x${it.qty}</span></div>
-      <div class="r-item-line"><span></span><span>${F(lineTotal)}</span></div>`;
+    return `<div class="r-item">
+      <div class="r-item-name">${it.name}</div>
+      <div class="r-item-detail"><span>${it.qty} x ${F(it.price)}</span><span class="r-amt">${F(lineTotal)}</span></div>
+    </div>`;
   }).join('');
 
   const subtotal = sale.subtotal || sale.total;
   const taxAmt = sale.tax_amount || 0;
   const total = sale.total;
 
-  let paymentHtml = '';
-  if (sale.payMethod === 'cash') {
-    const received = sale.received || total;
-    const change = sale.change || 0;
-    paymentHtml = `
-      <div class="r-row"><span>${_t('pos_cash')||'NAKİT'}</span><span>${F(received)}</span></div>
-      ${change > 0 ? `<div class="r-row"><span>${_t('pos_change')||'ÜSTÜ'}</span><span>${F(change)}</span></div>` : ''}`;
-  } else if (sale.payMethod === 'card') {
-    paymentHtml = `<div class="r-row"><span>${_t('pos_card')||'KART'}</span><span>${F(total)}</span></div>`;
-  } else if (sale.payMethod === 'bank') {
-    paymentHtml = `<div class="r-row"><span>${_t('pos_bank')||'HAVALE'}</span><span>${F(total)}</span></div>`;
+  // Subtotal + VAT (if enabled)
+  let subtotalHtml = '';
+  if (ci.receipt_show_subtotal && (taxAmt > 0 || ci.receipt_show_vat)) {
+    subtotalHtml += `<div class="r-row"><span>${_t('pos_subtotal')||'Ara Toplam'}</span><span class="r-amt">${F(subtotal)}</span></div>`;
   }
+  if (ci.receipt_show_vat && taxAmt > 0) {
+    subtotalHtml += `<div class="r-row"><span>${_t('label_vat_amount')||'KDV'}</span><span class="r-amt">${F(taxAmt)}</span></div>`;
+  }
+  if (subtotalHtml) subtotalHtml += `<div class="r-sep-minor">${SEP_MINOR}</div>`;
+
+  // Payment section
+  let paymentHtml = '';
+  const payLabel = { cash: _t('pos_cash')||'NAKİT', card: _t('pos_card')||'KART', bank: _t('pos_bank')||'HAVALE' };
+  paymentHtml += `<div class="r-row"><span>${payLabel[sale.payMethod]||sale.payMethod}</span><span class="r-amt">${F(sale.payMethod === 'cash' ? (sale.received||total) : total)}</span></div>`;
+  if (sale.payMethod === 'cash' && sale.change > 0) {
+    paymentHtml += `<div class="r-row"><span>${_t('pos_change')||'PARA ÜSTÜ'}</span><span class="r-amt">${F(sale.change)}</span></div>`;
+  }
+
+  // Cashier line
+  const cashierHtml = ci.receipt_show_cashier
+    ? `<div class="r-row r-info"><span>${_t('pos_cashier')||'Kasiyer'}: ${sale.cashier}</span></div>` : '';
 
   const footer = ci.receipt_footer || (_t('pos_receipt_thanks') || 'Teşekkürler!');
 
@@ -893,35 +917,65 @@ function generateReceiptHTML(sale) {
     <div class="r-center">
       ${logoHtml}
       <div class="r-company">${ci.name}</div>
-      ${ci.address ? `<div>${ci.address}</div>` : ''}
-      ${ci.phone ? `<div>${ci.phone}</div>` : ''}
+      ${ci.address ? `<div class="r-info">${ci.address}</div>` : ''}
+      ${ci.phone ? `<div class="r-info">${ci.phone}</div>` : ''}
     </div>
-    <hr class="r-hr">
+    <div class="r-sep-major">${SEP_MAJOR}</div>
     <div class="r-row"><span>${_t('pos_receipt_no')||'FİŞ'} #${sale.orderNumber}</span></div>
-    <div class="r-row"><span>${dateStr} ${timeStr}</span></div>
-    <div class="r-row"><span>${_t('pos_cashier')||'Kasiyer'}: ${sale.cashier}</span></div>
-    <hr class="r-hr">
+    <div class="r-row r-info"><span>${dateStr} ${timeStr}</span></div>
+    ${cashierHtml}
+    <div class="r-sep-minor">${SEP_MINOR}</div>
     ${itemsHtml}
-    <hr class="r-hr">
-    ${taxAmt > 0 ? `
-      <div class="r-row"><span>${_t('pos_subtotal')||'Ara Toplam'}</span><span>${F(subtotal)}</span></div>
-      <div class="r-row"><span>${_t('label_vat_amount')||'KDV'}</span><span>${F(taxAmt)}</span></div>
-      <hr class="r-hr">` : ''}
-    <div class="r-row r-total-row"><span>${_t('col_total')||'TOPLAM'}</span><span>${F(total)}</span></div>
-    <hr class="r-hr">
+    <div class="r-sep-major">${SEP_MAJOR}</div>
+    ${subtotalHtml}
+    <div class="r-row r-total-row"><span>${_t('col_total')||'TOPLAM'}</span><span class="r-amt">${F(total)}</span></div>
+    <div class="r-sep-major">${SEP_MAJOR}</div>
     ${paymentHtml}
-    <hr class="r-hr">
+    <div class="r-sep-minor">${SEP_MINOR}</div>
     <div class="r-footer">${footer}<br>solvenin.com</div>
   </div>`;
 }
 
 function showReceiptModal(sale) {
   lastSaleData = sale;
+  const mode = companyInfo.receipt_print_mode || 'ask';
+
+  if (mode === 'none') {
+    // Skip receipt entirely — go to new sale
+    document.getElementById('barcode-input').focus();
+    return;
+  }
+
+  if (mode === 'auto') {
+    // Print immediately, then show brief confirmation
+    printReceiptDirect(sale);
+    // Flash a brief toast instead of blocking modal
+    showToast(`✅ ${F(sale.total)} — ${t('pos_sale_completed')||'Satış tamamlandı'}`, 'success');
+    document.getElementById('barcode-input').focus();
+    return;
+  }
+
+  // mode === 'ask' — show modal with preview + buttons
   document.getElementById('r-total').textContent = F(sale.total);
   const change = sale.change || 0;
   document.getElementById('r-change').textContent = change > 0 ? `${t('pos_change')}: ${F(change)}` : '';
   document.getElementById('receipt-preview-container').innerHTML = generateReceiptHTML(sale);
   document.getElementById('receipt-modal').classList.add('open');
+}
+
+// Print without showing modal (for auto mode)
+function printReceiptDirect(sale) {
+  lastSaleData = sale;
+  const area = document.getElementById('receipt-print-area');
+  if (!area) return;
+  area.innerHTML = generateReceiptHTML(sale);
+  area.style.display = 'block';
+  if (companyInfo.receipt_paper === '80mm') document.body.classList.add('print-80mm');
+  else document.body.classList.remove('print-80mm');
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { area.style.display = 'none'; }, 500);
+  }, 100);
 }
 
 function printReceipt() {

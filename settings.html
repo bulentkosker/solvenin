@@ -898,14 +898,32 @@ tr:hover .action-btns { opacity:1; }
                   <option value="80mm">80mm</option>
                 </select>
               </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group" style="max-width:260px">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                  <input type="checkbox" id="pos-receipt-logo" checked>
-                  <span data-i18n="pos_receipt_show_logo">Fişte logo göster</span>
-                </label>
+              <div class="form-group" style="max-width:200px">
+                <label data-i18n="pos_print_mode">Yazdırma Modu</label>
+                <select id="pos-receipt-print-mode">
+                  <option value="ask" data-i18n="pos_print_ask">Sorulsun</option>
+                  <option value="auto" data-i18n="pos_print_auto">Otomatik</option>
+                  <option value="none" data-i18n="pos_print_none">Yazdırma</option>
+                </select>
               </div>
+            </div>
+            <div class="form-row" style="gap:24px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="checkbox" id="pos-receipt-logo" checked>
+                <span data-i18n="pos_receipt_show_logo">Fişte logo göster</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="checkbox" id="pos-receipt-show-subtotal" checked>
+                <span data-i18n="pos_show_subtotal">Ara toplamı göster</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="checkbox" id="pos-receipt-show-vat" checked>
+                <span data-i18n="pos_show_vat">KDV tutarını göster</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="checkbox" id="pos-receipt-show-cashier" checked>
+                <span data-i18n="pos_show_cashier">Kasiyer adını göster</span>
+              </label>
             </div>
           </div>
         </div>
@@ -3208,25 +3226,31 @@ async function loadPosSettings() {
   if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').value = pinRes.data.pos_pin;
   // Receipt settings
   const rs = coRes.data?.invoice_settings || {};
-  const footerEl = document.getElementById('pos-receipt-footer');
-  const paperEl = document.getElementById('pos-receipt-paper');
-  const logoEl = document.getElementById('pos-receipt-logo');
-  if (footerEl) footerEl.value = rs.receipt_footer || '';
-  if (paperEl) paperEl.value = rs.receipt_paper || '58mm';
-  if (logoEl) logoEl.checked = rs.receipt_show_logo !== false;
+  const _rcEl = (id, val) => { const el = document.getElementById(id); if (el) { if (el.type === 'checkbox') el.checked = val; else el.value = val; } };
+  _rcEl('pos-receipt-footer', rs.receipt_footer || '');
+  _rcEl('pos-receipt-paper', rs.receipt_paper || '58mm');
+  _rcEl('pos-receipt-print-mode', rs.receipt_print_mode || 'ask');
+  _rcEl('pos-receipt-logo', rs.receipt_show_logo !== false);
+  _rcEl('pos-receipt-show-subtotal', rs.receipt_show_subtotal !== false);
+  _rcEl('pos-receipt-show-vat', rs.receipt_show_vat !== false);
+  _rcEl('pos-receipt-show-cashier', rs.receipt_show_cashier !== false);
   renderPosButtons();
 }
 
 async function savePosReceiptSettings() {
   if (!companyId) return;
-  // Read current invoice_settings first to merge
   const { data: co } = await sb.from('companies').select('invoice_settings').eq('id', companyId).single();
   const existing = co?.invoice_settings || {};
+  const _rv = (id) => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : null; };
   const updated = {
     ...existing,
-    receipt_footer: document.getElementById('pos-receipt-footer')?.value.trim() || '',
-    receipt_paper: document.getElementById('pos-receipt-paper')?.value || '58mm',
-    receipt_show_logo: document.getElementById('pos-receipt-logo')?.checked !== false,
+    receipt_footer:       _rv('pos-receipt-footer')?.trim() || '',
+    receipt_paper:        _rv('pos-receipt-paper') || '58mm',
+    receipt_print_mode:   _rv('pos-receipt-print-mode') || 'ask',
+    receipt_show_logo:    _rv('pos-receipt-logo'),
+    receipt_show_subtotal: _rv('pos-receipt-show-subtotal'),
+    receipt_show_vat:     _rv('pos-receipt-show-vat'),
+    receipt_show_cashier: _rv('pos-receipt-show-cashier'),
   };
   const { error } = await sb.from('companies').update({ invoice_settings: updated }).eq('id', companyId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }

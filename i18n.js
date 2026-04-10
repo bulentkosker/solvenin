@@ -2658,6 +2658,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Receipt footer text',
     pos_receipt_paper_label:'Paper size',
     pos_receipt_show_logo:'Show logo on receipt',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3919,6 +3927,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Fiş alt mesajı',
     pos_receipt_paper_label:'Kağıt boyutu',
     pos_receipt_show_logo:'Fişte logo göster',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Yazdırma Modu',
+    pos_print_auto:'Otomatik',
+    pos_print_ask:'Sorulsun',
+    pos_print_none:'Yazdırma',
+    pos_show_subtotal:'Ara toplamı göster',
+    pos_show_vat:'KDV tutarını göster',
+    pos_show_cashier:'Kasiyer adını göster',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4757,6 +4773,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Bontext unten',
     pos_receipt_paper_label:'Papiergröße',
     pos_receipt_show_logo:'Logo auf Bon',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Druckmodus',
+    pos_print_auto:'Automatisch',
+    pos_print_ask:'Nachfragen',
+    pos_print_none:'Nicht drucken',
+    pos_show_subtotal:'Zwischensumme',
+    pos_show_vat:'MwSt. anzeigen',
+    pos_show_cashier:'Kassierer zeigen',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5596,6 +5620,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Texte en bas du reçu',
     pos_receipt_paper_label:'Taille papier',
     pos_receipt_show_logo:'Logo sur reçu',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Mode impression',
+    pos_print_auto:'Automatique',
+    pos_print_ask:'Demander',
+    pos_print_none:'Ne pas imprimer',
+    pos_show_subtotal:'Afficher sous-total',
+    pos_show_vat:'Afficher TVA',
+    pos_show_cashier:'Afficher caissier',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -6434,6 +6466,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Texto pie de recibo',
     pos_receipt_paper_label:'Tamaño papel',
     pos_receipt_show_logo:'Logo en recibo',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Modo impresión',
+    pos_print_auto:'Automático',
+    pos_print_ask:'Preguntar',
+    pos_print_none:'No imprimir',
+    pos_show_subtotal:'Mostrar subtotal',
+    pos_show_vat:'Mostrar IVA',
+    pos_show_cashier:'Mostrar cajero',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -7241,6 +7281,14 @@ const T = window.T = {
     pos_receipt_footer_label:'نص أسفل الإيصال',
     pos_receipt_paper_label:'حجم الورق',
     pos_receipt_show_logo:'عرض الشعار',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -8047,6 +8095,14 @@ const T = window.T = {
     pos_receipt_footer_label:'收据底部文字',
     pos_receipt_paper_label:'纸张大小',
     pos_receipt_show_logo:'显示Logo',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -9095,6 +9151,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Текст внизу чека',
     pos_receipt_paper_label:'Размер бумаги',
     pos_receipt_show_logo:'Логотип на чеке',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Режим печати',
+    pos_print_auto:'Автоматически',
+    pos_print_ask:'Спрашивать',
+    pos_print_none:'Не печатать',
+    pos_show_subtotal:'Показать подытог',
+    pos_show_vat:'Показать НДС',
+    pos_show_cashier:'Показать кассира',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -9910,6 +9974,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Texto rodapé',
     pos_receipt_paper_label:'Tamanho papel',
     pos_receipt_show_logo:'Logo no recibo',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -10716,6 +10788,14 @@ const T = window.T = {
     pos_receipt_footer_label:'レシートフッター',
     pos_receipt_paper_label:'用紙サイズ',
     pos_receipt_show_logo:'ロゴ表示',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   kz: {
     // NAV
@@ -10991,6 +11071,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Чек астындағы мәтін',
     pos_receipt_paper_label:'Қағаз өлшемі',
     pos_receipt_show_logo:'Логотипті көрсету',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   kg: {
     // NAV
@@ -11266,6 +11354,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Чектин алды тексти',
     pos_receipt_paper_label:'Кагаз өлчөмү',
     pos_receipt_show_logo:'Логотипти көрсөтүү',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   uz: {
     // NAV
@@ -11541,6 +11637,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Chek pastki matni',
     pos_receipt_paper_label:'Qog\'oz o\'lchami',
     pos_receipt_show_logo:'Logotipni ko\'rsatish',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   tm: {
     // NAV
@@ -11816,6 +11920,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Çek aşaky teksti',
     pos_receipt_paper_label:'Kagyz ölçegi',
     pos_receipt_show_logo:'Logotipi görkezmek',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   az: {
     // NAV
@@ -12091,6 +12203,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Qəbiz alt yazısı',
     pos_receipt_paper_label:'Kağız ölçüsü',
     pos_receipt_show_logo:'Logoyu göstər',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -12319,6 +12439,14 @@ const T = window.T = {
     pos_receipt_footer_label:'Tekst na dole paragonu',
     pos_receipt_paper_label:'Rozmiar papieru',
     pos_receipt_show_logo:'Logo na paragonie',
+    // === POS RECEIPT MODES ===
+    pos_print_mode:'Print Mode',
+    pos_print_auto:'Automatic',
+    pos_print_ask:'Ask',
+    pos_print_none:'Don\'t Print',
+    pos_show_subtotal:'Show subtotal',
+    pos_show_vat:'Show VAT amount',
+    pos_show_cashier:'Show cashier name',
   },
 };
 
