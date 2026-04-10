@@ -884,7 +884,7 @@ tr:hover td { background: var(--gray50); }
       <div id="t-commodity"></div>
       <div class="t-group-title">Oil API Key (optional)</div>
       <input type="text" id="t-oil-key" placeholder="oilpriceapi.com API key" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;margin-bottom:4px">
-      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Free key at oilpriceapi.com — without it, Brent shows last cached value.</p>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Brent oil price requires a free API key from <a href="https://oilpriceapi.com" target="_blank" style="color:var(--blue)">oilpriceapi.com</a>. Without it, Brent shows N/A.</p>
       <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()">Save</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')">Cancel</button>
     </div>
@@ -1907,8 +1907,13 @@ async function loadTicker(force){
   }
 
   if (prefs.includes('oil')) {
-    const val = (oilPrice != null) ? Number(oilPrice).toFixed(2) : '~82';
-    items.push({lbl:'Brent', sub:'USD/bbl', val, ch:null, icon:'🛢️'});
+    if (oilPrice != null) {
+      items.push({lbl:'Brent', sub:'USD/bbl', val:Number(oilPrice).toFixed(2), ch:null, icon:'🛢️'});
+    } else {
+      // No API key or fetch failed — show N/A instead of fake data.
+      // Users can add an oilpriceapi.com key via the ticker settings gear.
+      items.push({lbl:'Brent', sub:'⚙ API key', val:'N/A', ch:null, icon:'🛢️'});
+    }
   }
 
   // Last-updated indicator
