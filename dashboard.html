@@ -1802,18 +1802,14 @@ async function fetchCrypto(ids){
   return await r.json();
 }
 async function fetchOil(){
-  // Yahoo Finance v8 — free, no API key, returns Brent Crude Futures (BZ=F)
-  const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=2d');
+  // Same-origin Vercel serverless proxy → Yahoo Finance BZ=F (Brent Crude).
+  // The proxy exists because Yahoo has no CORS headers; browser blocks direct calls.
+  // Vercel CDN caches the response for 10 min (s-maxage=600).
+  const r = await fetch('/api/oil-price');
   if(!r.ok) throw new Error('oil http '+r.status);
   const d = await r.json();
-  const meta = d?.chart?.result?.[0]?.meta;
-  if(!meta?.regularMarketPrice) return null;
-  return {
-    price: meta.regularMarketPrice,
-    change: meta.chartPreviousClose
-      ? ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100).toFixed(2)
-      : null
-  };
+  if(d.error) throw new Error(d.error);
+  return { price: d.price, change: d.change ?? null };
 }
 
 async function loadTicker(force){
