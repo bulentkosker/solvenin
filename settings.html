@@ -635,6 +635,9 @@ tr:hover .action-btns { opacity:1; }
               <button class="btn-primary" onclick="openAddCatForm(null, 0)"><span data-i18n="btn_add_category">+ Add Category</span></button>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
+              <div style="padding:12px 0">
+                <input type="text" id="cat-search" placeholder="🔍 Kategori ara..." oninput="filterCategories(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;transition:border .15s">
+              </div>
               <div id="categories-list" class="manage-list"></div>
             </div>
           </div>
@@ -2065,6 +2068,9 @@ async function loadActiveVatRates() {
   return _activeVatRates;
 }
 
+let _catCollapsed = {}; // { catId: true } = collapsed
+let _catSearchTerm = '';
+
 async function loadCategories() {
   if (!companyId) return;
   const [catsRes] = await Promise.all([
@@ -2073,11 +2079,90 @@ async function loadCategories() {
   ]);
   if (catsRes.error) { console.error(catsRes.error); return; }
   allCategories = catsRes.data || [];
+  // Restore collapse state from localStorage
+  try { _catCollapsed = JSON.parse(localStorage.getItem('solvenin_cat_collapsed_' + companyId) || '{}'); } catch(e) { _catCollapsed = {}; }
   renderCategoriesList();
 }
 
 function getChildren(parentId) {
   return allCategories.filter(c => (c.parent_id||null) === (parentId||null));
+}
+
+// Build lookup: catId → category for O(1) access
+function _catById(id) { return allCategories.find(c => c.id === id); }
+
+// Build path string: "GIDA > TEMEL GIDA > Bakliyatlar"
+function _catPath(cat) {
+  const parts = [cat.name];
+  let cur = cat;
+  while (cur.parent_id) { cur = _catById(cur.parent_id); if (!cur) break; parts.unshift(cur.name); }
+  return parts.join(' > ');
+}
+
+// Resolve inherited VAT for display: walk up hierarchy, then company default
+function _catResolvedVat(cat) {
+  // Own VAT?
+  if (cat.tax_rate_id) {
+    const tr = _activeVatRates.find(r => r.id === cat.tax_rate_id);
+    return tr ? { rate: tr.rate, own: true, label: `KDV %${tr.rate}` } : { rate: 0, own: true, label: 'KDV' };
+  }
+  if (cat.tax_rate_override != null) return { rate: cat.tax_rate_override, own: true, label: `KDV %${cat.tax_rate_override}` };
+
+  // Walk up parent hierarchy
+  let cur = cat;
+  while (cur.parent_id) {
+    const parent = _catById(cur.parent_id);
+    if (!parent) break;
+    if (parent.tax_rate_id) {
+      const tr = _activeVatRates.find(r => r.id === parent.tax_rate_id);
+      if (tr) return { rate: tr.rate, own: false, label: `↑ ${parent.name}: %${tr.rate}` };
+    }
+    if (parent.tax_rate_override != null) return { rate: parent.tax_rate_override, own: false, label: `↑ ${parent.name}: %${parent.tax_rate_override}` };
+    cur = parent;
+  }
+
+  // Company default
+  const defId = companyData?.default_tax_rate_id;
+  if (defId) {
+    const tr = _activeVatRates.find(r => r.id === defId);
+    if (tr) return { rate: tr.rate, own: false, label: `${t('label_tax_source_fixed')||'Şirket varsayılanı'}: %${tr.rate}` };
+  }
+  return { rate: 0, own: false, label: t('label_tax_source_fixed')||'Şirket varsayılanı' };
+}
+
+function _saveCatCollapseState() {
+  try { localStorage.setItem('solvenin_cat_collapsed_' + companyId, JSON.stringify(_catCollapsed)); } catch(e) {}
+}
+
+function toggleCatCollapse(catId) {
+  if (_catCollapsed[catId]) delete _catCollapsed[catId];
+  else _catCollapsed[catId] = true;
+  _saveCatCollapseState();
+  renderCategoriesList();
+}
+
+function filterCategories(term) {
+  _catSearchTerm = (term || '').trim().toLowerCase();
+  renderCategoriesList();
+}
+
+// Collect all descendant IDs of a category (for search matching)
+function _catDescendantIds(catId) {
+  const ids = new Set();
+  const q = [catId];
+  while (q.length) {
+    const cur = q.shift();
+    for (const c of allCategories) { if (c.parent_id === cur && !ids.has(c.id)) { ids.add(c.id); q.push(c.id); } }
+  }
+  return ids;
+}
+
+// Collect ancestor IDs of a category
+function _catAncestorIds(catId) {
+  const ids = new Set();
+  let cur = _catById(catId);
+  while (cur?.parent_id) { ids.add(cur.parent_id); cur = _catById(cur.parent_id); }
+  return ids;
 }
 
 function renderCategoriesList() {
@@ -2086,47 +2171,88 @@ function renderCategoriesList() {
   const roots = getChildren(null);
 
   if (!roots.length) {
-    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_categories')}</div>`;
+    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_categories')||'No categories'}</div>`;
     return;
   }
 
+  // If searching, figure out which categories match and which ancestors to force-expand
+  let matchIds = null;  // null = show all, Set = only these + ancestors
+  let forceExpandIds = new Set();
+  if (_catSearchTerm) {
+    matchIds = new Set();
+    for (const c of allCategories) {
+      if (c.name.toLowerCase().includes(_catSearchTerm)) {
+        matchIds.add(c.id);
+        // Also include all ancestors so the match is visible
+        for (const anc of _catAncestorIds(c.id)) { matchIds.add(anc); forceExpandIds.add(anc); }
+        // Also include descendants so context is preserved
+        for (const desc of _catDescendantIds(c.id)) matchIds.add(desc);
+      }
+    }
+  }
+
   let html = '';
-  roots.forEach(root => {
-    const children = getChildren(root.id);
-    html += renderCatItem(root, 0, children.length);
-    children.forEach(child => {
-      const grandchildren = getChildren(child.id);
-      html += renderCatItem(child, 1, grandchildren.length);
-      grandchildren.forEach(grand => {
-        html += renderCatItem(grand, 2, 0);
-      });
-    });
-  });
+  function renderNode(cat, depth) {
+    if (matchIds && !matchIds.has(cat.id)) return;
+    const children = getChildren(cat.id);
+    const hasChildren = children.length > 0;
+    const isCollapsed = hasChildren && !forceExpandIds.has(cat.id) && _catCollapsed[cat.id];
+    html += renderCatItem(cat, depth, children.length, isCollapsed, hasChildren);
+    if (hasChildren && !isCollapsed) {
+      children.forEach(child => renderNode(child, depth + 1));
+    }
+  }
+  roots.forEach(root => renderNode(root, 0));
   container.innerHTML = html;
 }
 
-function _catVatLabel(cat) {
-  if (cat.tax_rate_id) {
-    const tr = _activeVatRates.find(r => r.id === cat.tax_rate_id);
-    return tr ? `KDV %${tr.rate}` : 'KDV';
-  }
-  if (cat.tax_rate_override != null) return `KDV %${cat.tax_rate_override}`;
-  return null;
-}
-
-function renderCatItem(cat, depth, childCount) {
+function renderCatItem(cat, depth, childCount, isCollapsed, hasChildren) {
   const indent = depth * 24;
+  const vat = _catResolvedVat(cat);
+
+  // Toggle arrow for parents
+  let toggleHtml = '';
+  if (hasChildren) {
+    const arrow = isCollapsed ? '▶' : '▼';
+    toggleHtml = `<span onclick="toggleCatCollapse('${cat.id}')" style="cursor:pointer;font-size:10px;color:var(--gray400);width:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:2px;user-select:none" title="${isCollapsed ? 'Expand' : 'Collapse'}">${arrow}</span>`;
+  } else {
+    toggleHtml = '<span style="width:16px;display:inline-block;flex-shrink:0;margin-right:2px"></span>';
+  }
+
   const icon = depth===0?'📁':depth===1?'📂':'📄';
-  const meta = childCount ? `${childCount} sub-categor${childCount>1?'ies':'y'}` : '';
-  const vatLabel = _catVatLabel(cat);
-  const vatBadge = vatLabel
-    ? `<span onclick="openCatVatPicker('${cat.id}', this)" style="cursor:pointer;background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">${vatLabel}</span>`
-    : `<span onclick="openCatVatPicker('${cat.id}', this)" style="cursor:pointer;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">+ KDV</span>`;
+  const meta = childCount ? `${childCount} sub` : '';
+
+  // VAT badge — own vs inherited styling
+  let vatBadge;
+  if (vat.own) {
+    vatBadge = `<span onclick="openCatVatPicker('${cat.id}')" style="cursor:pointer;background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">${vat.label}</span>`;
+  } else {
+    vatBadge = `<span onclick="openCatVatPicker('${cat.id}')" style="cursor:pointer;background:#f8fafc;color:#94a3b8;font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;margin-right:6px;font-style:italic" title="${vat.label}">${vat.label}</span>`;
+  }
+
+  // Highlight search match in name
+  let nameHtml = cat.name;
+  if (_catSearchTerm && cat.name.toLowerCase().includes(_catSearchTerm)) {
+    const idx = cat.name.toLowerCase().indexOf(_catSearchTerm);
+    const before = cat.name.slice(0, idx);
+    const match = cat.name.slice(idx, idx + _catSearchTerm.length);
+    const after = cat.name.slice(idx + _catSearchTerm.length);
+    nameHtml = `${before}<mark style="background:#fef08a;border-radius:2px;padding:0 1px">${match}</mark>${after}`;
+  }
+
+  // Show path breadcrumb when searching (for non-root items)
+  let pathHtml = '';
+  if (_catSearchTerm && depth > 0 && cat.name.toLowerCase().includes(_catSearchTerm)) {
+    pathHtml = `<div style="font-size:10px;color:var(--gray400);margin-top:1px">${_catPath(cat)}</div>`;
+  }
+
   return `<div class="manage-item" style="padding-left:${indent}px">
+    ${toggleHtml}
     <div class="manage-item-icon">${icon}</div>
     <div class="manage-item-info">
-      <div class="manage-item-name" id="cat-name-${cat.id}">${cat.name}</div>
+      <div class="manage-item-name" id="cat-name-${cat.id}">${nameHtml}</div>
       ${meta ? `<div class="manage-item-meta">${meta}</div>` : ''}
+      ${pathHtml}
     </div>
     <div class="manage-item-actions">
       ${vatBadge}

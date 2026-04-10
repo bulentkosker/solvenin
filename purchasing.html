@@ -850,7 +850,7 @@ let _vatCategories = [];
 let _vatCompanyDefaultRate = 0;
 async function loadVatRefs() {
   const [catsRes, coRes] = await Promise.all([
-    sb.from('categories').select('id,tax_rate_id,tax_rate_override').eq('company_id', companyId),
+    sb.from('categories').select('id,parent_id,tax_rate_id,tax_rate_override').eq('company_id', companyId),
     sb.from('companies').select('default_tax_rate_id').eq('id', companyId).single(),
   ]);
   _vatCategories = catsRes.data || [];
@@ -858,6 +858,8 @@ async function loadVatRefs() {
   _vatCompanyDefaultRate = (taxRates.find(r => r.id === defId)?.rate) || 0;
 }
 
+// Resolve effective VAT rate for a product (mirrors get_product_tax_rate RPC).
+// Walks the category hierarchy: category → parent → grandparent → company default.
 function resolveProductTaxRate(productId) {
   const p = products.find(x => x.id === productId);
   if (!p) return 0;
@@ -870,15 +872,19 @@ function resolveProductTaxRate(productId) {
     return Number(p.tax_rate_override || 0);
   }
   if (src === 'fixed') return _vatCompanyDefaultRate;
-  if (p.category_id) {
-    const cat = _vatCategories.find(c => c.id === p.category_id);
-    if (cat) {
-      if (cat.tax_rate_id) {
-        const tr = taxRates.find(r => r.id === cat.tax_rate_id);
-        if (tr) return Number(tr.rate);
-      }
-      if (cat.tax_rate_override != null) return Number(cat.tax_rate_override);
+  // Walk up category hierarchy
+  let catId = p.category_id;
+  let depth = 0;
+  while (catId && depth < 10) {
+    const cat = _vatCategories.find(c => c.id === catId);
+    if (!cat) break;
+    if (cat.tax_rate_id) {
+      const tr = taxRates.find(r => r.id === cat.tax_rate_id);
+      if (tr) return Number(tr.rate);
     }
+    if (cat.tax_rate_override != null) return Number(cat.tax_rate_override);
+    catId = cat.parent_id;
+    depth++;
   }
   return _vatCompanyDefaultRate;
 }
