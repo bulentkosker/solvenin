@@ -2099,14 +2099,19 @@ function _catPath(cat) {
   return parts.join(' > ');
 }
 
-// Resolve inherited VAT for display: walk up hierarchy, then company default
+// Resolve inherited VAT for display: walk up hierarchy, then company default.
+// Returns { rate, type:'own'|'parent'|'company'|'none', label, source }
 function _catResolvedVat(cat) {
   // Own VAT?
   if (cat.tax_rate_id) {
     const tr = _activeVatRates.find(r => r.id === cat.tax_rate_id);
-    return tr ? { rate: tr.rate, own: true, label: `KDV %${tr.rate}` } : { rate: 0, own: true, label: 'KDV' };
+    return tr
+      ? { rate: tr.rate, type: 'own', label: `KDV %${tr.rate}` }
+      : { rate: 0, type: 'own', label: 'KDV %0' };
   }
-  if (cat.tax_rate_override != null) return { rate: cat.tax_rate_override, own: true, label: `KDV %${cat.tax_rate_override}` };
+  if (cat.tax_rate_override != null) {
+    return { rate: cat.tax_rate_override, type: 'own', label: `KDV %${cat.tax_rate_override}` };
+  }
 
   // Walk up parent hierarchy
   let cur = cat;
@@ -2115,9 +2120,11 @@ function _catResolvedVat(cat) {
     if (!parent) break;
     if (parent.tax_rate_id) {
       const tr = _activeVatRates.find(r => r.id === parent.tax_rate_id);
-      if (tr) return { rate: tr.rate, own: false, label: `↑ ${parent.name}: %${tr.rate}` };
+      if (tr) return { rate: tr.rate, type: 'parent', label: `↑ ${parent.name}'tan %${tr.rate}` };
     }
-    if (parent.tax_rate_override != null) return { rate: parent.tax_rate_override, own: false, label: `↑ ${parent.name}: %${parent.tax_rate_override}` };
+    if (parent.tax_rate_override != null) {
+      return { rate: parent.tax_rate_override, type: 'parent', label: `↑ ${parent.name}'tan %${parent.tax_rate_override}` };
+    }
     cur = parent;
   }
 
@@ -2125,9 +2132,11 @@ function _catResolvedVat(cat) {
   const defId = companyData?.default_tax_rate_id;
   if (defId) {
     const tr = _activeVatRates.find(r => r.id === defId);
-    if (tr) return { rate: tr.rate, own: false, label: `${t('label_tax_source_fixed')||'Şirket varsayılanı'}: %${tr.rate}` };
+    if (tr) return { rate: tr.rate, type: 'company', label: `↑ ${t('label_tax_source_fixed')||'Şirket varsayılanı'}` };
   }
-  return { rate: 0, own: false, label: t('label_tax_source_fixed')||'Şirket varsayılanı' };
+
+  // Nothing defined anywhere
+  return { rate: 0, type: 'none', label: `KDV ${t('lbl_undefined')||'tanımsız'}` };
 }
 
 function _saveCatCollapseState() {
@@ -2222,12 +2231,18 @@ function renderCatItem(cat, depth, childCount, isCollapsed, hasChildren) {
   const icon = depth===0?'📁':depth===1?'📂':'📄';
   const meta = childCount ? `${childCount} sub` : '';
 
-  // VAT badge — own vs inherited styling
+  // VAT badge — styling varies by inheritance type, all clickable
   let vatBadge;
-  if (vat.own) {
-    vatBadge = `<span onclick="openCatVatPicker('${cat.id}')" style="cursor:pointer;background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;margin-right:6px" title="${t('label_vat_rate')||'VAT Rate'}">${vat.label}</span>`;
+  const _vbClick = `onclick="openCatVatPicker('${cat.id}')"`;
+  const _vbBase = 'cursor:pointer;font-size:10px;padding:3px 8px;border-radius:12px;margin-right:6px;display:inline-flex;align-items:center;gap:3px';
+  if (vat.type === 'own') {
+    vatBadge = `<span ${_vbClick} style="${_vbBase};background:#dbeafe;color:#1e40af;font-weight:700">${vat.label} <span style="font-size:8px;opacity:.6">▾</span></span>`;
+  } else if (vat.type === 'parent') {
+    vatBadge = `<span ${_vbClick} style="${_vbBase};background:#f0fdf4;color:#15803d;font-weight:600;font-style:italic">${vat.label} <span style="font-size:8px;opacity:.5">▾</span></span>`;
+  } else if (vat.type === 'company') {
+    vatBadge = `<span ${_vbClick} style="${_vbBase};background:#f8fafc;color:#94a3b8;font-weight:600;font-style:italic">${vat.label} <span style="font-size:8px;opacity:.5">▾</span></span>`;
   } else {
-    vatBadge = `<span onclick="openCatVatPicker('${cat.id}')" style="cursor:pointer;background:#f8fafc;color:#94a3b8;font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;margin-right:6px;font-style:italic" title="${vat.label}">${vat.label}</span>`;
+    vatBadge = `<span ${_vbClick} style="${_vbBase};background:#fff;color:#cbd5e1;font-weight:600;border:1px dashed #e2e8f0">${vat.label} <span style="font-size:8px;opacity:.5">▾</span></span>`;
   }
 
   // Highlight search match in name
@@ -2275,18 +2290,17 @@ function _setCatVatInline(catId) {
   if (!cat) return;
   const row = document.getElementById('cat-name-'+catId)?.closest('.manage-item');
   if (!row) return;
-  // Hide actions, show inline picker
   const actions = row.querySelector('.manage-item-actions');
   if (!actions) return;
-  const orig = actions.innerHTML;
   const opts = [
     `<option value="">${t('label_no_tax')||'Vergi Yok (%0)'}</option>`,
     ..._activeVatRates.map(r => `<option value="${r.id}" ${cat.tax_rate_id === r.id ? 'selected' : ''}>${r.name} (${r.rate}%)</option>`),
   ].join('');
   actions.innerHTML = `
+    <span style="font-size:10px;color:var(--gray400);font-weight:600;margin-right:4px">${t('label_vat_rate')||'KDV Oranı Seç'}:</span>
     <select id="_cv_${catId}" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;max-width:180px">${opts}</select>
-    <button class="action-btn" onclick="_saveCatVat('${catId}')">✓</button>
-    <button class="action-btn" onclick="renderCategoriesList()">✕</button>
+    <button class="action-btn" onclick="_saveCatVat('${catId}')" title="${t('btn_save')||'Kaydet'}">✓</button>
+    <button class="action-btn" onclick="renderCategoriesList()" title="${t('btn_cancel')||'İptal'}">✕</button>
   `;
   document.getElementById('_cv_'+catId).focus();
 }
