@@ -2647,6 +2647,7 @@ const T = window.T = {
     status_trial:'Trial',
     status_expired:'Expired',
     status_paused:'Paused',
+    label_no_vat_defined:'No VAT defined',
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -3897,6 +3898,7 @@ const T = window.T = {
     status_trial:'Deneme',
     status_expired:'Süresi Doldu',
     status_paused:'Duraklatıldı',
+    label_no_vat_defined:'KDV tanımsız',
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -4724,6 +4726,7 @@ const T = window.T = {
     status_trial:'Test',
     status_expired:'Abgelaufen',
     status_paused:'Pausiert',
+    label_no_vat_defined:'Keine MwSt.',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -5552,6 +5555,7 @@ const T = window.T = {
     status_trial:'Période d\'essai',
     status_expired:'Expiré',
     status_paused:'En pause',
+    label_no_vat_defined:'TVA non définie',
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -6379,6 +6383,7 @@ const T = window.T = {
     status_trial:'Prueba',
     status_expired:'Expirado',
     status_paused:'Pausado',
+    label_no_vat_defined:'IVA no definido',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -7175,6 +7180,7 @@ const T = window.T = {
     status_trial:'تجربة',
     status_expired:'منتهي',
     status_paused:'مُعلّق',
+    label_no_vat_defined:'ضريبة غير محددة',
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -7970,6 +7976,7 @@ const T = window.T = {
     status_trial:'试用',
     status_expired:'已过期',
     status_paused:'已暂停',
+    label_no_vat_defined:'未定义增值税',
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -9007,6 +9014,7 @@ const T = window.T = {
     status_trial:'Пробный',
     status_expired:'Истёк',
     status_paused:'Приостановлен',
+    label_no_vat_defined:'НДС не задан',
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -9811,6 +9819,7 @@ const T = window.T = {
     status_trial:'Teste',
     status_expired:'Expirado',
     status_paused:'Pausado',
+    label_no_vat_defined:'IVA não definido',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -10606,6 +10615,7 @@ const T = window.T = {
     status_trial:'お試し',
     status_expired:'期限切れ',
     status_paused:'一時停止',
+    label_no_vat_defined:'VAT未定義',
   },
   kz: {
     // NAV
@@ -10870,6 +10880,7 @@ const T = window.T = {
     status_trial:'Сынақ',
     status_expired:'Мерзімі аяқталды',
     status_paused:'Тоқтатылды',
+    label_no_vat_defined:'ҚҚС анықталмаған',
   },
   kg: {
     // NAV
@@ -11134,6 +11145,7 @@ const T = window.T = {
     status_trial:'Proba',
     status_expired:'Мөөнөтү бүтүптүр',
     status_paused:'Тыныгуу',
+    label_no_vat_defined:'КНС аныкталган эмес',
   },
   uz: {
     // NAV
@@ -11398,6 +11410,7 @@ const T = window.T = {
     status_trial:'Sinov',
     status_expired:'Muddati tugagan',
     status_paused:'To\'xtatilgan',
+    label_no_vat_defined:'QQS belgilanmagan',
   },
   tm: {
     // NAV
@@ -11662,6 +11675,7 @@ const T = window.T = {
     status_trial:'Synag',
     status_expired:'Möhleti doldy',
     status_paused:'Togtadyldy',
+    label_no_vat_defined:'GBS kesgitlenmedik',
   },
   az: {
     // NAV
@@ -11926,6 +11940,7 @@ const T = window.T = {
     status_trial:'Sınama',
     status_expired:'Süresi Doldu',
     status_paused:'Duraklatıldy',
+    label_no_vat_defined:'ƏDV müəyyən edilməyib',
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -12143,6 +12158,7 @@ const T = window.T = {
     status_trial:'Testowy',
     status_expired:'Wygasło',
     status_paused:'Wstrzymano',
+    label_no_vat_defined:'VAT niezdefiniowany',
   },
 };
 

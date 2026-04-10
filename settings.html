@@ -2136,7 +2136,10 @@ function _catResolvedVat(cat) {
   }
 
   // Nothing defined anywhere
-  return { rate: 0, type: 'none', label: `KDV ${t('lbl_undefined')||'tanımsız'}` };
+  const noVatLabel = t('label_no_vat_defined');
+  // t() returns the key itself on miss — detect that and use hardcoded fallback
+  const noVatText = (noVatLabel && noVatLabel !== 'label_no_vat_defined') ? noVatLabel : 'KDV tanımsız';
+  return { rate: 0, type: 'none', label: noVatText };
 }
 
 function _saveCatCollapseState() {
