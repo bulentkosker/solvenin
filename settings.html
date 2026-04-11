@@ -847,13 +847,13 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-card">
           <div class="settings-card-head">
             <div>
-              <div class="settings-card-title" data-i18n="pos_quick_buttons_title">Hızlı Erişim Butonları</div>
-              <div class="settings-card-desc">POS ekranında görünecek ürün butonları</div>
+              <div class="settings-card-title" data-i18n="pos_button_groups">Buton Grupları</div>
+              <div class="settings-card-desc" data-i18n="pos_quick_buttons_desc">POS ekranında görünecek ürün butonları</div>
             </div>
-            <button class="btn-primary" onclick="openPosButtonModal()" style="padding:8px 16px;font-size:12px">+ Buton Ekle</button>
+            <button class="btn-primary" onclick="openPosGroupModal()" style="padding:8px 16px;font-size:12px" data-i18n="pos_add_group">+ Grup Ekle</button>
           </div>
           <div class="settings-card-body" style="padding:0 24px">
-            <div id="pos-buttons-list" class="manage-list"></div>
+            <div id="pos-groups-list" class="manage-list"></div>
           </div>
         </div>
 
@@ -886,6 +886,67 @@ tr:hover .action-btns { opacity:1; }
             <button class="btn-primary" onclick="savePosReceiptSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
           </div>
           <div class="settings-card-body">
+            <!-- RECEIPT HEADER -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray500);letter-spacing:.5px;margin-bottom:8px" data-i18n="pos_receipt_header_section">Fiş Başlık Bilgileri</div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1">
+                <label data-i18n="pos_receipt_title_label">Fiş Başlığı</label>
+                <input type="text" id="pos-receipt-title" data-i18n-placeholder="pos_receipt_title_ph" placeholder="Market adı veya şube adı" style="width:100%">
+                <div style="font-size:11px;color:var(--gray400);margin-top:4px" data-i18n="pos_receipt_title_help">Şirket adından bağımsız, fişin üstünde görünür</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:2">
+                <label data-i18n="pos_receipt_address_label">Adres</label>
+                <input type="text" id="pos-receipt-address" data-i18n-placeholder="pos_receipt_address_ph" placeholder="Market adresi" style="width:100%">
+              </div>
+              <div class="form-group" style="flex:1">
+                <label data-i18n="pos_receipt_phone_label">Telefon</label>
+                <input type="text" id="pos-receipt-phone" placeholder="+7 777 000 0000" style="width:100%">
+              </div>
+            </div>
+
+            <!-- LOGO -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray500);letter-spacing:.5px;margin:16px 0 8px" data-i18n="pos_receipt_logo_section">Logo</div>
+            <div class="form-row full">
+              <div class="form-group">
+                <label data-i18n="pos_receipt_logo_source">Logo Kaynağı</label>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="radio" name="pos-logo-mode" value="company" checked onchange="onPosLogoModeChange()">
+                    <span data-i18n="pos_logo_use_company">Şirket logosunu kullan</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="radio" name="pos-logo-mode" value="custom" onchange="onPosLogoModeChange()">
+                    <span data-i18n="pos_logo_upload_custom">Özel logo yükle</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="radio" name="pos-logo-mode" value="none" onchange="onPosLogoModeChange()">
+                    <span data-i18n="pos_logo_none">Logo yok</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-row full" id="pos-logo-upload-row" style="display:none">
+              <div class="form-group">
+                <div style="display:flex;gap:16px;align-items:center;padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px">
+                  <div style="width:96px;height:96px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+                    <div id="pos-logo-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#94a3b8;background:#f1f5f9">—</div>
+                    <img id="pos-logo-preview" src="" alt="" style="width:100%;height:100%;object-fit:contain;display:none">
+                  </div>
+                  <div style="flex:1">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <input type="file" id="pos-logo-file-input" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none" onchange="onPosLogoFileSelected(event)">
+                      <button type="button" class="btn-secondary" onclick="document.getElementById('pos-logo-file-input').click()" style="padding:8px 16px;font-size:13px" data-i18n="btn_upload_logo">Logo Yükle</button>
+                      <button type="button" class="btn-secondary" id="btn-pos-remove-logo" onclick="removePosLogo()" style="padding:8px 16px;font-size:13px;color:#ef4444;border-color:#fecaca;display:none" data-i18n="btn_remove_logo">Kaldır</button>
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:6px">PNG, JPG, SVG, WebP — Max 2MB</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray500);letter-spacing:.5px;margin:16px 0 8px" data-i18n="pos_receipt_other_section">Diğer</div>
             <div class="form-row">
               <div class="form-group">
                 <label data-i18n="pos_receipt_footer_label">Fiş Alt Mesajı</label>
@@ -1178,19 +1239,66 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
       <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label data-i18n="pos_move_to_group">Gruba Taşı</label>
+          <select id="pb-group"></select>
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label>Renk</label>
           <div id="pb-colors" style="display:flex;gap:6px;margin-top:4px"></div>
-        </div>
-        <div class="form-group" style="max-width:100px">
-          <label>Sıra</label>
-          <input type="number" id="pb-order" value="0" min="0">
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeModal('pos-button-modal')">İptal</button>
       <button class="btn-primary" onclick="savePosButton()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- POS Button Group Modal -->
+<div class="modal-overlay" id="pos-group-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head">
+      <span class="modal-title" id="pos-group-modal-title" data-i18n="pos_add_group">+ Grup Ekle</span>
+      <button class="modal-close" onclick="closeModal('pos-group-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label data-i18n="pos_group_name">Grup Adı *</label>
+          <input type="text" id="pg-name" placeholder="Meyve Sebze">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Renk</label>
+          <div id="pg-colors" style="display:flex;gap:6px;margin-top:4px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('pos-group-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" onclick="savePosGroup()" data-i18n="btn_save">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal (groups/buttons) -->
+<div class="modal-overlay" id="pos-confirm-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <span class="modal-title" data-i18n="confirm_delete">Sil</span>
+      <button class="modal-close" onclick="closeModal('pos-confirm-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <p style="font-size:14px;color:var(--gray700);margin:0" id="pos-confirm-msg"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('pos-confirm-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" style="background:#dc2626;border-color:#dc2626" onclick="_posConfirmFn && _posConfirmFn()" data-i18n="btn_delete">Sil</button>
     </div>
   </div>
 </div>
@@ -3209,24 +3317,31 @@ async function confirmAccountingToggle() {
 }
 
 // ===== POS SETTINGS =====
-let posButtons = [], allProducts = [];
+let posButtons = [], posGroups = [], allProducts = [];
 const POS_COLORS = ['#1e40af','#1d4ed8','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#4d7c0f'];
-let editingPosButtonId = null;
+let editingPosButtonId = null, editingPosGroupId = null;
+let _posConfirmFn = null;
+let _posPendingLogo = null;  // null = unchanged, '' = remove, 'data:...' = new
 
 async function loadPosSettings() {
   if (!companyId) return;
-  const [btnRes, prodRes, pinRes, coRes] = await Promise.all([
+  const [grpRes, btnRes, prodRes, pinRes, coRes] = await Promise.all([
+    sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
     sb.from('pos_quick_buttons').select('*, products(name)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
     sb.from('products').select('id, name').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('company_users').select('pos_pin').eq('company_id', companyId).eq('user_id', currentUser.id).single(),
     sb.from('companies').select('invoice_settings').eq('id', companyId).single(),
   ]);
+  posGroups = grpRes.data || [];
   posButtons = btnRes.data || [];
   allProducts = prodRes.data || [];
   if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').value = pinRes.data.pos_pin;
   // Receipt settings
   const rs = coRes.data?.invoice_settings || {};
   const _rcEl = (id, val) => { const el = document.getElementById(id); if (el) { if (el.type === 'checkbox') el.checked = val; else el.value = val; } };
+  _rcEl('pos-receipt-title', rs.pos_receipt_title || '');
+  _rcEl('pos-receipt-address', rs.pos_receipt_address || '');
+  _rcEl('pos-receipt-phone', rs.pos_receipt_phone || '');
   _rcEl('pos-receipt-footer', rs.receipt_footer || '');
   _rcEl('pos-receipt-paper', rs.receipt_paper || '58mm');
   _rcEl('pos-receipt-print-mode', rs.receipt_print_mode || 'ask');
@@ -3234,7 +3349,64 @@ async function loadPosSettings() {
   _rcEl('pos-receipt-show-subtotal', rs.receipt_show_subtotal !== false);
   _rcEl('pos-receipt-show-vat', rs.receipt_show_vat !== false);
   _rcEl('pos-receipt-show-cashier', rs.receipt_show_cashier !== false);
-  renderPosButtons();
+
+  // Logo mode
+  const mode = rs.pos_receipt_logo_mode || 'company';
+  const radio = document.querySelector(`input[name="pos-logo-mode"][value="${mode}"]`);
+  if (radio) radio.checked = true;
+  _posPendingLogo = null;
+  applyPosLogoPreview(rs.pos_receipt_logo_url || '');
+  onPosLogoModeChange();
+
+  renderPosGroups();
+}
+
+function onPosLogoModeChange() {
+  const mode = document.querySelector('input[name="pos-logo-mode"]:checked')?.value || 'company';
+  document.getElementById('pos-logo-upload-row').style.display = mode === 'custom' ? '' : 'none';
+}
+
+function applyPosLogoPreview(url) {
+  const img = document.getElementById('pos-logo-preview');
+  const ph = document.getElementById('pos-logo-placeholder');
+  const removeBtn = document.getElementById('btn-pos-remove-logo');
+  if (!img) return;
+  if (url) {
+    img.src = url; img.style.display = ''; ph.style.display = 'none'; removeBtn.style.display = '';
+  } else {
+    img.src = ''; img.style.display = 'none'; ph.style.display = ''; removeBtn.style.display = 'none';
+  }
+}
+
+async function onPosLogoFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast(t('toast_logo_too_large') || 'Logo too large (max 2MB)', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    _posPendingLogo = reader.result;
+    applyPosLogoPreview(_posPendingLogo);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePosLogo() {
+  _posPendingLogo = '';
+  applyPosLogoPreview('');
+}
+
+async function uploadPosLogoIfNeeded(existingUrl) {
+  if (_posPendingLogo === null) return existingUrl || '';
+  if (_posPendingLogo === '') return '';
+  // dataURL → blob → storage
+  const res = await fetch(_posPendingLogo);
+  const blob = await res.blob();
+  const ext = (blob.type.split('/')[1] || 'png').replace('svg+xml','svg');
+  const path = `${companyId}/${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from('pos-logos').upload(path, blob, { upsert: true, contentType: blob.type });
+  if (error) { console.error(error); return existingUrl || ''; }
+  const { data } = sb.storage.from('pos-logos').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 async function savePosReceiptSettings() {
@@ -3242,8 +3414,16 @@ async function savePosReceiptSettings() {
   const { data: co } = await sb.from('companies').select('invoice_settings').eq('id', companyId).single();
   const existing = co?.invoice_settings || {};
   const _rv = (id) => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : null; };
+  const mode = document.querySelector('input[name="pos-logo-mode"]:checked')?.value || 'company';
+  const newLogoUrl = await uploadPosLogoIfNeeded(existing.pos_receipt_logo_url);
+  _posPendingLogo = null;
   const updated = {
     ...existing,
+    pos_receipt_title:    _rv('pos-receipt-title')?.trim() || '',
+    pos_receipt_address:  _rv('pos-receipt-address')?.trim() || '',
+    pos_receipt_phone:    _rv('pos-receipt-phone')?.trim() || '',
+    pos_receipt_logo_mode: mode,
+    pos_receipt_logo_url: newLogoUrl || '',
     receipt_footer:       _rv('pos-receipt-footer')?.trim() || '',
     receipt_paper:        _rv('pos-receipt-paper') || '58mm',
     receipt_print_mode:   _rv('pos-receipt-print-mode') || 'ask',
@@ -3257,36 +3437,135 @@ async function savePosReceiptSettings() {
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
 }
 
-function renderPosButtons() {
-  const el = document.getElementById('pos-buttons-list');
-  if (!posButtons.length) {
-    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray400)">Henüz buton eklenmemiş</div>';
+// ===== POS BUTTON GROUPS =====
+function renderPosGroups() {
+  const el = document.getElementById('pos-groups-list');
+  if (!posGroups.length) {
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray400)">${t('pos_no_groups_yet')||'Henüz grup yok. Başlamak için "Grup Ekle"ye tıklayın.'}</div>`;
     return;
   }
-  el.innerHTML = posButtons.map(b => `
-    <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray100)">
+  const btnRowHtml = (b, bi, bTotal) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 40px;border-top:1px dashed var(--gray100)">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:${b.button_color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${b.button_order}</div>
+        <div style="width:22px;height:22px;border-radius:6px;background:${b.button_color}"></div>
         <div>
           <div style="font-size:13px;font-weight:600">${b.button_name}</div>
           <div style="font-size:11px;color:var(--gray400)">${b.products?.name || '—'}</div>
         </div>
       </div>
       <div style="display:flex;gap:4px">
+        <button ${bi===0?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${bi===0?'not-allowed':'pointer'};opacity:${bi===0?'.4':'1'}" onclick="movePosButton('${b.id}',-1)">↑</button>
+        <button ${bi===bTotal-1?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${bi===bTotal-1?'not-allowed':'pointer'};opacity:${bi===bTotal-1?'.4':'1'}" onclick="movePosButton('${b.id}',1)">↓</button>
         <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="editPosButton('${b.id}')">✏️</button>
-        <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="deletePosButton('${b.id}')">✕</button>
+        <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="confirmDeletePosButton('${b.id}')">🗑️</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  el.innerHTML = posGroups.map((g, gi) => {
+    const groupButtons = posButtons.filter(b => b.group_id === g.id);
+    return `
+    <div class="manage-item" style="padding:12px 0;border-bottom:1px solid var(--gray100)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:10px;height:32px;border-radius:3px;background:${g.color}"></div>
+          <div style="font-size:14px;font-weight:700">📁 ${g.name}</div>
+          <div style="font-size:11px;color:var(--gray400)">(${groupButtons.length})</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button ${gi===0?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${gi===0?'not-allowed':'pointer'};opacity:${gi===0?'.4':'1'}" onclick="movePosGroup('${g.id}',-1)">↑</button>
+          <button ${gi===posGroups.length-1?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${gi===posGroups.length-1?'not-allowed':'pointer'};opacity:${gi===posGroups.length-1?'.4':'1'}" onclick="movePosGroup('${g.id}',1)">↓</button>
+          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="editPosGroup('${g.id}')">✏️</button>
+          <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="confirmDeletePosGroup('${g.id}')">🗑️</button>
+        </div>
+      </div>
+      <div style="margin:8px 0 0 22px">
+        <button class="btn-outline" style="padding:4px 10px;font-size:11px" onclick="openPosButtonModal('${g.id}')">+ ${t('pos_add_button')||'Buton Ekle'}</button>
+      </div>
+      ${groupButtons.map((b, bi) => btnRowHtml(b, bi, groupButtons.length)).join('')}
+    </div>`;
+  }).join('');
 }
 
-function openPosButtonModal() {
+let _selectedGroupColor = '#3B82F6';
+function renderGroupColorPicker(active) {
+  _selectedGroupColor = active;
+  const extra = ['#3B82F6', ...POS_COLORS];
+  document.getElementById('pg-colors').innerHTML = extra.map(c =>
+    `<div onclick="selectGroupColor('${c}')" style="width:28px;height:28px;border-radius:6px;background:${c};cursor:pointer;border:3px solid ${c === active ? '#000' : 'transparent'}"></div>`
+  ).join('');
+}
+function selectGroupColor(c) { renderGroupColorPicker(c); }
+
+function openPosGroupModal() {
+  editingPosGroupId = null;
+  document.getElementById('pos-group-modal-title').textContent = t('pos_add_group') || '+ Grup Ekle';
+  document.getElementById('pg-name').value = '';
+  renderGroupColorPicker('#3B82F6');
+  openModal('pos-group-modal');
+}
+
+function editPosGroup(id) {
+  const g = posGroups.find(x => x.id === id);
+  if (!g) return;
+  editingPosGroupId = id;
+  document.getElementById('pos-group-modal-title').textContent = t('pos_edit_group') || 'Grup Düzenle';
+  document.getElementById('pg-name').value = g.name;
+  renderGroupColorPicker(g.color || '#3B82F6');
+  openModal('pos-group-modal');
+}
+
+async function savePosGroup() {
+  const name = document.getElementById('pg-name').value.trim();
+  if (!name) { showToast(t('pos_group_name_required') || 'Grup adı zorunlu', 'error'); return; }
+  if (editingPosGroupId) {
+    await sb.from('pos_button_groups').update({ name, color: _selectedGroupColor }).eq('id', editingPosGroupId);
+  } else {
+    const sort_order = posGroups.length;
+    await sb.from('pos_button_groups').insert({ company_id: companyId, name, color: _selectedGroupColor, sort_order });
+  }
+  closeModal('pos-group-modal');
+  showToast(t('toast_saved') || 'Kaydedildi', 'success');
+  await loadPosSettings();
+}
+
+function confirmDeletePosGroup(id) {
+  const g = posGroups.find(x => x.id === id);
+  if (!g) return;
+  const count = posButtons.filter(b => b.group_id === id).length;
+  document.getElementById('pos-confirm-msg').textContent =
+    `"${g.name}" grubunu silmek istiyor musunuz? ${count>0 ? `İçerisindeki ${count} buton da silinecek.` : ''}`;
+  _posConfirmFn = async () => {
+    closeModal('pos-confirm-modal');
+    // delete buttons first (cascade would do it, but ON DELETE CASCADE is set)
+    await sb.from('pos_button_groups').delete().eq('id', id);
+    showToast(t('toast_deleted') || 'Silindi', 'success');
+    await loadPosSettings();
+  };
+  openModal('pos-confirm-modal');
+}
+
+async function movePosGroup(id, dir) {
+  const idx = posGroups.findIndex(g => g.id === id);
+  if (idx < 0) return;
+  const target = idx + dir;
+  if (target < 0 || target >= posGroups.length) return;
+  const a = posGroups[idx], b = posGroups[target];
+  await Promise.all([
+    sb.from('pos_button_groups').update({ sort_order: target }).eq('id', a.id),
+    sb.from('pos_button_groups').update({ sort_order: idx }).eq('id', b.id),
+  ]);
+  await loadPosSettings();
+}
+
+// ===== POS BUTTONS =====
+function openPosButtonModal(groupId) {
   editingPosButtonId = null;
-  document.getElementById('pos-btn-modal-title').textContent = 'Buton Ekle';
+  document.getElementById('pos-btn-modal-title').textContent = t('pos_add_button') || 'Buton Ekle';
   document.getElementById('pb-name').value = '';
-  document.getElementById('pb-order').value = posButtons.length;
-  document.getElementById('pb-product').innerHTML = '<option value="">Ürün seçin...</option>' +
+  document.getElementById('pb-product').innerHTML = `<option value="">${t('pos_select_product')||'Ürün seçin...'}</option>` +
     allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  const grpSelect = document.getElementById('pb-group');
+  const preselect = groupId || posGroups[0]?.id || '';
+  grpSelect.innerHTML = posGroups.map(g => `<option value="${g.id}" ${g.id===preselect?'selected':''}>${g.name}</option>`).join('');
   renderColorPicker('#1e40af');
   openModal('pos-button-modal');
 }
@@ -3295,11 +3574,12 @@ function editPosButton(id) {
   const b = posButtons.find(x => x.id === id);
   if (!b) return;
   editingPosButtonId = id;
-  document.getElementById('pos-btn-modal-title').textContent = 'Buton Düzenle';
+  document.getElementById('pos-btn-modal-title').textContent = t('pos_edit_button') || 'Buton Düzenle';
   document.getElementById('pb-name').value = b.button_name;
-  document.getElementById('pb-order').value = b.button_order;
-  document.getElementById('pb-product').innerHTML = '<option value="">Ürün seçin...</option>' +
+  document.getElementById('pb-product').innerHTML = `<option value="">${t('pos_select_product')||'Ürün seçin...'}</option>` +
     allProducts.map(p => `<option value="${p.id}" ${p.id === b.product_id ? 'selected' : ''}>${p.name}</option>`).join('');
+  const grpSelect = document.getElementById('pb-group');
+  grpSelect.innerHTML = posGroups.map(g => `<option value="${g.id}" ${g.id===b.group_id?'selected':''}>${g.name}</option>`).join('');
   renderColorPicker(b.button_color);
   openModal('pos-button-modal');
 }
@@ -3316,23 +3596,56 @@ function selectPosColor(c) { renderColorPicker(c); }
 async function savePosButton() {
   const name = document.getElementById('pb-name').value.trim();
   const productId = document.getElementById('pb-product').value;
-  const order = parseInt(document.getElementById('pb-order').value) || 0;
-  if (!name || !productId) { showToast('Ad ve ürün zorunlu', 'error'); return; }
+  const groupId = document.getElementById('pb-group').value || null;
+  if (!name || !productId) { showToast(t('pos_name_product_required') || 'Ad ve ürün zorunlu', 'error'); return; }
+  if (!groupId) { showToast(t('pos_group_required') || 'Önce bir grup oluşturun', 'error'); return; }
 
-  const payload = { company_id: companyId, product_id: productId, button_name: name, button_color: selectedPosColor, button_order: order };
   if (editingPosButtonId) {
+    const existing = posButtons.find(b => b.id === editingPosButtonId);
+    const payload = { product_id: productId, button_name: name, button_color: selectedPosColor, group_id: groupId };
+    // If moved to a new group, put at end of that group
+    if (existing && existing.group_id !== groupId) {
+      payload.button_order = posButtons.filter(b => b.group_id === groupId).length;
+    }
     await sb.from('pos_quick_buttons').update(payload).eq('id', editingPosButtonId);
   } else {
-    await sb.from('pos_quick_buttons').insert(payload);
+    const groupButtons = posButtons.filter(b => b.group_id === groupId);
+    if (groupButtons.length >= 20) { showToast(t('pos_max_buttons_reached') || 'Maks 20 buton', 'error'); return; }
+    await sb.from('pos_quick_buttons').insert({
+      company_id: companyId, product_id: productId, button_name: name,
+      button_color: selectedPosColor, group_id: groupId, button_order: groupButtons.length,
+    });
   }
   closeModal('pos-button-modal');
-  showToast('Buton kaydedildi', 'success');
+  showToast(t('toast_saved') || 'Kaydedildi', 'success');
   await loadPosSettings();
 }
 
-async function deletePosButton(id) {
-  await sb.from('pos_quick_buttons').update({ is_active: false }).eq('id', id);
-  showToast('Buton silindi', 'success');
+function confirmDeletePosButton(id) {
+  const b = posButtons.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('pos-confirm-msg').textContent = `"${b.button_name}" butonunu silmek istiyor musunuz?`;
+  _posConfirmFn = async () => {
+    closeModal('pos-confirm-modal');
+    await sb.from('pos_quick_buttons').update({ is_active: false }).eq('id', id);
+    showToast(t('toast_deleted') || 'Silindi', 'success');
+    await loadPosSettings();
+  };
+  openModal('pos-confirm-modal');
+}
+
+async function movePosButton(id, dir) {
+  const b = posButtons.find(x => x.id === id);
+  if (!b) return;
+  const siblings = posButtons.filter(x => x.group_id === b.group_id).sort((a,b)=>a.button_order-b.button_order);
+  const idx = siblings.findIndex(x => x.id === id);
+  const target = idx + dir;
+  if (target < 0 || target >= siblings.length) return;
+  const a = siblings[idx], other = siblings[target];
+  await Promise.all([
+    sb.from('pos_quick_buttons').update({ button_order: other.button_order }).eq('id', a.id),
+    sb.from('pos_quick_buttons').update({ button_order: a.button_order }).eq('id', other.id),
+  ]);
   await loadPosSettings();
 }
 

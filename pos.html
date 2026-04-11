@@ -303,13 +303,18 @@ async function init() {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
     currSym = syms[comp.base_currency] || comp.base_currency + ' ';
     const rs = comp.invoice_settings || {};
+    // Resolve logo by mode
+    const logoMode = rs.pos_receipt_logo_mode || 'company';
+    let resolvedLogo = '';
+    if (logoMode === 'company') resolvedLogo = comp.logo_url || '';
+    else if (logoMode === 'custom') resolvedLogo = rs.pos_receipt_logo_url || '';
     companyInfo = {
-      name: comp.name || '',
-      address: comp.address || '',
-      phone: comp.phone || '',
-      logo_url: comp.logo_url || '',
+      name: (rs.pos_receipt_title || '').trim() || comp.name || '',
+      address: (rs.pos_receipt_address || '').trim() || comp.address || '',
+      phone: (rs.pos_receipt_phone || '').trim() || comp.phone || '',
+      logo_url: resolvedLogo,
       receipt_footer: rs.receipt_footer || '',
-      receipt_show_logo: rs.receipt_show_logo !== false,
+      receipt_show_logo: rs.receipt_show_logo !== false && logoMode !== 'none',
       receipt_paper: rs.receipt_paper || '58mm',
       receipt_print_mode: rs.receipt_print_mode || 'ask',  // 'auto'|'ask'|'none'
       receipt_show_subtotal: rs.receipt_show_subtotal !== false,
@@ -372,20 +377,22 @@ async function startSession() {
   document.getElementById('barcode-input').focus();
 }
 
-let quickButtons = [];
+let quickButtons = [], buttonGroups = [];
 async function loadProducts() {
   // Offline path: pull everything from IndexedDB cache
   if (window.PosConnectivity && !window.PosConnectivity.isOnline && window.PosOfflineDB) {
     try {
-      const [cachedProducts, cachedButtons] = await Promise.all([
+      const [cachedProducts, cachedButtons, cachedGroups] = await Promise.all([
         window.PosOfflineDB.getCachedProducts(),
         window.PosOfflineDB.getCachedQuickButtons(),
+        window.PosOfflineDB.getCachedButtonGroups ? window.PosOfflineDB.getCachedButtonGroups() : Promise.resolve([]),
       ]);
       products = cachedProducts || [];
-      categories = []; // categories are derived from quick buttons in offline mode
+      categories = [];
       quickButtons = cachedButtons || [];
+      buttonGroups = cachedGroups || [];
       console.log('[POS] loaded from offline cache:', products.length, 'products,', quickButtons.length, 'quick buttons');
-      renderCategories();
+      renderGroupTabs();
       renderQuickButtons();
       return;
     } catch (e) {
@@ -393,15 +400,17 @@ async function loadProducts() {
     }
   }
   // Online path
-  const [prodRes, catRes, qbRes] = await Promise.all([
+  const [prodRes, catRes, qbRes, grpRes] = await Promise.all([
     sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('pos_quick_buttons').select('*, products(id,name,sale_price,category_id)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
+    sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
   ]);
   products = prodRes.data || [];
   categories = catRes.data || [];
   quickButtons = qbRes.data || [];
-  renderCategories();
+  buttonGroups = grpRes.data || [];
+  renderGroupTabs();
   renderQuickButtons();
 }
 
@@ -414,25 +423,42 @@ async function loadAccounts() {
 
 function F(n) { return currSym + parseFloat(n||0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
-// ===== CATEGORIES =====
-let activeCat = '';
-function renderCategories() {
-  const qbCatIds = [...new Set(quickButtons.map(b => b.products?.category_id).filter(Boolean))];
-  const visibleCats = categories.filter(c => qbCatIds.includes(c.id));
-  document.getElementById('pos-categories').innerHTML = `<button class="cat-btn active" onclick="filterCat(this,'')">${t('pos_all_categories')}</button>` +
-    visibleCats.map(c => `<button class="cat-btn" onclick="filterCat(this,'${c.id}')">${c.name}</button>`).join('');
+// ===== GROUP TABS =====
+let activeGroupId = '';
+function renderGroupTabs() {
+  const el = document.getElementById('pos-categories');
+  if (!buttonGroups.length) {
+    // Backward compat: no groups — show all buttons, hide tabs
+    el.innerHTML = '';
+    activeGroupId = '';
+    return;
+  }
+  // Restore last selected group from localStorage, else first group
+  const savedKey = 'pos_active_group_' + companyId;
+  const saved = localStorage.getItem(savedKey);
+  if (saved && buttonGroups.find(g => g.id === saved)) activeGroupId = saved;
+  else activeGroupId = buttonGroups[0].id;
+
+  el.innerHTML = buttonGroups.map(g =>
+    `<button class="cat-btn${g.id===activeGroupId?' active':''}" style="${g.id===activeGroupId?`border-color:${g.color};color:${g.color};`:''}" onclick="filterGroup(this,'${g.id}')">${g.name}</button>`
+  ).join('');
 }
-function filterCat(btn, id) {
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+function filterGroup(btn, id) {
+  document.querySelectorAll('.cat-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor=''; b.style.color=''; });
   btn.classList.add('active');
-  activeCat = id;
+  const g = buttonGroups.find(x => x.id === id);
+  if (g) { btn.style.borderColor = g.color; btn.style.color = g.color; }
+  activeGroupId = id;
+  localStorage.setItem('pos_active_group_' + companyId, id);
   renderQuickButtons();
 }
 
 // ===== QUICK BUTTONS =====
 function renderQuickButtons() {
   const grid = document.getElementById('pos-grid');
-  const filtered = quickButtons.filter(b => !activeCat || b.products?.category_id === activeCat);
+  const filtered = buttonGroups.length
+    ? quickButtons.filter(b => b.group_id === activeGroupId)
+    : quickButtons;
   if (!filtered.length) {
     grid.innerHTML = `<div class="pos-empty">${t('pos_no_quick_buttons')}.<br><a href="settings.html" style="color:var(--primary);font-weight:600">Settings → POS</a></div>`;
     return;
