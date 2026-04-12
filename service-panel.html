@@ -1271,6 +1271,7 @@ function repairTool(key, title, desc) {
   </div>`;
 }
 
+function fmtN(v) { return v == null ? '—' : parseFloat(v).toLocaleString(undefined, {maximumFractionDigits:2}); }
 function _rtOk(el, html) { el.style.background = '#dcfce7'; el.style.color = '#166534'; el.innerHTML = html; }
 function _rtWarn(el, html) { el.style.background = '#fef3c7'; el.style.color = '#92400e'; el.innerHTML = html; }
 function _rtErr(el, html) { el.style.background = '#fef2f2'; el.style.color = '#991b1b'; el.innerHTML = html; }
@@ -1299,13 +1300,15 @@ async function runRepair(key, mode) {
         const { data, error } = await sb.rpc('sp_apply_missing_sales_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         _rtOk(el, `✅ ${data?.created || 0} stok hareketi oluşturuldu`); loadRepairHistory();
+        setTimeout(() => runRepair('sales_stock', 'analyze'), 500);
       } else {
         const { data, error } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
-        if (data.items > 0)
-          _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
-        else _rtOk(el, '✅ Eksik stok hareketi yok');
+        const hdr = [{key:'order_number',label:'Fatura No'},{key:'issue_date',label:'Tarih'},{key:'contact_name',label:'Cari'},{key:'product_name',label:'Ürün'},{key:'quantity',label:'Miktar',align:'right',fmt:v=>fmtN(v)}];
+        _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi` +
+          _discrepancyTable(hdr, data.details || []) +
+          `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
       }
 
     // === PURCHASE STOCK ===
@@ -1314,13 +1317,15 @@ async function runRepair(key, mode) {
         const { data, error } = await sb.rpc('sp_apply_missing_purchase_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         _rtOk(el, `✅ ${data?.created || 0} stok hareketi oluşturuldu`); loadRepairHistory();
+        setTimeout(() => runRepair('purchase_stock', 'analyze'), 500);
       } else {
         const { data, error } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
-        if (data.items > 0)
-          _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
-        else _rtOk(el, '✅ Eksik stok hareketi yok');
+        const hdr = [{key:'order_number',label:'Sipariş No'},{key:'issue_date',label:'Tarih'},{key:'contact_name',label:'Tedarikçi'},{key:'product_name',label:'Ürün'},{key:'quantity',label:'Miktar',align:'right',fmt:v=>fmtN(v)}];
+        _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi` +
+          _discrepancyTable(hdr, data.details || []) +
+          `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
       }
 
     // === RECALC STOCK ===
