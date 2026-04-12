@@ -1296,10 +1296,13 @@ async function runRepair(key, mode) {
     // === SALES STOCK ===
     if (key === 'sales_stock') {
       if (mode === 'fix') {
-        const { data } = await sb.rpc('sp_apply_missing_sales_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
-        _rtOk(el, `✅ ${data.created} stok hareketi oluşturuldu`); loadRepairHistory();
+        const { data, error } = await sb.rpc('sp_apply_missing_sales_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (error) throw new Error(error.message);
+        _rtOk(el, `✅ ${data?.created || 0} stok hareketi oluşturuldu`); loadRepairHistory();
       } else {
-        const { data } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        const { data, error } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (error) throw new Error(error.message);
+        if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
         if (data.items > 0)
           _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
         else _rtOk(el, '✅ Eksik stok hareketi yok');
@@ -1308,10 +1311,13 @@ async function runRepair(key, mode) {
     // === PURCHASE STOCK ===
     } else if (key === 'purchase_stock') {
       if (mode === 'fix') {
-        const { data } = await sb.rpc('sp_apply_missing_purchase_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
-        _rtOk(el, `✅ ${data.created} stok hareketi oluşturuldu`); loadRepairHistory();
+        const { data, error } = await sb.rpc('sp_apply_missing_purchase_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (error) throw new Error(error.message);
+        _rtOk(el, `✅ ${data?.created || 0} stok hareketi oluşturuldu`); loadRepairHistory();
       } else {
-        const { data } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        const { data, error } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
+        if (error) throw new Error(error.message);
+        if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
         if (data.items > 0)
           _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
         else _rtOk(el, '✅ Eksik stok hareketi yok');
