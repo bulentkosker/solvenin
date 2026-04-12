@@ -37,17 +37,17 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
 .content { padding:28px; flex:1; }
 
 /* STATS */
-.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
-.stat-card { background:var(--white); border-radius:10px; border:1px solid var(--gray200); padding:10px 14px; box-shadow:var(--shadow-sm); }
-.stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
-.stat-label { font-size:10px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; }
-.stat-icon { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+.stat-card { background:var(--white); border-radius:8px; border:1px solid var(--gray200); padding:6px 10px; box-shadow:var(--shadow-sm); }
+.stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+.stat-label { font-size:9px; font-weight:600; color:var(--gray400); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-icon { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; }
 .stat-icon.blue { background:var(--blue-light); }
 .stat-icon.green { background:var(--green-light); }
 .stat-icon.orange { background:var(--orange-light); }
 .stat-icon.red { background:var(--red-light); }
-.stat-value { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--gray800); margin-bottom:2px; line-height:1.2; }
-.stat-change { font-size:11px; color:var(--gray400); display:flex; align-items:center; gap:4px; }
+.stat-value { font-family:var(--font-display); font-size:15px; font-weight:800; color:var(--gray800); margin-bottom:0; line-height:1.2; }
+.stat-change { font-size:9px; color:var(--gray400); display:flex; align-items:center; gap:3px; }
 .stat-change.up { color:var(--green); }
 .stat-change.down { color:var(--red); }
 .stat-change.warn { color:var(--orange); }
@@ -76,7 +76,7 @@ table { width:100%; border-collapse:collapse; }
 th { text-align:left; font-size:10px !important; font-weight:600; color:var(--gray400) !important; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px !important; border-bottom:1px solid var(--gray200) !important; background:var(--gray50) !important; white-space:nowrap !important; cursor:pointer; user-select:none; }
 th:hover { color:var(--blue); }
 th.sorted { color:var(--blue); }
-td { padding:3px 10px !important; font-size:11px !important; color:var(--gray600); border-bottom:1px solid var(--gray100) !important; vertical-align:middle !important; white-space:nowrap; }
+td { padding:2px 8px !important; font-size:11px !important; color:var(--gray600); border-bottom:1px solid var(--gray100) !important; vertical-align:middle !important; white-space:nowrap; }
 tr:last-child td { border-bottom:none !important; }
 tr:hover td { background:var(--gray50) !important; }
 .td-name { font-weight:600; color:var(--gray800); display:flex; align-items:center; gap:6px; white-space:nowrap; }
@@ -957,7 +957,7 @@ function renderTable() {
       <td><input type="checkbox" class="row-check" data-id="${p.id}"></td>
       <td><div class="td-name">
         <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
-        <span>${p.name}</span><span class="item-sku">${p.sku ? '— ' + p.sku : ''}</span>
+        <span>${p.name}</span>
       </div></td>
       <td data-col="kategori"><span class="badge ${catBadge}">${p.category || '—'}</span></td>
       <td data-col="stok">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : `<div class="stock-bar-wrap">
@@ -967,7 +967,7 @@ function renderTable() {
       <td data-col="birim_maliyet">${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
       <td data-col="toplam_deger" style="font-weight:600;color:var(--gray800)">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : totalVal}</td>
       <td data-col="durum">${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
-      <td data-col="barkod">${p.barcode || '—'}</td>
+      <td data-col="barkod">${p.barcode || p.sku || '—'}</td>
       <td data-col="tip">${typeBadge}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
@@ -1017,8 +1017,11 @@ function saveVisibleColumns(cols) {
 
 function applyColumnVisibility() {
   const visible = getVisibleColumns();
-  document.querySelectorAll('[data-col]').forEach(el => {
-    el.classList.toggle('col-hidden', !visible.includes(el.getAttribute('data-col')));
+  INVENTORY_COLUMNS.forEach(c => {
+    const show = visible.includes(c.key);
+    document.querySelectorAll(`[data-col="${c.key}"]`).forEach(el => {
+      el.style.display = show ? '' : 'none';
+    });
   });
 }
 
