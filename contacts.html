@@ -651,7 +651,8 @@ async function loadStatement() {
     (data||[]).forEach(o => lines.push({ type:'purchase_invoice', date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total||0), status: o.status, _data: o }));
   }
 
-  // Sale payments — find orders for this customer, then get their payments
+  // Sale payments (tahsilat)
+  const _pmLabel = m => ({cash:'Kasa',bank:'Banka',card:'Kart',transfer:'Havale',credit_card:'Kart',bank_transfer:'Havale'}[m] || m || '—');
   if (c?.is_customer) {
     const { data: custOrders } = await sb.from('sales_orders').select('id,order_number')
       .eq('company_id', companyId).eq('customer_id', stmtContactId).eq('is_active', true);
@@ -659,18 +660,18 @@ async function loadStatement() {
     (custOrders||[]).forEach(o => { orderMap[o.id] = o.order_number; });
     const orderIds = Object.keys(orderMap);
     if (orderIds.length) {
-      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id')
+      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,order_id')
         .eq('company_id', companyId).in('order_id', orderIds);
       (data||[]).forEach(p => {
         const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
         if (from && paidDate < from) return;
         if (to && paidDate > to) return;
-        lines.push({ type:'payment_in', date: paidDate, doc: p.reference || orderMap[p.order_id] || '—', desc: 'Tahsilat', debit: 0, credit: parseFloat(p.amount||0), _data: {...p, payment_method: p.method, _orderNo: orderMap[p.order_id]} });
+        lines.push({ type:'payment_in', date: paidDate, doc: _pmLabel(p.method), desc: 'Tahsilat — ' + _pmLabel(p.method), debit: 0, credit: parseFloat(p.amount||0), _data: {...p, payment_method: p.method, _orderNo: orderMap[p.order_id]} });
       });
     }
   }
 
-  // Purchase payments — find orders for this supplier, then get their payments
+  // Purchase payments (ödeme)
   if (c?.is_supplier) {
     const { data: suppOrders } = await sb.from('purchase_orders').select('id,order_number')
       .eq('company_id', companyId).eq('supplier_id', stmtContactId).eq('is_active', true);
@@ -678,13 +679,13 @@ async function loadStatement() {
     (suppOrders||[]).forEach(o => { orderMap[o.id] = o.order_number; });
     const orderIds = Object.keys(orderMap);
     if (orderIds.length) {
-      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,purchase_order_id')
+      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,purchase_order_id')
         .eq('company_id', companyId).in('purchase_order_id', orderIds);
       (data||[]).forEach(p => {
         const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
         if (from && paidDate < from) return;
         if (to && paidDate > to) return;
-        lines.push({ type:'payment_out', date: paidDate, doc: p.reference || orderMap[p.purchase_order_id] || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method, _orderNo: orderMap[p.purchase_order_id]} });
+        lines.push({ type:'payment_out', date: paidDate, doc: _pmLabel(p.method), desc: 'Ödeme — ' + _pmLabel(p.method), debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method, _orderNo: orderMap[p.purchase_order_id]} });
       });
     }
   }
