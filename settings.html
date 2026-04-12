@@ -3335,7 +3335,7 @@ async function loadPosSettings() {
   posGroups = grpRes.data || [];
   posButtons = btnRes.data || [];
   allProducts = prodRes.data || [];
-  if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').value = pinRes.data.pos_pin;
+  if (pinRes.data?.pos_pin) document.getElementById('pos-pin-input').placeholder = '••••';
   // Receipt settings
   const rs = coRes.data?.invoice_settings || {};
   const _rcEl = (id, val) => { const el = document.getElementById(id); if (el) { if (el.type === 'checkbox') el.checked = val; else el.value = val; } };
@@ -3652,7 +3652,8 @@ async function movePosButton(id, dir) {
 async function savePosPin() {
   const pin = document.getElementById('pos-pin-input').value.trim();
   if (pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) { showToast('PIN 4 haneli sayı olmalı', 'error'); return; }
-  await sb.from('company_users').update({ pos_pin: pin || null }).eq('company_id', companyId).eq('user_id', currentUser.id);
+  const { error } = await sb.rpc('set_pos_pin', { p_company_id: companyId, p_user_id: currentUser.id, p_pin: pin || '' });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('PIN kaydedildi', 'success');
 }
 
