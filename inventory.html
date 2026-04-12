@@ -215,6 +215,19 @@ tr:hover .action-btns { opacity:1; }
 .loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
 .loading-logo span{color:var(--sky)}
 @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:16px!important}}
+
+/* COLUMN SELECTOR */
+.col-hidden { display:none !important; }
+.col-selector-wrap { position:relative; }
+.col-selector-btn { display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;border:1px solid var(--gray200);background:var(--white);font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--gray600);cursor:pointer;transition:all .15s; }
+.col-selector-btn:hover { border-color:var(--blue);color:var(--blue); }
+.col-selector-panel { display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--white);border:1px solid var(--gray200);border-radius:12px;padding:12px 16px;min-width:200px;z-index:60;box-shadow:var(--shadow-md); }
+.col-selector-panel.open { display:block; }
+.col-selector-title { font-size:11px;font-weight:700;color:var(--gray400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px; }
+.col-selector-sep { height:1px;background:var(--gray100);margin:8px 0; }
+.col-selector-item { display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;color:var(--gray700); }
+.col-selector-item:hover { color:var(--blue); }
+.col-selector-item input[type="checkbox"] { accent-color:var(--blue); width:15px; height:15px; cursor:pointer; }
 </style>
 <script src="i18n.js"></script>
 <script src="feature-flags.js"></script>
@@ -371,9 +384,13 @@ tr:hover .action-btns { opacity:1; }
           <span class="table-title" data-i18n="inv_products">Products</span>
           <span class="table-count" id="table-count">0 items</span>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
           <button class="btn-secondary" style="padding:6px 12px;font-size:12px" onclick="toggleView('grid')" id="btn-grid" data-i18n="inv_grid">⊞ Grid</button>
           <button class="btn-secondary" style="padding:6px 12px;font-size:12px;border-color:var(--blue);color:var(--blue)" onclick="toggleView('list')" id="btn-list" data-i18n="inv_list">≡ List</button>
+          <div class="col-selector-wrap">
+            <button class="col-selector-btn" onclick="toggleColSelector(event)">⚙️ <span data-i18n="inv_columns">Kolonlar</span></button>
+            <div class="col-selector-panel" id="col-selector-panel"></div>
+          </div>
         </div>
       </div>
       <div id="table-container">
@@ -382,11 +399,13 @@ tr:hover .action-btns { opacity:1; }
             <tr>
               <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
               <th onclick="sortTable('name')"><span data-i18n="col_product">Product</span> ↕</th>
-              <th onclick="sortTable('category')"><span data-i18n="col_category">Category</span> ↕</th>
-              <th onclick="sortTable('stock')"><span data-i18n="col_stock">Stock</span> ↕</th>
-              <th onclick="sortTable('unit_cost')"><span data-i18n="col_unit_cost">Unit Cost</span> ↕</th>
-              <th onclick="sortTable('total_value')"><span data-i18n="col_total_value">Total Value</span> ↕</th>
-              <th><span data-i18n="col_status">Status</span></th>
+              <th data-col="kategori" onclick="sortTable('category')"><span data-i18n="col_category">Category</span> ↕</th>
+              <th data-col="stok" onclick="sortTable('stock')"><span data-i18n="col_stock">Stock</span> ↕</th>
+              <th data-col="birim_maliyet" onclick="sortTable('unit_cost')"><span data-i18n="col_unit_cost">Unit Cost</span> ↕</th>
+              <th data-col="toplam_deger" onclick="sortTable('total_value')"><span data-i18n="col_total_value">Total Value</span> ↕</th>
+              <th data-col="durum"><span data-i18n="col_status">Status</span></th>
+              <th data-col="barkod" style="display:none"><span data-i18n="col_barcode">Barcode</span></th>
+              <th data-col="tip" style="display:none"><span data-i18n="col_type">Type</span></th>
               <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
             </tr>
           </thead>
@@ -915,7 +934,7 @@ function renderTable() {
   document.getElementById('page-info').textContent = `${t('showing_x_of_y').replace('{0}',start+1).replace('{1}',Math.min(start+perPage,filteredProducts.length)).replace('{2}',filteredProducts.length)}`;
 
   if (page.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('inv_no_products')||'No products found'}</h3><p>${t('inv_no_products_sub')||'Try adjusting your filters or add a new product.'}</p><button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>${t('inv_no_products')||'No products found'}</h3><p>${t('inv_no_products_sub')||'Try adjusting your filters or add a new product.'}</p><button class="btn-primary" onclick="openAddModal()" data-i18n="inv_add_product">+ Add Product</button></div></td></tr>`;
     renderPagination();
     return;
   }
@@ -940,14 +959,16 @@ function renderTable() {
         <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
         <span>${p.name}</span><span class="item-sku">${p.sku ? '— ' + p.sku : ''}</span>
       </div></td>
-      <td><span class="badge ${catBadge}">${p.category || '—'}</span> ${typeBadge}</td>
-      <td>${p.is_service ? '<span style="color:var(--gray400)">—</span>' : `<div class="stock-bar-wrap">
+      <td data-col="kategori"><span class="badge ${catBadge}">${p.category || '—'}</span></td>
+      <td data-col="stok">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : `<div class="stock-bar-wrap">
         <div class="stock-bar"><div class="stock-fill ${fillClass}" style="width:${pct}%"></div></div>
         <span class="stock-num">${p.stock} ${p.unit}</span>
       </div>`}</td>
-      <td>${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
-      <td style="font-weight:600;color:var(--gray800)">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : totalVal}</td>
-      <td>${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
+      <td data-col="birim_maliyet">${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
+      <td data-col="toplam_deger" style="font-weight:600;color:var(--gray800)">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : totalVal}</td>
+      <td data-col="durum">${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
+      <td data-col="barkod">${p.barcode || '—'}</td>
+      <td data-col="tip">${typeBadge}</td>
       <td><div class="action-btns">
         <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
         <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
@@ -957,7 +978,87 @@ function renderTable() {
   }).join('');
 
   renderPagination();
+  applyColumnVisibility();
 }
+
+// ===== COLUMN SELECTOR =====
+const INVENTORY_COLUMNS = [
+  { key:'kategori',      i18n:'col_category',    label:'Kategori',      defaultOn:true },
+  { key:'stok',          i18n:'col_stock',        label:'Stok',          defaultOn:true },
+  { key:'birim_maliyet', i18n:'col_unit_cost',    label:'Birim Maliyet', defaultOn:true,  responsiveHide:true },
+  { key:'toplam_deger',  i18n:'col_total_value',  label:'Toplam Değer',  defaultOn:true,  responsiveHide:true },
+  { key:'durum',         i18n:'col_status',       label:'Durum',         defaultOn:true },
+  { key:'barkod',        i18n:'col_barcode',      label:'Barkod',        defaultOn:false },
+  { key:'tip',           i18n:'col_type',         label:'Tip',           defaultOn:false },
+];
+
+function getColStorageKey() { return 'solvenin_inventory_columns_' + (companyId || 'default'); }
+
+let _userExplicitCols = null;
+
+function getVisibleColumns() {
+  if (_userExplicitCols) return _userExplicitCols;
+  const saved = localStorage.getItem(getColStorageKey());
+  if (saved) {
+    try { _userExplicitCols = JSON.parse(saved); return _userExplicitCols; }
+    catch(e) { /* ignore */ }
+  }
+  // defaults + responsive
+  const isNarrow = window.innerWidth < 1280;
+  return INVENTORY_COLUMNS
+    .filter(c => c.defaultOn && !(isNarrow && c.responsiveHide))
+    .map(c => c.key);
+}
+
+function saveVisibleColumns(cols) {
+  _userExplicitCols = cols;
+  localStorage.setItem(getColStorageKey(), JSON.stringify(cols));
+}
+
+function applyColumnVisibility() {
+  const visible = getVisibleColumns();
+  document.querySelectorAll('[data-col]').forEach(el => {
+    el.classList.toggle('col-hidden', !visible.includes(el.getAttribute('data-col')));
+  });
+}
+
+function renderColSelectorPanel() {
+  const visible = getVisibleColumns();
+  const defaultOn = INVENTORY_COLUMNS.filter(c => c.defaultOn);
+  const defaultOff = INVENTORY_COLUMNS.filter(c => !c.defaultOn);
+  let html = `<div class="col-selector-title">${t('inv_visible_columns')||'Görünür Kolonlar'}</div>`;
+  defaultOn.forEach(c => {
+    const checked = visible.includes(c.key) ? 'checked' : '';
+    html += `<label class="col-selector-item"><input type="checkbox" ${checked} onchange="onColToggle('${c.key}',this.checked)"><span>${t(c.i18n)||c.label}</span></label>`;
+  });
+  html += '<div class="col-selector-sep"></div>';
+  defaultOff.forEach(c => {
+    const checked = visible.includes(c.key) ? 'checked' : '';
+    html += `<label class="col-selector-item"><input type="checkbox" ${checked} onchange="onColToggle('${c.key}',this.checked)"><span>${t(c.i18n)||c.label}</span></label>`;
+  });
+  document.getElementById('col-selector-panel').innerHTML = html;
+}
+
+function toggleColSelector(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('col-selector-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { panel.classList.remove('open'); return; }
+  renderColSelectorPanel();
+  panel.classList.add('open');
+}
+
+function onColToggle(key, checked) {
+  const visible = getVisibleColumns().slice();
+  if (checked && !visible.includes(key)) visible.push(key);
+  if (!checked) { const i = visible.indexOf(key); if (i >= 0) visible.splice(i, 1); }
+  saveVisibleColumns(visible);
+  applyColumnVisibility();
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('col-selector-panel')?.classList.remove('open');
+});
 
 function getCatIcon(cat) {
   const icons = { Electronics:'💻', 'Raw Material':'🔩', Packaging:'📦', 'Finished Goods':'✅', Office:'🖊️' };
@@ -2119,15 +2220,18 @@ function toggleView(view) {
         <thead><tr>
           <th style="width:40px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
           <th onclick="sortTable('name')">${t('col_product')} ↕</th>
-          <th onclick="sortTable('category')">${t('col_category')} ↕</th>
-          <th onclick="sortTable('stock')">${t('col_stock')} ↕</th>
-          <th onclick="sortTable('unit_cost')">${t('col_unit_cost')} ↕</th>
-          <th onclick="sortTable('total_value')">${t('col_total_value')} ↕</th>
-          <th>${t('col_status')}</th>
+          <th data-col="kategori" onclick="sortTable('category')">${t('col_category')} ↕</th>
+          <th data-col="stok" onclick="sortTable('stock')">${t('col_stock')} ↕</th>
+          <th data-col="birim_maliyet" onclick="sortTable('unit_cost')">${t('col_unit_cost')} ↕</th>
+          <th data-col="toplam_deger" onclick="sortTable('total_value')">${t('col_total_value')} ↕</th>
+          <th data-col="durum">${t('col_status')}</th>
+          <th data-col="barkod">${t('col_barcode')||'Barcode'}</th>
+          <th data-col="tip">${t('col_type')||'Type'}</th>
           <th style="width:80px">${t('col_actions')}</th>
         </tr></thead>
         <tbody id="inventory-tbody"></tbody>
       </table>`;
+      applyColumnVisibility();
     }
     renderTable();
   }
