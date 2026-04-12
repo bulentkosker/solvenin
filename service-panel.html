@@ -1345,16 +1345,15 @@ async function runRepair(key, runDirect) {
         resultEl.innerHTML = `⚠️ Mizan dengede değil!<br>Borç: ${fmt(data.total_debit)}<br>Alacak: ${fmt(data.total_credit)}<br>Fark: <strong>${fmt(data.difference)}</strong>`;
       }
     } else if (key === 'contact_balances') {
-      const { data } = await sb.rpc('sp_check_contact_balances', { p_company_id: repairCompanyId });
+      const { data } = await sb.rpc('get_all_contact_balances', { p_company_id: repairCompanyId });
       if (!data?.length) {
         resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
         resultEl.innerHTML = '✅ Tüm cariler dengeli';
       } else {
         resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
-        const rows = data.slice(0, 10).map(c => {
-          const bal = c.is_customer ? c.customer_balance : c.supplier_balance;
-          return `<tr><td>${c.name}</td><td class="text-right">${fmt(bal)}</td></tr>`;
-        }).join('');
+        const rows = data.slice(0, 10).map(c =>
+          `<tr><td>${c.contact_name}</td><td class="text-right">${fmt(c.balance)}</td></tr>`
+        ).join('');
         resultEl.innerHTML = `⚠️ <strong>${data.length}</strong> caride açık bakiye var<br><table style="margin-top:8px;font-size:11px"><thead><tr><th>Cari</th><th class="text-right">Bakiye</th></tr></thead><tbody>${rows}</tbody></table>${data.length > 10 ? '<div style="margin-top:4px;font-size:10px">...ve ' + (data.length - 10) + ' tane daha</div>' : ''}`;
       }
     }

@@ -397,27 +397,29 @@ async function loadBalances() {
     if (!balances[o.supplier_id]) balances[o.supplier_id] = { debit:0, credit:0 };
     balances[o.supplier_id].credit += parseFloat(o.total||0);
   });
-  // Payments — map via order tables (avoid ambiguous FK join)
-  const { data: allPayments } = await sb.from('payments').select('order_id, amount').eq('company_id', companyId);
+  // Payments — map via order tables
+  const { data: allPayments } = await sb.from('payments').select('order_id, purchase_order_id, payment_type, amount').eq('company_id', companyId);
   if (allPayments?.length) {
-    // Build order→contact maps from already-loaded sales/purchases
-    const saleOrderCustomer = {};
-    (sales||[]).forEach(o => { saleOrderCustomer[o.id || o.customer_id] = o.customer_id; });
-    // Re-query for full mapping
     const { data: soMap } = await sb.from('sales_orders').select('id,customer_id').eq('company_id', companyId).eq('is_active', true);
     const { data: poMap } = await sb.from('purchase_orders').select('id,supplier_id').eq('company_id', companyId).eq('is_active', true);
     const custMap = {}; (soMap||[]).forEach(o => { custMap[o.id] = o.customer_id; });
     const suppMap = {}; (poMap||[]).forEach(o => { suppMap[o.id] = o.supplier_id; });
     allPayments.forEach(p => {
-      const cid = custMap[p.order_id];
-      if (cid) {
-        if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
-        balances[cid].credit += parseFloat(p.amount||0);
+      // Sale payments → credit (customer paid us)
+      if (p.order_id) {
+        const cid = custMap[p.order_id];
+        if (cid) {
+          if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
+          balances[cid].credit += parseFloat(p.amount||0);
+        }
       }
-      const sid = suppMap[p.order_id];
-      if (sid) {
-        if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
-        balances[sid].debit += parseFloat(p.amount||0);
+      // Purchase payments → debit (we paid supplier)
+      if (p.purchase_order_id) {
+        const sid = suppMap[p.purchase_order_id];
+        if (sid) {
+          if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
+          balances[sid].debit += parseFloat(p.amount||0);
+        }
       }
     });
   }
@@ -676,13 +678,13 @@ async function loadStatement() {
     (suppOrders||[]).forEach(o => { orderMap[o.id] = o.order_number; });
     const orderIds = Object.keys(orderMap);
     if (orderIds.length) {
-      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,order_id')
-        .eq('company_id', companyId).in('order_id', orderIds);
+      const { data } = await sb.from('payments').select('id,amount,paid_at,method,reference,notes,register_id,account_id,purchase_order_id')
+        .eq('company_id', companyId).in('purchase_order_id', orderIds);
       (data||[]).forEach(p => {
         const paidDate = p.paid_at ? p.paid_at.split('T')[0] : '';
         if (from && paidDate < from) return;
         if (to && paidDate > to) return;
-        lines.push({ type:'payment_out', date: paidDate, doc: p.reference || orderMap[p.order_id] || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method, _orderNo: orderMap[p.order_id]} });
+        lines.push({ type:'payment_out', date: paidDate, doc: p.reference || orderMap[p.purchase_order_id] || '—', desc: 'Ödeme', debit: parseFloat(p.amount||0), credit: 0, _data: {...p, payment_method: p.method, _orderNo: orderMap[p.purchase_order_id]} });
       });
     }
   }

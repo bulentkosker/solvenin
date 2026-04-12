@@ -1176,7 +1176,7 @@ async function savePoPayment() {
   const order = orders.find(o => o.id === orderId);
 
   // 0. Save payment record
-  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
+  await sb.from('payments').insert({ company_id: companyId, purchase_order_id: orderId, payment_type: 'purchase', amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
 
   // 1. Create cash/bank transaction
   if (method === 'cash' && registerId) {
@@ -1836,6 +1836,13 @@ async function saveReceiving() {
   const poOrder = orders.find(o => o.id === orderId);
 
   if (payMethod && payAmount > 0) {
+    // Create payment record
+    await sb.from('payments').insert({
+      company_id: companyId, purchase_order_id: orderId, payment_type: 'purchase',
+      amount: payAmount, method: payMethod, reference: payRef,
+      paid_at: new Date().toISOString()
+    });
+
     if (payMethod === 'cash') {
       const registerId = document.getElementById('recv-pay-register').value;
       if (registerId) {
