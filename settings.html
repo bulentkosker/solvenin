@@ -850,10 +850,10 @@ tr:hover .action-btns { opacity:1; }
               <div class="settings-card-title" data-i18n="pos_button_groups">Buton Grupları</div>
               <div class="settings-card-desc" data-i18n="pos_quick_buttons_desc">POS ekranında görünecek ürün butonları</div>
             </div>
-            <button class="btn-primary" onclick="openPosGroupModal()" style="padding:8px 16px;font-size:12px" data-i18n="pos_add_group">+ Grup Ekle</button>
           </div>
-          <div class="settings-card-body" style="padding:0 24px">
-            <div id="pos-groups-list" class="manage-list"></div>
+          <div class="settings-card-body" style="padding:0 24px 20px">
+            <div id="pos-group-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+            <div id="pos-btn-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
           </div>
         </div>
 
@@ -1228,14 +1228,17 @@ tr:hover .action-btns { opacity:1; }
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Buton Adı *</label>
-          <input type="text" id="pb-name" placeholder="Ekmek">
+          <label>Ürün *</label>
+          <input type="text" id="pb-product-search" placeholder="🔍 Ürün ara..." autocomplete="off" oninput="filterPbProducts()" style="width:100%">
+          <input type="hidden" id="pb-product">
+          <div id="pb-product-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray200);border-radius:8px;margin-top:4px;display:none"></div>
+          <div id="pb-product-selected" style="display:none;margin-top:6px;padding:8px 12px;background:var(--gray50);border-radius:8px;font-size:13px;font-weight:600;color:var(--gray800)"></div>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Ürün *</label>
-          <select id="pb-product"></select>
+          <label>Buton Adı *</label>
+          <input type="text" id="pb-name" placeholder="Ekmek">
         </div>
       </div>
       <div class="form-row">
@@ -3327,8 +3330,8 @@ async function loadPosSettings() {
   if (!companyId) return;
   const [grpRes, btnRes, prodRes, pinRes, coRes] = await Promise.all([
     sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
-    sb.from('pos_quick_buttons').select('*, products(name)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
-    sb.from('products').select('id, name').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('pos_quick_buttons').select('*, products(name,sale_price)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
+    sb.from('products').select('id, name, sale_price').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('company_users').select('pos_pin').eq('company_id', companyId).eq('user_id', currentUser.id).single(),
     sb.from('companies').select('invoice_settings').eq('id', companyId).single(),
   ]);
@@ -3437,52 +3440,57 @@ async function savePosReceiptSettings() {
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
 }
 
-// ===== POS BUTTON GROUPS =====
+// ===== POS BUTTON GROUPS — TAB + GRID UI =====
+let _activeGroupTab = null;
+
 function renderPosGroups() {
-  const el = document.getElementById('pos-groups-list');
+  renderGroupTabs();
+  renderBtnGrid();
+}
+
+function renderGroupTabs() {
+  const el = document.getElementById('pos-group-tabs');
+  if (!_activeGroupTab && posGroups.length) _activeGroupTab = posGroups[0].id;
+  el.innerHTML = posGroups.map(g => {
+    const count = posButtons.filter(b => b.group_id === g.id).length;
+    const active = g.id === _activeGroupTab;
+    return `<div style="display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:10px;font-size:13px;font-weight:${active?'700':'500'};cursor:pointer;border:1.5px solid ${active?g.color:'var(--gray200)'};background:${active?g.color+'12':'var(--white)'};color:${active?g.color:'var(--gray600)'};transition:all .15s" onclick="_activeGroupTab='${g.id}';renderPosGroups()">
+      <span>${g.name} (${count})</span>
+      <span onclick="event.stopPropagation();editPosGroup('${g.id}')" style="cursor:pointer;font-size:11px;opacity:.6" title="Düzenle">✏️</span>
+      <span onclick="event.stopPropagation();confirmDeletePosGroup('${g.id}')" style="cursor:pointer;font-size:11px;opacity:.6" title="Sil">🗑️</span>
+    </div>`;
+  }).join('') +
+  `<div style="display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px dashed var(--gray300);background:var(--white);color:var(--gray500)" onclick="openPosGroupModal()">+ ${t('pos_add_group')||'Grup Ekle'}</div>`;
+}
+
+function renderBtnGrid() {
+  const el = document.getElementById('pos-btn-grid');
   if (!posGroups.length) {
-    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray400)">${t('pos_no_groups_yet')||'Henüz grup yok. Başlamak için "Grup Ekle"ye tıklayın.'}</div>`;
+    el.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--gray400)">${t('pos_no_groups_yet')||'Henüz grup yok. Başlamak için "Grup Ekle"ye tıklayın.'}</div>`;
     return;
   }
-  const btnRowHtml = (b, bi, bTotal) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 40px;border-top:1px dashed var(--gray100)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:22px;height:22px;border-radius:6px;background:${b.button_color}"></div>
-        <div>
-          <div style="font-size:13px;font-weight:600">${b.button_name}</div>
-          <div style="font-size:11px;color:var(--gray400)">${b.products?.name || '—'}</div>
-        </div>
+  const gid = _activeGroupTab || posGroups[0]?.id;
+  const btns = posButtons.filter(b => b.group_id === gid).sort((a,b)=>a.button_order-b.button_order);
+  const fmtP = v => v ? parseFloat(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) : '';
+  const slots = btns.map(b => `
+    <div style="border:1px solid var(--gray200);border-radius:12px;padding:12px;background:var(--white);display:flex;flex-direction:column;gap:4px;min-height:110px;cursor:pointer;transition:all .15s" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''" onclick="editPosButton('${b.id}')">
+      <div style="width:18px;height:18px;border-radius:5px;background:${b.button_color}"></div>
+      <div style="font-size:13px;font-weight:700;color:var(--gray800);line-height:1.2;flex:1">${b.button_name}</div>
+      <div style="font-size:11px;color:var(--gray400)">${fmtP(b.products?.sale_price)}</div>
+      <div style="display:flex;gap:4px;justify-content:flex-end">
+        <button onclick="event.stopPropagation();confirmDeletePosButton('${b.id}')" style="padding:2px 6px;border:1px solid #fecaca;border-radius:5px;font-size:10px;background:#fef2f2;color:#dc2626;cursor:pointer">🗑️</button>
       </div>
-      <div style="display:flex;gap:4px">
-        <button ${bi===0?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${bi===0?'not-allowed':'pointer'};opacity:${bi===0?'.4':'1'}" onclick="movePosButton('${b.id}',-1)">↑</button>
-        <button ${bi===bTotal-1?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${bi===bTotal-1?'not-allowed':'pointer'};opacity:${bi===bTotal-1?'.4':'1'}" onclick="movePosButton('${b.id}',1)">↓</button>
-        <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="editPosButton('${b.id}')">✏️</button>
-        <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="confirmDeletePosButton('${b.id}')">🗑️</button>
-      </div>
-    </div>`;
-  el.innerHTML = posGroups.map((g, gi) => {
-    const groupButtons = posButtons.filter(b => b.group_id === g.id);
-    return `
-    <div class="manage-item" style="padding:12px 0;border-bottom:1px solid var(--gray100)">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:10px;height:32px;border-radius:3px;background:${g.color}"></div>
-          <div style="font-size:14px;font-weight:700">📁 ${g.name}</div>
-          <div style="font-size:11px;color:var(--gray400)">(${groupButtons.length})</div>
-        </div>
-        <div style="display:flex;gap:4px">
-          <button ${gi===0?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${gi===0?'not-allowed':'pointer'};opacity:${gi===0?'.4':'1'}" onclick="movePosGroup('${g.id}',-1)">↑</button>
-          <button ${gi===posGroups.length-1?'disabled':''} style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:${gi===posGroups.length-1?'not-allowed':'pointer'};opacity:${gi===posGroups.length-1?'.4':'1'}" onclick="movePosGroup('${g.id}',1)">↓</button>
-          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;cursor:pointer" onclick="editPosGroup('${g.id}')">✏️</button>
-          <button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="confirmDeletePosGroup('${g.id}')">🗑️</button>
-        </div>
-      </div>
-      <div style="margin:8px 0 0 22px">
-        <button class="btn-outline" style="padding:4px 10px;font-size:11px" onclick="openPosButtonModal('${g.id}')">+ ${t('pos_add_button')||'Buton Ekle'}</button>
-      </div>
-      ${groupButtons.map((b, bi) => btnRowHtml(b, bi, groupButtons.length)).join('')}
-    </div>`;
-  }).join('');
+    </div>`);
+  // Empty slots up to 20
+  const emptyCount = Math.max(0, (btns.length < 20 ? 1 : 0)); // just 1 add slot
+  for (let i = 0; i < emptyCount; i++) {
+    slots.push(`
+      <div style="border:1.5px dashed var(--gray200);border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;cursor:pointer;color:var(--gray400);transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--gray200)';this.style.color='var(--gray400)'" onclick="openPosButtonModal('${gid}')">
+        <div style="font-size:24px;margin-bottom:4px">+</div>
+        <div style="font-size:11px;font-weight:600">${t('pos_add_button')||'Buton Ekle'}</div>
+      </div>`);
+  }
+  el.innerHTML = slots.join('');
 }
 
 let _selectedGroupColor = '#3B82F6';
@@ -3520,7 +3528,8 @@ async function savePosGroup() {
     await sb.from('pos_button_groups').update({ name, color: _selectedGroupColor }).eq('id', editingPosGroupId);
   } else {
     const sort_order = posGroups.length;
-    await sb.from('pos_button_groups').insert({ company_id: companyId, name, color: _selectedGroupColor, sort_order });
+    const { data: newG } = await sb.from('pos_button_groups').insert({ company_id: companyId, name, color: _selectedGroupColor, sort_order }).select('id').single();
+    if (newG) _activeGroupTab = newG.id;
   }
   closeModal('pos-group-modal');
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
@@ -3535,8 +3544,8 @@ function confirmDeletePosGroup(id) {
     `"${g.name}" grubunu silmek istiyor musunuz? ${count>0 ? `İçerisindeki ${count} buton da silinecek.` : ''}`;
   _posConfirmFn = async () => {
     closeModal('pos-confirm-modal');
-    // delete buttons first (cascade would do it, but ON DELETE CASCADE is set)
     await sb.from('pos_button_groups').delete().eq('id', id);
+    if (_activeGroupTab === id) _activeGroupTab = posGroups.find(x=>x.id!==id)?.id || null;
     showToast(t('toast_deleted') || 'Silindi', 'success');
     await loadPosSettings();
   };
@@ -3557,14 +3566,54 @@ async function movePosGroup(id, dir) {
 }
 
 // ===== POS BUTTONS =====
+function filterPbProducts() {
+  const q = document.getElementById('pb-product-search').value.trim().toLowerCase();
+  const list = document.getElementById('pb-product-list');
+  if (!q) { list.style.display = 'none'; return; }
+  const filtered = allProducts.filter(p => p.name.toLowerCase().includes(q)).slice(0, 15);
+  if (!filtered.length) { list.style.display = 'none'; return; }
+  const fmtP = v => v ? parseFloat(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) : '';
+  list.style.display = '';
+  list.innerHTML = filtered.map(p =>
+    `<div onclick="selectPbProduct('${p.id}')" style="padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray100);font-size:13px" onmouseover="this.style.background='var(--gray50)'" onmouseout="this.style.background=''">
+      <span style="font-weight:600">${p.name}</span>
+      <span style="color:var(--gray400);font-size:12px">${fmtP(p.sale_price)}</span>
+    </div>`
+  ).join('');
+}
+
+function selectPbProduct(id) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('pb-product').value = id;
+  document.getElementById('pb-product-search').value = '';
+  document.getElementById('pb-product-list').style.display = 'none';
+  const fmtP = v => v ? parseFloat(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) : '';
+  const sel = document.getElementById('pb-product-selected');
+  sel.style.display = '';
+  sel.innerHTML = `${p.name} <span style="color:var(--gray400);font-weight:400;margin-left:8px">${fmtP(p.sale_price)}</span> <span onclick="clearPbProduct()" style="cursor:pointer;margin-left:auto;color:var(--red);font-size:11px">✕</span>`;
+  // Auto-fill button name if empty
+  const nameInput = document.getElementById('pb-name');
+  if (!nameInput.value.trim()) nameInput.value = p.name;
+}
+
+function clearPbProduct() {
+  document.getElementById('pb-product').value = '';
+  document.getElementById('pb-product-selected').style.display = 'none';
+  document.getElementById('pb-product-search').value = '';
+  document.getElementById('pb-product-search').focus();
+}
+
 function openPosButtonModal(groupId) {
   editingPosButtonId = null;
   document.getElementById('pos-btn-modal-title').textContent = t('pos_add_button') || 'Buton Ekle';
   document.getElementById('pb-name').value = '';
-  document.getElementById('pb-product').innerHTML = `<option value="">${t('pos_select_product')||'Ürün seçin...'}</option>` +
-    allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('pb-product').value = '';
+  document.getElementById('pb-product-search').value = '';
+  document.getElementById('pb-product-list').style.display = 'none';
+  document.getElementById('pb-product-selected').style.display = 'none';
   const grpSelect = document.getElementById('pb-group');
-  const preselect = groupId || posGroups[0]?.id || '';
+  const preselect = groupId || _activeGroupTab || posGroups[0]?.id || '';
   grpSelect.innerHTML = posGroups.map(g => `<option value="${g.id}" ${g.id===preselect?'selected':''}>${g.name}</option>`).join('');
   renderColorPicker('#1e40af');
   openModal('pos-button-modal');
@@ -3576,8 +3625,16 @@ function editPosButton(id) {
   editingPosButtonId = id;
   document.getElementById('pos-btn-modal-title').textContent = t('pos_edit_button') || 'Buton Düzenle';
   document.getElementById('pb-name').value = b.button_name;
-  document.getElementById('pb-product').innerHTML = `<option value="">${t('pos_select_product')||'Ürün seçin...'}</option>` +
-    allProducts.map(p => `<option value="${p.id}" ${p.id === b.product_id ? 'selected' : ''}>${p.name}</option>`).join('');
+  document.getElementById('pb-product').value = b.product_id;
+  document.getElementById('pb-product-search').value = '';
+  document.getElementById('pb-product-list').style.display = 'none';
+  const p = allProducts.find(x => x.id === b.product_id);
+  const sel = document.getElementById('pb-product-selected');
+  const fmtP = v => v ? parseFloat(v).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) : '';
+  if (p) {
+    sel.style.display = '';
+    sel.innerHTML = `${p.name} <span style="color:var(--gray400);font-weight:400;margin-left:8px">${fmtP(p.sale_price)}</span> <span onclick="clearPbProduct()" style="cursor:pointer;margin-left:auto;color:var(--red);font-size:11px">✕</span>`;
+  } else { sel.style.display = 'none'; }
   const grpSelect = document.getElementById('pb-group');
   grpSelect.innerHTML = posGroups.map(g => `<option value="${g.id}" ${g.id===b.group_id?'selected':''}>${g.name}</option>`).join('');
   renderColorPicker(b.button_color);
@@ -3603,7 +3660,6 @@ async function savePosButton() {
   if (editingPosButtonId) {
     const existing = posButtons.find(b => b.id === editingPosButtonId);
     const payload = { product_id: productId, button_name: name, button_color: selectedPosColor, group_id: groupId };
-    // If moved to a new group, put at end of that group
     if (existing && existing.group_id !== groupId) {
       payload.button_order = posButtons.filter(b => b.group_id === groupId).length;
     }
@@ -3632,21 +3688,6 @@ function confirmDeletePosButton(id) {
     await loadPosSettings();
   };
   openModal('pos-confirm-modal');
-}
-
-async function movePosButton(id, dir) {
-  const b = posButtons.find(x => x.id === id);
-  if (!b) return;
-  const siblings = posButtons.filter(x => x.group_id === b.group_id).sort((a,b)=>a.button_order-b.button_order);
-  const idx = siblings.findIndex(x => x.id === id);
-  const target = idx + dir;
-  if (target < 0 || target >= siblings.length) return;
-  const a = siblings[idx], other = siblings[target];
-  await Promise.all([
-    sb.from('pos_quick_buttons').update({ button_order: other.button_order }).eq('id', a.id),
-    sb.from('pos_quick_buttons').update({ button_order: a.button_order }).eq('id', other.id),
-  ]);
-  await loadPosSettings();
 }
 
 async function savePosPin() {
