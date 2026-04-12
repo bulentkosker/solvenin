@@ -626,8 +626,8 @@ async function reportPayables() {
   const orderIds = (data||[]).map(o => o.id);
   let paymentMap = {};
   if (orderIds.length) {
-    const { data: pays } = await sb.from('payments').select('order_id,amount').in('order_id', orderIds);
-    (pays||[]).forEach(p => { paymentMap[p.order_id] = (paymentMap[p.order_id]||0) + parseFloat(p.amount); });
+    const { data: pays } = await sb.from('payments').select('purchase_order_id,amount').in('purchase_order_id', orderIds);
+    (pays||[]).forEach(p => { paymentMap[p.purchase_order_id] = (paymentMap[p.purchase_order_id]||0) + parseFloat(p.amount); });
   }
   const today = new Date().toISOString().split('T')[0];
   const headers = [
@@ -757,7 +757,7 @@ async function reportStatement() {
     (data||[]).forEach(o => lines.push({ date: o.issue_date, doc: o.order_number, desc: 'Alış Faturası', debit: 0, credit: parseFloat(o.total) }));
     const poIds = (data||[]).map(o => o.id);
     if (poIds.length) {
-      const { data: pays } = await sb.from('payments').select('amount,paid_at,order_id').eq('company_id', companyId).in('order_id', poIds);
+      const { data: pays } = await sb.from('payments').select('amount,paid_at,purchase_order_id').eq('company_id', companyId).in('purchase_order_id', poIds);
       (pays||[]).forEach(p => {
         const d = p.paid_at ? p.paid_at.split('T')[0] : '';
         if (from && d < from) return; if (to && d > to) return;
