@@ -1109,8 +1109,8 @@ function renderMovements() {
     </td>
     <td style="color:var(--gray500);font-size:12px">${m.ref || '—'}</td>
     <td style="color:var(--gray500);font-size:12px">${m.note || '—'}</td>
-    <td>${m.invoice_id
-      ? `<span style="font-size:11px;color:var(--gray400)" title="${t('err_movement_has_reference')||'Linked to order'}">🔒</span>`
+    <td>${m.ref && m.ref.trim()
+      ? `<span style="font-size:11px;color:var(--gray400);cursor:default" title="${t('err_movement_locked')||'Silinemez — hareket bir faturaya bağlı'}">🔒</span>`
       : `<button class="action-btn danger" onclick="deleteMovement('${m.id}','${m.product_id}',${m.type==='in'||m.type==='return'?-1:1},${m.qty})" title="${t('lbl_cancel')||'Delete'}">🗑️</button>`
     }</td>
   </tr>`).join('');
@@ -1119,8 +1119,8 @@ function renderMovements() {
 
 async function deleteMovement(id, productId, stockSign, qty) {
   if (!await showConfirm(t('confirm_delete_movement')||'Delete this stock movement?', t('lbl_delete')||'Delete')) return;
-  const { data: mvCheck } = await sb.from('stock_movements').select('invoice_id').eq('id', id).single();
-  if (mvCheck?.invoice_id) { showToast(t('err_movement_has_reference'), 'error'); return; }
+  const { data: mvCheck } = await sb.from('stock_movements').select('reference').eq('id', id).single();
+  if (mvCheck?.reference?.trim()) { showToast(t('err_movement_locked')||'Silinemez — hareket bir faturaya bağlı', 'error'); return; }
   const { data: { user: _u } } = await sb.auth.getUser();
   // Soft delete movement
   const { error } = await sb.from('stock_movements').update({
