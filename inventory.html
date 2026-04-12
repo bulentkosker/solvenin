@@ -1292,7 +1292,7 @@ async function loadProducts() {
 async function loadMovements() {
   if (!companyId) return;
   const { data, error } = await sb.from('stock_movements')
-    .select('id,created_at,product_id,type,quantity,reference,notes,invoice_id,products(name)')
+    .select('id,created_at,product_id,type,quantity,reference,notes,sales_order_id,purchase_order_id,reference_type,products(name)')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -1307,7 +1307,9 @@ async function loadMovements() {
     qty: parseFloat(m.quantity || 0),
     ref: m.reference || '',
     note: m.notes || '',
-    invoice_id: m.invoice_id || null,
+    sales_order_id: m.sales_order_id || null,
+    purchase_order_id: m.purchase_order_id || null,
+    reference_type: m.reference_type || null,
   }));
 }
 

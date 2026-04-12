@@ -1154,14 +1154,11 @@ async function startProduction(orderId) {
     .map(l => ({
       company_id: companyId,
       product_id: l.product_id,
-      movement_type: 'production_consumption',
-      direction: 'out',
+      type: 'out',
       quantity: parseFloat(l.qty) * qty,
-      unit: l.unit || null,
       reference_type: 'production_order',
-      reference_id: orderId,
+      reference: order.order_number || orderId.substring(0,8),
       notes: `Production Order #${order.order_number || orderId.substring(0,8)} - Start`,
-      movement_date: today,
       created_by: currentUserId,
     }));
 
@@ -1199,14 +1196,11 @@ async function completeProduction(orderId) {
     .map(l => ({
       company_id: companyId,
       product_id: l.product_id,
-      movement_type: 'production_output',
-      direction: 'in',
+      type: 'in',
       quantity: parseFloat(l.qty) * qty,
-      unit: l.unit || null,
       reference_type: 'production_order',
-      reference_id: orderId,
+      reference: order.order_number || orderId.substring(0,8),
       notes: `Production Order #${order.order_number || orderId.substring(0,8)} - Complete`,
-      movement_date: today,
       created_by: currentUserId,
     }));
 

@@ -1113,6 +1113,8 @@ async function confirmInvoice() {
         warehouse_id: defaultWh,
         type: 'in',
         quantity: i.quantity,
+        purchase_order_id: orderId,
+        reference_type: 'purchase_order',
         reference: order?.order_number || 'PO',
         notes: 'Alış faturası stok girişi',
         created_by: user?.id,
@@ -1183,7 +1185,7 @@ async function savePoPayment() {
       company_id: companyId, register_id: registerId, type: 'out', amount,
       currency_code: reg?.currency_code || 'USD',
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
-      category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
       payment_method: 'cash',
       reference: ref, transaction_date: payDate
     });
@@ -1193,7 +1195,7 @@ async function savePoPayment() {
       company_id: companyId, account_id: accountId, type: 'out', amount,
       currency_code: acc?.currency_code || 'USD',
       description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
-      category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+      category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
       payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
       reference: ref, transaction_date: payDate
     });
@@ -1595,6 +1597,8 @@ async function saveOrder() {
         warehouse_id: i.warehouse_id || defaultWh,
         type: 'in',
         quantity: i.qty,
+        purchase_order_id: orderId,
+        reference_type: 'purchase_order',
         reference: orderNumber,
         notes: document.getElementById('o-notes').value.trim() || null,
         created_by: user.id
@@ -1752,8 +1756,8 @@ async function editOrder(id) {
 async function deleteOrder(id) {
   const [payments, movements, journals] = await Promise.all([
     sb.from('payments').select('id',{count:'exact',head:true}).eq('order_id',id),
-    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('invoice_id',id).eq('is_active',true),
-    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('reference_id',id),
+    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('purchase_order_id',id).eq('is_active',true),
+    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('purchase_order_id',id),
   ]);
   const total = (payments.count||0)+(movements.count||0)+(journals.count||0);
   if (total > 0) {
@@ -1816,7 +1820,7 @@ async function saveReceiving() {
     await sb.from('stock').upsert({ product_id: item.product_id, warehouse_id: whId, quantity: current + recvQty });
 
     // Log movement
-    await sb.from('stock_movements').insert({ company_id: companyId, product_id: item.product_id, warehouse_id: whId, type:'in', quantity: recvQty, reference: orders.find(o=>o.id===orderId)?.order_number||'PO', notes: document.getElementById('receive-notes').value||null, created_by: user.id });
+    await sb.from('stock_movements').insert({ company_id: companyId, product_id: item.product_id, warehouse_id: whId, type:'in', quantity: recvQty, purchase_order_id: orderId, reference_type: 'purchase_order', reference: orders.find(o=>o.id===orderId)?.order_number||'PO', notes: document.getElementById('receive-notes').value||null, created_by: user.id });
 
     // Update received qty
     await sb.from('purchase_order_items').update({ received_qty: (item.received_qty||0) + recvQty }).eq('id', item.id);
@@ -1836,7 +1840,7 @@ async function saveReceiving() {
       const registerId = document.getElementById('recv-pay-register').value;
       if (registerId) {
         const { data: dup } = await sb.from('cash_transactions').select('id')
-          .eq('source_type','invoice_purchase').eq('source_id', orderId).eq('register_id', registerId);
+          .eq('source_type','purchase_order').eq('purchase_order_id', orderId).eq('register_id', registerId);
         if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
         else {
           const reg = cashRegisters.find(r => r.id === registerId);
@@ -1844,7 +1848,7 @@ async function saveReceiving() {
             company_id: companyId, register_id: registerId, type: 'out', amount: payAmount,
             currency_code: reg?.currency_code || 'USD',
             description: `${t('purchase_payment')} – ${poOrder?.order_number || ''}`,
-            category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+            category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
             reference: payRef, transaction_date: new Date().toISOString().split('T')[0]
           });
         }
@@ -1853,7 +1857,7 @@ async function saveReceiving() {
       const accountId = document.getElementById('recv-pay-account').value;
       if (accountId) {
         const { data: dup } = await sb.from('bank_transactions').select('id')
-          .eq('source_type','invoice_purchase').eq('source_id', orderId).eq('account_id', accountId);
+          .eq('source_type','purchase_order').eq('purchase_order_id', orderId).eq('account_id', accountId);
         if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
         else {
           const acc = bankAccounts.find(a => a.id === accountId);
@@ -1861,7 +1865,7 @@ async function saveReceiving() {
             company_id: companyId, account_id: accountId, type: 'out', amount: payAmount,
             currency_code: acc?.currency_code || 'USD',
             description: `${t('purchase_payment')} – ${poOrder?.order_number || ''}`,
-            category: 'purchase', source_type: 'invoice_purchase', source_id: orderId,
+            category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
             reference: payRef, transaction_date: new Date().toISOString().split('T')[0]
           });
         }

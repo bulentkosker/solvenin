@@ -1517,7 +1517,7 @@ async function saveOrder() {
   if (editingOrderId) {
     // Soft-delete existing movements for this order before recreating
     await sb.from('stock_movements').update({ is_active: false, deleted_at: _now, deleted_by: user.id })
-      .eq('invoice_id', orderId).eq('is_active', true);
+      .eq('sales_order_id', orderId).eq('is_active', true);
   }
   if (status !== 'cancelled') {
     // Skip services — they have no physical stock to move
@@ -1530,7 +1530,8 @@ async function saveOrder() {
         warehouse_id: i.warehouse_id || null,
         type: 'sale',
         quantity: i.qty,
-        invoice_id: orderId,
+        sales_order_id: orderId,
+        reference_type: 'sales_order',
         reference: payload.order_number,
         created_by: user.id
       }));
@@ -1684,8 +1685,8 @@ async function cancelOrder(id) {
 async function deleteOrder(id) {
   const [payments, movements, journals] = await Promise.all([
     sb.from('payments').select('id',{count:'exact',head:true}).eq('order_id',id),
-    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('invoice_id',id).eq('is_active',true),
-    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('reference_id',id),
+    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('sales_order_id',id).eq('is_active',true),
+    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('sales_order_id',id),
   ]);
   const total = (payments.count||0)+(movements.count||0)+(journals.count||0);
   if (total > 0) {
@@ -1777,7 +1778,7 @@ async function savePayment() {
 
   // 2. Auto-create cash or bank transaction
   if (method === 'cash' && registerId) {
-    const { data: dup } = await sb.from('cash_transactions').select('id').eq('source_type','invoice_sale').eq('source_id', orderId).eq('register_id', registerId);
+    const { data: dup } = await sb.from('cash_transactions').select('id').eq('source_type','sales_order').eq('sales_order_id', orderId).eq('register_id', registerId);
     if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
     else {
       const reg = cashRegisters.find(r => r.id === registerId);
@@ -1785,13 +1786,13 @@ async function savePayment() {
         company_id: companyId, register_id: registerId, type: 'in', amount,
         currency_code: reg?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
-        category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        category: 'sale', source_type: 'sales_order', sales_order_id: orderId,
         payment_method: 'cash',
         reference: ref, transaction_date: payDate
       });
     }
   } else if ((method === 'bank' || method === 'card') && accountId) {
-    const { data: dup } = await sb.from('bank_transactions').select('id').eq('source_type','invoice_sale').eq('source_id', orderId).eq('account_id', accountId);
+    const { data: dup } = await sb.from('bank_transactions').select('id').eq('source_type','sales_order').eq('sales_order_id', orderId).eq('account_id', accountId);
     if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
     else {
       const acc = bankAccounts.find(a => a.id === accountId);
@@ -1799,7 +1800,7 @@ async function savePayment() {
         company_id: companyId, account_id: accountId, type: 'in', amount,
         currency_code: acc?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
-        category: 'sale', source_type: 'invoice_sale', source_id: orderId,
+        category: 'sale', source_type: 'sales_order', sales_order_id: orderId,
         payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
         reference: ref, transaction_date: payDate
       });
@@ -2054,7 +2055,7 @@ async function createSaleJournalEntry(order, date) {
       entry_date: date,
       description: `${t('sale_invoice') || 'Satış faturası'} – ${order.order_number}`,
       type: 'invoice_sale',
-      source_id: order.id,
+      sales_order_id: order.id,
       is_posted: true,
     }).select('id').single();
     if (error || !je) { console.error('JE create error:', error); return; }
@@ -2089,7 +2090,7 @@ async function createPaymentJournalEntry(order, amount, method, date) {
       entry_date: date,
       description: `${t('sale_payment') || 'Satış tahsilatı'} – ${order.order_number}`,
       type: jeType,
-      source_id: order.id,
+      sales_order_id: order.id,
       is_posted: true,
     }).select('id').single();
     if (error || !je) { console.error('Payment JE error:', error); return; }

@@ -828,7 +828,7 @@ async function completeSale() {
         company_id: companyId, register_id: selectedRegister.id, type: 'in', amount: total,
         currency_code: selectedRegister.currency_code || 'USD',
         description: `POS – ${orderNum}`, category: 'sale',
-        source_type: 'invoice_sale', source_id: order.id, payment_method: 'cash',
+        source_type: 'sales_order', sales_order_id: order.id, payment_method: 'cash',
         transaction_date: today,
       });
     } else if (selectedPayMethod === 'card' || selectedPayMethod === 'bank') {
@@ -838,7 +838,7 @@ async function completeSale() {
         company_id: companyId, account_id: accId, type: 'in', amount: total,
         currency_code: acc?.currency_code || 'USD',
         description: `POS – ${orderNum}`, category: 'sale',
-        source_type: 'invoice_sale', source_id: order.id,
+        source_type: 'sales_order', sales_order_id: order.id,
         payment_method: selectedPayMethod === 'card' ? 'credit_card' : 'bank_transfer',
         transaction_date: today,
       });
@@ -851,7 +851,8 @@ async function completeSale() {
     for (const c of cart) {
       const { error: smErr } = await sb.from('stock_movements').insert({
         company_id: companyId, product_id: c.pid, type: 'out', quantity: c.qty,
-        warehouse_id: whId, reference: orderNum, notes: 'POS satış',
+        warehouse_id: whId, sales_order_id: order.id, reference_type: 'sales_order',
+        reference: orderNum, notes: 'POS satış',
         created_by: currentUser.id,
       });
       if (smErr) console.error('[pos] Stock movement error:', smErr.message);
