@@ -1225,13 +1225,13 @@ async function renderRepair() {
       <h3>📦 Stok Onarımı</h3>
       ${repairTool('sales_stock', 'Eksik Stok Hareketleri (Satış)', 'Invoiced/paid satış faturalarında stok çıkış hareketi eksik olanları oluşturur.')}
       ${repairTool('purchase_stock', 'Eksik Stok Hareketleri (Alış)', 'Invoiced/paid alış faturalarında stok giriş hareketi eksik olanları oluşturur.')}
-      ${repairTool('recalc_stock', 'Stok Bakiyelerini Yeniden Hesapla', 'Tüm stok hareketlerinden ürün bakiyelerini yeniden hesaplar.', true)}
+      ${repairTool('recalc_stock', 'Stok Bakiyelerini Yeniden Hesapla', 'Tüm stok hareketlerinden ürün bakiyelerini yeniden hesaplar.')}
     </div>
 
     <div class="card">
       <h3>💰 Finans Onarımı</h3>
-      ${repairTool('recalc_cash', 'Kasa Bakiyelerini Yeniden Hesapla', 'Tüm kasa hareketlerinden bakiyeleri yeniden hesaplar.', true)}
-      ${repairTool('recalc_bank', 'Banka Bakiyelerini Yeniden Hesapla', 'Tüm banka hareketlerinden bakiyeleri yeniden hesaplar.', true)}
+      ${repairTool('recalc_cash', 'Kasa Bakiyelerini Yeniden Hesapla', 'Tüm kasa hareketlerinden bakiyeleri yeniden hesaplar.')}
+      ${repairTool('recalc_bank', 'Banka Bakiyelerini Yeniden Hesapla', 'Tüm banka hareketlerinden bakiyeleri yeniden hesaplar.')}
     </div>
 
     <div class="card">
@@ -1256,7 +1256,7 @@ async function renderRepair() {
   });
 }
 
-function repairTool(key, title, desc, noDateAction) {
+function repairTool(key, title, desc) {
   return `<div style="padding:12px;border:1px solid var(--gray100);border-radius:8px;margin-bottom:8px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
       <div style="flex:1">
@@ -1264,102 +1264,126 @@ function repairTool(key, title, desc, noDateAction) {
         <div style="font-size:11px;color:var(--gray500);margin-top:2px">${desc}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        ${noDateAction
-          ? `<button class="btn btn-primary btn-sm" onclick="runRepair('${key}', true)">▶ Çalıştır</button>`
-          : `<button class="btn btn-outline btn-sm" onclick="runRepair('${key}', false)">🔍 Analiz Et</button>`
-        }
+        <button class="btn btn-outline btn-sm" onclick="runRepair('${key}', 'analyze')">🔍 Analiz Et</button>
       </div>
     </div>
     <div id="rt-result-${key}" style="margin-top:10px;display:none;padding:10px;border-radius:6px;font-size:12px"></div>
   </div>`;
 }
 
-async function runRepair(key, runDirect) {
+function _rtOk(el, html) { el.style.background = '#dcfce7'; el.style.color = '#166534'; el.innerHTML = html; }
+function _rtWarn(el, html) { el.style.background = '#fef3c7'; el.style.color = '#92400e'; el.innerHTML = html; }
+function _rtErr(el, html) { el.style.background = '#fef2f2'; el.style.color = '#991b1b'; el.innerHTML = html; }
+
+function _discrepancyTable(headers, items) {
+  return `<table style="width:100%;margin:8px 0;font-size:11px;border-collapse:collapse">
+    <thead><tr>${headers.map(h => `<th style="padding:4px 8px;text-align:${h.align||'left'};border-bottom:1px solid #e5e7eb">${h.label}</th>`).join('')}</tr></thead>
+    <tbody>${items.slice(0, 20).map(r =>
+      `<tr>${headers.map(h => `<td style="padding:3px 8px;text-align:${h.align||'left'};border-bottom:1px solid #f3f4f6">${h.fmt ? h.fmt(r[h.key]) : r[h.key]}</td>`).join('')}</tr>`
+    ).join('')}</tbody>
+  </table>${items.length > 20 ? `<div style="font-size:10px;color:var(--gray400)">...ve ${items.length - 20} kayıt daha</div>` : ''}`;
+}
+
+async function runRepair(key, mode) {
   if (!repairCompanyId) { showToast('Önce şirket seçin', 'error'); return; }
   const start = document.getElementById('repair-start').value;
   const end = document.getElementById('repair-end').value;
-  const resultEl = document.getElementById('rt-result-' + key);
-  resultEl.style.display = 'block';
-  resultEl.style.background = '#f8fafc';
-  resultEl.style.color = 'var(--gray500)';
-  resultEl.innerHTML = '⏳ Çalışıyor...';
+  const el = document.getElementById('rt-result-' + key);
+  el.style.display = 'block'; el.style.background = '#f8fafc'; el.style.color = 'var(--gray500)';
+  el.innerHTML = '⏳ Çalışıyor...';
 
   try {
+    // === SALES STOCK ===
     if (key === 'sales_stock') {
-      if (runDirect) {
+      if (mode === 'fix') {
         const { data } = await sb.rpc('sp_apply_missing_sales_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
-        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-        resultEl.innerHTML = `✅ ${data.created} stok hareketi oluşturuldu`;
-        loadRepairHistory();
+        _rtOk(el, `✅ ${data.created} stok hareketi oluşturuldu`); loadRepairHistory();
       } else {
         const { data } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
-        if (data.items > 0) {
-          resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
-          resultEl.innerHTML = `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi tespit edildi<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="runRepair('sales_stock', true)">🔧 Düzelt</button>`;
-        } else {
-          resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-          resultEl.innerHTML = '✅ Eksik stok hareketi yok';
-        }
+        if (data.items > 0)
+          _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
+        else _rtOk(el, '✅ Eksik stok hareketi yok');
       }
+
+    // === PURCHASE STOCK ===
     } else if (key === 'purchase_stock') {
-      if (runDirect) {
+      if (mode === 'fix') {
         const { data } = await sb.rpc('sp_apply_missing_purchase_stock', { p_user_id: user.id, p_company_id: repairCompanyId, p_start: start, p_end: end });
-        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-        resultEl.innerHTML = `✅ ${data.created} stok hareketi oluşturuldu`;
-        loadRepairHistory();
+        _rtOk(el, `✅ ${data.created} stok hareketi oluşturuldu`); loadRepairHistory();
       } else {
         const { data } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
-        if (data.items > 0) {
-          resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
-          resultEl.innerHTML = `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi tespit edildi<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="runRepair('purchase_stock', true)">🔧 Düzelt</button>`;
-        } else {
-          resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-          resultEl.innerHTML = '✅ Eksik stok hareketi yok';
-        }
+        if (data.items > 0)
+          _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi<br><button class="btn btn-primary btn-sm" style="margin-top:8px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
+        else _rtOk(el, '✅ Eksik stok hareketi yok');
       }
+
+    // === RECALC STOCK ===
     } else if (key === 'recalc_stock') {
-      if (!confirm('Tüm ürünlerin stok bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
-      const { data } = await sb.rpc('sp_recalc_product_stock', { p_user_id: user.id, p_company_id: repairCompanyId });
-      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-      resultEl.innerHTML = `✅ ${data.updated} ürünün bakiyesi güncellendi`;
-      loadRepairHistory();
+      if (mode === 'fix') {
+        const { data } = await sb.rpc('sp_recalc_product_stock', { p_user_id: user.id, p_company_id: repairCompanyId });
+        _rtOk(el, `✅ ${data.updated} ürünün bakiyesi güncellendi`); loadRepairHistory();
+        setTimeout(() => runRepair('recalc_stock', 'analyze'), 500);
+      } else {
+        const { data } = await sb.rpc('sp_analyze_stock_discrepancies', { p_company_id: repairCompanyId });
+        if (data.count > 0) {
+          const hdr = [{key:'name',label:'Ürün'},{key:'current',label:'Mevcut',align:'right',fmt:v=>fmt(v)},{key:'calculated',label:'Hesaplanan',align:'right',fmt:v=>fmt(v)},{key:'diff',label:'Fark',align:'right',fmt:v=>`<span style="color:${v>0?'var(--green)':'var(--red)'}; font-weight:700">${v>0?'+':''}${fmt(v)}</span>`}];
+          _rtWarn(el, `⚠️ <strong>${data.count}</strong> üründe tutarsızlık bulundu` + _discrepancyTable(hdr, data.items) +
+            `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('recalc_stock','fix')">🔧 Düzelt (${data.count} ürün)</button>`);
+        } else _rtOk(el, '✅ Tüm stok bakiyeleri doğru');
+      }
+
+    // === RECALC CASH ===
     } else if (key === 'recalc_cash') {
-      if (!confirm('Tüm kasa bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
-      const { data } = await sb.rpc('sp_recalc_cash_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
-      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-      resultEl.innerHTML = `✅ ${data.updated} kasanın bakiyesi güncellendi`;
-      loadRepairHistory();
+      if (mode === 'fix') {
+        const { data } = await sb.rpc('sp_recalc_cash_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
+        _rtOk(el, `✅ ${data.updated} kasanın bakiyesi güncellendi`); loadRepairHistory();
+        setTimeout(() => runRepair('recalc_cash', 'analyze'), 500);
+      } else {
+        const { data } = await sb.rpc('sp_analyze_cash_discrepancies', { p_company_id: repairCompanyId });
+        if (data.count > 0) {
+          const hdr = [{key:'name',label:'Kasa'},{key:'current',label:'Mevcut',align:'right',fmt:v=>fmt(v)},{key:'calculated',label:'Hesaplanan',align:'right',fmt:v=>fmt(v)},{key:'diff',label:'Fark',align:'right',fmt:v=>`<span style="color:${v>0?'var(--green)':'var(--red)'}; font-weight:700">${v>0?'+':''}${fmt(v)}</span>`}];
+          _rtWarn(el, `⚠️ <strong>${data.count}</strong> kasada tutarsızlık bulundu` + _discrepancyTable(hdr, data.items) +
+            `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('recalc_cash','fix')">🔧 Düzelt (${data.count} kasa)</button>`);
+        } else _rtOk(el, '✅ Tüm kasa bakiyeleri doğru');
+      }
+
+    // === RECALC BANK ===
     } else if (key === 'recalc_bank') {
-      if (!confirm('Tüm banka bakiyeleri yeniden hesaplanacak. Devam?')) { resultEl.style.display = 'none'; return; }
-      const { data } = await sb.rpc('sp_recalc_bank_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
-      resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-      resultEl.innerHTML = `✅ ${data.updated} banka hesabının bakiyesi güncellendi`;
-      loadRepairHistory();
+      if (mode === 'fix') {
+        const { data } = await sb.rpc('sp_recalc_bank_balances', { p_user_id: user.id, p_company_id: repairCompanyId });
+        _rtOk(el, `✅ ${data.updated} banka hesabının bakiyesi güncellendi`); loadRepairHistory();
+        setTimeout(() => runRepair('recalc_bank', 'analyze'), 500);
+      } else {
+        const { data } = await sb.rpc('sp_analyze_bank_discrepancies', { p_company_id: repairCompanyId });
+        if (data.count > 0) {
+          const hdr = [{key:'name',label:'Hesap'},{key:'current',label:'Mevcut',align:'right',fmt:v=>fmt(v)},{key:'calculated',label:'Hesaplanan',align:'right',fmt:v=>fmt(v)},{key:'diff',label:'Fark',align:'right',fmt:v=>`<span style="color:${v>0?'var(--green)':'var(--red)'}; font-weight:700">${v>0?'+':''}${fmt(v)}</span>`}];
+          _rtWarn(el, `⚠️ <strong>${data.count}</strong> banka hesabında tutarsızlık bulundu` + _discrepancyTable(hdr, data.items) +
+            `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('recalc_bank','fix')">🔧 Düzelt (${data.count} hesap)</button>`);
+        } else _rtOk(el, '✅ Tüm banka bakiyeleri doğru');
+      }
+
+    // === TRIAL BALANCE ===
     } else if (key === 'trial_balance') {
       const { data } = await sb.rpc('sp_check_trial_balance', { p_company_id: repairCompanyId, p_end: end });
-      if (data.balanced) {
-        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-        resultEl.innerHTML = `✅ Mizan dengeli<br>Borç: ${fmt(data.total_debit)} — Alacak: ${fmt(data.total_credit)}`;
-      } else {
-        resultEl.style.background = '#fef2f2'; resultEl.style.color = '#991b1b';
-        resultEl.innerHTML = `⚠️ Mizan dengede değil!<br>Borç: ${fmt(data.total_debit)}<br>Alacak: ${fmt(data.total_credit)}<br>Fark: <strong>${fmt(data.difference)}</strong>`;
-      }
+      if (data.balanced)
+        _rtOk(el, `✅ Mizan dengeli<br>Borç: ${fmt(data.total_debit)} — Alacak: ${fmt(data.total_credit)}`);
+      else
+        _rtErr(el, `⚠️ Mizan dengede değil!<br>Borç: ${fmt(data.total_debit)}<br>Alacak: ${fmt(data.total_credit)}<br>Fark: <strong>${fmt(data.difference)}</strong>`);
+
+    // === CONTACT BALANCES ===
     } else if (key === 'contact_balances') {
       const { data } = await sb.rpc('get_all_contact_balances', { p_company_id: repairCompanyId });
       if (!data?.length) {
-        resultEl.style.background = '#dcfce7'; resultEl.style.color = '#166534';
-        resultEl.innerHTML = '✅ Tüm cariler dengeli';
+        _rtOk(el, '✅ Tüm cariler dengeli');
       } else {
-        resultEl.style.background = '#fef3c7'; resultEl.style.color = '#92400e';
         const rows = data.slice(0, 10).map(c =>
           `<tr><td>${c.contact_name}</td><td class="text-right">${fmt(c.balance)}</td></tr>`
         ).join('');
-        resultEl.innerHTML = `⚠️ <strong>${data.length}</strong> caride açık bakiye var<br><table style="margin-top:8px;font-size:11px"><thead><tr><th>Cari</th><th class="text-right">Bakiye</th></tr></thead><tbody>${rows}</tbody></table>${data.length > 10 ? '<div style="margin-top:4px;font-size:10px">...ve ' + (data.length - 10) + ' tane daha</div>' : ''}`;
+        _rtWarn(el, `⚠️ <strong>${data.length}</strong> caride açık bakiye var<br><table style="margin-top:8px;font-size:11px"><thead><tr><th>Cari</th><th class="text-right">Bakiye</th></tr></thead><tbody>${rows}</tbody></table>${data.length > 10 ? '<div style="margin-top:4px;font-size:10px">...ve ' + (data.length - 10) + ' tane daha</div>' : ''}`);
       }
     }
   } catch (e) {
-    resultEl.style.background = '#fef2f2'; resultEl.style.color = '#991b1b';
-    resultEl.innerHTML = '❌ Hata: ' + e.message;
+    _rtErr(el, '❌ Hata: ' + e.message);
   }
 }
 
