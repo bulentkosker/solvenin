@@ -1577,7 +1577,7 @@ async function init() {
     }
   } catch (e) {
     console.error('init() error:', e);
-    showToast('Error loading settings: ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   }
 
   console.timeEnd('[settings] total init');
@@ -1833,7 +1833,7 @@ async function executeDeleteCompany() {
     });
 
     if (error) {
-      showToast(error.message, 'error');
+      showToast(getErrorMessage(error), 'error');
       btn.disabled = false; btn.textContent = origText;
       return;
     }
@@ -1866,7 +1866,7 @@ async function executeDeleteCompany() {
       window.location.href = 'auth.html';
     }, 6000);
   } catch (e) {
-    showToast('Error: ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
     btn.disabled = false;
     btn.textContent = origText;
   }
@@ -1888,7 +1888,7 @@ async function saveCompanyInfo() {
   // Apply pending logo change ('' = remove)
   if (_pendingLogo !== null) payload.logo_url = _pendingLogo === '' ? null : _pendingLogo;
   const { error } = await sb.from('companies').update(payload).eq('id', companyId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   companyData = { ...companyData, ...payload };
   // Update local cache so other pages can pick it up immediately
   if ('logo_url' in payload) {
@@ -1994,7 +1994,7 @@ async function onCountryChange() {
 
   // Always update country_code
   const { error } = await sb.from('companies').update({ country_code: newCode }).eq('id', companyId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   companyData = { ...companyData, country_code: newCode };
 
   if (confirmed) {
@@ -2056,7 +2056,7 @@ async function saveBaseCurrency() {
   const val = document.getElementById('base-currency-select').value;
   if (!val) return;
   const { error } = await sb.from('companies').update({ base_currency: val }).eq('id', companyId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   baseCurrency = val;
   localStorage.setItem('baseCurrency', val);
   document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: val }));
@@ -2162,7 +2162,7 @@ async function saveManualRate(currency) {
     rate_date: today,
     is_manual: true,
   }, { onConflict: 'company_id,currency,rate_date' });
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_rate_saved').replace('{0}', currency), 'success');
   await loadExchangeRates();
 }
@@ -2213,7 +2213,7 @@ async function fetchRatesFromAPI() {
     showToast(t('toast_rates_updated').replace('{0}', upserts2.length), 'success');
     await loadExchangeRates();
   } catch(e) {
-    showToast(t('toast_api_error') + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   } finally {
     btn.textContent = t('btn_fetch_rates');
     btn.disabled = false;
@@ -2480,7 +2480,7 @@ async function _saveCatVat(catId) {
   if (!sel) return;
   const newId = sel.value || null;
   const { error } = await sb.from('categories').update({ tax_rate_id: newId, tax_rate_override: null }).eq('id', catId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   const cat = allCategories.find(c => c.id === catId);
   if (cat) { cat.tax_rate_id = newId; cat.tax_rate_override = null; }
   renderCategoriesList();
@@ -2520,7 +2520,7 @@ async function saveCatAdd(parentId) {
   const { data, error } = await sb.from('categories').insert({
     name, parent_id: parentId||null, company_id: companyId
   }).select().single();
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   allCategories.push(data);
   document.getElementById('inline-add-cat')?.remove();
   renderCategoriesList();
@@ -2538,7 +2538,7 @@ async function openRenameCat(id) {
 
 async function renameCat(id, name) {
   const { error } = await sb.from('categories').update({name}).eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   allCategories = allCategories.map(c => c.id===id ? {...c, name} : c);
   renderCategoriesList();
   showToast(t('toast_renamed'), 'success');
@@ -2556,7 +2556,7 @@ async function openDeleteCat(id, name) {
   document.getElementById('delete-msg').textContent = `${t('confirm_delete_category')||'Delete category'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('categories').delete().eq('id', id);
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     allCategories = allCategories.filter(c => c.id !== id);
     closeModal('delete-modal');
     renderCategoriesList();
@@ -2644,7 +2644,7 @@ async function saveWarehouse() {
   } else {
     ({ error } = await sb.from('warehouses').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('warehouse-modal');
   await loadWarehouses();
   showToast(t('toast_saved'), 'success');
@@ -2654,7 +2654,7 @@ async function saveWarehouse() {
 async function setDefaultWarehouse(id) {
   await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
   const { error } = await sb.from('warehouses').update({ is_default: true }).eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   await loadWarehouses();
   showToast(t('toast_default_set') || 'Varsayılan depo ayarlandı ✓', 'success');
 }
@@ -2673,7 +2673,7 @@ async function openDeleteWarehouse(id, name) {
   document.getElementById('delete-msg').textContent = `${t('confirm_delete_warehouse')||'Delete warehouse'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('warehouses').delete().eq('id', id);
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     closeModal('delete-modal');
     await loadWarehouses();
     showToast(t('toast_deleted')||'Deleted ✓', 'success');
@@ -2767,7 +2767,7 @@ async function saveTax() {
   } else {
     ({ error } = await sb.from('tax_rates').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('tax-modal');
   await loadTaxes();
   showToast(t('toast_saved'), 'success');
@@ -2786,7 +2786,7 @@ async function openDeleteTax(id, name) {
   document.getElementById('delete-msg').textContent = `${t('confirm_delete_tax')||'Delete tax rate'} "${name}"?`;
   deleteCallback = async () => {
     const { error } = await sb.from('tax_rates').delete().eq('id', id);
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     closeModal('delete-modal');
     await loadTaxes();
     showToast(t('toast_deleted')||'Deleted ✓', 'success');
@@ -3029,7 +3029,7 @@ async function exportData(type) {
     showToast('✅ ' + fileName + ' indirildi', 'success');
   } catch (e) {
     console.error(e);
-    showToast('İndirme başarısız: ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   }
 }
 
@@ -3125,7 +3125,7 @@ async function handleImport(e, type) {
     if (valid.length) {
       const tableName = type === 'products' ? 'products' : 'contacts';
       const { error } = await sb.from(tableName).insert(valid);
-      if (error) { showToast('Hata: ' + error.message, 'error'); return; }
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
     }
     const { data: { user } } = await sb.auth.getUser();
     await sb.from('data_imports').insert({
@@ -3137,7 +3137,7 @@ async function handleImport(e, type) {
     e.target.value = '';
   } catch (err) {
     console.error(err);
-    showToast('İçe aktarım hatası: ' + err.message, 'error');
+    showToast(getErrorMessage(err), 'error');
     e.target.value = '';
   }
 }
@@ -3231,7 +3231,7 @@ async function restoreRecord(type, id) {
   const table = tableMap[type];
   if (!table) { showToast('Bilinmeyen kayıt türü: ' + type, 'error'); return; }
   const { error } = await sb.from(table).update({ is_active: true, deleted_at: null, deleted_by: null }).eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_restored')||'Kayıt geri yüklendi ✓', 'success');
   await loadRecycleBin();
 }
@@ -3247,7 +3247,7 @@ async function hardDeleteRecord(type, id, label) {
   const table = tableMap[type];
   if (!table) return;
   const { error } = await sb.from(table).delete().eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
   await loadRecycleBin();
 }
@@ -3327,7 +3327,7 @@ async function confirmAccountingToggle() {
   }
   const { error } = await sb.from('companies').update(update).eq('id', companyId);
   closeModal('accounting-modal');
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(newVal ? 'Muhasebe entegrasyonu aktif edildi' : 'Muhasebe entegrasyonu kapatıldı', 'success');
   await loadIntegrationSettings();
 }
@@ -3451,7 +3451,7 @@ async function savePosReceiptSettings() {
     receipt_show_cashier: _rv('pos-receipt-show-cashier'),
   };
   const { error } = await sb.from('companies').update({ invoice_settings: updated }).eq('id', companyId);
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
   } finally { submitting.reset(); }
 }
@@ -3718,7 +3718,7 @@ async function savePosPin() {
   const pin = document.getElementById('pos-pin-input').value.trim();
   if (pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) { showToast('PIN 4 haneli sayı olmalı', 'error'); return; }
   const { error } = await sb.rpc('set_pos_pin', { p_company_id: companyId, p_user_id: currentUser.id, p_pin: pin || '' });
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('PIN kaydedildi', 'success');
   } finally { submitting.reset(); }
 }
@@ -3787,7 +3787,7 @@ async function saveInvoiceSettings() {
     default_tax_rate_id: settings.default_tax_id || null,
   };
   const { error } = await sb.from('companies').update(updates).eq('id', companyId);
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_settings_saved') || 'Ayarlar kaydedildi', 'success');
   } finally { submitting.reset(); }
 }
@@ -3863,7 +3863,7 @@ async function toggleModule(moduleKey, isActive) {
       { onConflict: 'company_id,module' });
   if (error) {
     console.error('toggleModule error:', error);
-    showToast('Error: ' + error.message, 'error');
+    showToast(getErrorMessage(error), 'error');
     return;
   }
   // Invalidate the sidebar module cache so the next page render reflects
@@ -3976,7 +3976,7 @@ async function addUser() {
     document.getElementById('add-user-pass').value = '';
     await loadUsers();
   } catch (e) {
-    showToast('Error: ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   } finally {
     btn.disabled = false; btn.textContent = origText;
     submitting.reset();
@@ -4120,7 +4120,7 @@ async function applyRegime(regimeId, name) {
   const { error } = await sb.from('companies')
     .update({ tax_regime_id: regimeId })
     .eq('id', companyId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   companyData = { ...companyData, tax_regime_id: regimeId };
   await loadRegimes();
   showToast((t('toast_regime_applied')||'Tax regime applied: {0}').replace('{0}', name), 'success');
@@ -4162,7 +4162,7 @@ async function saveRegime() {
   } else {
     ({ error } = await sb.from('tax_regimes').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('regime-modal');
   await loadRegimes();
   showToast(t('toast_saved')||'Saved ✓', 'success');
@@ -4186,7 +4186,7 @@ async function deleteRegime(id, name) {
   const { error } = await sb.from('tax_regimes')
     .update({ is_active: false, deleted_at: new Date().toISOString() })
     .eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   await loadRegimes();
   showToast(t('toast_deleted')||'Deleted ✓', 'success');
 }

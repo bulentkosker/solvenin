@@ -972,7 +972,7 @@ async function saveProject() {
     }
   } else {
     const { error } = await sb.from('projects').insert(payload);
-    if (error) { showToast('Error: '+error.message,'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
   showToast(t('toast_project_saved'),'success');
   closeModal('project-modal');
@@ -1042,7 +1042,7 @@ async function saveTask() {
     await sb.from('tasks').update(payload).eq('id', editingTaskId);
   } else {
     const { error } = await sb.from('tasks').insert(payload);
-    if (error) { showToast('Error: '+error.message,'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
   showToast(t('toast_task_saved'),'success');
   closeModal('task-modal');
@@ -1090,7 +1090,7 @@ async function saveTimeLog() {
     created_by: user.id
   };
   const { error } = await sb.from('time_logs').insert(payload);
-  if (error) { showToast('Error: '+error.message,'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_time_saved'),'success');
   closeModal('time-modal');
   await loadTimeLogs(currentProject.id);
@@ -1142,7 +1142,7 @@ async function saveExpense() {
     await sb.from('project_expenses').update(payload).eq('id', editingExpenseId);
   } else {
     const { error } = await sb.from('project_expenses').insert(payload);
-    if (error) { showToast('Error: '+error.message,'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
   showToast(t('toast_expense_saved'),'success');
   closeModal('expense-modal');
@@ -1200,7 +1200,7 @@ async function saveMilestone() {
     await sb.from('milestones').update(payload).eq('id', editingMilestoneId);
   } else {
     const { error } = await sb.from('milestones').insert(payload);
-    if (error) { showToast('Error: '+error.message,'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
   showToast(t('toast_milestone_saved'),'success');
   closeModal('milestone-modal');

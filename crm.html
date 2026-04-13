@@ -716,7 +716,7 @@ async function saveQuote() {
     notes: document.getElementById('q-notes').value.trim() || null,
     created_by: currentUser.id
   }).select().single();
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   // Save items
   const items = validItems.map(it => ({
     quote_id: quote.id, product_id: it.product_id || null,
@@ -782,7 +782,7 @@ async function convertQuoteToOrder(quoteId) {
     opportunity_id: quote.opportunity_id,
     notes: quote.notes, created_by: currentUser.id
   }).select().single();
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   // Copy items
   if (items?.length) {
     await sb.from('sales_order_items').insert(items.map(it => ({

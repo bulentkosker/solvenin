@@ -367,7 +367,7 @@ async function startSession() {
     company_id: companyId, cash_register_id: regId,
     cashier_id: currentUser.id, opened_by: currentUser.id, status: 'open',
   }).select('id').single();
-  if (error) { showToast(t('pos_toast_session_failed') + ': ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   sessionId = ses.id;
 
   document.getElementById('pos-register-name').textContent = selectedRegister.name;
@@ -880,7 +880,7 @@ async function completeSale() {
     renderCart();
     saveCartToStorage();
   } catch (e) {
-    showToast(t('pos_toast_error_prefix') + ': ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   } finally {
     btn.disabled = false; btn.textContent = t('pos_complete_payment');
   }

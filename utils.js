@@ -26,6 +26,30 @@ window.submitting = (function() {
   return fn;
 })();
 
+// ===== ERROR MESSAGE HANDLER =====
+// Maps raw DB/API errors to user-friendly localized messages.
+// Never shows internal constraint names or table structure.
+window.getErrorMessage = function(error) {
+  const _t = (typeof t === 'function') ? t : (k => k);
+  if (!error) return _t('error_general') || 'Bir hata oluştu';
+  const msg = (error.message || error.toString() || '').toLowerCase();
+  if (msg.includes('violates foreign key constraint'))
+    return _t('error_related_record') || 'Bu kayıt başka verilerle ilişkili, silinemez';
+  if (msg.includes('violates unique constraint') || msg.includes('duplicate key'))
+    return _t('error_duplicate') || 'Bu kayıt zaten mevcut';
+  if (msg.includes('row-level security') || msg.includes('rls'))
+    return _t('error_permission') || 'Bu işlem için yetkiniz yok';
+  if (msg.includes('violates check constraint'))
+    return _t('error_invalid_value') || 'Geçersiz değer';
+  if (msg.includes('not-null') || msg.includes('null value'))
+    return _t('error_required_field') || 'Zorunlu alan boş bırakılamaz';
+  if (msg.includes('jwt') || msg.includes('token') || msg.includes('auth'))
+    return _t('error_session_expired') || 'Oturum süresi doldu, lütfen tekrar giriş yapın';
+  if (msg.includes('networkerror') || msg.includes('failed to fetch') || msg.includes('load failed'))
+    return _t('error_network') || 'Bağlantı hatası, lütfen tekrar deneyin';
+  return _t('error_general') || 'Bir hata oluştu, lütfen tekrar deneyin';
+};
+
 // ===== NUMBER FORMATTING =====
 function getNumLocale() {
   const lang = (typeof detectLang === 'function') ? detectLang() : 'en';

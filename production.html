@@ -898,14 +898,14 @@ async function saveBom() {
 
   if (bomId) {
     const { error } = await sb.from('bom').update({ name, notes, updated_at: now }).eq('id', bomId);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
 
     // Soft-delete old lines, re-insert
     await sb.from('bom_inputs').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('bom_id', bomId).eq('is_active', true);
     await sb.from('bom_outputs').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('bom_id', bomId).eq('is_active', true);
   } else {
     const { data, error } = await sb.from('bom').insert({ company_id: companyId, name, notes, is_active: true, created_by: currentUserId }).select().single();
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     bomId = data.id;
   }
 
@@ -1028,7 +1028,7 @@ async function saveOrder() {
       bom_id: bomId, planned_qty: plannedQty, planned_date: plannedDate,
       status, notes, updated_at: now,
     }).eq('id', editingOrderId);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   } else {
     // Generate order number
     const orderNum = 'PO-' + Date.now().toString(36).toUpperCase();
@@ -1043,7 +1043,7 @@ async function saveOrder() {
       is_active: true,
       created_by: currentUserId,
     });
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
 
   showToast(t('toast_order_saved'), 'success');
@@ -1137,7 +1137,7 @@ function closeOrderDetailModal() {
 
 async function changeOrderStatus(orderId, newStatus) {
   const { error } = await sb.from('production_orders').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', orderId);
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_status_updated'), 'success');
   closeOrderDetailModal();
   await loadOrders();
@@ -1170,7 +1170,7 @@ async function startProduction(orderId) {
 
   if (movements.length > 0) {
     const { error: mvErr } = await sb.from('stock_movements').insert(movements);
-    if (mvErr) { showToast('Error recording stock movements: ' + mvErr.message, 'error'); return; }
+    if (mvErr) { showToast(getErrorMessage(mvErr), 'error'); return; }
   }
 
   // Log production entry
@@ -1212,7 +1212,7 @@ async function completeProduction(orderId) {
 
   if (movements.length > 0) {
     const { error: mvErr } = await sb.from('stock_movements').insert(movements);
-    if (mvErr) { showToast('Error recording stock movements: ' + mvErr.message, 'error'); return; }
+    if (mvErr) { showToast(getErrorMessage(mvErr), 'error'); return; }
   }
 
   // Log production entry
@@ -1234,7 +1234,7 @@ function askDeleteOrder(id) {
   deleteCallback = async () => {
     const now = new Date().toISOString();
     const { error } = await sb.from('production_orders').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('id', id);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_deleted'), 'success');
     await loadOrders();
     renderOrdersTable();
@@ -1251,7 +1251,7 @@ function askDeleteBom(id) {
     if (used) { showToast(t('toast_bom_in_use'), 'error'); closeDeleteModal(); return; }
 
     const { error } = await sb.from('bom').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('id', id);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_deleted'), 'success');
     await loadBoms();
     renderBomTable();
@@ -1300,7 +1300,7 @@ async function saveQAProduct() {
     unit: document.getElementById('qa-p-unit').value,
     barcode, cost_price, sale_price: 0, quantity: 0, is_active: true,
   }).select().single();
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
   closeQAProductModal();
   if (_qaProductCb) _qaProductCb(data);

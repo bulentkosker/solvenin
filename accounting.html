@@ -720,7 +720,7 @@ async function loadCoaFromTemplates() {
       })),
       { onConflict: 'company_id,code' }
     );
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
 
   showToast(templates.length + ' accounts loaded!', 'success');
@@ -866,12 +866,12 @@ async function saveAccount() {
 
   if (editingAccountId) {
     const { error } = await sb.from('chart_of_accounts').update({ code, name, name_local: nameLocal, type, subtype }).eq('id', editingAccountId);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   } else {
     const { error } = await sb.from('chart_of_accounts').insert(payload);
     if (error) {
       if (error.message.includes('unique')) showToast(t('toast_code_exists'), 'error');
-      else showToast('Error: ' + error.message, 'error');
+      else showToast(getErrorMessage(error), 'error');
       return;
     }
   }
@@ -1006,7 +1006,7 @@ async function saveJournalEntry(post = false) {
     await sb.from('journal_lines').delete().eq('entry_id', editingEntryId);
   } else {
     const { data, error } = await sb.from('journal_entries').insert(entryPayload).select().single();
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     entryId = data.id;
   }
 
@@ -1073,7 +1073,7 @@ async function postEntry(id) {
 function deleteEntry(id) {
   deleteCallback = async () => {
     await sb.from('journal_lines').delete().eq('entry_id', id);
-    await sb.from('journal_entries').delete().eq('id', id);
+    await sb.from('journal_entries').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     await loadJournalEntries(); await loadAccounts(); updateStats();
     showToast(t('toast_deleted'), 'success');
   };
@@ -1328,7 +1328,7 @@ function deleteTax(id) {
     ]);
     const total = (so.count||0) + (po.count||0);
     if (total > 0) { showToast(t('err_has_tax_usage').replace('{0}', total), 'error'); return; }
-    await sb.from('tax_rates').delete().eq('id', id);
+    await sb.from('tax_rates').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     await loadTaxRates();
     showToast(t('toast_deleted'), 'success');
   };

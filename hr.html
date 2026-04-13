@@ -912,7 +912,7 @@ async function saveEmployee() {
   } else {
     ({ error } = await sb.from('employees').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(editingEmpId ? 'Çalışan güncellendi ✓' : 'Çalışan eklendi ✓', 'success');
   closeModal('emp-modal');
   await loadEmployees();
@@ -1072,7 +1072,7 @@ async function generatePayroll() {
   let prId = currentPayrollId;
   if (!prId) {
     const { data, error } = await sb.from('payroll').insert({ company_id: companyId, year, month, status: 'draft' }).select().single();
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     prId = data.id;
     currentPayrollId = prId;
   }
@@ -1086,7 +1086,7 @@ async function generatePayroll() {
   });
   if (toInsert.length) {
     const { error } = await sb.from('payroll_items').insert(toInsert);
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
   showToast('Bordro oluşturuldu ✓', 'success');
   await loadPayrolls();
@@ -1094,14 +1094,14 @@ async function generatePayroll() {
 async function approvePayroll() {
   if (!currentPayrollId) return;
   const { error } = await sb.from('payroll').update({ status: 'approved' }).eq('id', currentPayrollId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Bordro onaylandı ✓', 'success');
   await loadPayrolls();
 }
 async function markPayrollPaid() {
   if (!currentPayrollId) return;
   const { error } = await sb.from('payroll').update({ status: 'paid' }).eq('id', currentPayrollId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Bordro ödendi olarak işaretlendi ✓', 'success');
   await loadPayrolls();
 }
@@ -1153,7 +1153,7 @@ async function savePayItem() {
     gross, tax_amount: tax, insurance_amount: ins, net,
     notes: document.getElementById('pi-notes').value.trim() || null,
   }).eq('id', editingPayItemId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Bordro kalemi güncellendi ✓', 'success');
   closeModal('payitem-modal');
   await loadPayrolls();
@@ -1205,7 +1205,7 @@ function renderLeaveRequests() {
 }
 async function quickApproveLeave(id) {
   const { error } = await sb.from('leave_requests').update({ status: 'approved', approved_by: currentUser?.id, approved_at: new Date().toISOString() }).eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('İzin onaylandı ✓', 'success');
   await loadLeaveRequests();
   renderLeaveRequests();
@@ -1246,7 +1246,7 @@ async function saveLeaveRequest() {
   } else {
     ({ error } = await sb.from('leave_requests').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('İzin talebi kaydedildi ✓', 'success');
   closeModal('leave-modal');
   await loadLeaveRequests();
@@ -1287,7 +1287,7 @@ async function saveLeaveType() {
   } else {
     ({ error } = await sb.from('leave_types').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('İzin türü kaydedildi ✓', 'success');
   closeModal('leavetype-modal');
   await loadLeaveTypes();
@@ -1365,7 +1365,7 @@ async function saveAttendance() {
   } else {
     ({ error } = await sb.from('attendance').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Devam kaydı eklendi ✓', 'success');
   closeModal('att-modal');
   await loadAttendance();
@@ -1409,7 +1409,7 @@ async function saveDept() {
   } else {
     ({ error } = await sb.from('departments').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Departman kaydedildi ✓', 'success');
   closeModal('dept-modal');
   await loadDepts();
@@ -1452,7 +1452,7 @@ async function savePosition() {
   } else {
     ({ error } = await sb.from('positions').insert(payload));
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Pozisyon kaydedildi ✓', 'success');
   closeModal('pos-modal');
   await loadPositions();
@@ -1493,16 +1493,16 @@ async function openDeleteModal(type, id, name) {
       ({ error } = await sb.from('positions').update(softDelete).eq('id', id));
       if (!error) { await loadPositions(); renderPositions(); }
     } else if (type === 'leave') {
-      ({ error } = await sb.from('leave_requests').delete().eq('id', id));
+      ({ error } = await sb.from('leave_requests').update({ deleted_at: new Date().toISOString() }).eq('id', id));
       if (!error) { await loadLeaveRequests(); renderLeaveRequests(); updateStats(); }
     } else if (type === 'leavetype') {
       ({ error } = await sb.from('leave_types').update(softDelete).eq('id', id));
       if (!error) { await loadLeaveTypes(); renderLeaveTypes(); }
     } else if (type === 'att') {
-      ({ error } = await sb.from('attendance').delete().eq('id', id));
+      ({ error } = await sb.from('attendance').update({ deleted_at: new Date().toISOString() }).eq('id', id));
       if (!error) { await loadAttendance(); renderAttendance(); updateStats(); }
     }
-    if (error) { showToast(error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast('Silindi ✓', 'success');
     closeModal('delete-modal');
   };

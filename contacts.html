@@ -572,7 +572,7 @@ async function saveContact() {
     closeModal('contact-modal');
     await loadContacts();
   } catch (e) {
-    showToast('Error: ' + e.message, 'error');
+    showToast(getErrorMessage(e), 'error');
   } finally { submitting.reset(); }
 }
 
@@ -859,7 +859,7 @@ async function saveManualTx() {
     description: desc, reference: document.getElementById('mtx-ref').value.trim() || null,
     notes: document.getElementById('mtx-notes').value.trim() || null, created_by: user?.id
   });
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('Hareket kaydedildi ✓', 'success');
   closeModal('manual-tx-modal');
   await loadStatement();

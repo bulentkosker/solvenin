@@ -1128,7 +1128,7 @@ async function deleteMovement(id, productId, stockSign, qty) {
     deleted_at: new Date().toISOString(),
     deleted_by: _u?.id
   }).eq('id', id);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   // Reverse stock impact
   const delta = stockSign * qty;
   const prod = products.find(p => p.id === productId);
@@ -1512,7 +1512,7 @@ function buildInlineForm(parentId, level) {
       company_id: companyId,
     }).select().single();
 
-    if (error) { showToast(error.message, 'error'); saveBtn.textContent = 'Save'; saveBtn.disabled = false; return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); saveBtn.textContent = 'Save'; saveBtn.disabled = false; return; }
 
     categories.push(data);
     populateCategoryFilter();
@@ -1601,7 +1601,7 @@ async function saveProduct() {
     error = ins.error;
     if (ins.data) savedId = ins.data.id;
   }
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
 
   // Persist tracking sub-data (services skip this entirely)
   if (!isService) {
@@ -1610,7 +1610,7 @@ async function saveProduct() {
       if (trackingType === 'serial') await persistSerials(savedId);
       if (trackingType === 'lot') await persistLots(savedId);
     } catch (e) {
-      showToast(t('toast_error') + ': ' + e.message, 'error');
+      showToast(getErrorMessage(e), 'error');
       return;
     }
   }
@@ -2059,7 +2059,7 @@ async function saveQAProduct() {
     company_id: companyId, name, product_type, unit,
     barcode, cost_price, sale_price, quantity: 0, is_active: true,
   }).select().single();
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
   closeQAProductModal();
   await loadProducts();
@@ -2134,7 +2134,7 @@ async function saveAdjustment() {
     notes: document.getElementById('adj-note').value || null,
     created_by: currentUser?.id || null,
   });
-  if (movErr) { showToast(movErr.message, 'error'); return; }
+  if (movErr) { showToast(getErrorMessage(movErr), 'error'); return; }
 
   // Also update products.quantity for quick display
   const p = products.find(x => x.id === pid);
@@ -2178,7 +2178,7 @@ async function confirmDelete() {
   const { error } = await sb.from('products').update({
     is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id
   }).eq('id', deletingId);
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('delete-modal');
   await loadProducts();
   renderAll();

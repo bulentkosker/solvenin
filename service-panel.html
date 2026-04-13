@@ -552,7 +552,7 @@ async function restoreFromTrash(id, name) {
     p_performed_by: null,
     p_performed_by_email: user.email
   });
-  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   if (!data?.success) { showToast(data?.error || 'Geri yüklenemedi', 'error'); return; }
   showToast('Şirket geri yüklendi: '+name, 'success');
   renderTrash();
@@ -569,7 +569,7 @@ async function permDeleteFromTrash(id, name) {
     p_performed_by: null,
     p_performed_by_email: user.email
   });
-  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   if (!data?.success) { showToast(data?.error || 'Kalıcı silinemedi', 'error'); return; }
   showToast('Şirket kalıcı silindi: '+name, 'success');
   renderTrash();
@@ -577,7 +577,7 @@ async function permDeleteFromTrash(id, name) {
 
 async function openTrashAuditLog(id, name) {
   const { data, error } = await sb.rpc('sp_company_audit_log', { p_company_id: id });
-  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   const logs = data || [];
   const html = `
     <div style="padding:24px;max-width:700px">
@@ -680,7 +680,7 @@ async function toggleMaintenance(enable) {
     : 'Bakım modunu kapatmak istediğinize emin misiniz? Kullanıcılar dashboard\'a geri yönlendirilecek.';
   if (!confirm(msg)) return;
   const { data, error } = await sb.rpc('sp_set_maintenance_mode', { p_enabled: enable });
-  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(enable ? '🔒 Bakım modu AKTİF' : '✅ Bakım modu kapatıldı', enable?'error':'success');
   renderFlags();
 }
@@ -753,7 +753,7 @@ async function saveFlagEdit() {
     p_enabled_for_companies: companies,
     p_rollout_percentage: rollout
   });
-  if (error) { showToast('Hata: '+error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   if (!data?.success) { showToast(data?.error || 'Güncellenemedi', 'error'); return; }
   showToast('Flag güncellendi: '+_editingFlag.flag_name, 'success');
   document.getElementById('flag-edit-overlay').classList.remove('open');
@@ -911,7 +911,7 @@ async function saveSubscription(companyId) {
     p_plan: plan, p_max_users: maxUsers, p_status: status,
     p_start: start || null, p_end: end || null, p_note: note
   });
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal();
   showToast('Abonelik güncellendi', 'success');
   await renderCompanies();
@@ -1134,7 +1134,7 @@ async function createDemo() {
     status: 'active'
   }).select().single();
 
-  if (compErr) { showToast('Hata: ' + compErr.message, 'error'); return; }
+  if (compErr) { showToast(getErrorMessage(compErr), 'error'); return; }
 
   // Create demo data in parallel
   const demoProducts = [
@@ -1478,7 +1478,7 @@ async function savePanelUser() {
   const pwd = document.getElementById('pu-pwd').value;
   if (!name || !email) { showToast('Ad ve email gerekli', 'error'); return; }
   const { error } = await sb.from('service_panel_users').insert({ name, email, role, password_hash: pwd, is_active: true });
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   await sb.rpc('sp_log', { p_user_id: user.id, p_action: 'create_panel_user', p_details: { email, role } });
   closeModal();
   showToast('Kullanıcı eklendi. Şifre: ' + pwd, 'success');

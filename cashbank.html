@@ -1366,11 +1366,11 @@ async function saveRegister() {
 
   if (editingRegisterId) {
     const { error } = await sb.from('cash_registers').update({ name, currency_code: currency, description: desc }).eq('id', editingRegisterId);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_register_saved'), 'success');
   } else {
     const { error } = await sb.from('cash_registers').insert(payload);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_register_saved'), 'success');
   }
   closeModal('register-modal');
@@ -1430,7 +1430,7 @@ async function saveCashTx() {
     company_id: companyId, register_id: selectedRegisterId, type, amount, currency_code: reg.currency_code,
     description: desc, category, reference: ref, transaction_date: date, source_type: 'manual'
   });
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
   closeModal('cash-tx-modal');
   await loadCashTransactions();
@@ -1442,7 +1442,7 @@ async function saveCashTx() {
 
 function deleteCashTx(id) {
   deleteCallback = async () => {
-    await sb.from('cash_transactions').delete().eq('id', id);
+    await sb.from('cash_transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     await loadCashTransactions(); await loadRegisters(); updateStats(); filterCashTx();
     showToast(t('toast_deleted'), 'success');
   };
@@ -1605,7 +1605,7 @@ async function saveBankTx() {
     company_id: companyId, account_id: selectedAccountId, type, amount, currency_code: acc.currency_code,
     description: desc, category, counterparty, reference: ref, transaction_date: date, source_type: 'manual'
   });
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
   closeModal('bank-tx-modal');
   await loadBankTransactions();
@@ -1617,7 +1617,7 @@ async function saveBankTx() {
 
 function deleteBankTx(id) {
   deleteCallback = async () => {
-    await sb.from('bank_transactions').delete().eq('id', id);
+    await sb.from('bank_transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     await loadBankTransactions(); await loadBanks(); updateStats(); filterBankTx();
     showToast(t('toast_deleted'), 'success');
   };

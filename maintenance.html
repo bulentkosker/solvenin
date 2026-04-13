@@ -922,7 +922,7 @@ async function saveWO() {
     await sb.from('work_order_parts').update({ is_active: false }).eq('work_order_id', editingWOId);
   } else {
     const { data, error } = await sb.from('work_orders').insert(payload).select().single();
-    if (error) { showToast('Error: '+error.message,'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     woId = data.id;
   }
 
@@ -1018,7 +1018,7 @@ async function saveEquip() {
     created_by: user.id
   };
   if (editingEquipId) await sb.from('equipment').update(payload).eq('id', editingEquipId);
-  else { const { error } = await sb.from('equipment').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  else { const { error } = await sb.from('equipment').insert(payload); if (error) { showToast(getErrorMessage(error), 'error'); return; } }
   showToast(t('toast_equip_saved'),'success');
   closeModal('equip-modal');
   await loadEquipment(); updateStats(); renderEquipment();
@@ -1102,7 +1102,7 @@ async function savePlan() {
     created_by: user.id
   };
   if (editingPlanId) await sb.from('maintenance_plans').update(payload).eq('id', editingPlanId);
-  else { const { error } = await sb.from('maintenance_plans').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  else { const { error } = await sb.from('maintenance_plans').insert(payload); if (error) { showToast(getErrorMessage(error), 'error'); return; } }
   showToast(t('toast_plan_saved'),'success');
   closeModal('plan-modal');
   await loadPlans(); updateStats(); renderPlans();
@@ -1152,7 +1152,7 @@ async function saveFailure() {
     created_by: user.id
   };
   if (editingFailureId) await sb.from('failure_records').update(payload).eq('id', editingFailureId);
-  else { const { error } = await sb.from('failure_records').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  else { const { error } = await sb.from('failure_records').insert(payload); if (error) { showToast(getErrorMessage(error), 'error'); return; } }
   showToast(t('toast_failure_saved'),'success');
   closeModal('failure-modal');
   await loadFailures(); updateStats(); renderFailures();
@@ -1200,7 +1200,7 @@ async function saveProvider() {
     created_by: user.id
   };
   if (editingProviderId) await sb.from('service_providers').update(payload).eq('id', editingProviderId);
-  else { const { error } = await sb.from('service_providers').insert(payload); if (error) { showToast('Error: '+error.message,'error'); return; } }
+  else { const { error } = await sb.from('service_providers').insert(payload); if (error) { showToast(getErrorMessage(error), 'error'); return; } }
   showToast(t('toast_provider_saved'),'success');
   closeModal('provider-modal');
   await loadProviders(); renderProviders();

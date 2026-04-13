@@ -752,7 +752,7 @@ async function saveShipment() {
     await sb.from('shipment_items').update({ is_active: false }).eq('shipment_id', editingShipmentId);
   } else {
     const { data, error } = await sb.from('shipments').insert(payload).select().single();
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
     shipId = data.id;
   }
 
@@ -868,7 +868,7 @@ async function saveVehicle() {
     await sb.from('vehicles').update(payload).eq('id', editingVehicleId);
   } else {
     const { error } = await sb.from('vehicles').insert(payload);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
 
   showToast(t('toast_vehicle_saved'), 'success');
@@ -932,7 +932,7 @@ async function saveDriver() {
     await sb.from('drivers').update(payload).eq('id', editingDriverId);
   } else {
     const { error } = await sb.from('drivers').insert(payload);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
 
   showToast(t('toast_driver_saved'), 'success');

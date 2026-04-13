@@ -519,7 +519,7 @@ async function saveWarehouse() {
     ({ error } = await sb.from('warehouses').insert(payload));
   }
 
-  if (error) { showToast(error.message, 'error'); return; }
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(editingId ? 'Warehouse updated ✓' : 'Warehouse added ✓', 'success');
   closeModal();
   await loadWarehouses();
@@ -551,7 +551,7 @@ async function confirmDelete() {
   }
   const { error } = await sb.from('warehouses').delete().eq('id', deletingId);
   if (error) {
-    showToast(error.message, 'error');
+    showToast(getErrorMessage(error), 'error');
     closeDeleteModal(); return;
   }
   showToast(t('toast_deleted') || 'Depo silindi', 'success');
