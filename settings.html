@@ -688,7 +688,7 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card" style="margin-top:16px">
             <div class="settings-card-head">
               <div>
-                <div class="settings-card-title" data-i18n="settings_weight_barcode">Tartılan Ürün Barkodu</div>
+                <div class="settings-card-title" data-i18n="settings_scale_barcode">Terazi Barkodu</div>
                 <div class="settings-card-desc">Terazi barkod okuma ayarları</div>
               </div>
               <button class="btn-primary" onclick="saveStockSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
@@ -696,7 +696,7 @@ tr:hover .action-btns { opacity:1; }
             <div class="settings-card-body">
               <div class="form-row">
                 <div class="form-group">
-                  <label data-i18n="settings_weight_barcode_format">Barkod formatı</label>
+                  <label data-i18n="settings_scale_barcode_format">Barkod formatı</label>
                   <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
                       <input type="radio" name="wb-format" value="EAN-13" checked onchange="updateWbExample()"> EAN-13 (13 hane)
@@ -707,27 +707,27 @@ tr:hover .action-btns { opacity:1; }
                   </div>
                 </div>
                 <div class="form-group" style="max-width:120px">
-                  <label data-i18n="settings_weight_barcode_prefix">Prefix</label>
+                  <label data-i18n="settings_scale_barcode_prefix">Prefix</label>
                   <input type="text" id="wb-prefix" value="20" maxlength="2" style="width:100%;text-align:center;font-size:16px;font-weight:700;letter-spacing:2px" oninput="updateWbExample()">
                   <div style="font-size:10px;color:var(--gray400);margin-top:3px">20-29 arası</div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label data-i18n="settings_weight_barcode_content">Barkod içeriği</label>
+                  <label data-i18n="settings_scale_barcode_content">Barkod içeriği</label>
                   <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                      <input type="radio" name="wb-content" value="price" checked onchange="updateWbExample()"> <span data-i18n="settings_weight_barcode_price">Fiyat bazlı</span>
+                      <input type="radio" name="wb-content" value="price" checked onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_price">Fiyat bazlı</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                      <input type="radio" name="wb-content" value="weight" onchange="updateWbExample()"> <span data-i18n="settings_weight_barcode_weight">Ağırlık bazlı</span>
+                      <input type="radio" name="wb-content" value="weight" onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_weight">Ağırlık bazlı</span>
                     </label>
                   </div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group" style="max-width:160px">
-                  <label data-i18n="settings_weight_barcode_plu_length">PLU kod uzunluğu</label>
+                  <label data-i18n="settings_scale_barcode_plu_length">PLU kod uzunluğu</label>
                   <select id="wb-plu-length" onchange="updateWbExample()">
                     <option value="3">3 hane</option>
                     <option value="4">4 hane</option>
@@ -735,7 +735,7 @@ tr:hover .action-btns { opacity:1; }
                   </select>
                 </div>
                 <div class="form-group" style="max-width:160px">
-                  <label data-i18n="settings_weight_barcode_decimals">Ondalık basamak</label>
+                  <label data-i18n="settings_scale_barcode_decimals">Ondalık basamak</label>
                   <select id="wb-decimals" onchange="updateWbExample()">
                     <option value="0">0</option>
                     <option value="1">1</option>
@@ -2929,7 +2929,7 @@ function updateWbExample() {
   const barcode = prefix + plu + valueStr + '5';
   const valFloat = sampleVal / Math.pow(10, decimals);
   const label = content === 'weight' ? `Ağırlık: ${valFloat.toFixed(decimals)} kg` : `Fiyat: ${valFloat.toFixed(decimals)}`;
-  el.innerHTML = `<div style="font-size:11px;color:var(--gray500);margin-bottom:4px" data-i18n="settings_weight_barcode_example">Örnek:</div>
+  el.innerHTML = `<div style="font-size:11px;color:var(--gray500);margin-bottom:4px" data-i18n="settings_scale_barcode_example">Örnek:</div>
     <div style="font-size:18px;font-weight:700;color:var(--gray800);letter-spacing:2px">${barcode.split('').map((c,i) => {
       const isPrefix = i < prefix.length;
       const isPlu = i >= prefix.length && i < prefix.length + pluLen;
