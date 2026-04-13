@@ -16,7 +16,7 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - `*.html` — Sayfa modülleri (sales.html, purchasing.html, contacts.html vb.)
 - `sidebar.js` — Sidebar navigasyon (IIFE, tüm sayfalarda)
 - `i18n.js` — Çeviri sistemi (10 dil, ~900 key)
-- `utils.js` — Global yardımcı fonksiyonlar (fmtNum, parseNum, fmt, fmtShort)
+- `utils.js` — Global yardımcı fonksiyonlar (fmtNum, parseNum, fmt, fmtShort, submitting, withLoading, getErrorMessage)
 - `quickadd.js` — Aranabilir dropdown bileşeni (QA.create)
 - `permissions.js` — Modül izin kontrolü
 - `theme.css` — Global tema (spinner kaldırma, tablo stilleri)
@@ -137,6 +137,13 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Keyboard: Enter → sonraki alan, Ctrl+Enter → kaydet, Ctrl+Shift+Enter → yeni satır, Escape → kapat
 - YASAK kısayollar (tarayıcı çakışması): Ctrl+S, Ctrl+P, Ctrl+N, Ctrl+T, Ctrl+W, Ctrl+R
 - QA dropdown: ↑↓ navigasyon, Enter seç, Escape kapat
+
+## utils.js (MANDATORY)
+- Every `.html` file MUST include `utils.js` before any other custom scripts:
+  `<script src="utils.js"></script>`
+- This provides: `submitting()`, `withLoading()`, `getErrorMessage()` — all required for save functions
+- Missing `utils.js` = silent failures on all save buttons (ReferenceError swallowed as unhandled promise rejection)
+- When creating a new HTML page, always add utils.js in the `<head>` after sidebar.js
 
 ## Double Submit Prevention (MANDATORY)
 - Every save/submit function MUST start with: `if (submitting()) return;`
