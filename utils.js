@@ -16,13 +16,24 @@ window.withLoading = function(btn, asyncFn) {
   });
 };
 
-// Guard flag for Enter-key / programmatic double-fire. Usage:
-//   if (submitting()) return;
-//   try { await save(); } finally { submitting.reset(); }
+// Per-caller double-submit guard with auto-reset safety net.
+// Usage: if (submitting()) return;
+// The flag auto-resets after 10 seconds as a safety net against stuck state.
+// Each caller gets its own flag based on the call stack.
 window.submitting = (function() {
-  let _flag = false;
-  const fn = () => { if (_flag) return true; _flag = true; return false; };
-  fn.reset = () => { _flag = false; };
+  const _flags = {};
+  const fn = (key) => {
+    const k = key || (new Error().stack?.split('\n')[2]?.trim() || '_default');
+    if (_flags[k]) return true;
+    _flags[k] = true;
+    setTimeout(() => { delete _flags[k]; }, 10000); // safety net
+    return false;
+  };
+  fn.reset = (key) => {
+    if (key) { delete _flags[key]; return; }
+    // Reset all flags
+    Object.keys(_flags).forEach(k => delete _flags[k]);
+  };
   return fn;
 })();
 
