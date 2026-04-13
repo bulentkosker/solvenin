@@ -297,7 +297,7 @@ async function init() {
 
   // Load company info (currency + receipt data)
   const { data: comp } = await sb.from('companies')
-    .select('name,address,phone,logo_url,base_currency,invoice_settings,allow_negative_stock')
+    .select('name,address,phone,logo_url,base_currency,invoice_settings,allow_negative_stock,weight_barcode_prefix,weight_barcode_content,weight_barcode_plu_length,weight_barcode_decimals')
     .eq('id', companyId).single();
   if (comp) {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
@@ -321,6 +321,10 @@ async function init() {
       receipt_show_vat: rs.receipt_show_vat !== false,
       receipt_show_cashier: rs.receipt_show_cashier !== false,
       allow_negative_stock: comp.allow_negative_stock !== false,
+      weight_barcode_prefix: comp.weight_barcode_prefix || '20',
+      weight_barcode_content: comp.weight_barcode_content || 'price',
+      weight_barcode_plu_length: comp.weight_barcode_plu_length || 5,
+      weight_barcode_decimals: comp.weight_barcode_decimals ?? 3,
     };
   }
 
@@ -402,7 +406,7 @@ async function loadProducts() {
   }
   // Online path
   const [prodRes, catRes, qbRes, grpRes] = await Promise.all([
-    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode,plu_code').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('pos_quick_buttons').select('*, products(id,name,sale_price,category_id)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
     sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
@@ -472,6 +476,44 @@ function renderQuickButtons() {
   `).join('');
 }
 
+// ===== WEIGHT BARCODE PARSER =====
+function parseWeightBarcode(code) {
+  const ci = companyInfo;
+  const prefix = ci.weight_barcode_prefix || '20';
+  if (!code.startsWith(prefix) || (code.length !== 13 && code.length !== 12)) return null;
+  const pluLen = ci.weight_barcode_plu_length || 5;
+  const decimals = ci.weight_barcode_decimals ?? 3;
+  const plu = code.substring(prefix.length, prefix.length + pluLen);
+  const valueStart = prefix.length + pluLen;
+  const valueStr = code.substring(valueStart, code.length - 1); // -1 check digit
+  const value = parseInt(valueStr) / Math.pow(10, decimals);
+  return { plu, value, contentType: ci.weight_barcode_content || 'price' };
+}
+
+function addWeightProductToCart(parsed) {
+  const p = products.find(x => x.plu_code === parsed.plu);
+  if (!p) {
+    showToast((t('error_plu_not_found') || 'PLU bulunamadı') + ': ' + parsed.plu, 'error');
+    return;
+  }
+  const price = parseFloat(p.sale_price || 0);
+  let qty, linePrice;
+  if (parsed.contentType === 'weight') {
+    qty = parsed.value;
+    linePrice = price;
+  } else {
+    // price-based: value is total price, calculate qty
+    qty = price > 0 ? parsed.value / price : 1;
+    linePrice = price;
+  }
+  qty = Math.round(qty * 1000) / 1000; // round to 3 decimals
+  const ex = cart.find(c => c.pid === p.id);
+  if (ex) ex.qty += qty;
+  else cart.push({ pid: p.id, name: p.name, price: linePrice, qty, unit: p.unit || 'kg' });
+  renderCart();
+  saveCartToStorage();
+}
+
 // ===== BARCODE =====
 document.addEventListener('DOMContentLoaded', () => {
   const inp = document.getElementById('barcode-input');
@@ -481,15 +523,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const code = inp.value.trim();
       if (!code) return;
       inp.value = '';
-      // First check local cache
+      // Check weight barcode first
+      const wb = parseWeightBarcode(code);
+      if (wb) { addWeightProductToCart(wb); return; }
+      // Normal barcode — first check local cache
       let p = products.find(x => x.barcode === code);
       if (!p) {
-        // Query Supabase directly (barcode may have been added after page load)
-        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode')
+        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode,plu_code,stock_quantity')
           .eq('company_id', companyId).eq('barcode', code).eq('is_active', true).single();
         if (data) {
           p = data;
-          // Add to local cache
           if (!products.find(x => x.id === data.id)) products.push(data);
         }
       }

@@ -479,6 +479,18 @@ tr:hover .action-btns { opacity:1; }
           <input type="text" id="p-barcode" placeholder="Barkod">
         </div>
       </div>
+      <div class="form-row" data-product-only>
+        <div class="form-group" style="flex:0 0 auto">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding-top:22px">
+            <input type="checkbox" id="p-is-weight" onchange="document.getElementById('p-plu-wrap').style.display=this.checked?'':'none'">
+            <span data-i18n="product_is_weight_product">Tartılan ürün</span>
+          </label>
+        </div>
+        <div class="form-group" id="p-plu-wrap" style="display:none;max-width:160px">
+          <label><span data-i18n="product_plu_code">PLU Kodu</span></label>
+          <input type="text" id="p-plu-code" maxlength="5" placeholder="00123" style="font-family:monospace;letter-spacing:2px;text-align:center" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label><span data-i18n="label_category">Category</span></label>
@@ -1180,7 +1192,9 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = t('title_add_product');
-  ['p-name','p-sku','p-barcode','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['p-name','p-sku','p-barcode','p-desc','p-stock','p-min-stock','p-max-stock','p-cost','p-price','p-plu-code'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('p-is-weight').checked = false;
+  document.getElementById('p-plu-wrap').style.display = 'none';
   document.getElementById('p-category-id').value = '';
   document.getElementById('p-unit').value = 'pcs';
   document.getElementById('p-type').value = 'finished_good';
@@ -1210,6 +1224,9 @@ function openEditModal(id) {
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
   document.getElementById('p-barcode').value = p.barcode || '';
+  document.getElementById('p-is-weight').checked = !!p.is_weight_product;
+  document.getElementById('p-plu-code').value = p.plu_code || '';
+  document.getElementById('p-plu-wrap').style.display = p.is_weight_product ? '' : 'none';
   document.getElementById('p-category-id').value = p.category_id || '';
   document.getElementById('p-unit').value = p.unit || 'pcs';
   document.getElementById('p-type').value = p.product_type || 'finished_good';
@@ -1265,7 +1282,7 @@ function onItemTypeChange() {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override,is_weight_product,plu_code')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -1292,6 +1309,8 @@ async function loadProducts() {
     tax_source: p.tax_source || 'category',
     tax_rate_id: p.tax_rate_id || null,
     tax_rate_override: p.tax_rate_override,
+    is_weight_product: !!p.is_weight_product,
+    plu_code: p.plu_code || '',
   }));
 }
 
@@ -1581,6 +1600,8 @@ async function saveProduct() {
     name,
     sku: document.getElementById('p-sku').value.trim() || null,
     barcode: isService ? null : (document.getElementById('p-barcode').value.trim() || null),
+    is_weight_product: isService ? false : !!document.getElementById('p-is-weight')?.checked,
+    plu_code: isService ? null : (document.getElementById('p-plu-code').value.trim() || null),
     category_id: document.getElementById('p-category-id').value || null,
     unit: document.getElementById('p-unit').value || 'pcs',
     product_type: document.getElementById('p-type').value || 'finished_good',

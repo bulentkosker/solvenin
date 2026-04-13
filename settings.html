@@ -685,6 +685,69 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
 
+          <div class="settings-card" style="margin-top:16px">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="settings_weight_barcode">Tartılan Ürün Barkodu</div>
+                <div class="settings-card-desc">Terazi barkod okuma ayarları</div>
+              </div>
+              <button class="btn-primary" onclick="saveStockSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label data-i18n="settings_weight_barcode_format">Barkod formatı</label>
+                  <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                      <input type="radio" name="wb-format" value="EAN-13" checked onchange="updateWbExample()"> EAN-13 (13 hane)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                      <input type="radio" name="wb-format" value="UPC-A" onchange="updateWbExample()"> UPC-A (12 hane)
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group" style="max-width:120px">
+                  <label data-i18n="settings_weight_barcode_prefix">Prefix</label>
+                  <input type="text" id="wb-prefix" value="20" maxlength="2" style="width:100%;text-align:center;font-size:16px;font-weight:700;letter-spacing:2px" oninput="updateWbExample()">
+                  <div style="font-size:10px;color:var(--gray400);margin-top:3px">20-29 arası</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label data-i18n="settings_weight_barcode_content">Barkod içeriği</label>
+                  <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                      <input type="radio" name="wb-content" value="price" checked onchange="updateWbExample()"> <span data-i18n="settings_weight_barcode_price">Fiyat bazlı</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                      <input type="radio" name="wb-content" value="weight" onchange="updateWbExample()"> <span data-i18n="settings_weight_barcode_weight">Ağırlık bazlı</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="max-width:160px">
+                  <label data-i18n="settings_weight_barcode_plu_length">PLU kod uzunluğu</label>
+                  <select id="wb-plu-length" onchange="updateWbExample()">
+                    <option value="3">3 hane</option>
+                    <option value="4">4 hane</option>
+                    <option value="5" selected>5 hane</option>
+                  </select>
+                </div>
+                <div class="form-group" style="max-width:160px">
+                  <label data-i18n="settings_weight_barcode_decimals">Ondalık basamak</label>
+                  <select id="wb-decimals" onchange="updateWbExample()">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                  </select>
+                </div>
+              </div>
+              <div id="wb-example" style="margin-top:8px;padding:12px 16px;background:var(--gray50);border-radius:8px;font-family:monospace"></div>
+            </div>
+          </div>
+
           <!-- Sub-tab: Kategoriler -->
           <div id="stock-tab-categories" style="display:none">
             <div class="settings-card">
@@ -1806,7 +1869,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock,low_stock_threshold,default_barcode_format')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock,low_stock_threshold,default_barcode_format,weight_barcode_format,weight_barcode_prefix,weight_barcode_content,weight_barcode_plu_length,weight_barcode_decimals')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1846,6 +1909,18 @@ async function loadCompanyData() {
   if (thrEl) thrEl.value = data.low_stock_threshold ?? 10;
   const bfEl = document.getElementById('stk-barcode-format');
   if (bfEl) bfEl.value = data.default_barcode_format || 'EAN-13';
+  // Weight barcode settings
+  const wbFmt = document.querySelector(`input[name="wb-format"][value="${data.weight_barcode_format||'EAN-13'}"]`);
+  if (wbFmt) wbFmt.checked = true;
+  const wbPfx = document.getElementById('wb-prefix');
+  if (wbPfx) wbPfx.value = data.weight_barcode_prefix || '20';
+  const wbCnt = document.querySelector(`input[name="wb-content"][value="${data.weight_barcode_content||'price'}"]`);
+  if (wbCnt) wbCnt.checked = true;
+  const wbPlu = document.getElementById('wb-plu-length');
+  if (wbPlu) wbPlu.value = data.weight_barcode_plu_length || 5;
+  const wbDec = document.getElementById('wb-decimals');
+  if (wbDec) wbDec.value = data.weight_barcode_decimals ?? 3;
+  updateWbExample();
 
   // Show danger zone only for owners — and HIDE for demo companies
   // (demo companies are deleted from the service panel, not by end users)
@@ -2823,6 +2898,11 @@ async function saveStockSettings() {
       allow_negative_stock: document.getElementById('stk-allow-negative')?.checked ?? true,
       low_stock_threshold: parseInt(document.getElementById('stk-low-threshold')?.value) || 10,
       default_barcode_format: document.getElementById('stk-barcode-format')?.value || 'EAN-13',
+      weight_barcode_format: document.querySelector('input[name="wb-format"]:checked')?.value || 'EAN-13',
+      weight_barcode_prefix: document.getElementById('wb-prefix')?.value?.trim() || '20',
+      weight_barcode_content: document.querySelector('input[name="wb-content"]:checked')?.value || 'price',
+      weight_barcode_plu_length: parseInt(document.getElementById('wb-plu-length')?.value) || 5,
+      weight_barcode_decimals: parseInt(document.getElementById('wb-decimals')?.value) ?? 3,
     };
     const { error } = await sb.from('companies').update(payload).eq('id', companyId);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
@@ -2831,6 +2911,33 @@ async function saveStockSettings() {
     console.error('saveStockSettings:', e);
     showToast(getErrorMessage(e), 'error');
   } finally { submitting.reset(); }
+}
+
+function updateWbExample() {
+  const el = document.getElementById('wb-example');
+  if (!el) return;
+  const fmt = document.querySelector('input[name="wb-format"]:checked')?.value || 'EAN-13';
+  const prefix = document.getElementById('wb-prefix')?.value?.trim() || '20';
+  const content = document.querySelector('input[name="wb-content"]:checked')?.value || 'price';
+  const pluLen = parseInt(document.getElementById('wb-plu-length')?.value) || 5;
+  const decimals = parseInt(document.getElementById('wb-decimals')?.value) ?? 3;
+  const totalLen = fmt === 'UPC-A' ? 12 : 13;
+  const plu = '00123'.slice(-pluLen).padStart(pluLen, '0');
+  const valueLen = totalLen - prefix.length - pluLen - 1; // -1 for check digit
+  const sampleVal = content === 'weight' ? 274 : 1500;
+  const valueStr = String(sampleVal).padStart(valueLen, '0');
+  const barcode = prefix + plu + valueStr + '5';
+  const valFloat = sampleVal / Math.pow(10, decimals);
+  const label = content === 'weight' ? `Ağırlık: ${valFloat.toFixed(decimals)} kg` : `Fiyat: ${valFloat.toFixed(decimals)}`;
+  el.innerHTML = `<div style="font-size:11px;color:var(--gray500);margin-bottom:4px" data-i18n="settings_weight_barcode_example">Örnek:</div>
+    <div style="font-size:18px;font-weight:700;color:var(--gray800);letter-spacing:2px">${barcode.split('').map((c,i) => {
+      const isPrefix = i < prefix.length;
+      const isPlu = i >= prefix.length && i < prefix.length + pluLen;
+      const isValue = i >= prefix.length + pluLen && i < barcode.length - 1;
+      const color = isPrefix ? '#dc2626' : isPlu ? '#1e40af' : isValue ? '#16a34a' : '#94a3b8';
+      return `<span style="color:${color}">${c}</span>`;
+    }).join('')}</div>
+    <div style="font-size:11px;margin-top:4px;color:var(--gray500)"><span style="color:#dc2626">■</span> Prefix · <span style="color:#1e40af">■</span> PLU: ${plu} · <span style="color:#16a34a">■</span> ${label} · <span style="color:#94a3b8">■</span> Check</div>`;
 }
 
 // ===== WAREHOUSES =====
