@@ -690,13 +690,34 @@ tr:hover .action-btns { opacity:1; }
             <div class="settings-card">
               <div class="settings-card-head">
                 <div><div class="settings-card-title" data-i18n="label_categories">Categories</div><div class="settings-card-desc" data-i18n="desc_categories">Manage product categories (max 3 levels)</div></div>
-                <button class="btn-primary" onclick="openAddCatForm(null, 0)"><span data-i18n="btn_add_category">+ Add Category</span></button>
+                <div style="display:flex;gap:6px;flex-shrink:0">
+                  <button class="btn-secondary" onclick="exportCategories()" style="padding:6px 12px;font-size:12px" data-i18n="categories_export">⬇️ Dışa Aktar</button>
+                  <label class="btn-secondary" style="padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="file" accept=".xlsx,.csv" onchange="importCategoriesFile(event)" style="display:none"><span data-i18n="categories_import">⬆️ İçe Aktar</span></label>
+                  <button class="btn-primary" onclick="openAddCatForm(null, 0)" style="padding:6px 12px;font-size:12px"><span data-i18n="btn_add_category">+ Kategori Ekle</span></button>
+                </div>
               </div>
               <div class="settings-card-body" style="padding:0 24px">
                 <div style="padding:12px 0">
                   <input type="text" id="cat-search" placeholder="🔍 Kategori ara..." oninput="filterCategories(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;transition:border .15s">
                 </div>
                 <div id="categories-list" class="manage-list"></div>
+                <div style="padding:8px 0 12px;text-align:right">
+                  <a href="#" onclick="downloadCatTemplate();return false" style="font-size:11px;color:var(--gray400)">📄 <span data-i18n="categories_download_template">Şablon İndir</span></a>
+                </div>
+              </div>
+            </div>
+            <div id="cat-import-preview" style="display:none;margin-top:16px">
+              <div class="settings-card">
+                <div class="settings-card-head">
+                  <div><div class="settings-card-title" data-i18n="categories_import_preview">İçe Aktarma Önizlemesi</div></div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-secondary" onclick="cancelCatImport()" style="padding:6px 12px;font-size:12px" data-i18n="btn_cancel">İptal</button>
+                    <button class="btn-primary" id="btn-cat-import-confirm" onclick="confirmCatImport()" style="padding:6px 12px;font-size:12px">İçe Aktar</button>
+                  </div>
+                </div>
+                <div class="settings-card-body" style="padding:0 24px 16px">
+                  <div id="cat-import-table"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -2285,6 +2306,158 @@ async function fetchRatesFromAPI() {
     btn.textContent = t('btn_fetch_rates');
     btn.disabled = false;
   }
+}
+
+// ===== CATEGORY IMPORT/EXPORT =====
+function _buildCatHierarchy() {
+  const roots = allCategories.filter(c => !c.parent_id);
+  const rows = [];
+  roots.forEach(r => {
+    const vatR = _catVatLabel(r);
+    rows.push({ 'Ana Kategori': r.name, 'Alt Kategori': '', 'Alt-Alt Kategori': '', 'KDV Oranı': vatR });
+    const children = allCategories.filter(c => c.parent_id === r.id);
+    children.forEach(ch => {
+      const vatC = _catVatLabel(ch);
+      rows.push({ 'Ana Kategori': r.name, 'Alt Kategori': ch.name, 'Alt-Alt Kategori': '', 'KDV Oranı': vatC });
+      allCategories.filter(c => c.parent_id === ch.id).forEach(gc => {
+        rows.push({ 'Ana Kategori': r.name, 'Alt Kategori': ch.name, 'Alt-Alt Kategori': gc.name, 'KDV Oranı': _catVatLabel(gc) });
+      });
+    });
+  });
+  return rows;
+}
+
+function _catVatLabel(c) {
+  if (c.tax_rate_override != null) return '%' + c.tax_rate_override;
+  if (c.tax_rate_id) {
+    const tr = _activeVatRates.find(r => r.id === c.tax_rate_id);
+    return tr ? '%' + tr.rate : '';
+  }
+  return '';
+}
+
+function exportCategories() {
+  const rows = _buildCatHierarchy();
+  if (!rows.length) { showToast(t('categories_no_data') || 'Kategori yok', 'error'); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Kategoriler');
+  const coName = (document.getElementById('co-name')?.value || 'company').replace(/[^a-zA-Z0-9\u00C0-\u024F\u0400-\u04FF]/g, '_');
+  XLSX.writeFile(wb, `kategoriler_${coName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast(t('toast_exported') || 'Dışa aktarıldı', 'success');
+}
+
+function downloadCatTemplate() {
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    { 'Ana Kategori': 'GIDA', 'Alt Kategori': '', 'Alt-Alt Kategori': '', 'KDV Oranı': '%10' },
+    { 'Ana Kategori': 'GIDA', 'Alt Kategori': 'ET ÜRÜNLERİ', 'Alt-Alt Kategori': '', 'KDV Oranı': '%20' },
+    { 'Ana Kategori': 'GIDA', 'Alt Kategori': 'ET ÜRÜNLERİ', 'Alt-Alt Kategori': 'SALAM', 'KDV Oranı': '' },
+    { 'Ana Kategori': 'NON FOOD', 'Alt Kategori': '', 'Alt-Alt Kategori': '', 'KDV Oranı': '' },
+    { 'Ana Kategori': 'NON FOOD', 'Alt Kategori': 'KOZMETİK', 'Alt-Alt Kategori': '', 'KDV Oranı': '' },
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Şablon');
+  XLSX.writeFile(wb, 'kategoriler_sablon.xlsx');
+}
+
+let _catImportRows = [];
+function importCategoriesFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      if (!rows.length) { showToast(t('toast_empty_file') || 'Dosya boş', 'error'); return; }
+      _catImportRows = [];
+      const existingNames = new Set(allCategories.map(c => (c.name || '').toUpperCase()));
+      rows.forEach(r => {
+        const ana = (r['Ana Kategori'] || '').toString().trim().toUpperCase();
+        const alt = (r['Alt Kategori'] || '').toString().trim().toUpperCase();
+        const altalt = (r['Alt-Alt Kategori'] || '').toString().trim().toUpperCase();
+        const vat = (r['KDV Oranı'] || '').toString().replace('%', '').trim();
+        if (!ana) return;
+        // Check each level
+        [ana, alt, altalt].filter(Boolean).forEach(name => {
+          if (_catImportRows.find(x => x.name === name)) return; // already in import set
+          const status = existingNames.has(name) ? 'skip' : 'new';
+          _catImportRows.push({ name, ana, alt: alt || null, altalt: altalt || null, vat: name === ana ? vat : (name === alt ? vat : (name === altalt ? vat : '')), status, level: name === ana ? 0 : name === alt ? 1 : 2 });
+        });
+      });
+      renderCatImportPreview();
+    } catch (err) {
+      showToast(getErrorMessage(err), 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderCatImportPreview() {
+  const el = document.getElementById('cat-import-preview');
+  const tbl = document.getElementById('cat-import-table');
+  el.style.display = '';
+  const newCount = _catImportRows.filter(r => r.status === 'new').length;
+  const skipCount = _catImportRows.filter(r => r.status === 'skip').length;
+  document.getElementById('btn-cat-import-confirm').textContent = (t('categories_import') || 'İçe Aktar') + ` (${newCount})`;
+  tbl.innerHTML = `<div style="font-size:12px;color:var(--gray500);margin-bottom:8px">🟢 ${newCount} yeni · 🟡 ${skipCount} mevcut (atlanacak)</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:var(--gray50)"><th style="padding:6px 10px;text-align:left">Kategori</th><th style="padding:6px 10px">Seviye</th><th style="padding:6px 10px">KDV</th><th style="padding:6px 10px">Durum</th></tr></thead>
+    <tbody>${_catImportRows.map(r => {
+      const bg = r.status === 'new' ? '#f0fdf4' : '#fffbeb';
+      const badge = r.status === 'new' ? '<span class="badge badge-green">Yeni</span>' : '<span class="badge badge-orange">Mevcut</span>';
+      return `<tr style="background:${bg};border-bottom:1px solid var(--gray100)"><td style="padding:5px 10px;font-weight:${r.level===0?'700':'500'};padding-left:${10+r.level*16}px">${r.name}</td><td style="padding:5px 10px;text-align:center">${r.level+1}</td><td style="padding:5px 10px;text-align:center">${r.vat ? '%'+r.vat : '—'}</td><td style="padding:5px 10px;text-align:center">${badge}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function cancelCatImport() {
+  _catImportRows = [];
+  document.getElementById('cat-import-preview').style.display = 'none';
+}
+
+async function confirmCatImport() {
+  if (submitting()) return;
+  try {
+    const toCreate = _catImportRows.filter(r => r.status === 'new');
+    if (!toCreate.length) { showToast(t('categories_nothing_to_import') || 'İçe aktarılacak yeni kategori yok', 'info'); cancelCatImport(); return; }
+    let created = 0;
+    // Phase 1: create level 0 (ana)
+    const level0 = [...new Set(toCreate.filter(r => r.level === 0).map(r => r.name))];
+    for (const name of level0) {
+      const row = toCreate.find(r => r.name === name && r.level === 0);
+      const payload = { company_id: companyId, name };
+      if (row?.vat) payload.tax_rate_override = parseFloat(row.vat);
+      const { data } = await sb.from('categories').insert(payload).select('id,name').single();
+      if (data) { allCategories.push(data); created++; }
+    }
+    // Phase 2: create level 1 (alt)
+    const level1 = toCreate.filter(r => r.level === 1);
+    for (const r of level1) {
+      const parent = allCategories.find(c => c.name.toUpperCase() === r.ana && !c.parent_id);
+      if (!parent) continue;
+      const payload = { company_id: companyId, name: r.name, parent_id: parent.id };
+      if (r.vat) payload.tax_rate_override = parseFloat(r.vat);
+      const { data } = await sb.from('categories').insert(payload).select('id,name,parent_id').single();
+      if (data) { allCategories.push(data); created++; }
+    }
+    // Phase 3: create level 2 (altalt)
+    const level2 = toCreate.filter(r => r.level === 2);
+    for (const r of level2) {
+      const parentL1 = allCategories.find(c => c.name.toUpperCase() === r.alt && c.parent_id);
+      if (!parentL1) continue;
+      const payload = { company_id: companyId, name: r.name, parent_id: parentL1.id };
+      if (r.vat) payload.tax_rate_override = parseFloat(r.vat);
+      const { data } = await sb.from('categories').insert(payload).select('id,name,parent_id').single();
+      if (data) { allCategories.push(data); created++; }
+    }
+    const skipped = _catImportRows.filter(r => r.status === 'skip').length;
+    showToast((t('categories_import_success') || '{0} kategori içe aktarıldı').replace('{0}', created) + (skipped ? ` · ${skipped} atlandı` : ''), 'success');
+    cancelCatImport();
+    await loadAllCategories();
+  } catch (e) {
+    console.error('confirmCatImport:', e);
+    showToast(getErrorMessage(e), 'error');
+  } finally { submitting.reset(); }
 }
 
 // ===== CATEGORIES =====
