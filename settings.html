@@ -1615,10 +1615,11 @@ const WAREHOUSE_NAMES = {
 };
 
 async function createNewCompany() {
+  if (submitting()) return;
   const name = document.getElementById('new-company-name').value.trim();
   const errEl = document.getElementById('new-company-err');
   const countryCode = document.getElementById('new-company-country')?.value || 'US';
-  if (!name) { errEl.textContent = t('toast_company_name_required') || 'Company name is required'; errEl.style.display = 'block'; return; }
+  if (!name) { errEl.textContent = t('toast_company_name_required') || 'Company name is required'; errEl.style.display = 'block'; submitting.reset(); return; }
   errEl.style.display = 'none';
 
   // Lock UI
@@ -1714,7 +1715,7 @@ async function createNewCompany() {
     if (btn) { btn.disabled = false; btn.textContent = origText; }
     if (nameInput) nameInput.disabled = false;
     if (countrySel) countrySel.disabled = false;
-  }
+  } finally { submitting.reset(); }
 }
 
 // ===== COMPANY DATA =====
@@ -1872,6 +1873,8 @@ async function executeDeleteCompany() {
 }
 
 async function saveCompanyInfo() {
+  if (submitting()) return;
+  try {
   if (!companyId) return;
   const payload = {
     name: document.getElementById('co-name').value.trim(),
@@ -1897,6 +1900,7 @@ async function saveCompanyInfo() {
   }
   _pendingLogo = null;
   showToast(t('toast_company_info_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 // ===== LOGO UPLOAD (client-side resize → base64 data URL) =====
@@ -2509,6 +2513,8 @@ function openAddCatForm(parentId, depth) {
 }
 
 async function saveCatAdd(parentId) {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('new-cat-input')?.value.trim().toUpperCase();
   if (!name) return;
   const { data, error } = await sb.from('categories').insert({
@@ -2519,6 +2525,7 @@ async function saveCatAdd(parentId) {
   document.getElementById('inline-add-cat')?.remove();
   renderCategoriesList();
   showToast(`"${name}" added ✓`, 'success');
+  } finally { submitting.reset(); }
 }
 
 async function openRenameCat(id) {
@@ -2615,6 +2622,8 @@ function openWarehouseModal(id=null) {
 }
 
 async function saveWarehouse() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('wh-name').value.trim();
   if (!name) { showToast(t('toast_name_required'), 'error'); return; }
   const isDefault = document.getElementById('wh-default').checked;
@@ -2639,6 +2648,7 @@ async function saveWarehouse() {
   closeModal('warehouse-modal');
   await loadWarehouses();
   showToast(t('toast_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 async function setDefaultWarehouse(id) {
@@ -2741,6 +2751,8 @@ function openTaxModal(id=null) {
 }
 
 async function saveTax() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('tax-name').value.trim();
   const rate = parseFloat(document.getElementById('tax-rate').value);
   if (!name || isNaN(rate)) { showToast(t('toast_name_rate_required'), 'error'); return; }
@@ -2759,6 +2771,7 @@ async function saveTax() {
   closeModal('tax-modal');
   await loadTaxes();
   showToast(t('toast_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 async function openDeleteTax(id, name) {
@@ -3413,6 +3426,8 @@ async function uploadPosLogoIfNeeded(existingUrl) {
 }
 
 async function savePosReceiptSettings() {
+  if (submitting()) return;
+  try {
   if (!companyId) return;
   const { data: co } = await sb.from('companies').select('invoice_settings').eq('id', companyId).single();
   const existing = co?.invoice_settings || {};
@@ -3438,6 +3453,7 @@ async function savePosReceiptSettings() {
   const { error } = await sb.from('companies').update({ invoice_settings: updated }).eq('id', companyId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
+  } finally { submitting.reset(); }
 }
 
 // ===== POS BUTTON GROUPS — TAB + GRID UI =====
@@ -3522,6 +3538,8 @@ function editPosGroup(id) {
 }
 
 async function savePosGroup() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('pg-name').value.trim();
   if (!name) { showToast(t('pos_group_name_required') || 'Grup adı zorunlu', 'error'); return; }
   if (editingPosGroupId) {
@@ -3534,6 +3552,7 @@ async function savePosGroup() {
   closeModal('pos-group-modal');
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
   await loadPosSettings();
+  } finally { submitting.reset(); }
 }
 
 function confirmDeletePosGroup(id) {
@@ -3651,6 +3670,8 @@ function renderColorPicker(active) {
 function selectPosColor(c) { renderColorPicker(c); }
 
 async function savePosButton() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('pb-name').value.trim();
   const productId = document.getElementById('pb-product').value;
   const groupId = document.getElementById('pb-group').value || null;
@@ -3675,6 +3696,7 @@ async function savePosButton() {
   closeModal('pos-button-modal');
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
   await loadPosSettings();
+  } finally { submitting.reset(); }
 }
 
 function confirmDeletePosButton(id) {
@@ -3691,11 +3713,14 @@ function confirmDeletePosButton(id) {
 }
 
 async function savePosPin() {
+  if (submitting()) return;
+  try {
   const pin = document.getElementById('pos-pin-input').value.trim();
   if (pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) { showToast('PIN 4 haneli sayı olmalı', 'error'); return; }
   const { error } = await sb.rpc('set_pos_pin', { p_company_id: companyId, p_user_id: currentUser.id, p_pin: pin || '' });
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('PIN kaydedildi', 'success');
+  } finally { submitting.reset(); }
 }
 
 // ===== INVOICE SETTINGS =====
@@ -3739,6 +3764,8 @@ async function loadInvoiceSettings() {
 }
 
 async function saveInvoiceSettings() {
+  if (submitting()) return;
+  try {
   const settings = {
     show_unit: document.getElementById('inv-show-unit').checked,
     show_discount: document.getElementById('inv-show-discount').checked,
@@ -3762,6 +3789,7 @@ async function saveInvoiceSettings() {
   const { error } = await sb.from('companies').update(updates).eq('id', companyId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast(t('toast_settings_saved') || 'Ayarlar kaydedildi', 'success');
+  } finally { submitting.reset(); }
 }
 
 async function loadModules() {
@@ -3909,12 +3937,13 @@ async function loadUsers() {
 }
 
 async function addUser() {
+  if (submitting()) return;
   const name = document.getElementById('add-user-name').value.trim();
   const email = document.getElementById('add-user-email').value.trim();
   const pass = document.getElementById('add-user-pass').value;
   const role = document.getElementById('add-user-role').value;
-  if (!name || !email || !pass) { showToast(t('err_fill_all') || 'Fill all fields', 'error'); return; }
-  if (pass.length < 8) { showToast(t('err_pass_min') || 'Password must be at least 8 characters', 'error'); return; }
+  if (!name || !email || !pass) { showToast(t('err_fill_all') || 'Fill all fields', 'error'); submitting.reset(); return; }
+  if (pass.length < 8) { showToast(t('err_pass_min') || 'Password must be at least 8 characters', 'error'); submitting.reset(); return; }
 
   // Subscription + user limit check
   const { data: compCheck } = await sb.from('companies').select('max_users, subscription_status, subscription_end').eq('id', companyId).single();
@@ -3950,6 +3979,7 @@ async function addUser() {
     showToast('Error: ' + e.message, 'error');
   } finally {
     btn.disabled = false; btn.textContent = origText;
+    submitting.reset();
   }
 }
 
@@ -4110,6 +4140,8 @@ function openRegimeModal(id=null) {
 }
 
 async function saveRegime() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('rg-name').value.trim();
   if (!name) { showToast(t('toast_name_required')||'Name is required', 'error'); return; }
 
@@ -4134,6 +4166,7 @@ async function saveRegime() {
   closeModal('regime-modal');
   await loadRegimes();
   showToast(t('toast_saved')||'Saved ✓', 'success');
+  } finally { submitting.reset(); }
 }
 
 async function deleteRegime(id, name) {

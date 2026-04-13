@@ -1353,6 +1353,8 @@ function openRegisterModal(id = null) {
 function editRegister(id) { openRegisterModal(id); }
 
 async function saveRegister() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('reg-name').value.trim();
   const currency = document.getElementById('reg-currency').value || document.getElementById('reg-currency-input').value.split(' ')[0];
   const opening = parseFloat(document.getElementById('reg-opening').value) || 0;
@@ -1374,6 +1376,7 @@ async function saveRegister() {
   closeModal('register-modal');
   await loadRegisters();
   updateStats();
+  } finally { submitting.reset(); }
 }
 
 function deleteRegister(id) {
@@ -1409,6 +1412,8 @@ function openCashTxModal() {
 }
 
 async function saveCashTx() {
+  if (submitting()) return;
+  try {
   if (!selectedRegisterId) return;
   const type = document.getElementById('ctx-type').value;
   const amount = parseFloat(document.getElementById('ctx-amount').value);
@@ -1432,6 +1437,7 @@ async function saveCashTx() {
   await loadRegisters(); // refresh balance
   updateStats();
   filterCashTx();
+  } finally { submitting.reset(); }
 }
 
 function deleteCashTx(id) {
@@ -1461,6 +1467,8 @@ function openBankModal(id = null) {
 function editBank(id) { openBankModal(id); }
 
 async function saveBank() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('bank-name').value.trim();
   const swift = document.getElementById('bank-swift').value.trim();
   if (!name) { showToast(t('toast_name_required'), 'error'); return; }
@@ -1474,6 +1482,7 @@ async function saveBank() {
   showToast(t('toast_bank_saved'), 'success');
   closeModal('bank-modal');
   await loadBanks(); updateAccountFilter(); updateStats();
+  } finally { submitting.reset(); }
 }
 
 function deleteBank(id) {
@@ -1524,6 +1533,8 @@ function updateBankSelect(preselected = null) {
 }
 
 async function saveAccount() {
+  if (submitting()) return;
+  try {
   const bankId = parseInt(document.getElementById('acc-bank').value);
   const name = document.getElementById('acc-name').value.trim();
   const iban = document.getElementById('acc-iban').value.trim().replace(/\s/g, '');
@@ -1547,6 +1558,7 @@ async function saveAccount() {
   showToast(t('toast_account_saved'), 'success');
   closeModal('account-modal');
   await loadBanks(); updateAccountFilter(); updateStats();
+  } finally { submitting.reset(); }
 }
 
 function deleteAccount(id) {
@@ -1574,6 +1586,8 @@ function openBankTxModal() {
 }
 
 async function saveBankTx() {
+  if (submitting()) return;
+  try {
   if (!selectedAccountId) return;
   const type = document.getElementById('btx-type').value;
   const amount = parseFloat(document.getElementById('btx-amount').value);
@@ -1598,6 +1612,7 @@ async function saveBankTx() {
   await loadBanks();
   updateStats();
   filterBankTx();
+  } finally { submitting.reset(); }
 }
 
 function deleteBankTx(id) {

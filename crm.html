@@ -500,6 +500,8 @@ function editOpp() {
 }
 
 async function saveOpp() {
+  if (submitting()) return;
+  try {
   const title = document.getElementById('opp-title').value.trim();
   const contactId = document.getElementById('opp-contact').value;
   if (!title) { showToast(t('crm_toast_title_required'), 'error'); return; }
@@ -524,6 +526,7 @@ async function saveOpp() {
   closeModal('opp-modal');
   await loadOpps();
   showToast(t('crm_toast_opp_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 // DRAWER
@@ -591,6 +594,8 @@ function addActivity(type) {
 }
 
 async function saveActivity() {
+  if (submitting()) return;
+  try {
   const type = document.getElementById('act-type').value;
   const desc = document.getElementById('act-desc').value.trim();
   if (!desc) { showToast(t('crm_toast_desc_required'), 'error'); return; }
@@ -613,6 +618,7 @@ async function saveActivity() {
   await loadOpps();
   loadTimeline(selectedOppId);
   showToast(t('crm_toast_act_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 // ===== DRAWER TABS =====
@@ -693,6 +699,8 @@ function recalcQuote() {
 }
 
 async function saveQuote() {
+  if (submitting()) return;
+  try {
   const contactId = document.getElementById('q-contact').value;
   if (!contactId) { showToast(t('crm_toast_customer_required'), 'error'); return; }
   const validItems = quoteItems.filter(it => it.qty > 0 && (it.product_id || it.description));
@@ -720,6 +728,7 @@ async function saveQuote() {
   closeModal('quote-modal');
   loadQuotes(selectedOppId);
   showToast(t('crm_toast_quote_saved') + ': ' + quote.quote_number, 'success');
+  } finally { submitting.reset(); }
 }
 
 async function loadQuotes(oppId) {

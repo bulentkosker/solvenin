@@ -1160,6 +1160,8 @@ function onPoPayMethodChange() {
 }
 
 async function savePoPayment() {
+  if (submitting()) return;
+  try {
   const orderId = document.getElementById('po-pay-order-id').value;
   const amount = parseFloat(document.getElementById('po-pay-amount').value);
   const method = document.getElementById('po-pay-method').value;
@@ -1207,6 +1209,7 @@ async function savePoPayment() {
   showToast(t('toast_payment_recorded') || 'Ödeme kaydedildi', 'success');
   closeModal('po-payment-modal');
   await loadOrders();
+  } finally { submitting.reset(); }
 }
 
 // ===== ORDER FORM (FULL PAGE) =====
@@ -1507,6 +1510,8 @@ function recalcOrder() {
 }
 
 async function saveOrder() {
+  if (submitting()) return;
+  try {
   const supplierId = document.getElementById('o-supplier').value;
   if (!supplierId) { showToast(t('toast_select_supplier'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && (i.product_id || i.description));
@@ -1617,6 +1622,7 @@ async function saveOrder() {
   _originalFormData = null; // Skip dirty check after save
   closeOrderForm();
   await loadOrders();
+  } finally { submitting.reset(); }
 }
 
 function canEditOrder(status) {
@@ -1801,6 +1807,8 @@ async function openReceiveModal(orderId) {
 }
 
 async function saveReceiving() {
+  if (submitting()) return;
+  try {
   const orderId = document.getElementById('receive-order-id').value;
   const whId = document.getElementById('receive-warehouse').value;
   if (!whId) { showToast(t('toast_select_warehouse'), 'error'); return; }
@@ -1883,6 +1891,7 @@ async function saveReceiving() {
   showToast(t('toast_stock_received'), 'success');
   closeModal('receive-modal');
   await loadOrders();
+  } finally { submitting.reset(); }
 }
 
 // ===== SUPPLIER CRUD =====
@@ -1898,6 +1907,8 @@ function openSupplierModal(id=null) {
 }
 
 async function saveSupplier() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('s-name').value.trim();
   if (!name) { showToast(t('toast_supplier_name_required'),'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('s-email').value.trim()||null, phone: document.getElementById('s-phone').value.trim()||null, address: document.getElementById('s-address').value.trim()||null, city: document.getElementById('s-city').value.trim()||null, country: document.getElementById('s-country').value.trim()||null, tax_number: document.getElementById('s-tax').value.trim()||null, payment_terms: parseInt(document.getElementById('s-terms').value)||30, notes: document.getElementById('s-notes').value.trim()||null };
@@ -1905,6 +1916,7 @@ async function saveSupplier() {
   else { await sb.from('contacts').insert(payload); showToast(t('toast_supplier_added'),'success'); }
   closeModal('supplier-modal');
   await loadSuppliers();
+  } finally { submitting.reset(); }
 }
 
 function editSupplier(id) { openSupplierModal(id); }
@@ -1953,6 +1965,8 @@ function openQAProductModal(name, callback) {
 }
 function closeQAProductModal() { document.getElementById('qa-product-modal').classList.remove('open'); _qaProductCb = null; }
 async function saveQAProduct() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
   const barcode = document.getElementById('qa-p-barcode').value.trim() || null;
@@ -1968,6 +1982,7 @@ async function saveQAProduct() {
   closeQAProductModal();
   products.push(data);
   if (_qaProductCb) _qaProductCb(data);
+  } finally { submitting.reset(); }
 }
 function openQASupplierModal(name) {
   document.getElementById('qa-s-name').value = name || '';
@@ -1978,6 +1993,8 @@ function openQASupplierModal(name) {
 }
 function closeQASupplierModal() { document.getElementById('qa-supplier-modal').classList.remove('open'); }
 async function saveQASupplier() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-s-name').value.trim();
   if (!name) { showToast(t('toast_supplier_name_required') || 'Name required', 'error'); return; }
   const { data, error } = await sb.from('contacts').insert({
@@ -1994,6 +2011,7 @@ async function saveQASupplier() {
   updateSupplierSelects();
   if (supplierQA) supplierQA.addAndSelect({ id: data.id, name: data.name });
   document.getElementById('o-supplier').value = data.id;
+  } finally { submitting.reset(); }
 }
 
 init();

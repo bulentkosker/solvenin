@@ -881,6 +881,8 @@ function removeBomInputLine(i) { bomInputLines.splice(i, 1); renderBomLines(); }
 function removeBomOutputLine(i) { bomOutputLines.splice(i, 1); renderBomLines(); }
 
 async function saveBom() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('bom-name').value.trim();
   if (!name) { showToast(t('toast_bom_name_required'), 'error'); return; }
 
@@ -934,6 +936,7 @@ async function saveBom() {
   renderBomTable();
   renderStats();
   populateBomSelect();
+  } finally { submitting.reset(); }
 }
 
 // ===== ORDER MODAL =====
@@ -1007,6 +1010,8 @@ function updateOrderPreview() {
 }
 
 async function saveOrder() {
+  if (submitting()) return;
+  try {
   const bomId = document.getElementById('order-bom-id').value;
   if (!bomId) { showToast(t('toast_select_bom'), 'error'); return; }
 
@@ -1046,6 +1051,7 @@ async function saveOrder() {
   await loadOrders();
   renderOrdersTable();
   renderStats();
+  } finally { submitting.reset(); }
 }
 
 // ===== ORDER DETAIL / STATUS ACTIONS =====
@@ -1282,6 +1288,8 @@ function closeQAProductModal() {
   _qaProductCb = null;
 }
 async function saveQAProduct() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
   const barcode = document.getElementById('qa-p-barcode').value.trim() || null;
@@ -1296,6 +1304,7 @@ async function saveQAProduct() {
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
   closeQAProductModal();
   if (_qaProductCb) _qaProductCb(data);
+  } finally { submitting.reset(); }
 }
 
 function escHtml(str) {

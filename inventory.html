@@ -1499,6 +1499,8 @@ function buildInlineForm(parentId, level) {
   form.appendChild(cancelBtn);
 
   async function save() {
+    if (submitting()) return;
+    try {
     const name = inp.value.trim();
     if (!name) { inp.focus(); return; }
     saveBtn.textContent = '...';
@@ -1526,6 +1528,7 @@ function buildInlineForm(parentId, level) {
     renderCatSelector(data.id, level + 1, null);
 
     showToast(t('toast_category_added').replace('{0}', name), 'success');
+    } finally { submitting.reset(); }
   }
 
   return form;
@@ -1559,6 +1562,8 @@ function resetCatSelector(categoryId) {
 
 
 async function saveProduct() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name is required', 'error'); return; }
   const isService = (document.querySelector('input[name="is_service"]:checked')||{}).value === 'true';
@@ -1614,6 +1619,7 @@ async function saveProduct() {
   closeModal('product-modal');
   await loadProducts();
   renderAll();
+  } finally { submitting.reset(); }
 }
 
 // ===== TRACKING / VARIANTS / SERIALS / LOTS =====
@@ -2040,6 +2046,8 @@ function closeQAProductModal() {
   _qaProductCallback = null;
 }
 async function saveQAProduct() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
   const product_type = document.getElementById('qa-p-type').value;
@@ -2057,6 +2065,7 @@ async function saveQAProduct() {
   await loadProducts();
   renderAll();
   if (_qaProductCallback) _qaProductCallback({ ...data, stock: 0 });
+  } finally { submitting.reset(); }
 }
 
 function openAdjustModal() {
@@ -2095,6 +2104,8 @@ async function populateWarehouseSelects() {
 }
 
 async function saveAdjustment() {
+  if (submitting()) return;
+  try {
   const pid = adjProductQA ? adjProductQA.getValue() : '';
   const qty = parseFloat(document.getElementById('adj-qty').value);
   const type = document.getElementById('adj-type').value;
@@ -2139,6 +2150,7 @@ async function saveAdjustment() {
   await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
   showToast(t('toast_movement_saved'), 'success');
+  } finally { submitting.reset(); }
 }
 
 function openDeleteModal(id) {

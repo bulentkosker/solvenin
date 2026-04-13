@@ -850,6 +850,8 @@ function openAccountModal(id = null) {
 function editAccount(id) { openAccountModal(id); }
 
 async function saveAccount() {
+  if (submitting()) return;
+  try {
   const code = document.getElementById('acc-code').value.trim();
   const name = document.getElementById('acc-name-coa').value.trim();
   const type = document.getElementById('acc-type').value;
@@ -877,6 +879,7 @@ async function saveAccount() {
   closeModal('account-modal');
   await loadAccounts();
   updateStats();
+  } finally { submitting.reset(); }
 }
 
 function deleteAccount(id) {
@@ -975,6 +978,8 @@ function updateJeTotals() {
 }
 
 async function saveJournalEntry(post = false) {
+  if (submitting()) return;
+  try {
   const number = document.getElementById('je-number').value.trim();
   const date   = document.getElementById('je-date').value;
   const desc   = document.getElementById('je-desc').value.trim();
@@ -1020,6 +1025,7 @@ async function saveJournalEntry(post = false) {
   await loadJournalEntries();
   await loadAccounts();
   updateStats();
+  } finally { submitting.reset(); }
 }
 
 function filterJournal() {
@@ -1266,6 +1272,8 @@ function openTaxModal(id = null) {
 }
 
 async function saveTaxRate() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('tax-name').value.trim();
   const rate = parseFloat(document.getElementById('tax-rate').value);
   const type = document.getElementById('tax-type').value;
@@ -1286,6 +1294,7 @@ async function saveTaxRate() {
   showToast(t('toast_tax_saved'), 'success');
   closeModal('tax-modal');
   await loadTaxRates();
+  } finally { submitting.reset(); }
 }
 
 function renderTaxTable() {

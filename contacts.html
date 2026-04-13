@@ -534,11 +534,12 @@ function editContact(id) {
 }
 
 async function saveContact() {
+  if (submitting()) return;
   const name = document.getElementById('c-name').value.trim();
-  if (!name) { showToast(t('err_fill_name') || 'Ad giriniz', 'error'); return; }
+  if (!name) { showToast(t('err_fill_name') || 'Ad giriniz', 'error'); submitting.reset(); return; }
   const isCust = document.getElementById('c-is-customer').checked;
   const isSupp = document.getElementById('c-is-supplier').checked;
-  if (!isCust && !isSupp) { showToast(t('err_select_type') || 'En az bir tür seçin', 'error'); return; }
+  if (!isCust && !isSupp) { showToast(t('err_select_type') || 'En az bir tür seçin', 'error'); submitting.reset(); return; }
 
   const payload = {
     company_id: companyId,
@@ -572,7 +573,7 @@ async function saveContact() {
     await loadContacts();
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
-  }
+  } finally { submitting.reset(); }
 }
 
 async function deleteContact(id) {
@@ -843,6 +844,8 @@ function openManualTxModal() {
 }
 
 async function saveManualTx() {
+  if (submitting()) return;
+  try {
   const type = document.getElementById('mtx-type').value;
   const amount = parseFloat(document.getElementById('mtx-amount').value);
   const date = document.getElementById('mtx-date').value;
@@ -861,6 +864,7 @@ async function saveManualTx() {
   closeModal('manual-tx-modal');
   await loadStatement();
   await loadBalances();
+  } finally { submitting.reset(); }
 }
 
 async function deleteManualTx(id) {

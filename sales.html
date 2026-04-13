@@ -1436,6 +1436,8 @@ function recalcOrder() {
 }
 
 async function saveOrder() {
+  if (submitting()) return;
+  try {
   const customerId = document.getElementById('o-customer').value;
   if (!customerId) { showToast(t('err_select_customer'), 'error'); return; }
   const validItems = orderItems.filter(i => i.qty > 0 && i.price >= 0 && (i.product_id || i.description));
@@ -1542,6 +1544,7 @@ async function saveOrder() {
   _originalFormData = null; // Skip dirty check on close
   closeOrderForm();
   await loadOrders();
+  } finally { submitting.reset(); }
 }
 
 function canEditOrder(status) {
@@ -1717,6 +1720,8 @@ function openCustomerModal(id = null) {
 }
 
 async function saveCustomer() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('c-name').value.trim();
   if (!name) { showToast(t('customer_required'), 'error'); return; }
   const payload = { company_id: companyId, name, email: document.getElementById('c-email').value.trim()||null, phone: document.getElementById('c-phone').value.trim()||null, address: document.getElementById('c-address').value.trim()||null, city: document.getElementById('c-city').value.trim()||null, country: document.getElementById('c-country').value.trim()||null, tax_number: document.getElementById('c-tax').value.trim()||null, notes: document.getElementById('c-notes').value.trim()||null };
@@ -1724,6 +1729,7 @@ async function saveCustomer() {
   else { await sb.from('contacts').insert(payload); showToast(t('customer_added'),'success'); }
   closeModal('customer-modal');
   await loadCustomers();
+  } finally { submitting.reset(); }
 }
 
 function editCustomer(id) { openCustomerModal(id); }
@@ -1758,6 +1764,8 @@ function openPaymentModal(orderId, remaining) {
 }
 
 async function savePayment() {
+  if (submitting()) return;
+  try {
   const orderId = document.getElementById('pay-order-id').value;
   const amount = parseFloat(document.getElementById('pay-amount').value);
   const method = document.getElementById('pay-method').value;
@@ -1820,6 +1828,7 @@ async function savePayment() {
   closeModal('payment-modal');
   await Promise.all([loadOrders(), loadPayments()]);
   updateStats();
+  } finally { submitting.reset(); }
 }
 
 // ===== INVOICE =====
@@ -2120,6 +2129,8 @@ function openQAProductModal(name, callback) {
 }
 function closeQAProductModal() { document.getElementById('qa-product-modal').classList.remove('open'); _qaProductCb = null; }
 async function saveQAProduct() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-p-name').value.trim();
   if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
   const barcode = document.getElementById('qa-p-barcode').value.trim() || null;
@@ -2135,6 +2146,7 @@ async function saveQAProduct() {
   closeQAProductModal();
   await loadProducts();
   if (_qaProductCb) _qaProductCb(data);
+  } finally { submitting.reset(); }
 }
 function openQACustomerModal(name) {
   document.getElementById('qa-c-name').value = name || '';
@@ -2145,6 +2157,8 @@ function openQACustomerModal(name) {
 }
 function closeQACustomerModal() { document.getElementById('qa-customer-modal').classList.remove('open'); }
 async function saveQACustomer() {
+  if (submitting()) return;
+  try {
   const name = document.getElementById('qa-c-name').value.trim();
   if (!name) { showToast(t('customer_required') || 'Name required', 'error'); return; }
   const { data, error } = await sb.from('contacts').insert({
@@ -2161,6 +2175,7 @@ async function saveQACustomer() {
   updateCustomerSelects();
   if (customerQA) customerQA.addAndSelect({ id: data.id, name: data.name });
   document.getElementById('o-customer').value = data.id;
+  } finally { submitting.reset(); }
 }
 
 init();

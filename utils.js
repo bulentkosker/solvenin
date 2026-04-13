@@ -2,6 +2,30 @@
    Include AFTER i18n.js, BEFORE page-specific scripts
 */
 
+// ===== DOUBLE-SUBMIT GUARD =====
+// Wraps any async button handler: disables button, shows spinner, re-enables after.
+window.withLoading = function(btn, asyncFn) {
+  if (!btn || btn.disabled) return;
+  const orig = btn.innerHTML;
+  const isDark = !btn.classList.contains('btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner${isDark?' dark':''}"></span> ${orig}`;
+  asyncFn().catch(e => { console.error(e); }).finally(() => {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  });
+};
+
+// Guard flag for Enter-key / programmatic double-fire. Usage:
+//   if (submitting()) return;
+//   try { await save(); } finally { submitting.reset(); }
+window.submitting = (function() {
+  let _flag = false;
+  const fn = () => { if (_flag) return true; _flag = true; return false; };
+  fn.reset = () => { _flag = false; };
+  return fn;
+})();
+
 // ===== NUMBER FORMATTING =====
 function getNumLocale() {
   const lang = (typeof detectLang === 'function') ? detectLang() : 'en';
