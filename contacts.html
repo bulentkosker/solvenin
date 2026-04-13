@@ -864,7 +864,7 @@ async function saveManualTx() {
   closeModal('manual-tx-modal');
   await loadStatement();
   await loadBalances();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function deleteManualTx(id) {

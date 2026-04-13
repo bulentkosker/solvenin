@@ -1528,7 +1528,7 @@ function buildInlineForm(parentId, level) {
     renderCatSelector(data.id, level + 1, null);
 
     showToast(t('toast_category_added').replace('{0}', name), 'success');
-    } finally { submitting.reset(); }
+    } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
   }
 
   return form;
@@ -1619,7 +1619,7 @@ async function saveProduct() {
   closeModal('product-modal');
   await loadProducts();
   renderAll();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== TRACKING / VARIANTS / SERIALS / LOTS =====
@@ -2065,7 +2065,7 @@ async function saveQAProduct() {
   await loadProducts();
   renderAll();
   if (_qaProductCallback) _qaProductCallback({ ...data, stock: 0 });
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function openAdjustModal() {
@@ -2150,7 +2150,7 @@ async function saveAdjustment() {
   await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
   showToast(t('toast_movement_saved'), 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function openDeleteModal(id) {

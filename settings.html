@@ -1900,7 +1900,7 @@ async function saveCompanyInfo() {
   }
   _pendingLogo = null;
   showToast(t('toast_company_info_saved'), 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); }
 }
 
 // ===== LOGO UPLOAD (client-side resize → base64 data URL) =====
@@ -2525,7 +2525,7 @@ async function saveCatAdd(parentId) {
   document.getElementById('inline-add-cat')?.remove();
   renderCategoriesList();
   showToast(`"${name}" added ✓`, 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function openRenameCat(id) {
@@ -2624,30 +2624,32 @@ function openWarehouseModal(id=null) {
 async function saveWarehouse() {
   if (submitting()) return;
   try {
-  const name = document.getElementById('wh-name').value.trim();
-  if (!name) { showToast(t('toast_name_required'), 'error'); return; }
-  const isDefault = document.getElementById('wh-default').checked;
-  const payload = {
-    name,
-    location: document.getElementById('wh-location').value.trim() || null,
-    notes: document.getElementById('wh-notes').value.trim() || null,
-    is_default: isDefault,
-    company_id: companyId,
-  };
-  // If setting as default, clear others first
-  if (isDefault) {
-    await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
-  }
-  let error;
-  if (editingWhId) {
-    ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
-  } else {
-    ({ error } = await sb.from('warehouses').insert(payload));
-  }
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  closeModal('warehouse-modal');
-  await loadWarehouses();
-  showToast(t('toast_saved'), 'success');
+    const name = document.getElementById('wh-name').value.trim();
+    if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
+    const isDefault = document.getElementById('wh-default').checked;
+    const payload = {
+      name,
+      location: document.getElementById('wh-location').value.trim() || null,
+      notes: document.getElementById('wh-notes').value.trim() || null,
+      is_default: isDefault,
+      company_id: companyId,
+    };
+    if (isDefault) {
+      await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
+    }
+    let error;
+    if (editingWhId) {
+      ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
+    } else {
+      ({ error } = await sb.from('warehouses').insert(payload));
+    }
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    closeModal('warehouse-modal');
+    await loadWarehouses();
+    showToast(t('toast_saved') || 'Saved', 'success');
+  } catch (e) {
+    console.error('saveWarehouse error:', e);
+    showToast(getErrorMessage(e), 'error');
   } finally { submitting.reset(); }
 }
 
@@ -2771,7 +2773,7 @@ async function saveTax() {
   closeModal('tax-modal');
   await loadTaxes();
   showToast(t('toast_saved'), 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function openDeleteTax(id, name) {
@@ -3453,7 +3455,7 @@ async function savePosReceiptSettings() {
   const { error } = await sb.from('companies').update({ invoice_settings: updated }).eq('id', companyId);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== POS BUTTON GROUPS — TAB + GRID UI =====
@@ -3552,7 +3554,7 @@ async function savePosGroup() {
   closeModal('pos-group-modal');
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
   await loadPosSettings();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function confirmDeletePosGroup(id) {
@@ -3696,7 +3698,7 @@ async function savePosButton() {
   closeModal('pos-button-modal');
   showToast(t('toast_saved') || 'Kaydedildi', 'success');
   await loadPosSettings();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function confirmDeletePosButton(id) {
@@ -3720,7 +3722,7 @@ async function savePosPin() {
   const { error } = await sb.rpc('set_pos_pin', { p_company_id: companyId, p_user_id: currentUser.id, p_pin: pin || '' });
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast('PIN kaydedildi', 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== INVOICE SETTINGS =====
@@ -3789,7 +3791,7 @@ async function saveInvoiceSettings() {
   const { error } = await sb.from('companies').update(updates).eq('id', companyId);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_settings_saved') || 'Ayarlar kaydedildi', 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function loadModules() {
@@ -4166,7 +4168,7 @@ async function saveRegime() {
   closeModal('regime-modal');
   await loadRegimes();
   showToast(t('toast_saved')||'Saved ✓', 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function deleteRegime(id, name) {

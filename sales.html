@@ -1544,7 +1544,7 @@ async function saveOrder() {
   _originalFormData = null; // Skip dirty check on close
   closeOrderForm();
   await loadOrders();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function canEditOrder(status) {
@@ -1729,7 +1729,7 @@ async function saveCustomer() {
   else { await sb.from('contacts').insert(payload); showToast(t('customer_added'),'success'); }
   closeModal('customer-modal');
   await loadCustomers();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function editCustomer(id) { openCustomerModal(id); }
@@ -1828,7 +1828,7 @@ async function savePayment() {
   closeModal('payment-modal');
   await Promise.all([loadOrders(), loadPayments()]);
   updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== INVOICE =====
@@ -2146,7 +2146,7 @@ async function saveQAProduct() {
   closeQAProductModal();
   await loadProducts();
   if (_qaProductCb) _qaProductCb(data);
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 function openQACustomerModal(name) {
   document.getElementById('qa-c-name').value = name || '';
@@ -2175,7 +2175,7 @@ async function saveQACustomer() {
   updateCustomerSelects();
   if (customerQA) customerQA.addAndSelect({ id: data.id, name: data.name });
   document.getElementById('o-customer').value = data.id;
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 init();

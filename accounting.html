@@ -879,7 +879,7 @@ async function saveAccount() {
   closeModal('account-modal');
   await loadAccounts();
   updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteAccount(id) {
@@ -1025,7 +1025,7 @@ async function saveJournalEntry(post = false) {
   await loadJournalEntries();
   await loadAccounts();
   updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function filterJournal() {
@@ -1294,7 +1294,7 @@ async function saveTaxRate() {
   showToast(t('toast_tax_saved'), 'success');
   closeModal('tax-modal');
   await loadTaxRates();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function renderTaxTable() {

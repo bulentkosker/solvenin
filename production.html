@@ -936,7 +936,7 @@ async function saveBom() {
   renderBomTable();
   renderStats();
   populateBomSelect();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== ORDER MODAL =====
@@ -1051,7 +1051,7 @@ async function saveOrder() {
   await loadOrders();
   renderOrdersTable();
   renderStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== ORDER DETAIL / STATUS ACTIONS =====
@@ -1304,7 +1304,7 @@ async function saveQAProduct() {
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
   closeQAProductModal();
   if (_qaProductCb) _qaProductCb(data);
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function escHtml(str) {

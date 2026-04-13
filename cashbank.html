@@ -1376,7 +1376,7 @@ async function saveRegister() {
   closeModal('register-modal');
   await loadRegisters();
   updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteRegister(id) {
@@ -1437,7 +1437,7 @@ async function saveCashTx() {
   await loadRegisters(); // refresh balance
   updateStats();
   filterCashTx();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteCashTx(id) {
@@ -1482,7 +1482,7 @@ async function saveBank() {
   showToast(t('toast_bank_saved'), 'success');
   closeModal('bank-modal');
   await loadBanks(); updateAccountFilter(); updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteBank(id) {
@@ -1558,7 +1558,7 @@ async function saveAccount() {
   showToast(t('toast_account_saved'), 'success');
   closeModal('account-modal');
   await loadBanks(); updateAccountFilter(); updateStats();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteAccount(id) {
@@ -1612,7 +1612,7 @@ async function saveBankTx() {
   await loadBanks();
   updateStats();
   filterBankTx();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function deleteBankTx(id) {

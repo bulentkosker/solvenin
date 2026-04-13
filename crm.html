@@ -526,7 +526,7 @@ async function saveOpp() {
   closeModal('opp-modal');
   await loadOpps();
   showToast(t('crm_toast_opp_saved'), 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // DRAWER
@@ -618,7 +618,7 @@ async function saveActivity() {
   await loadOpps();
   loadTimeline(selectedOppId);
   showToast(t('crm_toast_act_saved'), 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== DRAWER TABS =====
@@ -728,7 +728,7 @@ async function saveQuote() {
   closeModal('quote-modal');
   loadQuotes(selectedOppId);
   showToast(t('crm_toast_quote_saved') + ': ' + quote.quote_number, 'success');
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 async function loadQuotes(oppId) {

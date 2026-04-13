@@ -1209,7 +1209,7 @@ async function savePoPayment() {
   showToast(t('toast_payment_recorded') || 'Ödeme kaydedildi', 'success');
   closeModal('po-payment-modal');
   await loadOrders();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== ORDER FORM (FULL PAGE) =====
@@ -1622,7 +1622,7 @@ async function saveOrder() {
   _originalFormData = null; // Skip dirty check after save
   closeOrderForm();
   await loadOrders();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function canEditOrder(status) {
@@ -1891,7 +1891,7 @@ async function saveReceiving() {
   showToast(t('toast_stock_received'), 'success');
   closeModal('receive-modal');
   await loadOrders();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 // ===== SUPPLIER CRUD =====
@@ -1916,7 +1916,7 @@ async function saveSupplier() {
   else { await sb.from('contacts').insert(payload); showToast(t('toast_supplier_added'),'success'); }
   closeModal('supplier-modal');
   await loadSuppliers();
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function editSupplier(id) { openSupplierModal(id); }
@@ -1982,7 +1982,7 @@ async function saveQAProduct() {
   closeQAProductModal();
   products.push(data);
   if (_qaProductCb) _qaProductCb(data);
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 function openQASupplierModal(name) {
   document.getElementById('qa-s-name').value = name || '';
@@ -2011,7 +2011,7 @@ async function saveQASupplier() {
   updateSupplierSelects();
   if (supplierQA) supplierQA.addAndSelect({ id: data.id, name: data.name });
   document.getElementById('o-supplier').value = data.id;
-  } finally { submitting.reset(); }
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 init();
