@@ -124,6 +124,24 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - YASAK kısayollar (tarayıcı çakışması): Ctrl+S, Ctrl+P, Ctrl+N, Ctrl+T, Ctrl+W, Ctrl+R
 - QA dropdown: ↑↓ navigasyon, Enter seç, Escape kapat
 
+## Double Submit Prevention (MANDATORY)
+- Every save/submit function MUST start with: `if (submitting()) return;`
+- Every save button MUST use `withLoading()` wrapper
+- This applies to ALL current and future functions that:
+  - Insert/update/delete data
+  - Call Supabase or any API
+  - Handle form submissions
+  - Process payments or transactions
+- Example:
+  ```js
+  async function saveProduct() {
+    if (submitting()) return;
+    // ... rest of function
+  }
+  ```
+- Violation of this rule is a bug, not a style issue
+- `utils.js` contains `submitting()` and `withLoading()` global utilities — always use these, never reinvent
+
 ## Subscription Planları
 - Free: $0, 30 fatura/ay, tüm modüller, email destek
 - Standard: $8.99/user/mo (yıllık $89.90), sınırsız fatura, öncelikli destek
