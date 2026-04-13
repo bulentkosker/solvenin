@@ -2622,9 +2622,10 @@ function openWarehouseModal(id=null) {
 }
 
 async function saveWarehouse() {
-  if (submitting()) return;
+  console.log('[saveWarehouse] called, editingWhId:', editingWhId, 'companyId:', companyId);
   try {
     const name = document.getElementById('wh-name').value.trim();
+    console.log('[saveWarehouse] name:', name);
     if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
     const isDefault = document.getElementById('wh-default').checked;
     const payload = {
@@ -2634,23 +2635,25 @@ async function saveWarehouse() {
       is_default: isDefault,
       company_id: companyId,
     };
+    console.log('[saveWarehouse] payload:', JSON.stringify(payload));
     if (isDefault) {
       await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
     }
-    let error;
+    let data, error;
     if (editingWhId) {
-      ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
+      ({ data, error } = await sb.from('warehouses').update(payload).eq('id', editingWhId).select());
     } else {
-      ({ error } = await sb.from('warehouses').insert(payload));
+      ({ data, error } = await sb.from('warehouses').insert(payload).select());
     }
+    console.log('[saveWarehouse] result:', data, 'error:', error);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     closeModal('warehouse-modal');
     await loadWarehouses();
     showToast(t('toast_saved') || 'Saved', 'success');
   } catch (e) {
-    console.error('saveWarehouse error:', e);
+    console.error('[saveWarehouse] EXCEPTION:', e);
     showToast(getErrorMessage(e), 'error');
-  } finally { submitting.reset(); }
+  }
 }
 
 async function setDefaultWarehouse(id) {
