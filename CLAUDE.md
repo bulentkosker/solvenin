@@ -66,6 +66,20 @@ Maintenance, Settings, Subscription, Contacts, User Permissions
 - Tüm migration'lar node + service key ile çalıştırılır (SQL Editor'e gerek yok)
 - `.env` dosyasında: SUPABASE_URL, SUPABASE_SERVICE_KEY
 
+## Migration Safety Rule (MANDATORY)
+- Every migration SQL file MUST be wrapped in a transaction:
+  ```sql
+  BEGIN;
+  -- all changes here
+  INSERT INTO migrations_log (file_name, notes) VALUES ('NNN_name.sql', 'description')
+    ON CONFLICT (file_name) DO NOTHING;
+  COMMIT;
+  ```
+- This ensures if anything fails midway, the entire migration rolls back automatically
+- No partial migrations allowed
+- Every migration must have a corresponding INSERT into migrations_log at the end, inside the same transaction
+- Violation of this rule is a bug — partial migrations corrupt data
+
 ## POS Module
 - `pos.html` — full-screen POS interface (no sidebar)
 - Product grid with category filter + search
