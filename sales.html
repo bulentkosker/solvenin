@@ -1839,81 +1839,73 @@ async function viewInvoice(orderId) {
   };
   const L = labels[lang] || labels.en;
   const IS = invoiceSettings;
-  const thS = 'padding:10px 12px;font-size:11px;font-weight:600';
-  const tdS = 'padding:10px 12px';
   const _logoUrl = (window.getCompanyLogo && window.getCompanyLogo()) || companyData.logo_url || null;
   const _logoBlock = _logoUrl
     ? `<img src="${_logoUrl}" alt="" crossorigin="anonymous" style="width:80px;height:80px;object-fit:contain;border-radius:8px;background:#fff;flex-shrink:0">`
     : '';
-  const html = `<div class="invoice-page" id="pdf-content" style="font-family:'DM Sans',sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-      <div style="display:flex;gap:16px;align-items:flex-start">
+  const _thS = 'padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:.3px';
+  const _tdS = 'padding:6px 10px;font-size:11px';
+  const html = `<div class="invoice-page" id="pdf-content" style="font-family:'DM Sans',sans-serif;max-width:800px;margin:0 auto;padding:28px 32px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div style="display:flex;gap:14px;align-items:flex-start">
         ${_logoBlock}
         <div>
-          <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:#1e40af">${companyName}</div>
-          ${companyData.email ? `<div style="font-size:12px;color:#64748b;margin-top:4px">${companyData.email}</div>` : ''}
-          ${companyData.phone ? `<div style="font-size:12px;color:#64748b">${companyData.phone}</div>` : ''}
-          ${companyData.tax_number ? `<div style="font-size:12px;color:#64748b">${L.taxNo}: ${companyData.tax_number}</div>` : ''}
+          <div style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:#1e3a5f">${companyName}</div>
+          ${companyData.address ? `<div style="font-size:11px;color:#64748b;margin-top:3px">${companyData.address}</div>` : ''}
+          ${companyData.phone ? `<div style="font-size:11px;color:#64748b">${companyData.phone}</div>` : ''}
+          ${companyData.email ? `<div style="font-size:11px;color:#64748b">${companyData.email}</div>` : ''}
+          ${companyData.tax_number ? `<div style="font-size:11px;color:#64748b">${L.taxNo}: ${companyData.tax_number}</div>` : ''}
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:900;color:#1e40af">${L.invoice}</div>
-        <div style="font-size:13px;color:#475569;margin-top:4px"><strong>${order.order_number}</strong></div>
-        <div style="font-size:12px;color:#94a3b8">${L.date}: ${order.issue_date}</div>
-        ${order.due_date ? `<div style="font-size:12px;color:#94a3b8">${L.dueDate}: ${order.due_date}</div>` : ''}
+        <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;color:#1e3a5f">${L.invoice}</div>
+        <div style="font-size:13px;color:#475569;margin-top:3px"><strong>${order.order_number}</strong></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">${L.date}: ${order.issue_date}</div>
+        ${order.due_date ? `<div style="font-size:11px;color:#94a3b8">${L.dueDate}: ${order.due_date}</div>` : ''}
       </div>
     </div>
-    <div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f8fafc;border-radius:10px">
-      <div style="flex:1">
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:6px">${L.billTo}</div>
-        <div style="font-size:14px;font-weight:700;color:#1a2744">${customer?.name||'—'}</div>
-        ${customer?.email ? `<div style="font-size:12px;color:#64748b">${customer.email}</div>` : ''}
-        ${customer?.phone ? `<div style="font-size:12px;color:#64748b">${customer.phone}</div>` : ''}
-        ${customer?.address ? `<div style="font-size:12px;color:#64748b">${customer.address}${customer.city ? ', '+customer.city : ''}</div>` : ''}
-        ${customer?.tax_number ? `<div style="font-size:12px;color:#64748b">${L.taxNo}: ${customer.tax_number}</div>` : ''}
-      </div>
-      <div style="flex:1">
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:6px">${L.from}</div>
-        <div style="font-size:14px;font-weight:700;color:#1a2744">${companyName}</div>
-        ${companyData.address ? `<div style="font-size:12px;color:#64748b">${companyData.address}</div>` : ''}
-        ${companyData.email ? `<div style="font-size:12px;color:#64748b">${companyData.email}</div>` : ''}
-        ${companyData.phone ? `<div style="font-size:12px;color:#64748b">${companyData.phone}</div>` : ''}
-      </div>
+    <div style="margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:8px">
+      <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${L.billTo}</div>
+      <div style="font-size:13px;font-weight:700;color:#1a2744">${customer?.name||'—'}</div>
+      ${customer?.address ? `<div style="font-size:11px;color:#64748b">${customer.address}${customer.city ? ', '+customer.city : ''}</div>` : ''}
+      ${customer?.phone ? `<div style="font-size:11px;color:#64748b">${customer.phone}</div>` : ''}
+      ${customer?.email ? `<div style="font-size:11px;color:#64748b">${customer.email}</div>` : ''}
+      ${customer?.tax_number ? `<div style="font-size:11px;color:#64748b">${L.taxNo}: ${customer.tax_number}</div>` : ''}
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">
-      <thead><tr style="background:#1e40af;color:#fff">
-        <th style="${thS};text-align:left">#</th>
-        <th style="${thS};text-align:left">${L.product}</th>
-        ${IS.show_description ? `<th style="${thS};text-align:left">${L.desc}</th>` : ''}
-        <th style="${thS};text-align:right">${L.qty}</th>
-        ${IS.show_unit ? `<th style="${thS};text-align:left">${L.unit}</th>` : ''}
-        <th style="${thS};text-align:right">${L.price}</th>
-        ${IS.show_discount ? `<th style="${thS};text-align:right">${L.disc}</th>` : ''}
-        <th style="${thS};text-align:right">${L.total}</th>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px">
+      <thead><tr style="background:#1e3a5f;color:#fff">
+        <th style="${_thS};text-align:left;border-radius:6px 0 0 0">#</th>
+        <th style="${_thS};text-align:left">${L.product}</th>
+        ${IS.show_description ? `<th style="${_thS};text-align:left">${L.desc}</th>` : ''}
+        <th style="${_thS};text-align:right">${L.qty}</th>
+        ${IS.show_unit ? `<th style="${_thS};text-align:left">${L.unit}</th>` : ''}
+        <th style="${_thS};text-align:right">${L.price}</th>
+        ${IS.show_discount ? `<th style="${_thS};text-align:right">${L.disc}</th>` : ''}
+        <th style="${_thS};text-align:right;border-radius:0 6px 0 0">${L.total}</th>
       </tr></thead>
       <tbody>
-        ${(items||[]).map((item,i) => `<tr style="border-bottom:1px solid #e2e8f0;${i%2?'background:#f8fafc':''}">
-          <td style="${tdS}">${i+1}</td>
-          <td style="${tdS}">${item.products?.name || item.description || '—'}</td>
-          ${IS.show_description ? `<td style="${tdS}">${item.description || '—'}</td>` : ''}
-          <td style="${tdS};text-align:right">${item.quantity}</td>
-          ${IS.show_unit ? `<td style="${tdS}">${item.products?.unit || '—'}</td>` : ''}
-          <td style="${tdS};text-align:right">${fmt(parseFloat(item.unit_price))}</td>
-          ${IS.show_discount ? `<td style="${tdS};text-align:right">${item.discount ? item.discount+'%' : '—'}</td>` : ''}
-          <td style="${tdS};text-align:right;font-weight:700">${fmt(parseFloat(item.total))}</td>
+        ${(items||[]).map((item,i) => `<tr style="border-bottom:1px solid #eef1f6;${i%2?'background:#f8f9fa':''}">
+          <td style="${_tdS};color:#94a3b8">${i+1}</td>
+          <td style="${_tdS};font-weight:600;color:#1a2744">${item.products?.name || item.description || '—'}</td>
+          ${IS.show_description ? `<td style="${_tdS};color:#64748b">${item.description || '—'}</td>` : ''}
+          <td style="${_tdS};text-align:right">${item.quantity}</td>
+          ${IS.show_unit ? `<td style="${_tdS};color:#64748b">${item.products?.unit || '—'}</td>` : ''}
+          <td style="${_tdS};text-align:right">${fmt(parseFloat(item.unit_price))}</td>
+          ${IS.show_discount ? `<td style="${_tdS};text-align:right;color:#64748b">${item.discount ? item.discount+'%' : '—'}</td>` : ''}
+          <td style="${_tdS};text-align:right;font-weight:700">${fmt(parseFloat(item.total))}</td>
         </tr>`).join('')}
       </tbody>
     </table>
     <div style="display:flex;justify-content:flex-end">
-      <div style="width:280px">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.subtotal}</span><span>${fmt(parseFloat(order.subtotal||0))}</span></div>
-        ${IS.show_tax ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.tax} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>` : ''}
-        ${parseFloat(order.discount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b"><span>${L.discount}</span><span>-${fmt(parseFloat(order.discount))}</span></div>` : ''}
-        <div style="border-top:2px solid #1e40af;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#1e40af"><span>${L.grandTotal}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
+      <div style="width:260px">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>${L.subtotal}</span><span>${fmt(parseFloat(order.subtotal||0))}</span></div>
+        ${IS.show_tax ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>${L.tax} (${order.tax_rate||0}%)</span><span>${fmt(parseFloat(order.tax_amount||0))}</span></div>` : ''}
+        ${parseFloat(order.discount||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>${L.discount}</span><span>-${fmt(parseFloat(order.discount))}</span></div>` : ''}
+        <div style="border-top:2px solid #1e3a5f;margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#1e3a5f"><span>${L.grandTotal}</span><span>${fmt(parseFloat(order.total||0))}</span></div>
       </div>
     </div>
-    ${order.notes ? `<div style="margin-top:24px;padding:14px;background:#f8fafc;border-radius:8px;font-size:12px;color:#475569"><strong>${L.notes}:</strong> ${order.notes}</div>` : ''}
-    ${userPlan === 'free' ? '<div style="text-align:center;margin-top:32px;font-size:10px;color:#cbd5e1">Powered by Solvenin · solvenin.com</div>' : ''}
+    ${order.notes ? `<div style="margin-top:16px;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:11px;color:#475569"><strong>${L.notes}:</strong> ${order.notes}</div>` : ''}
+    ${userPlan === 'free' ? '<div style="text-align:center;margin-top:24px;font-size:9px;color:#cbd5e1">Powered by Solvenin · solvenin.com</div>' : ''}
   </div>`;
 
   document.getElementById('invoice-content').innerHTML = html;
