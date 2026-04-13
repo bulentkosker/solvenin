@@ -838,6 +838,10 @@ async function init() {
   localStorage.setItem('currentCompanyId', companyId);
   currentUser = user;
 
+  // Load company stock settings
+  const { data: _coSettings } = await sb.from('companies').select('low_stock_threshold').eq('id', companyId).single();
+  window._lowStockThreshold = _coSettings?.low_stock_threshold ?? 10;
+
   await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
   renderAll();
 
@@ -862,7 +866,8 @@ function updateStats() {
   const physical = products.filter(p => !p.is_service);
   const total = products.length;
   const totalValue = physical.reduce((s, p) => s + p.stock * p.unit_cost, 0);
-  const low = physical.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
+  const _thr = window._lowStockThreshold || 10;
+  const low = physical.filter(p => p.stock > 0 && p.stock <= (p.min_stock || _thr)).length;
   const out = physical.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
@@ -880,8 +885,9 @@ function updateStats() {
 document.addEventListener('langChanged', () => { if (typeof products !== 'undefined' && products) updateStats(); });
 
 function getStockStatus(p) {
-  if (p.stock === 0) return 'out';
-  if (p.stock <= p.min_stock) return 'low';
+  if (p.stock <= 0) return 'out';
+  const threshold = p.min_stock || window._lowStockThreshold || 10;
+  if (p.stock <= threshold) return 'low';
   return 'in_stock';
 }
 

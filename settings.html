@@ -343,6 +343,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item active" onclick="switchSection('company', this)"><span class="settings-nav-icon">🏢</span> <span data-i18n="nav_company">Company</span></button>
         <button class="settings-nav-item" onclick="switchSection('currency', this)"><span class="settings-nav-icon">💱</span> <span data-i18n="nav_currency">Currency</span></button>
         <button class="settings-nav-item" onclick="switchSection('categories', this)"><span class="settings-nav-icon">🏷️</span> <span data-i18n="nav_categories">Categories</span></button>
+        <button class="settings-nav-item" onclick="switchSection('stock-settings', this)"><span class="settings-nav-icon">📦</span> <span data-i18n="nav_stock_settings">Stok Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></button>
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
         <button class="settings-nav-item" onclick="switchSection('tax-regime', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="nav_tax_regime">Tax Regime</span></button>
@@ -400,17 +401,6 @@ tr:hover .action-btns { opacity:1; }
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- STOCK SETTINGS -->
-          <div class="settings-card" style="margin-top:16px">
-            <div class="settings-card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-              <div>
-                <div style="font-size:13px;font-weight:600;color:var(--gray800)" data-i18n="setting_allow_negative_stock">Negatif stoka izin ver</div>
-                <div style="font-size:12px;color:var(--gray500)" data-i18n="setting_allow_negative_stock_desc">Kapalıysa stok sıfır veya altındaki ürünler satılamaz</div>
-              </div>
-              <label class="toggle"><input type="checkbox" id="co-allow-negative-stock" checked><span class="track"></span><span class="thumb"></span></label>
             </div>
           </div>
 
@@ -651,6 +641,58 @@ tr:hover .action-btns { opacity:1; }
                 <input type="text" id="cat-search" placeholder="🔍 Kategori ara..." oninput="filterCategories(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;transition:border .15s">
               </div>
               <div id="categories-list" class="manage-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STOCK SETTINGS -->
+        <div class="settings-section" id="section-stock-settings">
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="settings_stock_control">Stok Kontrolü</div>
+                <div class="settings-card-desc" data-i18n="settings_stock_control_desc">Stok yönetimi ve uyarı ayarları</div>
+              </div>
+              <button class="btn-primary" onclick="saveStockSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+            </div>
+            <div class="settings-card-body">
+              <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+                <div>
+                  <div style="font-weight:600;font-size:13px" data-i18n="setting_allow_negative_stock">Negatif stoka izin ver</div>
+                  <div style="font-size:11px;color:var(--gray400)" data-i18n="setting_allow_negative_stock_desc">Kapalıysa stok sıfır veya altındaki ürünler satılamaz</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="stk-allow-negative" checked><span class="track"></span><span class="thumb"></span></label>
+              </div>
+              <div class="manage-item" style="padding:12px 0">
+                <div class="form-row">
+                  <div class="form-group" style="max-width:240px">
+                    <label data-i18n="settings_low_stock_threshold">Düşük stok eşiği</label>
+                    <input type="number" id="stk-low-threshold" value="10" min="0" placeholder="10" style="width:100%">
+                    <div style="font-size:11px;color:var(--gray400);margin-top:4px" data-i18n="settings_low_stock_threshold_helper">Bu miktarın altındaki ürünler düşük stok uyarısı verir</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card" style="margin-top:16px">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="settings_barcode">Barkod</div>
+              </div>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row">
+                <div class="form-group" style="max-width:240px">
+                  <label data-i18n="settings_barcode_format">Varsayılan barkod formatı</label>
+                  <select id="stk-barcode-format">
+                    <option value="EAN-13">EAN-13</option>
+                    <option value="EAN-8">EAN-8</option>
+                    <option value="CODE-128">CODE-128</option>
+                    <option value="QR">QR Code</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1738,7 +1780,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock,low_stock_threshold,default_barcode_format')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1771,9 +1813,13 @@ async function loadCompanyData() {
 
   renderActiveCurrencies();
 
-  // Negative stock toggle
-  const negStockEl = document.getElementById('co-allow-negative-stock');
-  if (negStockEl) negStockEl.checked = data.allow_negative_stock !== false;
+  // Stock settings
+  const negEl = document.getElementById('stk-allow-negative');
+  if (negEl) negEl.checked = data.allow_negative_stock !== false;
+  const thrEl = document.getElementById('stk-low-threshold');
+  if (thrEl) thrEl.value = data.low_stock_threshold ?? 10;
+  const bfEl = document.getElementById('stk-barcode-format');
+  if (bfEl) bfEl.value = data.default_barcode_format || 'EAN-13';
 
   // Show danger zone only for owners — and HIDE for demo companies
   // (demo companies are deleted from the service panel, not by end users)
@@ -1900,7 +1946,6 @@ async function saveCompanyInfo() {
     website: document.getElementById('co-website').value.trim() || null,
     address: document.getElementById('co-address').value.trim() || null,
     country_code: document.getElementById('co-country').value || null,
-    allow_negative_stock: document.getElementById('co-allow-negative-stock')?.checked ?? true,
   };
   // Apply pending logo change ('' = remove)
   if (_pendingLogo !== null) payload.logo_url = _pendingLogo === '' ? null : _pendingLogo;
@@ -2583,6 +2628,25 @@ async function openDeleteCat(id, name) {
 }
 
 function confirmDeleteAction() { if(deleteCallback) deleteCallback(); }
+
+// ===== STOCK SETTINGS =====
+async function saveStockSettings() {
+  if (submitting()) return;
+  try {
+    if (!companyId) return;
+    const payload = {
+      allow_negative_stock: document.getElementById('stk-allow-negative')?.checked ?? true,
+      low_stock_threshold: parseInt(document.getElementById('stk-low-threshold')?.value) || 10,
+      default_barcode_format: document.getElementById('stk-barcode-format')?.value || 'EAN-13',
+    };
+    const { error } = await sb.from('companies').update(payload).eq('id', companyId);
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    showToast(t('toast_saved') || 'Saved', 'success');
+  } catch (e) {
+    console.error('saveStockSettings:', e);
+    showToast(getErrorMessage(e), 'error');
+  } finally { submitting.reset(); }
+}
 
 // ===== WAREHOUSES =====
 async function loadWarehouses() {
