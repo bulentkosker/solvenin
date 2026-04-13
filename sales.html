@@ -783,7 +783,7 @@ async function init() {
 
   // Load company details + user plan + module data in parallel
   const [cdRes, profRes] = await Promise.all([
-    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings,accounting_enabled,logo_url').eq('id', companyId).single(),
+    sb.from('companies').select('name,email,phone,address,tax_number,base_currency,invoice_settings,accounting_enabled,logo_url,allow_negative_stock').eq('id', companyId).single(),
     sb.from('profiles').select('plan').eq('id', session.user.id).single(),
   ]);
   if (cdRes.data) { companyData = cdRes.data; companyName = cdRes.data.name; if (cdRes.data.invoice_settings) invoiceSettings = { ...invoiceSettings, ...cdRes.data.invoice_settings }; accountingEnabled = !!cdRes.data.accounting_enabled; }
@@ -1355,6 +1355,14 @@ function renderOrderItems() {
       value: wrap.dataset.qaVal || '',
       placeholder: t('select_product') || 'Ürün seç...',
       onSelect(id, p) {
+        // Negative stock check
+        if (companyData.allow_negative_stock === false && !p?._is_service) {
+          const prod = products.find(x => x.id === id);
+          if (prod && parseFloat(prod.quantity || 0) <= 0) {
+            showToast(t('error_insufficient_stock') || 'Stok yetersiz — bu ürün satılamaz', 'error');
+            return;
+          }
+        }
         orderItems[idx].product_id = id;
         orderItems[idx].price = parseFloat(p?._price || 0);
         orderItems[idx].description = (p?.name || '').replace(/^[📦🔧]\s/, '');

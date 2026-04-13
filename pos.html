@@ -297,7 +297,7 @@ async function init() {
 
   // Load company info (currency + receipt data)
   const { data: comp } = await sb.from('companies')
-    .select('name,address,phone,logo_url,base_currency,invoice_settings')
+    .select('name,address,phone,logo_url,base_currency,invoice_settings,allow_negative_stock')
     .eq('id', companyId).single();
   if (comp) {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
@@ -320,6 +320,7 @@ async function init() {
       receipt_show_subtotal: rs.receipt_show_subtotal !== false,
       receipt_show_vat: rs.receipt_show_vat !== false,
       receipt_show_cashier: rs.receipt_show_cashier !== false,
+      allow_negative_stock: comp.allow_negative_stock !== false,
     };
   }
 
@@ -510,6 +511,15 @@ function addToCart(pid) {
     if (qb?.products) p = qb.products;
   }
   if (!p) { console.warn('[pos] Product not found:', pid); return; }
+  // Negative stock check
+  if (!companyInfo.allow_negative_stock) {
+    const currentInCart = cart.find(c => c.pid === pid)?.qty || 0;
+    const available = parseFloat(p.stock_quantity || 0) - currentInCart;
+    if (available <= 0) {
+      showToast(t('error_insufficient_stock') || 'Stok yetersiz', 'error');
+      return;
+    }
+  }
   const ex = cart.find(c => c.pid === pid);
   if (ex) ex.qty++;
   else cart.push({ pid, name: p.name, price: parseFloat(p.sale_price||0), qty: 1, unit: p.unit || '' });

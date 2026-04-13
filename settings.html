@@ -403,6 +403,17 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
 
+          <!-- STOCK SETTINGS -->
+          <div class="settings-card" style="margin-top:16px">
+            <div class="settings-card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--gray800)" data-i18n="setting_allow_negative_stock">Negatif stoka izin ver</div>
+                <div style="font-size:12px;color:var(--gray500)" data-i18n="setting_allow_negative_stock_desc">Kapalıysa stok sıfır veya altındaki ürünler satılamaz</div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="co-allow-negative-stock" checked><span class="track"></span><span class="thumb"></span></label>
+            </div>
+          </div>
+
           <!-- DANGER ZONE (owner only, hidden for demo companies) -->
           <div class="settings-card danger-zone-card" id="danger-zone" style="display:none">
             <div class="settings-card-head" style="border-bottom-color:#fecaca">
@@ -1727,7 +1738,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1759,6 +1770,10 @@ async function loadCompanyData() {
   if (bcs) bcs.value = baseCurrency;
 
   renderActiveCurrencies();
+
+  // Negative stock toggle
+  const negStockEl = document.getElementById('co-allow-negative-stock');
+  if (negStockEl) negStockEl.checked = data.allow_negative_stock !== false;
 
   // Show danger zone only for owners — and HIDE for demo companies
   // (demo companies are deleted from the service panel, not by end users)
@@ -1885,6 +1900,7 @@ async function saveCompanyInfo() {
     website: document.getElementById('co-website').value.trim() || null,
     address: document.getElementById('co-address').value.trim() || null,
     country_code: document.getElementById('co-country').value || null,
+    allow_negative_stock: document.getElementById('co-allow-negative-stock')?.checked ?? true,
   };
   // Apply pending logo change ('' = remove)
   if (_pendingLogo !== null) payload.logo_url = _pendingLogo === '' ? null : _pendingLogo;
