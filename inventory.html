@@ -1507,6 +1507,7 @@ function buildInlineForm(parentId, level) {
     const { data, error } = await sb.from('categories').insert({
       name,
       parent_id: parentId || null,
+      company_id: companyId,
     }).select().single();
 
     if (error) { showToast(error.message, 'error'); saveBtn.textContent = 'Save'; saveBtn.disabled = false; return; }
