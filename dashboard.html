@@ -698,6 +698,7 @@ tr:hover td { background: var(--gray50); }
 .stat-opt-info{flex:1}
 .stat-opt-label{font-size:13px;font-weight:600;color:var(--gray800)}
 .stat-opt-desc{font-size:11px;color:var(--gray400)}
+.dark-select option{color:#1a2744;background:#fff}
 </style>
 <script src="i18n.js"></script>
 <script src="feature-flags.js"></script>
@@ -740,13 +741,13 @@ tr:hover td { background: var(--gray50); }
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="label_country">Country</span> *</label>
-      <select id="onboarding-country" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+      <select id="onboarding-country" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none" class="dark-select">
         <option value="">—</option>
       </select>
     </div>
     <div style="margin-bottom:22px">
       <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="label_base_currency">Base Currency</span> *</label>
-      <select id="onboarding-currency" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+      <select id="onboarding-currency" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none" class="dark-select">
         <option value="">—</option>
         <option value="USD">USD — US Dollar</option>
         <option value="EUR">EUR — Euro</option>
