@@ -308,6 +308,7 @@ tr:hover .action-btns { opacity:1; }
     .main { margin-left: 220px; }
   </style>
   <script src="sidebar.js"></script>
+  <script src="utils.js"></script>
   <link rel="stylesheet" href="theme.css">
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-KPXCV8FEZB"></script>
@@ -2622,10 +2623,9 @@ function openWarehouseModal(id=null) {
 }
 
 async function saveWarehouse() {
-  console.log('[saveWarehouse] called, editingWhId:', editingWhId, 'companyId:', companyId);
+  if (submitting()) return;
   try {
     const name = document.getElementById('wh-name').value.trim();
-    console.log('[saveWarehouse] name:', name);
     if (!name) { showToast(t('toast_name_required') || 'Name required', 'error'); return; }
     const isDefault = document.getElementById('wh-default').checked;
     const payload = {
@@ -2635,25 +2635,23 @@ async function saveWarehouse() {
       is_default: isDefault,
       company_id: companyId,
     };
-    console.log('[saveWarehouse] payload:', JSON.stringify(payload));
     if (isDefault) {
       await sb.from('warehouses').update({ is_default: false }).eq('company_id', companyId);
     }
-    let data, error;
+    let error;
     if (editingWhId) {
-      ({ data, error } = await sb.from('warehouses').update(payload).eq('id', editingWhId).select());
+      ({ error } = await sb.from('warehouses').update(payload).eq('id', editingWhId));
     } else {
-      ({ data, error } = await sb.from('warehouses').insert(payload).select());
+      ({ error } = await sb.from('warehouses').insert(payload));
     }
-    console.log('[saveWarehouse] result:', data, 'error:', error);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     closeModal('warehouse-modal');
     await loadWarehouses();
     showToast(t('toast_saved') || 'Saved', 'success');
   } catch (e) {
-    console.error('[saveWarehouse] EXCEPTION:', e);
+    console.error('saveWarehouse error:', e);
     showToast(getErrorMessage(e), 'error');
-  }
+  } finally { submitting.reset(); }
 }
 
 async function setDefaultWarehouse(id) {

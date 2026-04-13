@@ -181,6 +181,7 @@ tr:hover td{background:var(--gray50)}
 <script>
 const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+if (typeof getErrorMessage === 'undefined') { window.getErrorMessage = function(e) { return (e && e.message) ? e.message : 'Error'; }; }
 
 let user = null; // {id, email, name, role}
 let currentPage = 'dashboard';

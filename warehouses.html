@@ -349,6 +349,7 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+if (typeof getErrorMessage === 'undefined') { window.getErrorMessage = function(e) { return (e && e.message) ? e.message : 'Error'; }; }
 const { createClient } = supabase;
 const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',
