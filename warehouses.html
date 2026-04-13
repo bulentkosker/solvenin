@@ -176,6 +176,7 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
 @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:16px!important}}
 </style>
 <script src="i18n.js"></script>
+<script src="utils.js"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-KPXCV8FEZB"></script>
 <script>
@@ -349,7 +350,6 @@ body { font-family:var(--font-body); background:var(--bg); color:var(--gray800);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-if (typeof getErrorMessage === 'undefined') { window.getErrorMessage = function(e) { return (e && e.message) ? e.message : 'Error'; }; }
 const { createClient } = supabase;
 const sb = createClient(
   'https://jaakjdzpdizjbzvbtcld.supabase.co',

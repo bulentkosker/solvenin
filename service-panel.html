@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFhMjc0NCIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="utils.js"></script>
 <style>
 :root{--primary:#1e40af;--primary-dark:#1a2744;--white:#fff;--bg:#f5f7fb;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1a2744;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif;--sb-w:220px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -181,7 +182,6 @@ tr:hover td{background:var(--gray50)}
 <script>
 const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
-if (typeof getErrorMessage === 'undefined') { window.getErrorMessage = function(e) { return (e && e.message) ? e.message : 'Error'; }; }
 
 let user = null; // {id, email, name, role}
 let currentPage = 'dashboard';
