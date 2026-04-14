@@ -151,10 +151,12 @@
     .sidebar-user-name { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .sidebar-logout {
       background: none; border: none; color: rgba(255,255,255,0.5);
-      cursor: pointer; font-size: 18px; padding: 0 6px;
+      cursor: pointer; padding: 0 6px;
+      display: flex; align-items: center; justify-content: center;
       transition: color .15s;
     }
     .sidebar-logout:hover { color: #ef4444; }
+    .sidebar-logout svg { display: block; }
     .company-switcher {
       display: flex; align-items: center; gap: 8px;
       padding: 7px 8px; margin: 0 0 4px;
@@ -743,7 +745,7 @@
               <span class="sidebar-user-name" id="sb-user-name">Loading...</span>
             </div>
           </div>
-          <button class="sidebar-logout" id="sb-logout-btn" title="Çıkış" onclick="event.stopPropagation();sidebarLogout()">⛌</button>
+          <button class="sidebar-logout" id="sb-logout-btn" title="Çıkış" onclick="event.stopPropagation();sidebarLogout()"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
         </div>
       </div>
 
@@ -1197,11 +1199,12 @@
     if (!menu) return;
     const isOpen = menu.style.display !== 'none';
     if (isOpen) { menu.style.display = 'none'; return; }
-    // Position above the company switcher
-    const switcher = document.getElementById('company-switcher');
-    if (switcher) {
-      const rect = switcher.getBoundingClientRect();
-      menu.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+    // Position above the user bar (opens UPWARD)
+    const bar = document.getElementById('sidebar-user-bar');
+    if (bar) {
+      const rect = bar.getBoundingClientRect();
+      menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+      menu.style.top = 'auto';
       menu.style.left = rect.left + 'px';
       menu.style.width = rect.width + 'px';
     }
