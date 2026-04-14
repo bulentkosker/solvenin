@@ -1086,41 +1086,125 @@ async function renderUsers() {
   renderUsersTable();
 }
 
+let _usersFilter = 'all'; // 'all' | 'owners'
+const _usersExpanded = new Set(); // company_name → expanded?
+
 function renderUsersTable() {
   const q = (document.getElementById('u-search')?.value || '').toLowerCase();
   const filtered = allUsers.filter(u => {
     if (q && !(u.full_name||'').toLowerCase().includes(q) && !(u.email||'').toLowerCase().includes(q) && !(u.company_name||'').toLowerCase().includes(q)) return false;
     return true;
   });
-  document.getElementById('sp-content').innerHTML = `
+  const planBadgeOf = p => ({ free:'badge-gray', standard:'badge-blue', pro:'badge-purple' }[p||'free'] || 'badge-gray');
+  const statusBadgeOf = s => ({ active:'badge-green', trial:'badge-orange', expired:'badge-red', cancelled:'badge-red', paused:'badge-gray' }[s||'active'] || 'badge-gray');
+
+  // Group by company_name; identify owner per group
+  const groups = {};
+  filtered.forEach(u => {
+    const key = u.company_name || '—';
+    if (!groups[key]) groups[key] = { owner: null, members: [] };
+    if (u.company_role === 'owner') groups[key].owner = u;
+    else groups[key].members.push(u);
+  });
+
+  // If filter = owners only: flat list of owners
+  const ownersOnly = _usersFilter === 'owners';
+  const toolbarHTML = `
     <div class="toolbar">
       <input type="text" id="u-search" placeholder="🔍 Kullanıcı ara..." oninput="renderUsersTable()" value="${q}">
+      <div class="tab-group" style="display:inline-flex;gap:4px;background:var(--gray100);border-radius:8px;padding:3px">
+        <button onclick="setUsersFilter('all')" style="padding:5px 12px;border-radius:6px;border:none;background:${_usersFilter==='all'?'#fff':'transparent'};font-size:12px;font-weight:${_usersFilter==='all'?'700':'500'};cursor:pointer;color:var(--gray800);box-shadow:${_usersFilter==='all'?'0 1px 3px rgba(0,0,0,.08)':'none'}">Tümü</button>
+        <button onclick="setUsersFilter('owners')" style="padding:5px 12px;border-radius:6px;border:none;background:${_usersFilter==='owners'?'#fff':'transparent'};font-size:12px;font-weight:${_usersFilter==='owners'?'700':'500'};cursor:pointer;color:var(--gray800);box-shadow:${_usersFilter==='owners'?'0 1px 3px rgba(0,0,0,.08)':'none'}">Sadece Ownerlar</button>
+      </div>
       <div style="flex:1"></div>
-      <span style="font-size:12px;color:var(--gray500)">${filtered.length} kullanıcı</span>
+      <span style="font-size:12px;color:var(--gray500)">${filtered.length} kullanıcı · ${Object.keys(groups).length} şirket</span>
     </div>
+  `;
+
+  let rowsHTML = '';
+  Object.entries(groups).sort((a,b) => (a[0]||'').localeCompare(b[0]||'')).forEach(([companyName, g]) => {
+    const o = g.owner;
+    const members = g.members;
+    const expanded = _usersExpanded.has(companyName);
+    if (ownersOnly) {
+      // Flat: only owner
+      if (!o) return;
+      rowsHTML += `<tr>
+        <td></td>
+        <td><strong>${o.full_name || '—'}</strong></td>
+        <td style="color:var(--gray500);font-size:11px">${o.email || '—'}</td>
+        <td>${companyName}</td>
+        <td><span class="badge badge-purple">owner</span></td>
+        <td><span class="badge ${planBadgeOf(o.plan)}">${o.plan || 'free'}</span></td>
+        <td><span class="badge ${statusBadgeOf(o.plan_status)}">${o.plan_status || 'active'}</span></td>
+        <td style="color:var(--gray500);font-size:11px">${o.plan_end ? fmtDate(o.plan_end) : '—'}</td>
+        <td style="color:var(--gray500);font-size:11px">${fmtDate(o.created_at)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick='openUserPlanModal(${JSON.stringify(o).replace(/'/g, "&apos;")})'>💼 Plan</button></td>
+      </tr>`;
+    } else {
+      // Grouped: owner row + collapsible members
+      const hasMembers = members.length > 0;
+      const arrow = hasMembers ? (expanded ? '▼' : '▶') : '';
+      if (o) {
+        rowsHTML += `<tr style="background:#f8fafc;border-top:2px solid var(--gray100);cursor:${hasMembers?'pointer':'default'}" ${hasMembers?`onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"`:''}>
+          <td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td>
+          <td><strong>👤 ${o.full_name || '—'}</strong></td>
+          <td style="color:var(--gray500);font-size:11px">${o.email || '—'}</td>
+          <td><strong>${companyName}</strong></td>
+          <td><span class="badge badge-purple">owner</span></td>
+          <td><span class="badge ${planBadgeOf(o.plan)}">${o.plan || 'free'}</span></td>
+          <td><span class="badge ${statusBadgeOf(o.plan_status)}">${o.plan_status || 'active'}</span></td>
+          <td style="color:var(--gray500);font-size:11px">${o.plan_end ? fmtDate(o.plan_end) : '—'}</td>
+          <td style="color:var(--gray500);font-size:11px">${fmtDate(o.created_at)}</td>
+          <td><button class="btn btn-outline btn-sm" onclick='event.stopPropagation();openUserPlanModal(${JSON.stringify(o).replace(/'/g, "&apos;")})'>💼 Plan</button></td>
+        </tr>`;
+      } else {
+        rowsHTML += `<tr style="background:#fef3c7;border-top:2px solid var(--gray100)">
+          <td></td>
+          <td colspan="9" style="color:#92400e;font-size:11px">⚠️ Owner bulunamadı: ${companyName}</td>
+        </tr>`;
+      }
+      if (expanded && hasMembers) {
+        members.forEach(m => {
+          rowsHTML += `<tr style="background:#fff">
+            <td style="text-align:right;color:var(--gray400);padding-right:8px">└</td>
+            <td style="padding-left:24px;color:var(--gray600)">${m.full_name || '—'}</td>
+            <td style="color:var(--gray500);font-size:11px">${m.email || '—'}</td>
+            <td style="color:var(--gray400);font-size:11px">↑</td>
+            <td><span class="badge badge-gray">${m.company_role || '—'}</span></td>
+            <td colspan="3" style="color:var(--gray400);font-size:11px;font-style:italic">(plan owner'dan miras)</td>
+            <td style="color:var(--gray500);font-size:11px">${fmtDate(m.created_at)}</td>
+            <td></td>
+          </tr>`;
+        });
+      } else if (!expanded && hasMembers) {
+        // show count hint
+        rowsHTML = rowsHTML.replace(
+          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong>`,
+          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong> <span style="color:var(--gray400);font-size:10px;font-weight:500">+${members.length}</span>`
+        );
+      }
+    }
+  });
+
+  document.getElementById('sp-content').innerHTML = `
+    ${toolbarHTML}
     <div class="card" style="padding:0">
       <table>
-        <thead><tr><th>AD</th><th>EMAIL</th><th>ŞİRKET</th><th>ROL</th><th>PLAN</th><th>DURUM</th><th>BİTİŞ</th><th>KAYIT</th><th></th></tr></thead>
+        <thead><tr><th style="width:24px"></th><th>AD</th><th>EMAIL</th><th>ŞİRKET</th><th>ROL</th><th>PLAN</th><th>DURUM</th><th>BİTİŞ</th><th>KAYIT</th><th></th></tr></thead>
         <tbody>
-          ${filtered.map(u => {
-            const planBadge = { free:'badge-gray', standard:'badge-blue', starter:'badge-blue', professional:'badge-purple', pro:'badge-purple' }[u.plan||'free'] || 'badge-gray';
-            const statusBadge = { active:'badge-green', trial:'badge-orange', expired:'badge-red', cancelled:'badge-red', paused:'badge-gray' }[u.plan_status||'active'] || 'badge-gray';
-            return `<tr>
-              <td><strong>${u.full_name || '—'}</strong></td>
-              <td style="color:var(--gray500);font-size:11px">${u.email || '—'}</td>
-              <td>${u.company_name || '—'}</td>
-              <td><span class="badge badge-gray">${u.company_role || '—'}</span></td>
-              <td><span class="badge ${planBadge}">${u.plan || 'free'}</span></td>
-              <td><span class="badge ${statusBadge}">${u.plan_status || 'active'}</span></td>
-              <td style="color:var(--gray500);font-size:11px">${u.plan_end ? fmtDate(u.plan_end) : '—'}</td>
-              <td style="color:var(--gray500);font-size:11px">${fmtDate(u.created_at)}</td>
-              <td><button class="btn btn-outline btn-sm" onclick='openUserPlanModal(${JSON.stringify(u).replace(/'/g, "&apos;")})'>💼 Plan</button></td>
-            </tr>`;
-          }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--gray400);padding:30px">Kullanıcı bulunamadı</td></tr>'}
+          ${rowsHTML || '<tr><td colspan="10" style="text-align:center;color:var(--gray400);padding:30px">Kullanıcı bulunamadı</td></tr>'}
         </tbody>
       </table>
     </div>
   `;
+}
+
+function setUsersFilter(f) { _usersFilter = f; renderUsersTable(); }
+function toggleUserGroup(companyName) {
+  if (_usersExpanded.has(companyName)) _usersExpanded.delete(companyName);
+  else _usersExpanded.add(companyName);
+  renderUsersTable();
 }
 
 // ===== DEMOS =====
