@@ -451,29 +451,31 @@ function renderCompaniesTable() {
     <div class="card" style="padding:0">
       <table>
         <thead><tr>
-          <th>ŞİRKET</th><th>ÜLKE</th><th class="text-right">KULL</th><th>PLAN</th>
+          <th>ŞİRKET</th><th>ÜLKE</th><th>OWNER</th><th class="text-right">KULL</th>
           <th class="text-right">FAT</th><th class="text-right">STOK</th>
-          <th>PARTNER</th><th>DURUM</th><th></th>
+          <th>DURUM</th><th></th>
         </tr></thead>
         <tbody>
           ${filtered.map(c => {
-            const planBadge = { free:'badge-gray', standard:'badge-blue', professional:'badge-purple' }[c.plan||'free'] || 'badge-gray';
+            const planBadge = { free:'badge-gray', standard:'badge-blue', starter:'badge-blue', professional:'badge-purple', pro:'badge-purple' }[c.owner_plan||'free'] || 'badge-gray';
             const initials = (c.name||'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase() || '—';
             const thumb = c.logo_url
               ? `<img src="${c.logo_url}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;flex-shrink:0">`
               : `<div style="width:28px;height:28px;border-radius:6px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid #e2e8f0;flex-shrink:0">${initials}</div>`;
+            const ownerCell = c.owner_email
+              ? `<div style="font-size:12px">${c.owner_email}</div><div style="font-size:10px;margin-top:2px"><span class="badge ${planBadge}">${c.owner_plan || 'free'}</span></div>`
+              : '<span style="color:var(--gray400)">—</span>';
             return `<tr>
               <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><strong>${c.name || '—'}</strong><div style="font-size:10px;color:var(--gray400)">${fmtDate(c.created_at)}</div></div></div></td>
               <td>${c.country_code || '—'}</td>
+              <td>${ownerCell}</td>
               <td class="text-right">${c.user_count || 0}</td>
-              <td><span class="badge ${planBadge}">${c.plan || 'free'}</span></td>
               <td class="text-right">${c.invoice_count || 0}</td>
               <td class="text-right">${c.stock_count || 0}</td>
-              <td style="color:var(--gray500)">${c.partner_name || '—'}</td>
               <td>${c.is_frozen ? '<span class="badge badge-red">🔴 Dondu</span>' : '<span class="badge badge-green">✅ Aktif</span>'}</td>
               <td><button class="btn btn-outline btn-sm" onclick="openCompanyDrawer('${c.id}')">Detay →</button></td>
             </tr>`;
-          }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--gray400);padding:30px">Şirket bulunamadı</td></tr>'}
+          }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--gray400);padding:30px">Şirket bulunamadı</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -795,8 +797,6 @@ async function openCompanyDrawer(id) {
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
       ${isSuperadmin ? `
-        <button class="btn btn-primary btn-sm" onclick="showSubscriptionModal('${c.id}')">💳 Abonelik Yönet</button>
-        <button class="btn btn-outline btn-sm" onclick="showPlanModal('${c.id}', '${c.plan||'free'}')">💼 Plan</button>
         <button class="btn btn-outline btn-sm" onclick="showLimitModal('${c.id}')">📊 Fatura Limiti</button>
         ${c.is_frozen ? `<button class="btn btn-success btn-sm" onclick="unfreezeCompany('${c.id}')">✅ Aktif Et</button>` : `<button class="btn btn-danger btn-sm" onclick="showFreezeModal('${c.id}')">🔴 Dondur</button>`}
       ` : ''}
@@ -829,23 +829,23 @@ function closeDrawer() {
   selectedCompany = null;
 }
 
-// Load subscription info after drawer opens
+// Load owner info after drawer opens (subscription is now per-user)
 async function loadSubscriptionInfo(companyId) {
   const el = document.getElementById('dr-subscription-info');
   if (!el) return;
   const { data } = await sb.rpc('get_company_subscription', { p_company_id: companyId });
   if (!data) { el.innerHTML = ''; return; }
-  const endStr = data.subscription_end ? new Date(data.subscription_end).toLocaleDateString('tr-TR') : '—';
-  const startStr = data.subscription_start ? new Date(data.subscription_start).toLocaleDateString('tr-TR') : '—';
+  const endStr = data.plan_end ? new Date(data.plan_end).toLocaleDateString('tr-TR') : '—';
+  const planBadgeClass = { free:'badge-gray', standard:'badge-blue', starter:'badge-blue', professional:'badge-purple', pro:'badge-purple' }[data.plan||'free'] || 'badge-gray';
+  // Find owner email from sp_companies cache
+  const co = (allCompanies||[]).find(x => x.id === companyId);
+  const ownerEmail = co?.owner_email || '—';
   el.innerHTML = `
-    <div style="font-weight:700;font-size:13px;margin-bottom:6px">💳 Abonelik Bilgisi</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
-      <div><span style="color:var(--gray400)">Plan:</span> <strong>${data.plan || 'free'}</strong></div>
-      <div><span style="color:var(--gray400)">Durum:</span> <strong>${data.subscription_status || '—'}</strong></div>
-      <div><span style="color:var(--gray400)">Max Kullanıcı:</span> <strong>${data.max_users || 1}</strong> (${data.user_count} kullanılıyor)</div>
-      <div><span style="color:var(--gray400)">Kalan:</span> <strong>${data.days_left !== null ? data.days_left + ' gün' : '—'}</strong></div>
-      <div><span style="color:var(--gray400)">Başlangıç:</span> ${startStr}</div>
-      <div><span style="color:var(--gray400)">Bitiş:</span> ${endStr}</div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:6px">👤 Owner & Plan</div>
+    <div style="font-size:11px;line-height:1.6">
+      <div><strong>${ownerEmail}</strong> — <span class="badge ${planBadgeClass}">${data.plan || 'free'}</span> <span style="color:var(--gray400)">(${data.plan_status || 'active'})</span></div>
+      <div style="margin-top:4px"><span style="color:var(--gray400)">Max Kullanıcı:</span> <strong>${data.max_users || 1}</strong> (${data.user_count} kullanılıyor)</div>
+      ${data.plan_end ? `<div><span style="color:var(--gray400)">Plan Bitiş:</span> ${endStr} (${data.days_left !== null ? data.days_left + ' gün' : '—'})</div>` : ''}
     </div>
   `;
 }
@@ -943,6 +943,56 @@ async function savePlan(companyId) {
   showToast('Plan değiştirildi', 'success');
   await renderCompanies();
   if (selectedCompany) openCompanyDrawer(selectedCompany.id);
+}
+
+// ===== USER PLAN MANAGEMENT (per-user subscription) =====
+function openUserPlanModal(u) {
+  const planEnd = u.plan_end ? new Date(u.plan_end).toISOString().split('T')[0] : '';
+  openModal('💼 Kullanıcı Planı: ' + (u.full_name || u.email), `
+    <div class="field"><label>Email</label><div style="padding:6px 0;font-size:12px;color:var(--gray500)">${u.email || '—'}</div></div>
+    <div class="field"><label>Plan</label>
+      <select id="up-plan">
+        <option value="free" ${u.plan==='free'?'selected':''}>Free</option>
+        <option value="starter" ${u.plan==='starter'?'selected':''}>Starter</option>
+        <option value="standard" ${u.plan==='standard'?'selected':''}>Standard</option>
+        <option value="professional" ${u.plan==='professional'?'selected':''}>Professional</option>
+        <option value="pro" ${u.plan==='pro'?'selected':''}>Pro</option>
+      </select>
+    </div>
+    <div class="field"><label>Plan Durumu</label>
+      <select id="up-status">
+        <option value="active" ${(u.plan_status||'active')==='active'?'selected':''}>Active</option>
+        <option value="trial" ${u.plan_status==='trial'?'selected':''}>Trial</option>
+        <option value="expired" ${u.plan_status==='expired'?'selected':''}>Expired</option>
+        <option value="cancelled" ${u.plan_status==='cancelled'?'selected':''}>Cancelled</option>
+        <option value="paused" ${u.plan_status==='paused'?'selected':''}>Paused</option>
+      </select>
+    </div>
+    <div class="field"><label>Bitiş Tarihi</label>
+      <input type="date" id="up-end" value="${planEnd}">
+      <div style="font-size:11px;color:var(--gray400);margin-top:3px">Boş bırakılırsa süresiz</div>
+    </div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveUserPlan('${u.id}')` }
+  ]);
+}
+
+async function saveUserPlan(userId) {
+  const plan = document.getElementById('up-plan').value;
+  const status = document.getElementById('up-status').value;
+  const endStr = document.getElementById('up-end').value;
+  const planEnd = endStr ? new Date(endStr + 'T23:59:59').toISOString() : null;
+  const { data, error } = await sb.rpc('sp_update_user_plan', {
+    p_user_id: userId, p_plan: plan, p_plan_end: planEnd, p_plan_status: status
+  });
+  if (error || data?.success === false) {
+    showToast('Hata: ' + (error?.message || data?.error || 'unknown'), 'error');
+    return;
+  }
+  closeModal();
+  showToast('Plan güncellendi', 'success');
+  await renderUsers();
 }
 
 function showLimitModal(companyId) {
@@ -1052,16 +1102,23 @@ function renderUsersTable() {
     </div>
     <div class="card" style="padding:0">
       <table>
-        <thead><tr><th>AD</th><th>EMAIL</th><th>ŞİRKET</th><th>PLAN</th><th>ROL</th><th>KAYIT</th></tr></thead>
+        <thead><tr><th>AD</th><th>EMAIL</th><th>ŞİRKET</th><th>ROL</th><th>PLAN</th><th>DURUM</th><th>BİTİŞ</th><th>KAYIT</th><th></th></tr></thead>
         <tbody>
-          ${filtered.map(u => `<tr>
-            <td><strong>${u.full_name || '—'}</strong></td>
-            <td style="color:var(--gray500);font-size:11px">${u.email || '—'}</td>
-            <td>${u.company_name || '—'}</td>
-            <td><span class="badge badge-gray">${u.plan || 'free'}</span></td>
-            <td><span class="badge badge-gray">${u.company_role || '—'}</span></td>
-            <td style="color:var(--gray500);font-size:11px">${fmtDate(u.created_at)}</td>
-          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray400);padding:30px">Kullanıcı bulunamadı</td></tr>'}
+          ${filtered.map(u => {
+            const planBadge = { free:'badge-gray', standard:'badge-blue', starter:'badge-blue', professional:'badge-purple', pro:'badge-purple' }[u.plan||'free'] || 'badge-gray';
+            const statusBadge = { active:'badge-green', trial:'badge-orange', expired:'badge-red', cancelled:'badge-red', paused:'badge-gray' }[u.plan_status||'active'] || 'badge-gray';
+            return `<tr>
+              <td><strong>${u.full_name || '—'}</strong></td>
+              <td style="color:var(--gray500);font-size:11px">${u.email || '—'}</td>
+              <td>${u.company_name || '—'}</td>
+              <td><span class="badge badge-gray">${u.company_role || '—'}</span></td>
+              <td><span class="badge ${planBadge}">${u.plan || 'free'}</span></td>
+              <td><span class="badge ${statusBadge}">${u.plan_status || 'active'}</span></td>
+              <td style="color:var(--gray500);font-size:11px">${u.plan_end ? fmtDate(u.plan_end) : '—'}</td>
+              <td style="color:var(--gray500);font-size:11px">${fmtDate(u.created_at)}</td>
+              <td><button class="btn btn-outline btn-sm" onclick='openUserPlanModal(${JSON.stringify(u).replace(/'/g, "&apos;")})'>💼 Plan</button></td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--gray400);padding:30px">Kullanıcı bulunamadı</td></tr>'}
         </tbody>
       </table>
     </div>
