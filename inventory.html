@@ -2402,7 +2402,7 @@ function renderCompanyMenu() {
 
   // Show "Add company" only for pro+ owners
   const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && active.plan === 'professional' && active.role === 'owner';
+  const canAdd = active && active.plan === 'pro' && active.role === 'owner';
   footer.innerHTML = canAdd
     ? `<button onclick="openNewCompanyModal()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;

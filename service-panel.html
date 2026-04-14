@@ -438,7 +438,7 @@ function renderCompaniesTable() {
         <option value="">Tüm Planlar</option>
         <option value="free" ${planFilter==='free'?'selected':''}>Free</option>
         <option value="standard" ${planFilter==='standard'?'selected':''}>Standard</option>
-        <option value="professional" ${planFilter==='professional'?'selected':''}>Professional</option>
+        <option value="pro" ${planFilter==='pro'?'selected':''}>Professional</option>
       </select>
       <select id="co-filter-status" onchange="renderCompaniesTable()">
         <option value="">Tüm Durumlar</option>
@@ -719,7 +719,7 @@ function openEditFlag(name) {
         <div style="font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:6px">Planlar</div>
         <label style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:13px"><input type="checkbox" class="flg-plan" value="free" ${plansSet.has('free')?'checked':''}> Free</label>
         <label style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:13px"><input type="checkbox" class="flg-plan" value="standard" ${plansSet.has('standard')?'checked':''}> Standard</label>
-        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" class="flg-plan" value="professional" ${plansSet.has('professional')?'checked':''}> Professional</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" class="flg-plan" value="pro" ${plansSet.has('pro')?'checked':''}> Professional</label>
       </div>
 
       <div style="margin-bottom:14px">
@@ -860,7 +860,7 @@ async function showSubscriptionModal(companyId) {
       <select id="sub-plan">
         <option value="free" ${info?.plan==='free'?'selected':''}>Free</option>
         <option value="standard" ${info?.plan==='standard'?'selected':''}>Standard</option>
-        <option value="professional" ${info?.plan==='professional'?'selected':''}>Professional</option>
+        <option value="pro" ${info?.plan==='pro'?'selected':''}>Professional</option>
       </select>
     </div>
     <div class="field">
@@ -927,7 +927,7 @@ function showPlanModal(companyId, currentPlan) {
       <select id="m-plan">
         <option value="free" ${currentPlan==='free'?'selected':''}>Free</option>
         <option value="standard" ${currentPlan==='standard'?'selected':''}>Standard</option>
-        <option value="professional" ${currentPlan==='professional'?'selected':''}>Professional</option>
+        <option value="pro" ${currentPlan==='pro'?'selected':''}>Professional</option>
       </select>
     </div>
   `, [
@@ -953,9 +953,7 @@ function openUserPlanModal(u) {
     <div class="field"><label>Plan</label>
       <select id="up-plan">
         <option value="free" ${u.plan==='free'?'selected':''}>Free</option>
-        <option value="starter" ${u.plan==='starter'?'selected':''}>Starter</option>
         <option value="standard" ${u.plan==='standard'?'selected':''}>Standard</option>
-        <option value="professional" ${u.plan==='professional'?'selected':''}>Professional</option>
         <option value="pro" ${u.plan==='pro'?'selected':''}>Pro</option>
       </select>
     </div>
@@ -1188,7 +1186,7 @@ async function createDemo() {
     name: companyNames[lang] || companyNames.en,
     base_currency: currencies[lang] || 'USD',
     country_code: lang === 'tr' ? 'TR' : lang === 'ru' ? 'KZ' : 'US',
-    plan: 'professional',
+    plan: 'pro',
     status: 'active'
   }).select().single();
 

@@ -999,7 +999,7 @@
 
       const company = compRes.data;
       const userPlan = profileRes.data?.plan || 'free';
-      const plan = userPlan === 'pro' ? 'professional' : userPlan;
+      const plan = userPlan;
 
       if (company) {
         const cnEl = document.getElementById('sb-company-name');

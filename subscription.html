@@ -576,7 +576,7 @@ async function loadSubscription() {
 
     if (sub) {
       let rawPlan = sub.plan || 'free';
-      if (rawPlan === 'pro') rawPlan = 'professional';
+      // rawPlan stays as 'pro' (no longer remapped)
       currentPlan = rawPlan;
       planStartedAt = sub.subscription_start || null;
 
@@ -597,7 +597,7 @@ async function loadSubscription() {
         .select('plan, plan_interval, plan_started_at').eq('id', currentUser.id).single();
       if (profile) {
         let rawPlan = profile.plan || 'free';
-        if (rawPlan === 'pro') rawPlan = 'professional';
+        // rawPlan stays as 'pro' (no longer remapped)
         currentPlan = rawPlan;
         planStartedAt = profile.plan_started_at || null;
       }
@@ -732,7 +732,7 @@ function renderSubscription() {
       badge: null, subtitle: t('sub_7day_trial') || '7-day free trial',
     },
     {
-      key: 'professional', name: t('plan_professional') || 'Professional',
+      key: 'pro', name: t('plan_pro') || 'Professional',
       price: 12.99, yearlyPrice: 129.90,
       features: [
         { text: t('sub_feat_all_modules') || 'All modules', ok: true },
@@ -846,7 +846,7 @@ function renderSubscription() {
       const showPrice = p.key === 'free' ? '$0' : (isYearly ? '$' + (p.yearlyPrice / 12).toFixed(2) : '$' + p.price.toFixed(2));
       const yearlyTotal = isYearly && p.key !== 'free' ? `<div style="font-size:11px;color:var(--gray400);margin-top:2px">$${p.yearlyPrice.toFixed(2)}/yr</div>` : '';
       const badgeHtml = p.badge ? `<div class="plan-option-badge">${p.badge}</div>` : (isCurrent ? `<div class="plan-option-badge current-badge">${t('current_plan') || 'Current Plan'}</div>` : '');
-      const cls = isCurrent ? 'plan-option current' : (p.key === 'professional' ? 'plan-option recommended' : 'plan-option');
+      const cls = isCurrent ? 'plan-option current' : (p.key === 'pro' ? 'plan-option recommended' : 'plan-option');
 
       let btnHtml;
       if (isCurrent) {
@@ -1010,7 +1010,7 @@ function renderCompanyMenu() {
       <div class="c-role">${c.role}</div>
     </div>`).join('');
   const active = _myCompanies.find(c => c.is_active);
-  const canAdd = active && active.plan === 'professional' && active.role === 'owner';
+  const canAdd = active && active.plan === 'pro' && active.role === 'owner';
   footer.innerHTML = canAdd
     ? `<button onclick="sidebarOpenNewCompany()">+ Add Company</button>`
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
