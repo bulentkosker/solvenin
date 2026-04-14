@@ -706,25 +706,22 @@ tr:hover .action-btns { opacity:1; }
                     </label>
                   </div>
                 </div>
-                <div class="form-group" style="max-width:120px">
-                  <label data-i18n="settings_scale_barcode_prefix">Prefix</label>
-                  <input type="text" id="wb-prefix" value="20" maxlength="2" style="width:100%;text-align:center;font-size:16px;font-weight:700;letter-spacing:2px" oninput="updateWbExample()">
-                  <div style="font-size:10px;color:var(--gray400);margin-top:3px">20-29 arası</div>
-                </div>
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label data-i18n="settings_scale_barcode_content">Barkod içeriği</label>
-                  <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                      <input type="radio" name="wb-content" value="price" checked onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_price">Fiyat bazlı</span>
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                      <input type="radio" name="wb-content" value="weight" onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_weight">Ağırlık bazlı</span>
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                      <input type="radio" name="wb-content" value="quantity" onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_quantity">Adet bazlı</span>
-                    </label>
+              <div style="margin-top:12px;padding:12px;background:var(--gray50);border-radius:8px">
+                <div style="font-size:11px;font-weight:700;color:var(--gray600);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px" data-i18n="settings_scale_prefix_title">Prefix Tanımları</div>
+                <div style="font-size:11px;color:var(--gray400);margin-bottom:10px" data-i18n="settings_scale_prefix_helper">20-29 arası 2 haneli sayı</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;font-weight:600;color:var(--gray700);min-width:120px" data-i18n="settings_scale_prefix_weight">Ağırlık bazlı:</div>
+                    <div id="wb-pfx-weight" style="display:flex;flex-wrap:wrap;gap:6px;flex:1"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;font-weight:600;color:var(--gray700);min-width:120px" data-i18n="settings_scale_prefix_quantity">Adet bazlı:</div>
+                    <div id="wb-pfx-quantity" style="display:flex;flex-wrap:wrap;gap:6px;flex:1"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;font-weight:600;color:var(--gray700);min-width:120px" data-i18n="settings_scale_prefix_price">Fiyat bazlı:</div>
+                    <div id="wb-pfx-price" style="display:flex;flex-wrap:wrap;gap:6px;flex:1"></div>
                   </div>
                 </div>
               </div>
@@ -1872,7 +1869,7 @@ async function loadCompanyData() {
   // Fetch company data and danger-zone role check in parallel
   const [compRes, cuRes] = await Promise.all([
     sb.from('companies')
-      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock,low_stock_threshold,default_barcode_format,weight_barcode_format,weight_barcode_prefix,weight_barcode_content,weight_barcode_plu_length,weight_barcode_decimals')
+      .select('name,tax_number,email,phone,website,address,base_currency,active_currencies,country_code,tax_regime_id,logo_url,is_demo,allow_negative_stock,low_stock_threshold,default_barcode_format,weight_barcode_format,weight_barcode_plu_length,weight_barcode_decimals,scale_prefix_weight,scale_prefix_quantity,scale_prefix_price')
       .eq('id', companyId).single(),
     sb.from('company_users')
       .select('role').eq('company_id', companyId).eq('user_id', currentUser.id).single()
@@ -1912,17 +1909,19 @@ async function loadCompanyData() {
   if (thrEl) thrEl.value = data.low_stock_threshold ?? 10;
   const bfEl = document.getElementById('stk-barcode-format');
   if (bfEl) bfEl.value = data.default_barcode_format || 'EAN-13';
-  // Weight barcode settings
+  // Weight/scale barcode settings
   const wbFmt = document.querySelector(`input[name="wb-format"][value="${data.weight_barcode_format||'EAN-13'}"]`);
   if (wbFmt) wbFmt.checked = true;
-  const wbPfx = document.getElementById('wb-prefix');
-  if (wbPfx) wbPfx.value = data.weight_barcode_prefix || '20';
-  const wbCnt = document.querySelector(`input[name="wb-content"][value="${data.weight_barcode_content||'price'}"]`);
-  if (wbCnt) wbCnt.checked = true;
   const wbPlu = document.getElementById('wb-plu-length');
   if (wbPlu) wbPlu.value = data.weight_barcode_plu_length || 5;
   const wbDec = document.getElementById('wb-decimals');
   if (wbDec) wbDec.value = data.weight_barcode_decimals ?? 3;
+  _wbPrefixes = {
+    weight: Array.isArray(data.scale_prefix_weight) ? [...data.scale_prefix_weight] : ['20','21'],
+    quantity: Array.isArray(data.scale_prefix_quantity) ? [...data.scale_prefix_quantity] : ['22','23'],
+    price: Array.isArray(data.scale_prefix_price) ? [...data.scale_prefix_price] : ['28','29'],
+  };
+  renderWbPrefixes();
   updateWbExample();
 
   // Show danger zone only for owners — and HIDE for demo companies
@@ -2902,10 +2901,11 @@ async function saveStockSettings() {
       low_stock_threshold: parseInt(document.getElementById('stk-low-threshold')?.value) || 10,
       default_barcode_format: document.getElementById('stk-barcode-format')?.value || 'EAN-13',
       weight_barcode_format: document.querySelector('input[name="wb-format"]:checked')?.value || 'EAN-13',
-      weight_barcode_prefix: document.getElementById('wb-prefix')?.value?.trim() || '20',
-      weight_barcode_content: document.querySelector('input[name="wb-content"]:checked')?.value || 'price',
       weight_barcode_plu_length: parseInt(document.getElementById('wb-plu-length')?.value) || 5,
       weight_barcode_decimals: parseInt(document.getElementById('wb-decimals')?.value) ?? 3,
+      scale_prefix_weight: _wbPrefixes.weight,
+      scale_prefix_quantity: _wbPrefixes.quantity,
+      scale_prefix_price: _wbPrefixes.price,
     };
     const { error } = await sb.from('companies').update(payload).eq('id', companyId);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
@@ -2916,34 +2916,69 @@ async function saveStockSettings() {
   } finally { submitting.reset(); }
 }
 
+let _wbPrefixes = { weight: ['20','21'], quantity: ['22','23'], price: ['28','29'] };
+
+function renderWbPrefixes() {
+  ['weight','quantity','price'].forEach(type => {
+    const el = document.getElementById('wb-pfx-' + type);
+    if (!el) return;
+    el.innerHTML = _wbPrefixes[type].map(pfx =>
+      `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;background:#fff;border:1px solid var(--gray200);font-family:monospace;font-size:13px;font-weight:700">${pfx}<span onclick="removeWbPrefix('${type}','${pfx}')" style="cursor:pointer;color:var(--red);font-size:14px;font-weight:400">×</span></div>`
+    ).join('') +
+    `<button type="button" onclick="addWbPrefix('${type}')" style="padding:3px 10px;border-radius:6px;border:1px dashed var(--gray300);background:transparent;font-size:12px;color:var(--gray500);cursor:pointer">+ Ekle</button>`;
+  });
+  updateWbExample();
+}
+
+function addWbPrefix(type) {
+  const val = prompt(t('settings_scale_prefix_helper') || '20-29 arası 2 haneli sayı', '');
+  if (!val) return;
+  const trimmed = val.trim();
+  if (!/^2[0-9]$/.test(trimmed)) { showToast('20-29 arası 2 haneli sayı olmalı', 'error'); return; }
+  // Check not already used in ANY list
+  const allPrefixes = [..._wbPrefixes.weight, ..._wbPrefixes.quantity, ..._wbPrefixes.price];
+  if (allPrefixes.includes(trimmed)) { showToast('Bu prefix zaten kullanılıyor', 'error'); return; }
+  _wbPrefixes[type].push(trimmed);
+  renderWbPrefixes();
+}
+
+function removeWbPrefix(type, pfx) {
+  _wbPrefixes[type] = _wbPrefixes[type].filter(p => p !== pfx);
+  renderWbPrefixes();
+}
+
 function updateWbExample() {
   const el = document.getElementById('wb-example');
   if (!el) return;
   const fmt = document.querySelector('input[name="wb-format"]:checked')?.value || 'EAN-13';
-  const prefix = document.getElementById('wb-prefix')?.value?.trim() || '20';
-  const content = document.querySelector('input[name="wb-content"]:checked')?.value || 'price';
   const pluLen = parseInt(document.getElementById('wb-plu-length')?.value) || 5;
   const decimals = parseInt(document.getElementById('wb-decimals')?.value) ?? 3;
   const totalLen = fmt === 'UPC-A' ? 12 : 13;
   const plu = '00123'.slice(-pluLen).padStart(pluLen, '0');
-  const valueLen = totalLen - prefix.length - pluLen - 1; // -1 for check digit
-  const sampleVal = content === 'weight' ? 274 : content === 'quantity' ? 6 : 1234;
-  const valueStr = String(sampleVal).padStart(valueLen, '0');
-  const barcode = prefix + plu + valueStr + '5';
-  const effDecimals = content === 'quantity' ? 0 : decimals;
-  const valFloat = sampleVal / Math.pow(10, effDecimals);
-  const label = content === 'weight' ? `Ağırlık: ${valFloat.toFixed(decimals)} kg`
-              : content === 'quantity' ? `Adet: ${Math.round(valFloat)}`
-              : `Fiyat: ${valFloat.toFixed(decimals)}`;
-  el.innerHTML = `<div style="font-size:11px;color:var(--gray500);margin-bottom:4px" data-i18n="settings_scale_barcode_example">Örnek:</div>
-    <div style="font-size:18px;font-weight:700;color:var(--gray800);letter-spacing:2px">${barcode.split('').map((c,i) => {
-      const isPrefix = i < prefix.length;
-      const isPlu = i >= prefix.length && i < prefix.length + pluLen;
-      const isValue = i >= prefix.length + pluLen && i < barcode.length - 1;
-      const color = isPrefix ? '#dc2626' : isPlu ? '#1e40af' : isValue ? '#16a34a' : '#94a3b8';
-      return `<span style="color:${color}">${c}</span>`;
-    }).join('')}</div>
-    <div style="font-size:11px;margin-top:4px;color:var(--gray500)"><span style="color:#dc2626">■</span> Prefix · <span style="color:#1e40af">■</span> PLU: ${plu} · <span style="color:#16a34a">■</span> ${label} · <span style="color:#94a3b8">■</span> Check</div>`;
+  const types = [
+    { type: 'weight',   pfx: _wbPrefixes.weight[0]   || '20', val: 274,  lbl: 'Ağırlık', unit: 'kg', dec: decimals },
+    { type: 'quantity', pfx: _wbPrefixes.quantity[0] || '22', val: 6,    lbl: 'Adet',    unit: '',   dec: 0 },
+    { type: 'price',    pfx: _wbPrefixes.price[0]    || '28', val: 1370, lbl: 'Fiyat',   unit: '',   dec: decimals },
+  ];
+  el.innerHTML = '<div style="font-size:11px;color:var(--gray500);margin-bottom:6px" data-i18n="settings_scale_barcode_example">Örnekler:</div>' +
+    types.map(t => {
+      const valueLen = totalLen - 2 - pluLen - 1;
+      const valueStr = String(t.val).padStart(valueLen, '0');
+      const barcode = t.pfx + plu + valueStr + '5';
+      const valFloat = t.val / Math.pow(10, t.dec);
+      const valDisplay = t.type === 'quantity' ? Math.round(valFloat) : valFloat.toFixed(t.dec);
+      return `<div style="margin-bottom:4px;font-size:12px">
+        <strong style="min-width:70px;display:inline-block">${t.lbl}:</strong>
+        <span style="font-family:monospace;letter-spacing:1.5px;font-size:13px">${barcode.split('').map((c,i) => {
+          const isPrefix = i < 2;
+          const isPlu = i >= 2 && i < 2 + pluLen;
+          const isValue = i >= 2 + pluLen && i < barcode.length - 1;
+          const color = isPrefix ? '#dc2626' : isPlu ? '#1e40af' : isValue ? '#16a34a' : '#94a3b8';
+          return `<span style="color:${color}">${c}</span>`;
+        }).join('')}</span>
+        <span style="color:var(--gray500);margin-left:8px">→ PLU: ${plu}, ${t.lbl}: ${valDisplay}${t.unit ? ' '+t.unit : ''}</span>
+      </div>`;
+    }).join('');
 }
 
 // ===== WAREHOUSES =====

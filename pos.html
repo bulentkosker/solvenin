@@ -297,7 +297,7 @@ async function init() {
 
   // Load company info (currency + receipt data)
   const { data: comp } = await sb.from('companies')
-    .select('name,address,phone,logo_url,base_currency,invoice_settings,allow_negative_stock,weight_barcode_prefix,weight_barcode_content,weight_barcode_plu_length,weight_barcode_decimals')
+    .select('name,address,phone,logo_url,base_currency,invoice_settings,allow_negative_stock,weight_barcode_plu_length,weight_barcode_decimals,scale_prefix_weight,scale_prefix_quantity,scale_prefix_price')
     .eq('id', companyId).single();
   if (comp) {
     const syms = {USD:'$',EUR:'€',TRY:'₺',GBP:'£',RUB:'₽',KZT:'₸',AZN:'₼',JPY:'¥',CNY:'¥'};
@@ -321,10 +321,11 @@ async function init() {
       receipt_show_vat: rs.receipt_show_vat !== false,
       receipt_show_cashier: rs.receipt_show_cashier !== false,
       allow_negative_stock: comp.allow_negative_stock !== false,
-      weight_barcode_prefix: comp.weight_barcode_prefix || '20',
-      weight_barcode_content: comp.weight_barcode_content || 'price',
       weight_barcode_plu_length: comp.weight_barcode_plu_length || 5,
       weight_barcode_decimals: comp.weight_barcode_decimals ?? 3,
+      scale_prefix_weight: Array.isArray(comp.scale_prefix_weight) ? comp.scale_prefix_weight : ['20','21'],
+      scale_prefix_quantity: Array.isArray(comp.scale_prefix_quantity) ? comp.scale_prefix_quantity : ['22','23'],
+      scale_prefix_price: Array.isArray(comp.scale_prefix_price) ? comp.scale_prefix_price : ['28','29'],
     };
   }
 
@@ -479,15 +480,21 @@ function renderQuickButtons() {
 // ===== WEIGHT BARCODE PARSER =====
 function parseWeightBarcode(code) {
   const ci = companyInfo;
-  const prefix = ci.weight_barcode_prefix || '20';
-  if (!code.startsWith(prefix) || (code.length !== 13 && code.length !== 12)) return null;
+  if (code.length !== 13 && code.length !== 12) return null;
+  const prefix2 = code.substring(0, 2);
+  const weightPfx = ci.scale_prefix_weight || ['20','21'];
+  const quantityPfx = ci.scale_prefix_quantity || ['22','23'];
+  const pricePfx = ci.scale_prefix_price || ['28','29'];
+  let contentType = null;
+  if (weightPfx.includes(prefix2)) contentType = 'weight';
+  else if (quantityPfx.includes(prefix2)) contentType = 'quantity';
+  else if (pricePfx.includes(prefix2)) contentType = 'price';
+  if (!contentType) return null;
   const pluLen = ci.weight_barcode_plu_length || 5;
-  const contentType = ci.weight_barcode_content || 'price';
-  // Quantity content always has 0 decimals (integer count)
   const decimals = contentType === 'quantity' ? 0 : (ci.weight_barcode_decimals ?? 3);
-  const plu = code.substring(prefix.length, prefix.length + pluLen);
-  const valueStart = prefix.length + pluLen;
-  const valueStr = code.substring(valueStart, code.length - 1); // -1 check digit
+  const plu = code.substring(2, 2 + pluLen);
+  const valueStart = 2 + pluLen;
+  const valueStr = code.substring(valueStart, code.length - 1);
   const value = parseInt(valueStr) / Math.pow(10, decimals);
   return { plu, value, contentType };
 }
