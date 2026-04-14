@@ -722,6 +722,9 @@ tr:hover .action-btns { opacity:1; }
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
                       <input type="radio" name="wb-content" value="weight" onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_weight">Ağırlık bazlı</span>
                     </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                      <input type="radio" name="wb-content" value="quantity" onchange="updateWbExample()"> <span data-i18n="settings_scale_barcode_quantity">Adet bazlı</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -2924,11 +2927,14 @@ function updateWbExample() {
   const totalLen = fmt === 'UPC-A' ? 12 : 13;
   const plu = '00123'.slice(-pluLen).padStart(pluLen, '0');
   const valueLen = totalLen - prefix.length - pluLen - 1; // -1 for check digit
-  const sampleVal = content === 'weight' ? 274 : 1500;
+  const sampleVal = content === 'weight' ? 274 : content === 'quantity' ? 6 : 1234;
   const valueStr = String(sampleVal).padStart(valueLen, '0');
   const barcode = prefix + plu + valueStr + '5';
-  const valFloat = sampleVal / Math.pow(10, decimals);
-  const label = content === 'weight' ? `Ağırlık: ${valFloat.toFixed(decimals)} kg` : `Fiyat: ${valFloat.toFixed(decimals)}`;
+  const effDecimals = content === 'quantity' ? 0 : decimals;
+  const valFloat = sampleVal / Math.pow(10, effDecimals);
+  const label = content === 'weight' ? `Ağırlık: ${valFloat.toFixed(decimals)} kg`
+              : content === 'quantity' ? `Adet: ${Math.round(valFloat)}`
+              : `Fiyat: ${valFloat.toFixed(decimals)}`;
   el.innerHTML = `<div style="font-size:11px;color:var(--gray500);margin-bottom:4px" data-i18n="settings_scale_barcode_example">Örnek:</div>
     <div style="font-size:18px;font-weight:700;color:var(--gray800);letter-spacing:2px">${barcode.split('').map((c,i) => {
       const isPrefix = i < prefix.length;

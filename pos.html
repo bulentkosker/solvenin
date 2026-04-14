@@ -482,12 +482,14 @@ function parseWeightBarcode(code) {
   const prefix = ci.weight_barcode_prefix || '20';
   if (!code.startsWith(prefix) || (code.length !== 13 && code.length !== 12)) return null;
   const pluLen = ci.weight_barcode_plu_length || 5;
-  const decimals = ci.weight_barcode_decimals ?? 3;
+  const contentType = ci.weight_barcode_content || 'price';
+  // Quantity content always has 0 decimals (integer count)
+  const decimals = contentType === 'quantity' ? 0 : (ci.weight_barcode_decimals ?? 3);
   const plu = code.substring(prefix.length, prefix.length + pluLen);
   const valueStart = prefix.length + pluLen;
   const valueStr = code.substring(valueStart, code.length - 1); // -1 check digit
   const value = parseInt(valueStr) / Math.pow(10, decimals);
-  return { plu, value, contentType: ci.weight_barcode_content || 'price' };
+  return { plu, value, contentType };
 }
 
 function addWeightProductToCart(parsed) {
@@ -497,19 +499,24 @@ function addWeightProductToCart(parsed) {
     return;
   }
   const price = parseFloat(p.sale_price || 0);
-  let qty, linePrice;
+  let qty, linePrice, unit;
   if (parsed.contentType === 'weight') {
-    qty = parsed.value;
+    qty = Math.round(parsed.value * 1000) / 1000;
     linePrice = price;
+    unit = p.unit || 'kg';
+  } else if (parsed.contentType === 'quantity') {
+    qty = Math.round(parsed.value); // integer count
+    linePrice = price;
+    unit = p.unit || 'adet';
   } else {
     // price-based: value is total price, calculate qty
-    qty = price > 0 ? parsed.value / price : 1;
+    qty = price > 0 ? Math.round((parsed.value / price) * 1000) / 1000 : 1;
     linePrice = price;
+    unit = p.unit || '';
   }
-  qty = Math.round(qty * 1000) / 1000; // round to 3 decimals
   const ex = cart.find(c => c.pid === p.id);
   if (ex) ex.qty += qty;
-  else cart.push({ pid: p.id, name: p.name, price: linePrice, qty, unit: p.unit || 'kg' });
+  else cart.push({ pid: p.id, name: p.name, price: linePrice, qty, unit });
   renderCart();
   saveCartToStorage();
 }
