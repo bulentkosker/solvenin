@@ -229,21 +229,21 @@
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
     .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
 
-    /* ── AI Button (floating top-right) ── */
+    /* ── AI Button (floating bottom-right) ── */
     #ai-floating-btn {
-      position: fixed; top: 16px; right: 16px;
-      padding: 8px 14px; border-radius: 999px;
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 10px 16px; border-radius: 999px;
       border: none;
       background: linear-gradient(135deg, #1e3a8a 0%, #38bdf8 100%);
-      color: #fff; font-size: 12px; font-weight: 700;
+      color: #fff; font-size: 13px; font-weight: 700;
       font-family: 'DM Sans', system-ui, sans-serif;
       cursor: pointer;
       transition: all .15s;
-      box-shadow: 0 4px 14px rgba(56,189,248,0.35);
+      box-shadow: 0 6px 20px rgba(56,189,248,0.4);
       display: none; align-items: center; gap: 6px;
-      z-index: 1500;
+      z-index: 9999;
     }
-    #ai-floating-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(56,189,248,0.5); }
+    #ai-floating-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(56,189,248,0.55); }
     #ai-floating-btn.visible { display: inline-flex; }
 
     /* ── AI Chat Panel ── */
