@@ -945,8 +945,18 @@ async function savePlan(companyId) {
 }
 
 // ===== USER PLAN MANAGEMENT (per-user subscription) =====
-function openUserPlanModal(u) {
+async function openUserPlanModal(u) {
   const planEnd = u.plan_end ? new Date(u.plan_end).toISOString().split('T')[0] : '';
+  // Fetch current plan_user_count + active user count across all owned companies
+  const { data: prof } = await sb.from('profiles').select('plan_user_count').eq('id', u.id).single();
+  const { data: ownedCompanies } = await sb.from('companies').select('id').eq('owner_id', u.id);
+  const coIds = (ownedCompanies||[]).map(c=>c.id);
+  let activeUsers = 0;
+  if (coIds.length) {
+    const { data: cus } = await sb.from('company_users').select('user_id').in('company_id', coIds);
+    activeUsers = new Set((cus||[]).map(x=>x.user_id)).size;
+  }
+  const currentCount = prof?.plan_user_count ?? 1;
   openModal('💼 Kullanıcı Planı: ' + (u.full_name || u.email), `
     <div class="field"><label>Email</label><div style="padding:6px 0;font-size:12px;color:var(--gray500)">${u.email || '—'}</div></div>
     <div class="field"><label>Plan</label>
@@ -969,19 +979,40 @@ function openUserPlanModal(u) {
       <input type="date" id="up-end" value="${planEnd}">
       <div style="font-size:11px;color:var(--gray400);margin-top:3px">Boş bırakılırsa süresiz</div>
     </div>
+    <div class="field"><label>Kullanıcı Limiti (plan_user_count)</label>
+      <input type="number" id="up-count" min="1" value="${currentCount}" oninput="checkUserCountOverage(${activeUsers})">
+      <div id="up-count-warn" style="font-size:11px;color:var(--gray400);margin-top:3px">Aktif kullanıcı sayısı: ${activeUsers}. Sınırsız için 999999 girin.</div>
+    </div>
   `, [
     { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
-    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveUserPlan('${u.id}')` }
+    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveUserPlan('${u.id}',${activeUsers})` }
   ]);
 }
 
-async function saveUserPlan(userId) {
+function checkUserCountOverage(activeUsers) {
+  const val = parseInt(document.getElementById('up-count').value) || 0;
+  const warn = document.getElementById('up-count-warn');
+  if (val < activeUsers) {
+    warn.style.color = '#dc2626';
+    warn.innerHTML = `⚠️ Mevcut kullanıcı sayısı (${activeUsers}) yeni limitin (${val}) üzerinde. ${activeUsers - val} kullanıcıyı silmeniz gerekebilir.`;
+  } else {
+    warn.style.color = 'var(--gray400)';
+    warn.textContent = `Aktif kullanıcı sayısı: ${activeUsers}. Sınırsız için 999999 girin.`;
+  }
+}
+
+async function saveUserPlan(userId, activeUsers) {
   const plan = document.getElementById('up-plan').value;
   const status = document.getElementById('up-status').value;
   const endStr = document.getElementById('up-end').value;
+  const countStr = document.getElementById('up-count').value;
+  const count = countStr ? parseInt(countStr) : null;
   const planEnd = endStr ? new Date(endStr + 'T23:59:59').toISOString() : null;
+  if (count !== null && activeUsers > count) {
+    if (!confirm(`Mevcut kullanıcı sayısı (${activeUsers}) yeni limitin (${count}) üzerinde. Yine de kaydetmek istiyor musunuz? Fazla kullanıcılar login olabilir ama yeni işlem yapamaz.`)) return;
+  }
   const { data, error } = await sb.rpc('sp_update_user_plan', {
-    p_user_id: userId, p_plan: plan, p_plan_end: planEnd, p_plan_status: status
+    p_user_id: userId, p_plan: plan, p_plan_end: planEnd, p_plan_status: status, p_plan_user_count: count
   });
   if (error || data?.success === false) {
     showToast('Hata: ' + (error?.message || data?.error || 'unknown'), 'error');

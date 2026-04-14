@@ -43,7 +43,17 @@ window.submitting = (function() {
 window.getErrorMessage = function(error) {
   const _t = (typeof t === 'function') ? t : (k => k);
   if (!error) return _t('error_general') || 'Bir hata oluştu';
-  const msg = (error.message || error.toString() || '').toLowerCase();
+  const raw = (error.message || error.toString() || '');
+  const msg = raw.toLowerCase();
+  // Plan-limit trigger errors (match exact error code tokens from triggers)
+  const planErrors = [
+    'free_plan_invoice_limit', 'free_plan_no_users', 'plan_user_limit_reached',
+    'free_plan_one_company', 'standard_plan_one_company',
+    'free_plan_warehouse_limit', 'free_plan_register_limit'
+  ];
+  for (const code of planErrors) {
+    if (raw.includes(code)) return _t('error_' + code) || code;
+  }
   if (msg.includes('violates foreign key constraint'))
     return _t('error_related_record') || 'Bu kayıt başka verilerle ilişkili, silinemez';
   if (msg.includes('violates unique constraint') || msg.includes('duplicate key'))
