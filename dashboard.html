@@ -1207,7 +1207,9 @@ async function createFirstCompany() {
     }
     if (!data || data.success === false) {
       console.error('createFirstCompany returned failure:', data);
-      showToast((data && data.error) || t('onboarding_create_error') || 'Could not create company, please try again', 'error');
+      const errKey = data?.error === 'free_plan_one_company' ? 'error_free_plan_one_company' : null;
+      const msg = errKey ? (t(errKey) || 'Ücretsiz planda yalnızca 1 şirket açabilirsiniz') : ((data && data.error) || t('onboarding_create_error') || 'Could not create company');
+      showToast(msg, 'error');
       btn.disabled = false; btn.innerHTML = orig;
       return;
     }

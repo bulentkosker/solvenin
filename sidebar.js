@@ -133,6 +133,28 @@
 
     /* ── Sidebar footer ── */
     .sidebar-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+    .sidebar-user-bar {
+      display: flex; align-items: stretch; gap: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 8px 10px;
+      transition: background .15s;
+    }
+    .sidebar-user-bar:hover { background: rgba(255,255,255,0.08); }
+    .sidebar-user-bar-content { flex: 1; cursor: pointer; min-width: 0; }
+    .sidebar-company-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .sidebar-company-icon { font-size: 12px; opacity: .7; }
+    .sidebar-company-name { font-size: 13px; font-weight: 600; color: #fff; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-company-chevron { font-size: 11px; color: rgba(255,255,255,0.5); }
+    .sidebar-user-row { display: flex; align-items: center; gap: 6px; }
+    .sidebar-user-icon { font-size: 11px; opacity: .6; }
+    .sidebar-user-name { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-logout {
+      background: none; border: none; color: rgba(255,255,255,0.5);
+      cursor: pointer; font-size: 18px; padding: 0 6px;
+      transition: color .15s;
+    }
+    .sidebar-logout:hover { color: #ef4444; }
     .company-switcher {
       display: flex; align-items: center; gap: 8px;
       padding: 7px 8px; margin: 0 0 4px;
@@ -705,24 +727,23 @@
       </a>
       <div class="sidebar-sections">${sectionsHTML}</div>
       <div class="sidebar-footer">
-        <div class="company-switcher" id="company-switcher" onclick="sidebarToggleCompanyMenu()">
-          <div class="company-icon" id="sb-company-icon" style="overflow:hidden">🏢</div>
-          <div class="company-info">
-            <div class="company-name" id="sb-company-name">Loading...</div>
-            <div class="company-plan" id="sb-company-plan">—</div>
-          </div>
-          <div class="company-chevron">⌄</div>
-        </div>
         <div class="company-menu" id="sb-company-menu" style="display:none">
           <div class="company-menu-list" id="sb-company-menu-list"></div>
           <div class="company-menu-footer" id="sb-company-menu-footer"></div>
         </div>
-        <div class="user-card" id="sb-user-card">
-          <div class="user-avatar" id="sb-user-avatar">?</div>
-          <div class="user-info">
-            <div class="user-name" id="sb-user-name">Loading...</div>
-            <div class="user-plan" id="sb-user-plan">Free Plan</div>
+        <div class="sidebar-user-bar" id="sidebar-user-bar">
+          <div class="sidebar-user-bar-content" onclick="sidebarToggleCompanyMenu()">
+            <div class="sidebar-company-row">
+              <span class="sidebar-company-icon">🏢</span>
+              <span class="sidebar-company-name" id="sb-company-name">Loading...</span>
+              <span class="sidebar-company-chevron" id="sb-company-chevron">⌄</span>
+            </div>
+            <div class="sidebar-user-row">
+              <span class="sidebar-user-icon">👤</span>
+              <span class="sidebar-user-name" id="sb-user-name">Loading...</span>
+            </div>
           </div>
+          <button class="sidebar-logout" id="sb-logout-btn" title="Çıkış" onclick="event.stopPropagation();sidebarLogout()">⛌</button>
         </div>
       </div>
 
@@ -1160,6 +1181,15 @@
     const childrenEl = document.querySelector(`.nav-children[data-key="${key}"]`);
     if (parentEl) parentEl.classList.toggle('open', open);
     if (childrenEl) childrenEl.classList.toggle('open', open);
+  };
+
+  window.sidebarLogout = async function() {
+    try {
+      const sb = window._supabase || window.supabase;
+      if (sb && sb.auth) await sb.auth.signOut();
+    } catch (e) { console.warn(e); }
+    localStorage.removeItem('currentCompanyId');
+    window.location.href = 'auth.html';
   };
 
   window.sidebarToggleCompanyMenu = function() {

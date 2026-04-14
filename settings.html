@@ -4372,6 +4372,13 @@ async function addUser() {
   if (!name || !email || !pass) { showToast(t('err_fill_all') || 'Fill all fields', 'error'); submitting.reset(); return; }
   if (pass.length < 8) { showToast(t('err_pass_min') || 'Password must be at least 8 characters', 'error'); submitting.reset(); return; }
 
+  // Free plan: owner cannot add additional users
+  const { data: canAdd } = await sb.rpc('check_can_add_user', { p_company_id: companyId });
+  if (canAdd && canAdd.allowed === false) {
+    showToast(t('error_free_plan_no_users') || 'Ücretsiz planda kullanıcı ekleyemezsiniz', 'error');
+    submitting.reset(); return;
+  }
+
   // Subscription + user limit check
   const { data: compCheck } = await sb.from('companies').select('max_users, subscription_status, subscription_end').eq('id', companyId).single();
   if (compCheck?.subscription_end && new Date(compCheck.subscription_end) < new Date()) {
