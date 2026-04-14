@@ -4363,7 +4363,7 @@ async function loadUsers() {
 
   // Load team members with profile info
   const { data: members } = await sb.from('company_users')
-    .select('user_id, role, status, joined_at, ai_assistant_enabled')
+    .select('user_id, role, status, joined_at, ai_assistant_enabled, is_suspended')
     .eq('company_id', companyId);
   // Fetch profiles for display names
   const profileMap = {};
@@ -4380,11 +4380,13 @@ async function loadUsers() {
       const profile = profileMap[m.user_id];
       const displayName = profile?.full_name || (isSelf ? (currentUser.email || currentUser.user_metadata?.full_name) : null) || m.user_id.slice(0,8) + '...';
       const initials = displayName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-      return `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100)">
+      const suspended = m.is_suspended === true;
+      const suspendedBadge = suspended ? ` <span style="font-size:10px;padding:1px 6px;background:#fef3c7;color:#92400e;border-radius:4px;font-weight:600">${t('sp_suspended') || 'Askıda'}</span>` : '';
+      return `<div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100);${suspended?'opacity:0.65':''}">
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:32px;height:32px;border-radius:50%;background:rgba(30,64,175,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1e40af">${initials}</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--gray800)">${displayName}${isSelf?' <span style="font-size:10px;color:var(--gray400)">(you)</span>':''}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--gray800)">${displayName}${isSelf?' <span style="font-size:10px;color:var(--gray400)">(you)</span>':''}${suspendedBadge}</div>
             <div style="font-size:11px;color:var(--gray400)">${m.role} · ${m.status}</div>
           </div>
         </div>
@@ -4396,12 +4398,25 @@ async function loadUsers() {
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
           ${!isOwner&&!isSelf ? `<a href="user-permissions.html?user=${m.user_id}" style="padding:4px 8px;border:1px solid #1e40af;border-radius:6px;font-size:11px;background:#fff;color:#1e40af;cursor:pointer;font-weight:500;text-decoration:none;display:inline-block">${t('btn_permissions') || 'İzinler'}</a>` : ''}
+          ${!isOwner&&!isSelf ? (suspended
+            ? `<button style="padding:4px 8px;border:1px solid #86efac;border-radius:6px;font-size:11px;background:#f0fdf4;color:#166534;cursor:pointer" onclick="toggleSuspend('${m.user_id}', false)">${t('btn_unsuspend') || 'Aktif Et'}</button>`
+            : `<button style="padding:4px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:11px;background:#fffbeb;color:#92400e;cursor:pointer" onclick="toggleSuspend('${m.user_id}', true)">${t('btn_suspend') || 'Askıya Al'}</button>`
+          ) : ''}
           ${!isOwner&&!isSelf ? `<button style="padding:4px 8px;border:1px solid #fecaca;border-radius:6px;font-size:11px;background:#fef2f2;color:#dc2626;cursor:pointer" onclick="removeUser('${m.user_id}')">✕</button>` : ''}
         </div>
       </div>`;
     }).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)">No members</div>';
   }
 
+}
+
+async function toggleSuspend(userId, suspended) {
+  const { error } = await sb.from('company_users')
+    .update({ is_suspended: suspended })
+    .eq('company_id', companyId).eq('user_id', userId);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(suspended ? (t('toast_user_suspended') || 'Kullanıcı askıya alındı') : (t('toast_user_unsuspended') || 'Kullanıcı aktif edildi'), 'success');
+  await loadUsers();
 }
 
 async function toggleAiAssistant(userId, enabled) {

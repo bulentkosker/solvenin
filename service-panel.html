@@ -1110,6 +1110,7 @@ function renderUsersTable() {
   });
   const planBadgeOf = p => ({ free:'badge-gray', standard:'badge-blue', pro:'badge-purple' }[p||'free'] || 'badge-gray');
   const statusBadgeOf = s => ({ active:'badge-green', trial:'badge-orange', expired:'badge-red', cancelled:'badge-red', paused:'badge-gray' }[s||'active'] || 'badge-gray');
+  const suspBadge = u => u && u.is_suspended ? ' <span style="font-size:9px;padding:1px 5px;background:#fef3c7;color:#92400e;border-radius:3px;font-weight:700">🚫 ASKIDA</span>' : '';
 
   // Group by company_name; identify owner per group
   const groups = {};
@@ -1144,7 +1145,7 @@ function renderUsersTable() {
       if (!o) return;
       rowsHTML += `<tr>
         <td></td>
-        <td><strong>${o.full_name || '—'}</strong></td>
+        <td><strong>${o.full_name || '—'}</strong>${suspBadge(o)}</td>
         <td style="color:var(--gray500);font-size:11px">${o.email || '—'}</td>
         <td>${companyName}</td>
         <td><span class="badge badge-purple">owner</span></td>
@@ -1161,7 +1162,7 @@ function renderUsersTable() {
       if (o) {
         rowsHTML += `<tr style="background:#f8fafc;border-top:2px solid var(--gray100);cursor:${hasMembers?'pointer':'default'}" ${hasMembers?`onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"`:''}>
           <td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td>
-          <td><strong>👤 ${o.full_name || '—'}</strong></td>
+          <td><strong>👤 ${o.full_name || '—'}</strong>${suspBadge(o)}</td>
           <td style="color:var(--gray500);font-size:11px">${o.email || '—'}</td>
           <td><strong>${companyName}</strong></td>
           <td><span class="badge badge-purple">owner</span></td>
@@ -1181,7 +1182,7 @@ function renderUsersTable() {
         members.forEach(m => {
           rowsHTML += `<tr style="background:#fff">
             <td style="text-align:right;color:var(--gray400);padding-right:8px">└</td>
-            <td style="padding-left:24px;color:var(--gray600)">${m.full_name || '—'}</td>
+            <td style="padding-left:24px;color:var(--gray600)">${m.full_name || '—'}${suspBadge(m)}</td>
             <td style="color:var(--gray500);font-size:11px">${m.email || '—'}</td>
             <td style="color:var(--gray400);font-size:11px">↑</td>
             <td><span class="badge badge-gray">${m.company_role || '—'}</span></td>
@@ -1193,8 +1194,8 @@ function renderUsersTable() {
       } else if (!expanded && hasMembers) {
         // show count hint
         rowsHTML = rowsHTML.replace(
-          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong>`,
-          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong> <span style="color:var(--gray400);font-size:10px;font-weight:500">+${members.length}</span>`
+          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong>${suspBadge(o)}`,
+          `onclick="toggleUserGroup('${companyName.replace(/'/g, "\\'")}')"><td style="width:24px;text-align:center;color:var(--gray400);font-size:10px">${arrow}</td><td><strong>👤 ${o.full_name || '—'}</strong>${suspBadge(o)} <span style="color:var(--gray400);font-size:10px;font-weight:500">+${members.length}</span>`
         );
       }
     }
