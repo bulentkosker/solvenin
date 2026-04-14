@@ -205,16 +205,22 @@
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
     .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
 
-    /* ── AI Button ── */
-    .ai-btn {
-      width: 100%; padding: 9px 12px; border-radius: 8px;
-      border: 1.5px solid rgba(56,189,248,0.3);
-      background: rgba(56,189,248,0.08); color: var(--sb-accent);
-      font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: all .15s; text-align: left; margin-top: 6px;
-      display: flex; align-items: center; gap: 8px;
+    /* ── AI Button (floating top-right) ── */
+    #ai-floating-btn {
+      position: fixed; top: 16px; right: 16px;
+      padding: 8px 14px; border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #1e3a8a 0%, #38bdf8 100%);
+      color: #fff; font-size: 12px; font-weight: 700;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: 0 4px 14px rgba(56,189,248,0.35);
+      display: none; align-items: center; gap: 6px;
+      z-index: 1500;
     }
-    .ai-btn:hover { background: rgba(56,189,248,0.15); border-color: var(--sb-accent); }
+    #ai-floating-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(56,189,248,0.5); }
+    #ai-floating-btn.visible { display: inline-flex; }
 
     /* ── AI Chat Panel ── */
     #ai-chat-panel {
@@ -718,9 +724,6 @@
             <div class="user-plan" id="sb-user-plan">Free Plan</div>
           </div>
         </div>
-        <button class="ai-btn" onclick="sidebarOpenAI()">
-          <span>🤖</span><span>AI Asistan</span>
-        </button>
       </div>
 
       <!-- New Company Modal -->
@@ -786,6 +789,7 @@
 
     // Inject AI chat panel if not exists
     injectAIPanel();
+    injectAIFloatingButton();
 
     // Inject confirm modal if not exists
     if (!document.getElementById('solvenin-confirm-overlay')) {
@@ -1515,6 +1519,28 @@
   function aiUpdateRemaining() {
     const el = document.getElementById('ai-remaining');
     if (el) el.textContent = `${aiRemaining()}/${AI_MAX_DAILY} mesaj kaldı`;
+  }
+
+  async function injectAIFloatingButton() {
+    if (document.getElementById('ai-floating-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'ai-floating-btn';
+    btn.innerHTML = '🤖 <span>AI</span>';
+    btn.onclick = () => window.sidebarOpenAI && window.sidebarOpenAI();
+    document.body.appendChild(btn);
+    // Check if enabled for current user
+    try {
+      const sb = window._supabase || window.supabase;
+      if (!sb || !sb.auth) return;
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const companyId = localStorage.getItem('currentCompanyId');
+      if (!companyId) return;
+      const { data: cu } = await sb.from('company_users')
+        .select('ai_assistant_enabled')
+        .eq('company_id', companyId).eq('user_id', user.id).single();
+      if (cu?.ai_assistant_enabled) btn.classList.add('visible');
+    } catch (e) { /* silent — button stays hidden */ }
   }
 
   function injectAIPanel() {

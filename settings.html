@@ -4314,7 +4314,7 @@ async function loadUsers() {
 
   // Load team members with profile info
   const { data: members } = await sb.from('company_users')
-    .select('user_id, role, status, joined_at')
+    .select('user_id, role, status, joined_at, ai_assistant_enabled')
     .eq('company_id', companyId);
   // Fetch profiles for display names
   const profileMap = {};
@@ -4339,7 +4339,10 @@ async function loadUsers() {
             <div style="font-size:11px;color:var(--gray400)">${m.role} · ${m.status}</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <label title="${t('settings_ai_assistant_helper') || 'AI asistanı etkinleştir'}" style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray500);cursor:pointer;padding:4px 6px;border:1px solid var(--gray200);border-radius:6px">
+            🤖 <input type="checkbox" ${m.ai_assistant_enabled ? 'checked' : ''} onchange="toggleAiAssistant('${m.user_id}',this.checked)" style="cursor:pointer">
+          </label>
           <select style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px" ${isOwner?'disabled':''} onchange="changeUserRole('${m.user_id}',this.value)">
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
@@ -4350,6 +4353,14 @@ async function loadUsers() {
     }).join('') || '<div style="padding:20px;text-align:center;color:var(--gray400)">No members</div>';
   }
 
+}
+
+async function toggleAiAssistant(userId, enabled) {
+  const { error } = await sb.from('company_users')
+    .update({ ai_assistant_enabled: enabled })
+    .eq('company_id', companyId).eq('user_id', userId);
+  if (error) { showToast(getErrorMessage(error), 'error'); await loadUsers(); return; }
+  showToast(t('toast_saved') || 'Saved', 'success');
 }
 
 async function addUser() {
