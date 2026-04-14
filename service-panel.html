@@ -797,8 +797,6 @@ async function openCompanyDrawer(id) {
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
       ${isSuperadmin ? `
-        <button class="btn btn-outline btn-sm" onclick="showLimitModal('${c.id}')">📊 Fatura Limiti</button>
-        <button class="btn btn-outline btn-sm" onclick="showUserLimitModal('${c.id}')">👥 Kullanıcı Limiti</button>
         ${c.is_frozen ? `<button class="btn btn-success btn-sm" onclick="unfreezeCompany('${c.id}')">✅ Aktif Et</button>` : `<button class="btn btn-danger btn-sm" onclick="showFreezeModal('${c.id}')">🔴 Dondur</button>`}
       ` : ''}
       ${(isSuperadmin || isSupport) ? `<button class="btn btn-outline btn-sm" onclick="showNoteModal('${c.id}')">📝 Not Ekle</button>` : ''}
@@ -992,67 +990,6 @@ async function saveUserPlan(userId) {
   closeModal();
   showToast('Plan güncellendi', 'success');
   await renderUsers();
-}
-
-function showLimitModal(companyId) {
-  openModal('Fatura Limiti', `
-    <div class="field"><label>Özel Limit (boş=varsayılan)</label><input type="number" id="m-limit" placeholder="30" min="0"></div>
-  `, [
-    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
-    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveLimit('${companyId}')` }
-  ]);
-}
-
-async function saveLimit(companyId) {
-  const limit = document.getElementById('m-limit').value || '';
-  await sb.rpc('sp_update_company', { p_user_id: user.id, p_company_id: companyId, p_field: 'invoice_limit_override', p_value: limit });
-  closeModal();
-  showToast('Limit güncellendi', 'success');
-  await renderCompanies();
-}
-
-// ===== USER LIMIT (per-company override) =====
-async function showUserLimitModal(companyId) {
-  const co = allCompanies.find(c => c.id === companyId);
-  if (!co) return;
-  // Fetch current custom limit + owner plan
-  const { data: compRow } = await sb.from('companies').select('custom_user_limit, name').eq('id', companyId).single();
-  const ownerPlan = co.owner_plan || 'free';
-  const planDefaults = { free: 1, standard: 10, pro: 'Sınırsız' };
-  const planDefault = planDefaults[ownerPlan] ?? 1;
-  const { data: check } = await sb.rpc('check_can_add_user', { p_company_id: companyId });
-  const effective = check?.limit ?? planDefault;
-  const current = check?.current ?? 0;
-
-  openModal('👥 Kullanıcı Limiti — ' + (compRow?.name || co.name), `
-    <div style="padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:12px;margin-bottom:14px;color:var(--gray600)">
-      <div><strong>Owner planı:</strong> ${ownerPlan}</div>
-      <div><strong>Plan varsayılanı:</strong> ${planDefault}</div>
-      <div><strong>Mevcut limit:</strong> ${effective === 999999 ? 'Sınırsız' : effective} <span style="color:var(--gray400)">(${current} kullanımda)</span></div>
-    </div>
-    <div class="field">
-      <label>Özel Limit</label>
-      <input type="number" id="m-user-limit" min="0" placeholder="Boş = plan varsayılanı" value="${compRow?.custom_user_limit ?? ''}">
-      <div style="font-size:11px;color:var(--gray400);margin-top:6px">Boş bırakılırsa plan varsayılanı kullanılır<br>Free: 1 · Standard: 10 · Pro: Sınırsız</div>
-    </div>
-  `, [
-    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
-    { text: 'Kaydet', cls: 'btn-primary', onclick: `saveUserLimit('${companyId}')` }
-  ]);
-}
-
-async function saveUserLimit(companyId) {
-  const raw = document.getElementById('m-user-limit').value.trim();
-  const limit = raw === '' ? null : parseInt(raw);
-  if (raw !== '' && (isNaN(limit) || limit < 0)) { showToast('Geçerli bir sayı girin', 'error'); return; }
-  const { data, error } = await sb.rpc('sp_update_user_limit', { p_company_id: companyId, p_limit: limit });
-  if (error || data?.success === false) {
-    showToast('Hata: ' + (error?.message || data?.error || 'unknown'), 'error');
-    return;
-  }
-  closeModal();
-  showToast('Kullanıcı limiti güncellendi', 'success');
-  await renderCompanies();
 }
 
 function showTrialModal(companyId) {
