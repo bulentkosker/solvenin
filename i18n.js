@@ -1945,6 +1945,9 @@ const T = window.T = {
     settings_barcode_format:"Default barcode format",
     settings_ai_assistant:"AI Assistant",
     settings_ai_assistant_helper:"Enable AI assistant for this user",
+    settings_profile_prefs:"Profile Preferences",
+    settings_profile_prefs_desc:"Affects only your account",
+    settings_language:"Language",
     categories_export:"⬇️ Export",
     categories_import:"⬆️ Import",
     categories_import_preview:"Import Preview",
@@ -3200,6 +3203,9 @@ const T = window.T = {
     settings_barcode_format:"Varsayılan barkod formatı",
     settings_ai_assistant:"AI Asistan",
     settings_ai_assistant_helper:"Bu kullanıcı için AI asistanı etkinleştir",
+    settings_profile_prefs:"Profil Tercihleri",
+    settings_profile_prefs_desc:"Sadece sizin hesabınızı etkiler",
+    settings_language:"Dil",
     categories_export:"⬇️ Dışa Aktar",
     categories_import:"⬆️ İçe Aktar",
     categories_import_preview:"İçe Aktarma Önizlemesi",
@@ -9586,6 +9592,9 @@ const T = window.T = {
     settings_barcode_format:"Формат штрихкода по умолчанию",
     settings_ai_assistant:"ИИ Ассистент",
     settings_ai_assistant_helper:"Включить ИИ-ассистент для этого пользователя",
+    settings_profile_prefs:"Настройки профиля",
+    settings_profile_prefs_desc:"Влияет только на вашу учётную запись",
+    settings_language:"Язык",
     categories_export:"⬇️ Экспорт",
     categories_import:"⬆️ Импорт",
     categories_import_preview:"Предпросмотр импорта",
@@ -12966,6 +12975,43 @@ function selectLang(lang) {
   if (menu) menu.style.display = 'none';
   const btn = document.getElementById('lang-switcher');
   if (btn) btn.classList.remove('open');
+  // Persist to profiles.preferred_language so it syncs across devices
+  saveLangToProfile(lang);
+}
+
+async function saveLangToProfile(lang) {
+  try {
+    const sb = window._supabase || window.supabase;
+    if (!sb || !sb.auth) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    await sb.from('profiles').update({ preferred_language: lang }).eq('id', user.id);
+  } catch (e) { /* silent */ }
+}
+
+// On page load: try profile.preferred_language → localStorage → browser → 'tr'
+async function loadLangFromProfile() {
+  try {
+    const sb = window._supabase || window.supabase;
+    if (!sb || !sb.auth) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('profiles').select('preferred_language').eq('id', user.id).single();
+    const lang = data?.preferred_language;
+    if (lang && SUPPORTED_LANGS.includes(lang)) {
+      const current = localStorage.getItem('solvenin_lang');
+      if (current !== lang) {
+        localStorage.setItem('solvenin_lang', lang);
+        if (typeof setLang === 'function') setLang(lang);
+        else applyTranslations();
+      }
+    }
+  } catch (e) { /* silent */ }
+}
+
+// Auto-sync after auth is ready
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(loadLangFromProfile, 800));
 }
 
 // Close dropdown on outside click

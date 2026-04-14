@@ -1170,6 +1170,12 @@ async function handleLogin() {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
 
+    // Save the language selected on auth page to user's profile
+    const currentLang = localStorage.getItem('solvenin_lang');
+    if (currentLang) {
+      try { await sb.from('profiles').update({ preferred_language: currentLang }).eq('id', data.user.id); } catch(e) {}
+    }
+
     // Check if user must change password (added by admin)
     const { data: profile } = await sb.from('profiles').select('must_change_password').eq('id', data.user.id).maybeSingle();
 

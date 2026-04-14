@@ -403,6 +403,41 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
 
+          <!-- PROFILE PREFERENCES (current user only) -->
+          <div class="settings-card" style="margin-top:16px">
+            <div class="settings-card-head">
+              <div>
+                <div class="settings-card-title" data-i18n="settings_profile_prefs">Profil Tercihleri</div>
+                <div class="settings-card-desc" data-i18n="settings_profile_prefs_desc">Sadece sizin hesabınızı etkiler</div>
+              </div>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row">
+                <div class="form-group" style="max-width:240px">
+                  <label data-i18n="settings_language">Dil</label>
+                  <select id="profile-lang" onchange="changeProfileLang(this.value)">
+                    <option value="tr">🇹🇷 Türkçe</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="kz">🇰🇿 Қазақша</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="zh">🇨🇳 中文</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="pt">🇵🇹 Português</option>
+                    <option value="pl">🇵🇱 Polski</option>
+                    <option value="kg">🇰🇬 Кыргызча</option>
+                    <option value="uz">🇺🇿 O'zbek</option>
+                    <option value="tm">🇹🇲 Türkmen</option>
+                    <option value="az">🇦🇿 Azərbaycan</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- DANGER ZONE (owner only, hidden for demo companies) -->
           <div class="settings-card danger-zone-card" id="danger-zone" style="display:none">
             <div class="settings-card-head" style="border-bottom-color:#fecaca">
@@ -1928,7 +1963,21 @@ async function loadCompanyData() {
   // (demo companies are deleted from the service panel, not by end users)
   const dz = document.getElementById('danger-zone');
   if (dz) dz.style.display = (cuRes.data?.role === 'owner' && !data.is_demo) ? '' : 'none';
+
+  // Load current user's preferred language
+  const { data: prof } = await sb.from('profiles').select('preferred_language').eq('id', currentUser.id).single();
+  const langSel = document.getElementById('profile-lang');
+  if (langSel) langSel.value = prof?.preferred_language || localStorage.getItem('solvenin_lang') || 'tr';
+
   console.timeEnd('[settings] loadCompanyData');
+}
+
+async function changeProfileLang(lang) {
+  if (!lang) return;
+  await sb.from('profiles').update({ preferred_language: lang }).eq('id', currentUser.id);
+  localStorage.setItem('solvenin_lang', lang);
+  if (typeof setLang === 'function') setLang(lang);
+  showToast(t('toast_saved') || 'Saved', 'success');
 }
 
 // ===== DELETE COMPANY (soft-delete via RPC) =====
