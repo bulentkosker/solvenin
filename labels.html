@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="i18n.js"></script>
+<script src="quickadd.js"></script>
 <style>
   :root{
     --blue:#3b82f6;--blue-dark:#2563eb;--blue-light:#eff6ff;
@@ -147,9 +148,8 @@
         <div class="grid-2">
           <div>
             <label data-i18n="label.customer">Müşteri</label>
-            <select id="customer-select" onchange="onCustomerChange()">
-              <option value="">— Müşteri seçiniz —</option>
-            </select>
+            <div id="customer-qa"></div>
+            <input type="hidden" id="customer-select">
           </div>
           <div>
             <label data-i18n="label.template_name">Şablon Adı</label>
@@ -438,12 +438,10 @@ async function loadCompany(){
   }
 }
 
+let customerQA = null;
 async function loadContacts(){
-  const sel = document.getElementById('customer-select');
-  if (!companyId){
-    sel.innerHTML = '<option value="">— Şirket bulunamadı —</option>';
-    return;
-  }
+  const wrap = document.getElementById('customer-qa');
+  if (!companyId){ wrap.innerHTML = '<div style="font-size:12px;color:var(--gray400)">Şirket bulunamadı</div>'; return; }
   try {
     const { data, error } = await sb.from('contacts')
       .select('id, name, is_customer, is_supplier, type')
@@ -451,29 +449,28 @@ async function loadContacts(){
       .order('name');
     if (error) throw error;
     contacts = data || [];
-    const placeholder = _t('label.select_customer') || 'Müşteri seçiniz';
-    if (!contacts.length){
-      sel.innerHTML = `<option value="">— ${escapeHtml(placeholder)} (boş) —</option>`;
-      return;
-    }
-    // Group customers first, suppliers after
+    // Customers first, suppliers after
     const customers = contacts.filter(c => c.is_customer);
     const others = contacts.filter(c => !c.is_customer);
-    let html = `<option value="">— ${escapeHtml(placeholder)} —</option>`;
-    if (customers.length){
-      html += '<optgroup label="Müşteriler">'
-        + customers.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')
-        + '</optgroup>';
+    const items = [
+      ...customers.map(c => ({ id: c.id, name: c.name })),
+      ...others.map(c => ({ id: c.id, name: c.name + ' (tedarikçi)' }))
+    ];
+    const placeholder = _t('label.select_customer') || 'Müşteri ara…';
+    if (customerQA) {
+      customerQA.setItems(items);
+    } else {
+      customerQA = QA.create(wrap, {
+        items, placeholder,
+        onSelect(id){
+          document.getElementById('customer-select').value = id;
+          onCustomerChange();
+        }
+      });
     }
-    if (others.length){
-      html += '<optgroup label="Diğer (Tedarikçi vb.)">'
-        + others.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')
-        + '</optgroup>';
-    }
-    sel.innerHTML = html;
   } catch(e){
     console.error('loadContacts error:', e);
-    sel.innerHTML = `<option value="">— Hata: ${escapeHtml(e.message||'yükleme başarısız')} —</option>`;
+    wrap.innerHTML = `<div style="font-size:12px;color:#dc2626">Hata: ${escapeHtml(e.message||'yükleme başarısız')}</div>`;
   }
 }
 
@@ -543,6 +540,7 @@ function newTemplate(){
   editingTemplateId = null;
   document.getElementById('template-name').value='';
   document.getElementById('customer-select').value='';
+  if (customerQA && customerQA.setValue) customerQA.setValue('');
   document.getElementById('template-list').innerHTML='';
   document.querySelectorAll('#label-form-wrap input, #label-form-wrap textarea').forEach(el => {
     if (el.type==='checkbox'||el.type==='radio'){ if (el.name==='gmo' && el.value==='no') el.checked=true; else el.checked=false; }
