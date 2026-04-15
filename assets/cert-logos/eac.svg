@@ -1,6 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-  <rect x="4" y="4" width="112" height="112" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
-  <text x="60" y="62" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-weight="900" font-size="38" fill="#000" letter-spacing="-2">EAC</text>
-  <text x="60" y="82" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="8" fill="#000">EURASIAN</text>
-  <text x="60" y="94" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="8" fill="#000">CONFORMITY</text>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.6.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+<g id="Layer_1_00000028323777702232420810000005534079592627225492_">
+</g>
+<g id="Слой_1">
+	<polygon points="904,184.6 904,96 813.6,96 724.9,96 724.9,184.6 724.9,815.4 724.9,904 813.6,904 904,904 904,815.4 813.6,815.4 
+		813.6,184.6 	"/>
+	<polygon points="275.1,184.6 275.1,96 184.6,96 96,96 96,184.6 96,455.6 96,544.4 96,815.4 96,904 184.6,904 275.1,904 
+		275.1,815.4 184.6,815.4 184.6,544.4 275.1,544.4 275.1,455.6 184.6,455.6 184.6,184.6 	"/>
+	<path d="M590,96h-44.3h-91.4h-43.5h-45.3V904h88.6V544.4h91.4V904h88.6V96H590z M454.3,455.6v-271h91.4v271L454.3,455.6
+		L454.3,455.6z"/>
+</g>
+<path d="M1000,1000H0V0h1000V1000z M30.3,969.7h939.4V30.3H30.3V969.7z"/>
 </svg>
