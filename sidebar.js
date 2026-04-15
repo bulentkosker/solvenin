@@ -229,22 +229,29 @@
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
     .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
 
-    /* ── AI Button (floating bottom-right) ── */
-    #ai-floating-btn {
-      position: fixed; bottom: 24px; right: 24px;
-      padding: 10px 16px; border-radius: 999px;
-      border: none;
-      background: linear-gradient(135deg, #1e3a8a 0%, #38bdf8 100%);
-      color: #fff; font-size: 13px; font-weight: 700;
+    /* ── AI Button (inside sidebar, above user bar) ── */
+    #sb-ai-btn {
+      display: none;
+      width: calc(100% - 16px);
+      margin: 0 8px 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
       font-family: 'DM Sans', system-ui, sans-serif;
       cursor: pointer;
-      transition: all .15s;
-      box-shadow: 0 6px 20px rgba(56,189,248,0.4);
-      display: none; align-items: center; gap: 6px;
-      z-index: 9999;
+      transition: background .15s, transform .1s;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    #ai-floating-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(56,189,248,0.55); }
-    #ai-floating-btn.visible { display: inline-flex; }
+    #sb-ai-btn.visible { display: flex; }
+    #sb-ai-btn:hover { background: rgba(255,255,255,0.16); }
+    #sb-ai-btn:active { transform: scale(0.98); }
+    #sb-ai-btn .sb-ai-icon { font-size: 14px; }
 
     /* ── AI Chat Panel ── */
     #ai-chat-panel {
@@ -729,6 +736,9 @@
       </a>
       <div class="sidebar-sections">${sectionsHTML}</div>
       <div class="sidebar-footer">
+        <button id="sb-ai-btn" type="button" onclick="window.sidebarOpenAI && window.sidebarOpenAI()" title="AI Asistan">
+          <span class="sb-ai-icon">✨</span><span>AI Asistan</span>
+        </button>
         <div class="company-menu" id="sb-company-menu" style="display:none">
           <div class="company-menu-list" id="sb-company-menu-list"></div>
           <div class="company-menu-footer" id="sb-company-menu-footer"></div>
@@ -1555,12 +1565,10 @@
   }
 
   async function injectAIFloatingButton() {
-    if (document.getElementById('ai-floating-btn')) return;
-    const btn = document.createElement('button');
-    btn.id = 'ai-floating-btn';
-    btn.innerHTML = '🤖 <span>AI</span>';
-    btn.onclick = () => window.sidebarOpenAI && window.sidebarOpenAI();
-    document.body.appendChild(btn);
+    // Remove legacy floating button if present (from older cache)
+    document.getElementById('ai-floating-btn')?.remove();
+    const btn = document.getElementById('sb-ai-btn');
+    if (!btn) return;
     // Check if enabled for current user
     try {
       const sb = window._supabase || window.supabase;
