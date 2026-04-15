@@ -496,7 +496,12 @@
             { key: 'nav_reports',           href: 'reports-purchase.html' },
           ]
         },
-        { icon: '🏭', key: 'nav_production', href: 'production.html' },
+        { icon: '🏭', key: 'nav_production', href: 'production.html',
+          children: [
+            { key: 'nav_production', href: 'production.html' },
+            { key: 'nav_labels',     href: 'labels.html' },
+          ]
+        },
       ]
     },
     {

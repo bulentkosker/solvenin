@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin – Etiket Oluşturucu</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="i18n.js"></script>
+<style>
+  :root{
+    --blue:#3b82f6;--blue-dark:#2563eb;--blue-light:#eff6ff;
+    --green:#22c55e;--red:#ef4444;--orange:#f97316;
+    --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;
+    --gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;
+    --gray700:#1a2744;--gray800:#1a2744;
+    --radius:12px;
+    --font-body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);background:var(--gray50);color:var(--gray800);display:flex;min-height:100vh}
+  .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+  .topbar{height:60px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
+  .topbar-title{font-size:16px;font-weight:700;flex:1}
+  .topbar-actions{display:flex;gap:8px}
+  .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--gray200);background:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--gray800);font-family:inherit}
+  .btn:hover{background:var(--gray50)}
+  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn-primary:hover{background:var(--blue-dark)}
+  .btn-ghost{border:none;background:transparent}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .content{flex:1;display:grid;grid-template-columns:1fr 460px;gap:20px;padding:20px;align-items:start}
+  @media(max-width:1200px){.content{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid var(--gray200);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+  .panel h3{font-size:13px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .panel .step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+  label{display:block;font-size:12px;font-weight:600;color:var(--gray500);margin-bottom:4px}
+  input[type=text],input[type=number],input[type=date],input[type=url],input[type=tel],select,textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--gray800)
+  }
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:900px){.type-grid{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
+  .type-opt{padding:12px 10px;border:2px solid var(--gray200);border-radius:10px;cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--gray700);background:#fff;transition:all .15s}
+  .type-opt:hover{border-color:var(--blue-light);background:var(--gray50)}
+  .type-opt.active{border-color:var(--blue);background:var(--blue-light);color:var(--blue-dark)}
+  .type-opt .ico{display:block;font-size:20px;margin-bottom:4px}
+  .allergen-grid,.cert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .chk-pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:12px;user-select:none;background:#fff}
+  .chk-pill input{margin:0}
+  .chk-pill.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue-dark)}
+  .cert-grid{grid-template-columns:repeat(5,1fr);gap:8px}
+  .cert-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;border:2px solid var(--gray200);border-radius:10px;cursor:pointer;background:#fff;font-size:10px;font-weight:600;color:var(--gray500);text-align:center;transition:all .15s}
+  .cert-opt img{width:40px;height:40px;opacity:.55;transition:opacity .15s}
+  .cert-opt:hover{border-color:var(--blue-light)}
+  .cert-opt.active{border-color:var(--blue);color:var(--blue-dark)}
+  .cert-opt.active img{opacity:1}
+  .lang-grid{display:grid;grid-template-columns:repeat(4,auto);gap:6px}
+  .lang-opt{padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;cursor:pointer;font-size:12px;background:#fff;font-weight:600}
+  .lang-opt.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .radio-group{display:flex;gap:12px;flex-wrap:wrap}
+  .radio-group label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--gray800);font-weight:500;cursor:pointer;margin-bottom:0}
+  .hidden{display:none!important}
+  .subsec{margin-top:14px;padding-top:14px;border-top:1px dashed var(--gray200)}
+  .subsec h4{font-size:12px;font-weight:700;margin-bottom:8px;color:var(--gray700)}
+  .dyn-row{display:grid;grid-template-columns:1fr 120px 60px 36px;gap:6px;margin-bottom:6px;align-items:center}
+  .del-btn{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px}
+  .toast{position:fixed;top:20px;right:20px;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+  .toast.success{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+  .toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+  .toast.info{background:#eff6ff;color:#1e40af;border:1px solid #93c5fd}
+
+  /* PREVIEW PANEL */
+  .preview-panel{position:sticky;top:76px;background:#fff;border:1px solid var(--gray200);border-radius:var(--radius);padding:16px;max-height:calc(100vh - 96px);overflow:auto}
+  .preview-panel h3{font-size:13px;font-weight:700;color:var(--gray500);text-transform:uppercase;margin-bottom:12px}
+  .preview-wrap{background:var(--gray100);padding:16px;border-radius:10px;display:flex;justify-content:center}
+  /* LABEL CARD — sized per mm via CSS vars */
+  #label{
+    --w:80mm;--h:120mm;
+    width:var(--w);min-height:var(--h);
+    background:#fff;border:1px solid #ddd;padding:4mm;font-size:9pt;color:#000;
+    font-family:'Inter',Arial,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.06);
+    display:flex;flex-direction:column;gap:2mm
+  }
+  #label .lbl-title{font-size:12pt;font-weight:800;line-height:1.1}
+  #label .lbl-brand{font-size:9pt;font-weight:600;color:#374151}
+  #label .lbl-section{font-size:7pt;font-weight:700;text-transform:uppercase;color:#64748b;margin-top:1mm}
+  #label .lbl-text{font-size:8pt;line-height:1.25}
+  #label .lbl-bold{font-weight:700}
+  #label table.nutr{width:100%;border-collapse:collapse;font-size:7.5pt}
+  #label table.nutr td{padding:1px 2px;border-bottom:.3pt solid #999}
+  #label table.nutr td:nth-child(2){text-align:right;font-weight:600}
+  #label .lbl-certs{display:flex;flex-wrap:wrap;gap:2mm;margin-top:1mm}
+  #label .lbl-certs img{height:10mm;width:10mm}
+  #label .lbl-barcode{margin-top:2mm;display:flex;justify-content:center}
+  #label .lbl-barcode svg,#label .lbl-barcode canvas,#label .lbl-barcode img{max-width:100%;max-height:18mm}
+  #label .ghs-row{display:flex;gap:1mm;flex-wrap:wrap}
+  #label .ghs-row span{font-size:8pt;padding:1mm 2mm;border:.5pt solid #000;border-radius:1mm}
+
+  /* A4 layout preview */
+  #a4-preview{width:210mm;min-height:297mm;background:#fff;border:1px dashed #94a3b8;padding:var(--a4-margin,10mm);display:grid;gap:var(--a4-gap,2mm);grid-template-columns:repeat(var(--a4-cols,2),var(--w));grid-auto-rows:var(--h);zoom:.45}
+  #a4-preview .lbl-copy{width:var(--w);height:var(--h);background:#fff;border:.5pt solid #ccc;padding:3mm;overflow:hidden;font-size:8pt}
+
+  @media print{
+    body{background:#fff}
+    .sidebar,#sb-hamburger,#sb-mobile-overlay,.topbar,.preview-panel>h3,.panel,#label-form-wrap,.toast{display:none!important}
+    .content{padding:0;grid-template-columns:1fr}
+    .main{margin-left:0}
+    .preview-panel{position:static;border:none;padding:0;max-height:none;overflow:visible}
+    .preview-wrap{background:#fff;padding:0}
+    #label{box-shadow:none;border:none;page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<script src="utils.js"></script>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" data-i18n="label.maker">Etiket Oluşturucu</div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="saveTemplate()" data-i18n="label.save_template">Şablonu Kaydet</button>
+      <button class="btn" onclick="newTemplate()">➕ <span data-i18n="label.new_template">Yeni Şablon</span></button>
+      <button class="btn btn-primary" onclick="printLabel()">🖨️ <span data-i18n="label.print">Yazdır</span></button>
+      <button class="btn" onclick="downloadPDF()">📄 PDF</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div id="label-form-wrap">
+
+      <!-- STEP 1: Customer & Template -->
+      <div class="panel">
+        <h3><span class="step-num">1</span> <span data-i18n="label.step_customer">Müşteri & Şablon</span></h3>
+        <div class="grid-2">
+          <div>
+            <label data-i18n="label.customer">Müşteri</label>
+            <select id="customer-select" onchange="onCustomerChange()"></select>
+          </div>
+          <div>
+            <label data-i18n="label.template_name">Şablon Adı</label>
+            <input type="text" id="template-name" placeholder="Şablon adı…">
+          </div>
+        </div>
+        <div id="template-list" style="margin-top:8px;font-size:12px;color:var(--gray500)"></div>
+      </div>
+
+      <!-- STEP 2: Label Type -->
+      <div class="panel">
+        <h3><span class="step-num">2</span> <span data-i18n="label.type">Etiket Türü</span></h3>
+        <div class="type-grid" id="type-grid">
+          <div class="type-opt active" data-type="food"     onclick="selectType('food')">    <span class="ico">🥗</span><span data-i18n="label.food">Gıda</span></div>
+          <div class="type-opt"        data-type="textile"  onclick="selectType('textile')"> <span class="ico">👕</span><span data-i18n="label.textile">Tekstil</span></div>
+          <div class="type-opt"        data-type="chemical" onclick="selectType('chemical')"><span class="ico">🧴</span><span data-i18n="label.chemical">Kimyasal</span></div>
+          <div class="type-opt"        data-type="electronic" onclick="selectType('electronic')"><span class="ico">⚡</span><span data-i18n="label.electronic">Elektronik</span></div>
+          <div class="type-opt"        data-type="packaging" onclick="selectType('packaging')"><span class="ico">📦</span><span data-i18n="label.packaging">Ambalaj</span></div>
+          <div class="type-opt"        data-type="general"  onclick="selectType('general')"> <span class="ico">📋</span><span data-i18n="label.general">Genel</span></div>
+          <div class="type-opt"        data-type="custom"   onclick="selectType('custom')">  <span class="ico">⚙️</span><span data-i18n="label.custom">Özel</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Common Fields -->
+      <div class="panel">
+        <h3><span class="step-num">3</span> <span data-i18n="label.product_info">Ürün Bilgileri</span></h3>
+        <div class="grid-2">
+          <div><label data-i18n="label.product_name">Ürün Adı</label><input type="text" id="f-name" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.brand">Marka</label><input type="text" id="f-brand" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.model_code">Model / Kod</label><input type="text" id="f-model" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.origin">Menşei Ülke</label><input type="text" id="f-origin" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.net_quantity">Net Miktar / Ağırlık</label><input type="number" id="f-qty" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.unit">Birim</label>
+            <select id="f-unit" onchange="updatePreview()">
+              <option>kg</option><option>g</option><option>lt</option><option>ml</option>
+              <option>adet</option><option>m</option><option>m²</option><option>cm</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4 data-i18n="label.manufacturer">Üretici Bilgileri</h4>
+          <div class="grid-2">
+            <div><label data-i18n="label.company">Şirket</label><input type="text" id="f-mfr-name" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.phone">Telefon</label><input type="tel" id="f-mfr-phone" oninput="updatePreview()"></div>
+            <div style="grid-column:1/-1"><label data-i18n="label.address">Adres</label><input type="text" id="f-mfr-addr" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.website">Web Sitesi</label><input type="url" id="f-mfr-web" oninput="updatePreview()"></div>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4 style="display:flex;align-items:center;justify-content:space-between">
+            <span data-i18n="label.importer">İthalatçı Bilgileri</span>
+            <label class="chk-pill" style="font-weight:500"><input type="checkbox" id="f-has-importer" onchange="toggleImporter();updatePreview()"> <span data-i18n="label.include">Dahil et</span></label>
+          </h4>
+          <div id="importer-fields" class="grid-2 hidden">
+            <div><label data-i18n="label.company">Şirket</label><input type="text" id="f-imp-name" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.phone">Telefon</label><input type="tel" id="f-imp-phone" oninput="updatePreview()"></div>
+            <div style="grid-column:1/-1"><label data-i18n="label.country_address">Ülke + Adres</label><input type="text" id="f-imp-addr" oninput="updatePreview()"></div>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4 data-i18n="label.dates_batch">Tarih & Parti</h4>
+          <div class="grid-2">
+            <div><label data-i18n="label.prod_date">Üretim Tarihi</label><input type="date" id="f-prod-date" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.exp_mode">Son Kullanma Türü</label>
+              <select id="f-exp-mode" onchange="toggleExpMode();updatePreview()">
+                <option value="date" data-i18n="label.exp_date">Tarih</option>
+                <option value="duration" data-i18n="label.exp_duration">Süre (üretimden itibaren)</option>
+              </select>
+            </div>
+            <div id="exp-date-wrap"><label data-i18n="label.exp_date">Son Kullanma Tarihi</label><input type="date" id="f-exp-date" oninput="updatePreview()"></div>
+            <div id="exp-dur-wrap" class="hidden">
+              <label data-i18n="label.exp_duration">Süre</label>
+              <div style="display:flex;gap:6px">
+                <input type="number" id="f-exp-n" style="flex:1" oninput="updatePreview()">
+                <select id="f-exp-unit" style="width:90px" onchange="updatePreview()">
+                  <option value="ay">ay</option><option value="yıl">yıl</option><option value="gün">gün</option>
+                </select>
+              </div>
+            </div>
+            <div><label data-i18n="label.batch">Parti No</label><input type="text" id="f-batch" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.serial">Seri No</label><input type="text" id="f-serial" oninput="updatePreview()"></div>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4 data-i18n="label.storage">Saklama / Kullanım Koşulları</h4>
+          <textarea id="f-storage" rows="2" oninput="updatePreview()"></textarea>
+        </div>
+
+        <div class="subsec">
+          <h4 style="display:flex;align-items:center;justify-content:space-between">
+            <span data-i18n="label.barcode">Barkod</span>
+            <label class="chk-pill" style="font-weight:500"><input type="checkbox" id="f-has-barcode" onchange="toggleBarcode();updatePreview()"> <span data-i18n="label.include">Dahil et</span></label>
+          </h4>
+          <div id="barcode-fields" class="grid-3 hidden">
+            <div><label data-i18n="label.barcode_value">Barkod No</label><input type="text" id="f-bc-value" oninput="updatePreview()"></div>
+            <div><label data-i18n="label.barcode_type">Tür</label>
+              <select id="f-bc-type" onchange="updatePreview()">
+                <option value="ean13">EAN-13</option>
+                <option value="code128">Code-128</option>
+                <option value="qr">QR</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:end"><button class="btn" onclick="document.getElementById('f-bc-value').value=document.getElementById('f-model').value||('SV'+Date.now());updatePreview()" data-i18n="label.from_code">Koddan Üret</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOD -->
+      <div class="panel type-panel" data-for="food">
+        <h3>🥗 <span data-i18n="label.nutrition">Besin Değerleri (100g)</span></h3>
+        <div id="nutr-rows"></div>
+        <button class="btn" onclick="addNutrRow()">+ <span data-i18n="label.add_row">Satır Ekle</span></button>
+        <div class="subsec">
+          <h4 data-i18n="label.allergens">Alerjenler</h4>
+          <div class="allergen-grid" id="allergens"></div>
+          <div style="margin-top:8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            <label class="chk-pill"><input type="checkbox" id="f-traces" onchange="updatePreview()"> <span data-i18n="label.traces">İzler halinde içerebilir</span></label>
+            <div class="radio-group">
+              <label><input type="radio" name="gmo" value="no" checked onchange="updatePreview()"> <span data-i18n="label.gmo_free">GDO İçermez</span></label>
+              <label><input type="radio" name="gmo" value="yes" onchange="updatePreview()"> <span data-i18n="label.gmo_yes">GDO İçerir</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEXTILE -->
+      <div class="panel type-panel hidden" data-for="textile">
+        <h3>👕 <span data-i18n="label.textile_details">Tekstil Detayları</span></h3>
+        <label data-i18n="label.composition">Materyal Bileşimi</label>
+        <div id="tex-rows"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px">
+          <button class="btn" onclick="addTexRow()">+ <span data-i18n="label.add">Ekle</span></button>
+          <span id="tex-total" style="font-size:12px;color:var(--gray500)">Toplam: 0%</span>
+        </div>
+        <div class="subsec">
+          <h4 data-i18n="label.washing">Yıkama Talimatları</h4>
+          <div class="allergen-grid" id="washing"></div>
+        </div>
+        <div class="subsec grid-2">
+          <div><label data-i18n="label.size">Beden</label><input type="text" id="f-size" oninput="updatePreview()"></div>
+        </div>
+      </div>
+
+      <!-- CHEMICAL -->
+      <div class="panel type-panel hidden" data-for="chemical">
+        <h3>🧴 <span data-i18n="label.chemical_details">Kimyasal Detayları</span></h3>
+        <label data-i18n="label.ghs">GHS Tehlike Sembolleri</label>
+        <div class="allergen-grid" id="ghs"></div>
+        <div class="subsec">
+          <h4 data-i18n="label.usage">Kullanım Talimatları</h4>
+          <textarea id="f-usage" rows="3" oninput="updatePreview()"></textarea>
+        </div>
+        <div class="subsec">
+          <h4 data-i18n="label.first_aid">İlk Yardım</h4>
+          <textarea id="f-first-aid" rows="3" oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+
+      <!-- ELECTRONIC -->
+      <div class="panel type-panel hidden" data-for="electronic">
+        <h3>⚡ <span data-i18n="label.electronic_details">Elektronik Detayları</span></h3>
+        <div class="grid-2">
+          <div><label data-i18n="label.voltage">Voltaj / Frekans</label><input type="text" id="f-voltage" placeholder="220V / 50Hz" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.power">Güç (W)</label><input type="number" id="f-power" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.ip_rating">IP Koruma Sınıfı</label><input type="text" id="f-ip" placeholder="IP54" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.warranty">Garanti Süresi</label><input type="text" id="f-warranty" placeholder="2 yıl" oninput="updatePreview()"></div>
+        </div>
+      </div>
+
+      <!-- CUSTOM -->
+      <div class="panel type-panel hidden" data-for="custom">
+        <h3>⚙️ <span data-i18n="label.custom_fields">Özel Alanlar</span></h3>
+        <div id="custom-rows"></div>
+        <button class="btn" onclick="addCustomRow()">+ <span data-i18n="label.add_field">Alan Ekle</span></button>
+      </div>
+
+      <!-- CERTIFICATIONS -->
+      <div class="panel">
+        <h3><span class="step-num">4</span> <span data-i18n="label.certifications">Sertifikasyonlar</span></h3>
+        <div class="cert-grid" id="cert-grid"></div>
+      </div>
+
+      <!-- LANGUAGE & TRANSLATION -->
+      <div class="panel">
+        <h3><span class="step-num">5</span> <span data-i18n="label.language">Etiket Dili</span></h3>
+        <div class="lang-grid" id="lang-grid"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" id="translate-btn" onclick="translateAll()">🤖 <span data-i18n="label.translate">AI ile Çevir</span></button>
+          <span id="translate-status" style="font-size:12px;color:var(--gray500)"></span>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="panel">
+        <h3><span class="step-num">6</span> <span data-i18n="label.output">Çıktı Ayarları</span></h3>
+        <div class="radio-group" style="margin-bottom:10px">
+          <label><input type="radio" name="out" value="printer" checked onchange="onOutputChange()"> <span data-i18n="label.print_label">Etiket Yazıcı</span></label>
+          <label><input type="radio" name="out" value="a4" onchange="onOutputChange()"> <span data-i18n="label.print_a4">A4 Kağıt</span></label>
+        </div>
+        <div class="grid-3">
+          <div><label data-i18n="label.width">Genişlik (mm)</label><input type="number" id="out-w" value="80" oninput="applyDimensions()"></div>
+          <div><label data-i18n="label.height">Uzunluk (mm)</label><input type="number" id="out-h" value="120" oninput="applyDimensions()"></div>
+          <div id="out-copies-wrap" class="hidden"><label data-i18n="label.copies">Kopya Sayısı</label><input type="number" id="out-copies" value="10" oninput="applyDimensions()"></div>
+        </div>
+        <div id="a4-extras" class="grid-3 hidden" style="margin-top:10px">
+          <div><label data-i18n="label.margin">Kenar Boşluğu (mm)</label><input type="number" id="a4-margin" value="10" oninput="applyDimensions()"></div>
+          <div><label data-i18n="label.gap">Etiket Arası (mm)</label><input type="number" id="a4-gap" value="2" oninput="applyDimensions()"></div>
+          <div style="display:flex;align-items:end;font-size:12px;color:var(--gray500)" id="a4-fit">—</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-panel">
+      <h3>👁 <span data-i18n="label.preview">Önizleme</span></h3>
+      <div class="preview-wrap">
+        <div id="label"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+const T = window.t || (k=>k);
+
+// ===== STATE =====
+let companyId = null;
+let currentUserId = null;
+let contacts = [];
+let currentType = 'food';
+let currentLang = 'tr';
+let editingTemplateId = null;
+
+// ===== ALLERGENS / WASHING / GHS =====
+const ALLERGENS = ['gluten','fıstık','süt','yumurta','balık','kabuklu deniz ürünü','soya','fındık'];
+const WASHING = ['30°C','40°C','60°C','kuru temizleme','ütüleme','çamaşır suyu kullanma','makine kurutma'];
+const GHS = ['patlayıcı','alevlenir','aşındırıcı','toksik','tahriş edici','çevreye zararlı','oksitleyici','sağlığa zararlı','basınçlı gaz'];
+const CERTS = [
+  {k:'eac',n:'EAC'},{k:'iso9001',n:'ISO 9001'},{k:'iso22000',n:'ISO 22000'},{k:'haccp',n:'HACCP'},
+  {k:'halal',n:'Halal'},{k:'kosher',n:'Kosher'},{k:'ce',n:'CE'},{k:'fda',n:'FDA'},
+  {k:'usda_organic',n:'USDA Organic'},{k:'eu_organic',n:'EU Organic'},{k:'rainforest',n:'Rainforest'},
+  {k:'fairtrade',n:'Fair Trade'},{k:'gmp',n:'GMP'},{k:'rohs',n:'RoHS'},{k:'gost',n:'GOST'}
+];
+const LANGS = [
+  {c:'tr',n:'🇹🇷 Türkçe'},{c:'ru',n:'🇷🇺 Русский'},{c:'kk',n:'🇰🇿 Қазақша'},
+  {c:'en',n:'🇬🇧 English'},{c:'ka',n:'🇬🇪 ქართული'},{c:'az',n:'🇦🇿 Azərbaycan'},
+  {c:'ar',n:'🇸🇦 العربية'},{c:'zh',n:'🇨🇳 中文'},{c:'de',n:'🇩🇪 Deutsch'},
+  {c:'fr',n:'🇫🇷 Français'},{c:'es',n:'🇪🇸 Español'},{c:'pt',n:'🇵🇹 Português'}
+];
+
+// ===== INIT =====
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ location.href='/auth.html'; return; }
+  currentUserId = session.user.id;
+  companyId = localStorage.getItem('currentCompanyId');
+  if (!companyId){
+    const { data: cu } = await sb.from('company_users').select('company_id').eq('user_id',currentUserId).limit(1).maybeSingle();
+    if (cu){ companyId = cu.company_id; localStorage.setItem('currentCompanyId',companyId); }
+  }
+  await Promise.all([loadCompany(), loadContacts()]);
+  buildAllergens(); buildWashing(); buildGhs(); buildCerts(); buildLangs();
+  addNutrRow(); addTexRow();
+  applyDimensions();
+  updatePreview();
+}
+
+async function loadCompany(){
+  if (!companyId) return;
+  const { data: c } = await sb.from('companies').select('name, address, phone, website').eq('id',companyId).maybeSingle();
+  if (c){
+    if (c.name) document.getElementById('f-mfr-name').value = c.name;
+    if (c.address) document.getElementById('f-mfr-addr').value = c.address;
+    if (c.phone) document.getElementById('f-mfr-phone').value = c.phone;
+    if (c.website) document.getElementById('f-mfr-web').value = c.website;
+  }
+}
+
+async function loadContacts(){
+  const { data } = await sb.from('contacts').select('id, name, is_customer').eq('company_id',companyId).order('name');
+  contacts = (data||[]).filter(c => c.is_customer !== false);
+  const sel = document.getElementById('customer-select');
+  sel.innerHTML = '<option value="">— '+(T('label.select_customer')||'Müşteri seçiniz')+' —</option>'
+    + contacts.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+// ===== CUSTOMER / TEMPLATE =====
+async function onCustomerChange(){
+  const cid = document.getElementById('customer-select').value;
+  const listEl = document.getElementById('template-list');
+  listEl.innerHTML = '';
+  editingTemplateId = null;
+  if (!cid){ return; }
+  const { data } = await sb.from('label_templates')
+    .select('id, name, label_type, template_data, updated_at')
+    .eq('company_id',companyId).eq('contact_id',cid).order('updated_at',{ascending:false});
+  if (!data || !data.length){
+    listEl.innerHTML = '<span style="color:var(--gray400)">'+(T('label.no_template')||'Bu müşteri için şablon bulunamadı')+'</span>';
+    return;
+  }
+  listEl.innerHTML = '<strong>'+(T('label.saved_templates')||'Kayıtlı şablonlar')+':</strong> '
+    + data.map(t => `<a href="#" onclick="event.preventDefault();loadTemplate('${t.id}')" style="margin-right:10px;color:var(--blue)">${escapeHtml(t.name)}</a>`).join('');
+  // auto-load most recent
+  loadTemplate(data[0].id, true);
+}
+
+async function loadTemplate(id, silent){
+  const { data: tpl } = await sb.from('label_templates').select('*').eq('id',id).maybeSingle();
+  if (!tpl) return;
+  editingTemplateId = id;
+  document.getElementById('template-name').value = tpl.name || '';
+  const d = tpl.template_data || {};
+  selectType(tpl.label_type || 'food');
+  applyData(d);
+  if (!silent) showToast(T('label.template_loaded')||'Şablon yüklendi','success');
+  else showToast(T('label.template_loaded')||'Şablon yüklendi','info');
+  updatePreview();
+}
+
+async function saveTemplate(){
+  if (submitting && submitting()) return;
+  const name = document.getElementById('template-name').value.trim();
+  const cid = document.getElementById('customer-select').value || null;
+  if (!name){ showToast(T('label.err_name')||'Şablon adı girin','error'); if(submitting)submitting.reset(); return; }
+  const payload = {
+    company_id: companyId,
+    contact_id: cid,
+    name,
+    label_type: currentType,
+    template_data: collectData(),
+    created_by: currentUserId
+  };
+  try {
+    if (editingTemplateId){
+      const { error } = await sb.from('label_templates').update(payload).eq('id',editingTemplateId);
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.from('label_templates').insert(payload).select('id').single();
+      if (error) throw error;
+      editingTemplateId = data.id;
+    }
+    showToast(T('label.template_saved')||'Şablon kaydedildi','success');
+    if (cid) onCustomerChange();
+  } catch(e){
+    showToast((window.getErrorMessage&&getErrorMessage(e))||e.message||'Hata','error');
+  } finally { if(submitting)submitting.reset(); }
+}
+
+function newTemplate(){
+  editingTemplateId = null;
+  document.getElementById('template-name').value='';
+  document.getElementById('customer-select').value='';
+  document.getElementById('template-list').innerHTML='';
+  document.querySelectorAll('#label-form-wrap input, #label-form-wrap textarea').forEach(el => {
+    if (el.type==='checkbox'||el.type==='radio'){ if (el.name==='gmo' && el.value==='no') el.checked=true; else el.checked=false; }
+    else if (el.id !== 'out-w' && el.id !== 'out-h' && el.id !== 'out-copies' && el.id !== 'a4-margin' && el.id !== 'a4-gap') el.value='';
+  });
+  loadCompany();
+  document.getElementById('nutr-rows').innerHTML=''; addNutrRow();
+  document.getElementById('tex-rows').innerHTML=''; addTexRow();
+  document.getElementById('custom-rows').innerHTML='';
+  selectType('food');
+  updatePreview();
+}
+
+// ===== TYPE =====
+function selectType(t){
+  currentType = t;
+  document.querySelectorAll('.type-opt').forEach(el => el.classList.toggle('active', el.dataset.type===t));
+  document.querySelectorAll('.type-panel').forEach(el => el.classList.toggle('hidden', el.dataset.for!==t));
+  updatePreview();
+}
+
+// ===== DYNAMIC ROWS =====
+function addNutrRow(name='',value='',unit='g'){
+  const wrap = document.getElementById('nutr-rows');
+  const row = document.createElement('div'); row.className='dyn-row';
+  row.innerHTML = `<input type="text" placeholder="Besin (örn. Protein)" value="${escapeHtml(name)}" oninput="updatePreview()">
+    <input type="number" placeholder="0" value="${escapeHtml(value)}" oninput="updatePreview()">
+    <input type="text" value="${escapeHtml(unit)}" oninput="updatePreview()">
+    <button class="del-btn" onclick="this.parentNode.remove();updatePreview()">✕</button>`;
+  wrap.appendChild(row);
+}
+function addTexRow(pct='',mat=''){
+  const wrap = document.getElementById('tex-rows');
+  const row = document.createElement('div'); row.className='dyn-row'; row.style.gridTemplateColumns='80px 1fr 36px';
+  row.innerHTML = `<input type="number" placeholder="%" value="${escapeHtml(pct)}" oninput="texTotal();updatePreview()">
+    <input type="text" placeholder="Materyal (örn. Pamuk)" value="${escapeHtml(mat)}" oninput="updatePreview()">
+    <button class="del-btn" onclick="this.parentNode.remove();texTotal();updatePreview()">✕</button>`;
+  wrap.appendChild(row); texTotal();
+}
+function texTotal(){
+  let sum = 0;
+  document.querySelectorAll('#tex-rows .dyn-row input[type=number]').forEach(i => sum += parseFloat(i.value||0));
+  const el = document.getElementById('tex-total');
+  el.textContent = 'Toplam: '+sum+'%';
+  el.style.color = sum===100 ? 'var(--green)' : 'var(--red)';
+}
+function addCustomRow(name='',type='text',value=''){
+  const wrap = document.getElementById('custom-rows');
+  const row = document.createElement('div'); row.className='dyn-row'; row.style.gridTemplateColumns='1fr 120px 1fr 36px';
+  row.innerHTML = `<input type="text" placeholder="Alan Adı" value="${escapeHtml(name)}" oninput="updatePreview()">
+    <select onchange="updatePreview()"><option value="text" ${type==='text'?'selected':''}>Metin</option><option value="number" ${type==='number'?'selected':''}>Sayı</option><option value="date" ${type==='date'?'selected':''}>Tarih</option></select>
+    <input type="text" placeholder="Değer" value="${escapeHtml(value)}" oninput="updatePreview()">
+    <button class="del-btn" onclick="this.parentNode.remove();updatePreview()">✕</button>`;
+  wrap.appendChild(row);
+}
+
+// ===== ALLERGENS / WASHING / GHS BUILDERS =====
+function buildPills(containerId, items, namePrefix){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = items.map((x,i) => `<label class="chk-pill"><input type="checkbox" name="${namePrefix}" value="${escapeHtml(x)}" onchange="this.parentNode.classList.toggle('active',this.checked);updatePreview()"> ${escapeHtml(x)}</label>`).join('');
+}
+function buildAllergens(){ buildPills('allergens', ALLERGENS, 'allergen'); }
+function buildWashing(){ buildPills('washing', WASHING, 'wash'); }
+function buildGhs(){ buildPills('ghs', GHS, 'ghs'); }
+
+// ===== CERTIFICATIONS =====
+function buildCerts(){
+  const wrap = document.getElementById('cert-grid');
+  wrap.innerHTML = CERTS.map(c => `<label class="cert-opt">
+    <input type="checkbox" value="${c.k}" style="position:absolute;opacity:0" onchange="this.parentNode.classList.toggle('active',this.checked);updatePreview()">
+    <img src="assets/cert-logos/${c.k}.svg" alt="${c.n}">
+    <span>${c.n}</span>
+  </label>`).join('');
+}
+
+// ===== LANGUAGES =====
+function buildLangs(){
+  const wrap = document.getElementById('lang-grid');
+  wrap.innerHTML = LANGS.map(l => `<div class="lang-opt ${l.c===currentLang?'active':''}" data-lang="${l.c}" onclick="selectLang('${l.c}')">${l.n}</div>`).join('');
+}
+function selectLang(c){
+  currentLang = c;
+  document.querySelectorAll('.lang-opt').forEach(el => el.classList.toggle('active', el.dataset.lang===c));
+}
+
+// ===== IMPORTER / BARCODE / EXP TOGGLES =====
+function toggleImporter(){ document.getElementById('importer-fields').classList.toggle('hidden', !document.getElementById('f-has-importer').checked); }
+function toggleBarcode(){ document.getElementById('barcode-fields').classList.toggle('hidden', !document.getElementById('f-has-barcode').checked); }
+function toggleExpMode(){
+  const m = document.getElementById('f-exp-mode').value;
+  document.getElementById('exp-date-wrap').classList.toggle('hidden', m!=='date');
+  document.getElementById('exp-dur-wrap').classList.toggle('hidden', m!=='duration');
+}
+
+// ===== DATA COLLECT / APPLY =====
+function collectData(){
+  const get = id => document.getElementById(id)?.value || '';
+  const checked = name => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(x => x.value);
+  return {
+    product: { name:get('f-name'), brand:get('f-brand'), model:get('f-model'), origin:get('f-origin'), qty:get('f-qty'), unit:get('f-unit') },
+    mfr:     { name:get('f-mfr-name'), addr:get('f-mfr-addr'), phone:get('f-mfr-phone'), web:get('f-mfr-web') },
+    imp:     { enabled:document.getElementById('f-has-importer').checked, name:get('f-imp-name'), addr:get('f-imp-addr'), phone:get('f-imp-phone') },
+    dates:   { prod:get('f-prod-date'), expMode:get('f-exp-mode'), expDate:get('f-exp-date'), expN:get('f-exp-n'), expUnit:get('f-exp-unit'), batch:get('f-batch'), serial:get('f-serial') },
+    storage: get('f-storage'),
+    barcode: { enabled:document.getElementById('f-has-barcode').checked, value:get('f-bc-value'), type:get('f-bc-type') },
+    nutr:    Array.from(document.querySelectorAll('#nutr-rows .dyn-row')).map(r => ({ name:r.children[0].value, value:r.children[1].value, unit:r.children[2].value })),
+    allergens: checked('allergen'),
+    traces: document.getElementById('f-traces')?.checked||false,
+    gmo: document.querySelector('input[name=gmo]:checked')?.value || 'no',
+    tex: Array.from(document.querySelectorAll('#tex-rows .dyn-row')).map(r => ({ pct:r.children[0].value, mat:r.children[1].value })),
+    washing: checked('wash'),
+    size: get('f-size'),
+    ghs: checked('ghs'),
+    usage: get('f-usage'),
+    firstAid: get('f-first-aid'),
+    elec: { voltage:get('f-voltage'), power:get('f-power'), ip:get('f-ip'), warranty:get('f-warranty') },
+    custom: Array.from(document.querySelectorAll('#custom-rows .dyn-row')).map(r => ({ name:r.children[0].value, type:r.children[1].value, value:r.children[2].value })),
+    certs: Array.from(document.querySelectorAll('#cert-grid input:checked')).map(x => x.value),
+    lang: currentLang,
+    output: {
+      mode: document.querySelector('input[name=out]:checked').value,
+      w: +document.getElementById('out-w').value,
+      h: +document.getElementById('out-h').value,
+      copies: +document.getElementById('out-copies').value,
+      margin: +document.getElementById('a4-margin').value,
+      gap: +document.getElementById('a4-gap').value
+    }
+  };
+}
+function applyData(d){
+  const set = (id,v) => { const el=document.getElementById(id); if (el) el.value = v==null?'':v; };
+  const p=d.product||{}; set('f-name',p.name);set('f-brand',p.brand);set('f-model',p.model);set('f-origin',p.origin);set('f-qty',p.qty);set('f-unit',p.unit||'kg');
+  const m=d.mfr||{}; set('f-mfr-name',m.name);set('f-mfr-addr',m.addr);set('f-mfr-phone',m.phone);set('f-mfr-web',m.web);
+  const i=d.imp||{}; document.getElementById('f-has-importer').checked=!!i.enabled; toggleImporter(); set('f-imp-name',i.name);set('f-imp-addr',i.addr);set('f-imp-phone',i.phone);
+  const dt=d.dates||{}; set('f-prod-date',dt.prod);set('f-exp-mode',dt.expMode||'date');toggleExpMode();set('f-exp-date',dt.expDate);set('f-exp-n',dt.expN);set('f-exp-unit',dt.expUnit||'ay');set('f-batch',dt.batch);set('f-serial',dt.serial);
+  set('f-storage',d.storage);
+  const b=d.barcode||{}; document.getElementById('f-has-barcode').checked=!!b.enabled; toggleBarcode(); set('f-bc-value',b.value); set('f-bc-type',b.type||'ean13');
+  document.getElementById('nutr-rows').innerHTML=''; (d.nutr||[]).forEach(n => addNutrRow(n.name,n.value,n.unit));
+  document.getElementById('tex-rows').innerHTML=''; (d.tex||[]).forEach(n => addTexRow(n.pct,n.mat));
+  document.getElementById('custom-rows').innerHTML=''; (d.custom||[]).forEach(n => addCustomRow(n.name,n.type,n.value));
+  document.querySelectorAll('input[name=allergen]').forEach(el => { el.checked = (d.allergens||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
+  document.querySelectorAll('input[name=wash]').forEach(el => { el.checked = (d.washing||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
+  document.querySelectorAll('input[name=ghs]').forEach(el => { el.checked = (d.ghs||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
+  document.getElementById('f-traces').checked=!!d.traces;
+  document.querySelectorAll('input[name=gmo]').forEach(el => el.checked = el.value === (d.gmo||'no'));
+  set('f-size',d.size); set('f-usage',d.usage); set('f-first-aid',d.firstAid);
+  const e=d.elec||{}; set('f-voltage',e.voltage);set('f-power',e.power);set('f-ip',e.ip);set('f-warranty',e.warranty);
+  document.querySelectorAll('#cert-grid input').forEach(el => { el.checked = (d.certs||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
+  if (d.lang) selectLang(d.lang);
+  const o=d.output||{}; if (o.w) set('out-w',o.w); if (o.h) set('out-h',o.h); if (o.copies) set('out-copies',o.copies); if (o.margin) set('a4-margin',o.margin); if (o.gap) set('a4-gap',o.gap);
+  if (o.mode){ document.querySelectorAll('input[name=out]').forEach(r => r.checked = r.value===o.mode); onOutputChange(); }
+  applyDimensions();
+}
+
+// ===== OUTPUT DIMENSIONS =====
+function onOutputChange(){
+  const mode = document.querySelector('input[name=out]:checked').value;
+  document.getElementById('out-copies-wrap').classList.toggle('hidden', mode!=='a4');
+  document.getElementById('a4-extras').classList.toggle('hidden', mode!=='a4');
+  applyDimensions();
+}
+function applyDimensions(){
+  const w = +document.getElementById('out-w').value || 80;
+  const h = +document.getElementById('out-h').value || 120;
+  const lbl = document.getElementById('label');
+  lbl.style.setProperty('--w', w+'mm');
+  lbl.style.setProperty('--h', h+'mm');
+  // A4 fit calc
+  const margin = +document.getElementById('a4-margin').value||10;
+  const gap = +document.getElementById('a4-gap').value||2;
+  const cols = Math.max(1, Math.floor((210 - 2*margin + gap) / (w + gap)));
+  const rows = Math.max(1, Math.floor((297 - 2*margin + gap) / (h + gap)));
+  document.getElementById('a4-fit').textContent = `A4: ${cols}×${rows} = ${cols*rows} ${T('label.fits')||'etikete sığıyor'}`;
+}
+
+// ===== PREVIEW =====
+function updatePreview(){
+  const d = collectData();
+  const lbl = document.getElementById('label');
+  const parts = [];
+  if (d.product.name) parts.push(`<div class="lbl-title">${escapeHtml(d.product.name)}</div>`);
+  if (d.product.brand) parts.push(`<div class="lbl-brand">${escapeHtml(d.product.brand)}</div>`);
+  const model = [d.product.model, d.product.origin].filter(Boolean);
+  if (d.product.qty) model.unshift(`${d.product.qty} ${d.product.unit||''}`);
+  if (model.length) parts.push(`<div class="lbl-text">${escapeHtml(model.join(' · '))}</div>`);
+
+  // Food: nutrition
+  if (currentType==='food' && d.nutr.some(n => n.name)){
+    parts.push(`<div class="lbl-section">Besin Değerleri (100g)</div>`);
+    parts.push(`<table class="nutr">${d.nutr.filter(n=>n.name).map(n => `<tr><td>${escapeHtml(n.name)}</td><td>${escapeHtml(n.value)} ${escapeHtml(n.unit||'')}</td></tr>`).join('')}</table>`);
+    if (d.allergens.length) parts.push(`<div class="lbl-text"><span class="lbl-bold">Alerjenler:</span> ${escapeHtml(d.allergens.join(', '))}${d.traces?' (izler halinde içerebilir)':''}</div>`);
+    if (d.gmo==='yes') parts.push(`<div class="lbl-text lbl-bold">⚠️ GDO İçerir</div>`);
+  }
+
+  if (currentType==='textile'){
+    const tex = d.tex.filter(t=>t.mat);
+    if (tex.length) parts.push(`<div class="lbl-section">Bileşim</div><div class="lbl-text">${tex.map(t=>`${escapeHtml(t.pct)}% ${escapeHtml(t.mat)}`).join(' · ')}</div>`);
+    if (d.size) parts.push(`<div class="lbl-text"><span class="lbl-bold">Beden:</span> ${escapeHtml(d.size)}</div>`);
+    if (d.washing.length) parts.push(`<div class="lbl-text">${escapeHtml(d.washing.join(' · '))}</div>`);
+  }
+
+  if (currentType==='chemical'){
+    if (d.ghs.length) parts.push(`<div class="lbl-section">⚠️ GHS</div><div class="ghs-row">${d.ghs.map(g => `<span>${escapeHtml(g)}</span>`).join('')}</div>`);
+    if (d.usage) parts.push(`<div class="lbl-section">Kullanım</div><div class="lbl-text">${escapeHtml(d.usage)}</div>`);
+    if (d.firstAid) parts.push(`<div class="lbl-section">İlk Yardım</div><div class="lbl-text">${escapeHtml(d.firstAid)}</div>`);
+  }
+
+  if (currentType==='electronic'){
+    const e = d.elec;
+    const parts2 = [];
+    if (e.voltage) parts2.push(`${e.voltage}`);
+    if (e.power) parts2.push(`${e.power}W`);
+    if (e.ip) parts2.push(e.ip);
+    if (e.warranty) parts2.push(`Garanti: ${e.warranty}`);
+    if (parts2.length) parts.push(`<div class="lbl-text">${escapeHtml(parts2.join(' · '))}</div>`);
+  }
+
+  if (currentType==='custom' && d.custom.length){
+    parts.push(`<div class="lbl-section">Detaylar</div>`);
+    d.custom.filter(c=>c.name).forEach(c => parts.push(`<div class="lbl-text"><span class="lbl-bold">${escapeHtml(c.name)}:</span> ${escapeHtml(c.value)}</div>`));
+  }
+
+  // Dates
+  const dateLine = [];
+  if (d.dates.prod) dateLine.push(`ÜT: ${d.dates.prod}`);
+  if (d.dates.expMode==='date' && d.dates.expDate) dateLine.push(`SKT: ${d.dates.expDate}`);
+  if (d.dates.expMode==='duration' && d.dates.expN) dateLine.push(`Raf ömrü: ${d.dates.expN} ${d.dates.expUnit}`);
+  if (d.dates.batch) dateLine.push(`Parti: ${d.dates.batch}`);
+  if (d.dates.serial) dateLine.push(`Seri: ${d.dates.serial}`);
+  if (dateLine.length) parts.push(`<div class="lbl-text">${escapeHtml(dateLine.join(' · '))}</div>`);
+
+  if (d.storage) parts.push(`<div class="lbl-section">Saklama</div><div class="lbl-text">${escapeHtml(d.storage)}</div>`);
+
+  // Manufacturer
+  const mfrText = [d.mfr.name, d.mfr.addr, d.mfr.phone].filter(Boolean).join(' · ');
+  if (mfrText){ parts.push(`<div class="lbl-section">Üretici</div><div class="lbl-text">${escapeHtml(mfrText)}</div>`); }
+  if (d.imp.enabled){
+    const impText = [d.imp.name, d.imp.addr, d.imp.phone].filter(Boolean).join(' · ');
+    if (impText) parts.push(`<div class="lbl-section">İthalatçı</div><div class="lbl-text">${escapeHtml(impText)}</div>`);
+  }
+
+  // Certs
+  if (d.certs.length){
+    parts.push(`<div class="lbl-certs">${d.certs.map(k => `<img src="assets/cert-logos/${k}.svg" alt="${k}">`).join('')}</div>`);
+  }
+
+  // Barcode
+  if (d.barcode.enabled && d.barcode.value){
+    parts.push(`<div class="lbl-barcode" id="bc-host"></div>`);
+  }
+
+  lbl.innerHTML = parts.join('');
+
+  // Render barcode
+  if (d.barcode.enabled && d.barcode.value){
+    const host = document.getElementById('bc-host');
+    if (d.barcode.type==='qr'){
+      const canvas = document.createElement('canvas');
+      host.appendChild(canvas);
+      QRCode.toCanvas(canvas, d.barcode.value, { width:96, margin:1 });
+    } else {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      host.appendChild(svg);
+      try {
+        JsBarcode(svg, d.barcode.value, { format: d.barcode.type==='ean13'?'EAN13':'CODE128', width:1.6, height:40, fontSize:10, margin:2 });
+      } catch(e){ host.innerHTML = `<span style="font-size:8pt;color:#dc2626">Barkod hatası</span>`; }
+    }
+  }
+}
+
+// ===== TRANSLATE =====
+async function translateAll(){
+  const btn = document.getElementById('translate-btn');
+  const status = document.getElementById('translate-status');
+  btn.disabled = true; status.textContent = T('label.translating')||'Çeviriliyor…';
+  try {
+    const { data: appSet } = await sb.from('app_settings').select('value').eq('key','anthropic_api_key').maybeSingle();
+    const apiKey = appSet?.value;
+    if (!apiKey){ throw new Error(T('label.no_api_key')||'Anthropic API anahtarı yok'); }
+
+    const target = LANGS.find(l => l.c===currentLang)?.n || currentLang;
+    const ids = ['f-name','f-brand','f-model','f-origin','f-storage','f-usage','f-first-aid','f-ip','f-warranty','f-size'];
+    const payload = {};
+    ids.forEach(id => { const v = document.getElementById(id)?.value; if (v) payload[id] = v; });
+    // nutrient names
+    const nutrNames = Array.from(document.querySelectorAll('#nutr-rows .dyn-row')).map((r,i) => ({ k:'nutr_'+i, v:r.children[0].value })).filter(x=>x.v);
+    nutrNames.forEach(x => payload[x.k] = x.v);
+    // custom field names
+    const customs = Array.from(document.querySelectorAll('#custom-rows .dyn-row')).map((r,i) => ({ k:'custom_n_'+i, v:r.children[0].value, k2:'custom_v_'+i, v2:r.children[2].value })).filter(x=>x.v||x.v2);
+    customs.forEach(x => { if(x.v)payload[x.k]=x.v; if(x.v2)payload[x.k2]=x.v2; });
+
+    if (!Object.keys(payload).length){ status.textContent = T('label.nothing_to_translate')||'Çevrilecek metin yok'; btn.disabled=false; return; }
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:2048,
+        messages:[{role:'user', content:`Translate the following product label fields to ${target}. Keep brand names, company names, addresses, numbers unchanged. Translate only descriptive text. Return only valid JSON with the same keys, no commentary.\n\n${JSON.stringify(payload,null,2)}`}]
+      })
+    });
+    if (!resp.ok){ const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+resp.status); }
+    const body = await resp.json();
+    const text = body.content?.[0]?.text || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Geçersiz yanıt');
+    const translated = JSON.parse(match[0]);
+    // apply
+    Object.entries(translated).forEach(([k,v]) => {
+      if (k.startsWith('nutr_')){
+        const i = +k.slice(5); const row = document.querySelectorAll('#nutr-rows .dyn-row')[i];
+        if (row) row.children[0].value = v;
+      } else if (k.startsWith('custom_n_')){
+        const i = +k.slice(9); const row = document.querySelectorAll('#custom-rows .dyn-row')[i];
+        if (row) row.children[0].value = v;
+      } else if (k.startsWith('custom_v_')){
+        const i = +k.slice(9); const row = document.querySelectorAll('#custom-rows .dyn-row')[i];
+        if (row) row.children[2].value = v;
+      } else {
+        const el = document.getElementById(k); if (el) el.value = v;
+      }
+    });
+    status.textContent = '✓ '+(T('label.translated')||'Çevrildi');
+    updatePreview();
+  } catch(e){
+    status.textContent = '❌ '+e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ===== PRINT / PDF =====
+function printLabel(){
+  const mode = document.querySelector('input[name=out]:checked').value;
+  if (mode==='a4') printA4();
+  else window.print();
+}
+function printA4(){
+  const copies = +document.getElementById('out-copies').value || 1;
+  const w = +document.getElementById('out-w').value;
+  const h = +document.getElementById('out-h').value;
+  const margin = +document.getElementById('a4-margin').value;
+  const gap = +document.getElementById('a4-gap').value;
+  const cols = Math.max(1, Math.floor((210 - 2*margin + gap) / (w + gap)));
+  const rows = Math.max(1, Math.floor((297 - 2*margin + gap) / (h + gap)));
+  const perPage = cols*rows;
+  const pages = Math.ceil(copies / perPage);
+  const src = document.getElementById('label').outerHTML;
+  const win = window.open('','_blank');
+  const css = document.querySelector('style').innerHTML;
+  let pageHTML = '';
+  let rem = copies;
+  for (let p=0;p<pages;p++){
+    pageHTML += `<div class="a4page">`;
+    for (let i=0;i<perPage && rem>0;i++,rem--){ pageHTML += src; }
+    pageHTML += `</div>`;
+  }
+  win.document.write(`<!doctype html><html><head><title>Etiketler</title>
+    <style>${css}
+    @page{size:A4;margin:${margin}mm}
+    body{margin:0;padding:0}
+    .a4page{display:grid;grid-template-columns:repeat(${cols}, ${w}mm);gap:${gap}mm;page-break-after:always}
+    #label{box-shadow:none!important;border:.5pt solid #ddd!important}
+    </style></head><body>${pageHTML}</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 300);
+}
+async function downloadPDF(){
+  try {
+    const { jsPDF } = window.jspdf;
+    const el = document.getElementById('label');
+    const w = +document.getElementById('out-w').value;
+    const h = +document.getElementById('out-h').value;
+    const mode = document.querySelector('input[name=out]:checked').value;
+    const canvas = await html2canvas(el, { scale:3, backgroundColor:'#fff' });
+    const img = canvas.toDataURL('image/png');
+    if (mode==='a4'){
+      const pdf = new jsPDF({ unit:'mm', format:'a4' });
+      const copies = +document.getElementById('out-copies').value || 1;
+      const margin = +document.getElementById('a4-margin').value;
+      const gap = +document.getElementById('a4-gap').value;
+      const cols = Math.max(1, Math.floor((210 - 2*margin + gap) / (w + gap)));
+      const rows = Math.max(1, Math.floor((297 - 2*margin + gap) / (h + gap)));
+      let placed = 0;
+      while (placed < copies){
+        if (placed>0) pdf.addPage();
+        for (let r=0;r<rows && placed<copies;r++){
+          for (let c=0;c<cols && placed<copies;c++){
+            const x = margin + c*(w+gap);
+            const y = margin + r*(h+gap);
+            pdf.addImage(img,'PNG',x,y,w,h);
+            placed++;
+          }
+        }
+      }
+      pdf.save('labels-a4.pdf');
+    } else {
+      const pdf = new jsPDF({ unit:'mm', format:[w,h] });
+      pdf.addImage(img,'PNG',0,0,w,h);
+      pdf.save('label.pdf');
+    }
+  } catch(e){ showToast(e.message,'error'); }
+}
+
+// ===== UTILS =====
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg,type='info'){
+  const t = document.createElement('div'); t.className='toast '+type; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); },2500);
+}
+
+init();
+</script>
+</body>
+</html>
