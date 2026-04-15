@@ -776,12 +776,12 @@ function updatePreview(){
   const d = collectData();
   const lbl = document.getElementById('label');
   const parts = [];
-  // Logos row (brand + manufacturer)
+  // Logos row (brand left / mfr right) — centered when only one
   if (d.product.brandLogo || d.mfr.logo){
-    const logos = [];
-    if (d.product.brandLogo) logos.push(`<img src="${escapeAttr(d.product.brandLogo)}" alt="brand" style="max-height:14mm;max-width:40mm;object-fit:contain">`);
-    if (d.mfr.logo) logos.push(`<img src="${escapeAttr(d.mfr.logo)}" alt="mfr" style="max-height:14mm;max-width:40mm;object-fit:contain">`);
-    parts.push(`<div style="display:flex;justify-content:space-between;align-items:center;gap:3mm">${logos.join('')}</div>`);
+    const brand = d.product.brandLogo ? `<img src="${escapeAttr(d.product.brandLogo)}" alt="brand" style="max-height:14mm;max-width:40mm;object-fit:contain">` : '<span></span>';
+    const mfr   = d.mfr.logo         ? `<img src="${escapeAttr(d.mfr.logo)}"         alt="mfr"   style="max-height:14mm;max-width:40mm;object-fit:contain">` : '<span></span>';
+    const justify = (d.product.brandLogo && d.mfr.logo) ? 'space-between' : 'center';
+    parts.push(`<div style="display:flex;justify-content:${justify};align-items:center;gap:3mm">${brand}${mfr}</div>`);
   }
   if (d.product.name) parts.push(`<div class="lbl-title">${escapeHtml(d.product.name)}</div>`);
   if (d.product.brand) parts.push(`<div class="lbl-brand">${escapeHtml(d.product.brand)}</div>`);
@@ -938,8 +938,32 @@ async function translateAll(){
 function printLabel(){
   const mode = document.querySelector('input[name=out]:checked').value;
   if (mode==='a4') printA4();
-  else window.print();
+  else printThermal();
 }
+
+function getLabelStyles(){
+  // grab full page CSS so the cloned label in the new window renders identically
+  return Array.from(document.querySelectorAll('style'))
+    .map(s => s.innerHTML).join('\n');
+}
+
+function printThermal(){
+  const w = +document.getElementById('out-w').value || 80;
+  const h = +document.getElementById('out-h').value || 120;
+  const src = document.getElementById('label').outerHTML;
+  const css = getLabelStyles();
+  const win = window.open('','_blank','width=600,height=800');
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title></title>
+    <style>${css}
+    @page{size:${w}mm ${h}mm;margin:0}
+    html,body{margin:0;padding:0;background:#fff}
+    #label{box-shadow:none!important;border:none!important;width:${w}mm!important;min-height:${h}mm!important;page-break-after:avoid;margin:0}
+    </style></head><body>${src}
+    <script>window.onload=function(){setTimeout(function(){window.print();window.onafterprint=function(){window.close()};},100)}<\/script>
+    </body></html>`);
+  win.document.close();
+}
+
 function printA4(){
   const copies = +document.getElementById('out-copies').value || 1;
   const w = +document.getElementById('out-w').value;
@@ -951,8 +975,7 @@ function printA4(){
   const perPage = cols*rows;
   const pages = Math.ceil(copies / perPage);
   const src = document.getElementById('label').outerHTML;
-  const win = window.open('','_blank');
-  const css = document.querySelector('style').innerHTML;
+  const css = getLabelStyles();
   let pageHTML = '';
   let rem = copies;
   for (let p=0;p<pages;p++){
@@ -960,16 +983,17 @@ function printA4(){
     for (let i=0;i<perPage && rem>0;i++,rem--){ pageHTML += src; }
     pageHTML += `</div>`;
   }
-  win.document.write(`<!doctype html><html><head><title>Etiketler</title>
+  const win = window.open('','_blank','width=800,height=1100');
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title></title>
     <style>${css}
     @page{size:A4;margin:${margin}mm}
-    body{margin:0;padding:0}
+    html,body{margin:0;padding:0;background:#fff}
     .a4page{display:grid;grid-template-columns:repeat(${cols}, ${w}mm);gap:${gap}mm;page-break-after:always}
-    #label{box-shadow:none!important;border:.5pt solid #ddd!important}
-    </style></head><body>${pageHTML}</body></html>`);
+    .a4page #label{box-shadow:none!important;border:.5pt solid #ddd!important;width:${w}mm!important;min-height:${h}mm!important;margin:0}
+    </style></head><body>${pageHTML}
+    <script>window.onload=function(){setTimeout(function(){window.print();window.onafterprint=function(){window.close()};},200)}<\/script>
+    </body></html>`);
   win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 300);
 }
 async function downloadPDF(){
   try {
