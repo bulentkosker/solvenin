@@ -1520,7 +1520,6 @@
   const AI_MAX_DAILY     = 20;
   const AI_SYSTEM = `Sen Solvenin ERP yazılımının AI asistanısın. Solvenin şu modüllere sahip: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muhasebe, İK & Bordro, Sevkiyat, Projeler, Bakım. Kullanıcıların sorularını Türkçe yanıtla. Yazılımla ilgili sorunları çöz, nasıl kullanılacağını anlat. Çözemediğin durumlarda support@solvenin.com adresine başvurmalarını öner.`;
 
-  let _aiApiKey   = null;
   let _aiHistory  = [];
   let _aiStreaming = false;
 
@@ -1541,17 +1540,6 @@
 
   function aiIncrRate() {
     localStorage.setItem(AI_RATE_KEY, String(parseInt(localStorage.getItem(AI_RATE_KEY) || '0') + 1));
-  }
-
-  async function aiGetApiKey() {
-    if (_aiApiKey) return _aiApiKey;
-    try {
-      const sb = window._supabase || window.supabase;
-      if (!sb) return null;
-      const { data } = await sb.from('app_settings').select('value').eq('key', 'anthropic_api_key').single();
-      _aiApiKey = data?.value || null;
-    } catch (e) { /* not configured */ }
-    return _aiApiKey;
   }
 
   function aiAppend(role, text, id) {
@@ -1675,12 +1663,6 @@
       return;
     }
 
-    const apiKey = await aiGetApiKey();
-    if (!apiKey) {
-      aiAppend('system', '⚠️ Anthropic API anahtarı bulunamadı. Ayarlar > Uygulama Ayarları bölümünden ekleyin.');
-      return;
-    }
-
     input.value = '';
     input.style.height = 'auto';
     aiAppend('user', text);
@@ -1699,52 +1681,27 @@
     const pageCtx = `Kullanıcı şu an "${document.title}" sayfasında (${window.location.pathname}).`;
 
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-allow-browser': 'true'
-        },
-        body: JSON.stringify({
+      // Proxy via claude-proxy edge function — resolves CORS + keeps key server-side
+      const sbc = window._supabase || window.supabase;
+      if (!sbc) throw new Error('Supabase client not ready');
+      const el = document.getElementById(msgId);
+      if (el) el.textContent = '…';
+      const { data, error } = await sbc.functions.invoke('claude-proxy', {
+        body: {
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1024,
-          stream: true,
           system: AI_SYSTEM + '\n\n' + pageCtx,
           messages: _aiHistory
-        })
-      });
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || 'HTTP ' + resp.status);
-      }
-
-      const reader  = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText  = '';
-      const msgs    = document.getElementById('ai-chat-messages');
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (!raw || raw === '[DONE]') continue;
-          try {
-            const ev = JSON.parse(raw);
-            if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
-              fullText += ev.delta.text;
-              const el = document.getElementById(msgId);
-              if (el) { el.textContent = fullText; if (msgs) msgs.scrollTop = msgs.scrollHeight; }
-            }
-          } catch (_) {}
         }
+      });
+      if (error) throw new Error(error.message || 'edge fn error');
+      if (data?.error) throw new Error(data.error?.message || data.error);
+      const fullText = (data?.content || []).map(b => b.text || '').join('');
+      if (el) {
+        el.textContent = fullText;
+        const msgs = document.getElementById('ai-chat-messages');
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
       }
-
       _aiHistory.push({ role: 'assistant', content: fullText });
 
       // Show support button if AI can't resolve
