@@ -77,6 +77,8 @@
   .subsec h4{font-size:12px;font-weight:700;margin-bottom:8px;color:var(--gray700)}
   .dyn-row{display:grid;grid-template-columns:1fr 120px 60px 36px;gap:6px;margin-bottom:6px;align-items:center}
   .del-btn{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px}
+  .unit-btn{border:none!important;background:transparent!important;color:var(--gray500);font-weight:600;border-radius:4px}
+  .unit-btn.active{background:#fff!important;color:var(--gray800);box-shadow:0 1px 3px rgba(0,0,0,.1)}
   .logo-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
   .logo-thumb{width:48px;height:48px;border-radius:8px;object-fit:contain;border:1px solid var(--gray200);background:#fff;padding:2px}
   .logo-btn{border:1px dashed var(--gray300)!important}
@@ -376,9 +378,33 @@
           <label><input type="radio" name="out" value="printer" checked onchange="onOutputChange()"> <span data-i18n="label.print_label">Etiket Yazıcı</span></label>
           <label><input type="radio" name="out" value="a4" onchange="onOutputChange()"> <span data-i18n="label.print_a4">A4 Kağıt</span></label>
         </div>
+
+        <div style="margin-bottom:10px">
+          <label style="display:flex;justify-content:space-between;align-items:center">
+            <span data-i18n="label.preset">Hazır Boyut</span>
+            <div style="display:inline-flex;gap:2px;background:var(--gray100);border-radius:6px;padding:2px">
+              <button type="button" class="btn btn-ghost unit-btn active" data-unit="mm" onclick="setUnit('mm')" style="padding:2px 10px;font-size:11px">mm</button>
+              <button type="button" class="btn btn-ghost unit-btn"        data-unit="in" onclick="setUnit('in')" style="padding:2px 10px;font-size:11px">inch</button>
+            </div>
+          </label>
+          <select id="preset-select" onchange="applyPreset()">
+            <option value="">— Özel boyut —</option>
+            <option value="40x30">40 × 30 mm (1.57 × 1.18″)</option>
+            <option value="58x40">58 × 40 mm (2.28 × 1.57″)</option>
+            <option value="70x50">70 × 50 mm (2.76 × 1.97″)</option>
+            <option value="80x60">80 × 60 mm (3.15 × 2.36″) — Xprinter yaygın</option>
+            <option value="80x120">80 × 120 mm (3.15 × 4.72″)</option>
+            <option value="100x100">100 × 100 mm (3.94 × 3.94″)</option>
+            <option value="100x150">100 × 150 mm (3.94 × 5.91″) — 4×6 kargo</option>
+            <option value="102x152">102 × 152 mm (4 × 6″) — DYMO 4×6</option>
+            <option value="35x89">35 × 89 mm (1.38 × 3.5″) — DYMO address</option>
+            <option value="50x100">50 × 100 mm (1.97 × 3.94″)</option>
+          </select>
+        </div>
+
         <div class="grid-3">
-          <div><label data-i18n="label.width">Genişlik (mm)</label><input type="number" id="out-w" value="80" oninput="applyDimensions()"></div>
-          <div><label data-i18n="label.height">Uzunluk (mm)</label><input type="number" id="out-h" value="120" oninput="applyDimensions()"></div>
+          <div><label><span data-i18n="label.width">Genişlik</span> (<span class="unit-lbl">mm</span>)</label><input type="number" id="out-w" value="80" step="0.1" oninput="onDimInput()"></div>
+          <div><label><span data-i18n="label.height">Uzunluk</span> (<span class="unit-lbl">mm</span>)</label><input type="number" id="out-h" value="120" step="0.1" oninput="onDimInput()"></div>
           <div id="out-copies-wrap" class="hidden"><label data-i18n="label.copies">Kopya Sayısı</label><input type="number" id="out-copies" value="10" oninput="applyDimensions()"></div>
         </div>
         <div id="a4-extras" class="grid-3 hidden" style="margin-top:10px">
@@ -715,8 +741,10 @@ function collectData(){
     lang: currentLang,
     output: {
       mode: document.querySelector('input[name=out]:checked').value,
-      w: +document.getElementById('out-w').value,
-      h: +document.getElementById('out-h').value,
+      // always persist in mm — display unit only affects inputs
+      w: getDimsMm().w,
+      h: getDimsMm().h,
+      unit: _unit,
       copies: +document.getElementById('out-copies').value,
       margin: +document.getElementById('a4-margin').value,
       gap: +document.getElementById('a4-gap').value
@@ -745,7 +773,10 @@ function applyData(d){
   const e=d.elec||{}; set('f-voltage',e.voltage);set('f-power',e.power);set('f-ip',e.ip);set('f-warranty',e.warranty);
   document.querySelectorAll('#cert-grid input').forEach(el => { el.checked = (d.certs||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
   if (d.lang) selectLang(d.lang);
-  const o=d.output||{}; if (o.w) set('out-w',o.w); if (o.h) set('out-h',o.h); if (o.copies) set('out-copies',o.copies); if (o.margin) set('a4-margin',o.margin); if (o.gap) set('a4-gap',o.gap);
+  const o=d.output||{};
+  if (o.unit && o.unit !== _unit){ setUnit(o.unit); }
+  if (o.w && o.h) setDimsMm(o.w, o.h);
+  if (o.copies) set('out-copies',o.copies); if (o.margin) set('a4-margin',o.margin); if (o.gap) set('a4-gap',o.gap);
   if (o.mode){ document.querySelectorAll('input[name=out]').forEach(r => r.checked = r.value===o.mode); onOutputChange(); }
   applyDimensions();
 }
@@ -757,9 +788,48 @@ function onOutputChange(){
   document.getElementById('a4-extras').classList.toggle('hidden', mode!=='a4');
   applyDimensions();
 }
+// ===== UNIT + PRESET =====
+let _unit = 'mm'; // 'mm' | 'in'
+const MM_PER_IN = 25.4;
+function getDimsMm(){
+  const w = +document.getElementById('out-w').value || 0;
+  const h = +document.getElementById('out-h').value || 0;
+  return _unit==='in' ? { w: w*MM_PER_IN, h: h*MM_PER_IN } : { w, h };
+}
+function setDimsMm(wMm, hMm){
+  if (_unit==='in'){
+    document.getElementById('out-w').value = +(wMm/MM_PER_IN).toFixed(2);
+    document.getElementById('out-h').value = +(hMm/MM_PER_IN).toFixed(2);
+  } else {
+    document.getElementById('out-w').value = +wMm.toFixed(1);
+    document.getElementById('out-h').value = +hMm.toFixed(1);
+  }
+}
+function setUnit(u){
+  if (u === _unit) return;
+  // convert existing value
+  const { w, h } = getDimsMm();
+  _unit = u;
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('active', b.dataset.unit===u));
+  document.querySelectorAll('.unit-lbl').forEach(el => el.textContent = u);
+  setDimsMm(w, h);
+  applyDimensions();
+}
+function onDimInput(){
+  // clear preset when user types custom
+  document.getElementById('preset-select').value = '';
+  applyDimensions();
+}
+function applyPreset(){
+  const v = document.getElementById('preset-select').value;
+  if (!v) return;
+  const [w, h] = v.split('x').map(Number);
+  setDimsMm(w, h);
+  applyDimensions();
+}
+
 function applyDimensions(){
-  const w = +document.getElementById('out-w').value || 80;
-  const h = +document.getElementById('out-h').value || 120;
+  const { w, h } = getDimsMm();
   const lbl = document.getElementById('label');
   lbl.style.setProperty('--w', w+'mm');
   lbl.style.setProperty('--h', h+'mm');
@@ -948,8 +1018,7 @@ function getLabelStyles(){
 }
 
 function printThermal(){
-  const w = +document.getElementById('out-w').value || 80;
-  const h = +document.getElementById('out-h').value || 120;
+  const { w, h } = getDimsMm();
   const src = document.getElementById('label').outerHTML;
   const css = getLabelStyles();
   const win = window.open('','_blank','width=600,height=800');
@@ -966,8 +1035,7 @@ function printThermal(){
 
 function printA4(){
   const copies = +document.getElementById('out-copies').value || 1;
-  const w = +document.getElementById('out-w').value;
-  const h = +document.getElementById('out-h').value;
+  const { w, h } = getDimsMm();
   const margin = +document.getElementById('a4-margin').value;
   const gap = +document.getElementById('a4-gap').value;
   const cols = Math.max(1, Math.floor((210 - 2*margin + gap) / (w + gap)));
@@ -999,8 +1067,7 @@ async function downloadPDF(){
   try {
     const { jsPDF } = window.jspdf;
     const el = document.getElementById('label');
-    const w = +document.getElementById('out-w').value;
-    const h = +document.getElementById('out-h').value;
+    const { w, h } = getDimsMm();
     const mode = document.querySelector('input[name=out]:checked').value;
     const canvas = await html2canvas(el, { scale:3, backgroundColor:'#fff' });
     const img = canvas.toDataURL('image/png');
