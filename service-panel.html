@@ -248,6 +248,7 @@ function buildNav() {
     { key: 'flags', icon: '🚩', label: 'Feature Flags', roles: ['superadmin','support'] },
     { key: 'repair', icon: '🔧', label: 'Veri Onarım', roles: ['superadmin','support'] },
     { key: 'panel_users', icon: '👤', label: 'Panel Kullanıcıları', roles: ['superadmin'] },
+    { key: 'system', icon: '⚙️', label: 'Sistem Ayarları', roles: ['superadmin'] },
     { key: 'logs', icon: '📋', label: 'Loglar', roles: ['superadmin','support'] }
   ];
   const nav = document.getElementById('sp-nav');
@@ -271,7 +272,7 @@ async function refreshExpiredTrashCount() {
 function switchPage(key) {
   currentPage = key;
   buildNav();
-  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', trash:'🗑️ Çöp Kutusu', users:'👥 Kullanıcılar', demos:'🎯 Demolar', flags:'🚩 Feature Flags', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', logs:'📋 Loglar' };
+  const titles = { dashboard:'🏠 Dashboard', companies:'🏢 Şirketler', trash:'🗑️ Çöp Kutusu', users:'👥 Kullanıcılar', demos:'🎯 Demolar', flags:'🚩 Feature Flags', repair:'🔧 Veri Onarım', panel_users:'👤 Panel Kullanıcıları', system:'⚙️ Sistem Ayarları', logs:'📋 Loglar' };
   document.getElementById('sp-title').textContent = titles[key] || key;
   if (key === 'dashboard') renderDashboard();
   else if (key === 'companies') renderCompanies();
@@ -281,6 +282,7 @@ function switchPage(key) {
   else if (key === 'flags') renderFlags();
   else if (key === 'repair') renderRepair();
   else if (key === 'panel_users') renderPanelUsers();
+  else if (key === 'system') renderSystem();
   else if (key === 'logs') renderLogs();
 }
 
@@ -1637,6 +1639,91 @@ async function savePanelUser() {
   closeModal();
   showToast('Kullanıcı eklendi. Şifre: ' + pwd, 'success');
   renderPanelUsers();
+}
+
+// ===== SYSTEM SETTINGS (superadmin) =====
+async function renderSystem() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data: info } = await sb.rpc('sp_get_anthropic_key_info', { p_user_id: user.id });
+  if (info && info.error){
+    content.innerHTML = `<div class="card" style="padding:24px;color:#dc2626">⛔ ${info.error}</div>`;
+    return;
+  }
+  const masked = info?.masked || '';
+  const has = info?.has_key === true;
+  content.innerHTML = `
+    <div class="card" style="padding:24px;max-width:720px">
+      <h2 style="font-size:18px;margin-bottom:6px">🤖 AI Entegrasyonu</h2>
+      <div style="font-size:12px;color:var(--gray500);margin-bottom:18px">Anthropic Claude API anahtarı — etiket çevirisi, AI Asistan ve müşteri destek özellikleri için kullanılır.</div>
+
+      <label style="font-size:12px;font-weight:600;color:var(--gray500);display:block;margin-bottom:4px">Anthropic API Key</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input type="password" id="anth-key-input" placeholder="${has ? masked : 'sk-ant-...'}" style="flex:1;padding:9px 12px;border:1px solid var(--gray200);border-radius:8px;font-family:'SF Mono',Menlo,monospace;font-size:13px;background:#fff" autocomplete="off">
+        <button class="btn btn-ghost" type="button" onclick="toggleApiKeyVisibility()">👁</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <button class="btn btn-primary" type="button" onclick="saveAnthropicKey()">💾 Kaydet</button>
+        <button class="btn btn-outline" type="button" onclick="testAnthropicKey()" ${has ? '' : 'disabled'}>🧪 Test Et</button>
+        <span id="anth-test-result" style="font-size:12px;margin-left:6px"></span>
+      </div>
+      <div style="font-size:11px;color:var(--gray500);margin-top:8px;line-height:1.5">
+        ${has ? `Mevcut: <code style="font-family:'SF Mono',Menlo,monospace">${masked}</code> (${info.length} karakter)` : '<span style="color:#ea580c">⚠️ Henüz anahtar tanımlanmamış</span>'}<br>
+        Anahtarı buradan al: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--blue)">console.anthropic.com</a><br>
+        Bu anahtar bütün Solvenin müşterileri tarafından paylaşılır. Kullanım faturası Anthropic hesabına yansır.
+      </div>
+    </div>
+  `;
+}
+
+function toggleApiKeyVisibility(){
+  const inp = document.getElementById('anth-key-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function saveAnthropicKey(){
+  const v = document.getElementById('anth-key-input').value.trim();
+  if (!v){ showToast('Boş anahtar gönderilemez', 'error'); return; }
+  if (!v.startsWith('sk-ant-')){ showToast('Anthropic anahtarı sk-ant- ile başlamalı', 'error'); return; }
+  const { data, error } = await sb.rpc('sp_set_anthropic_key', { p_user_id: user.id, p_value: v });
+  if (error){ showToast(error.message, 'error'); return; }
+  if (!data?.success){ showToast(data?.error || 'Kaydedilemedi', 'error'); return; }
+  showToast('API key kaydedildi ✓', 'success');
+  renderSystem();
+}
+
+async function testAnthropicKey(){
+  const result = document.getElementById('anth-test-result');
+  result.textContent = '⏳ Test ediliyor…'; result.style.color = 'var(--gray500)';
+  const { data: key, error: e1 } = await sb.rpc('sp_get_anthropic_key_raw', { p_user_id: user.id });
+  if (e1 || !key){ result.textContent = '❌ Anahtar alınamadı'; result.style.color = '#dc2626'; return; }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'ping' }]
+      })
+    });
+    if (resp.ok){
+      result.textContent = '✅ Bağlantı başarılı';
+      result.style.color = '#059669';
+    } else {
+      const err = await resp.json().catch(()=>({}));
+      result.textContent = '❌ ' + (err.error?.message || ('HTTP '+resp.status));
+      result.style.color = '#dc2626';
+    }
+  } catch(e){
+    result.textContent = '❌ ' + e.message;
+    result.style.color = '#dc2626';
+  }
 }
 
 // ===== LOGS =====

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="56" fill="#c8102e"/>
+  <!-- crescent + star (Turkish flag motif) -->
+  <path d="M 76 44 A 18 18 0 1 1 58 32 A 14 14 0 1 0 76 44 Z" fill="#fff"/>
+  <polygon points="72,42 75,48 81,48 76,52 78,58 72,55 66,58 68,52 63,48 69,48" fill="#fff"/>
+  <text x="60" y="86" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="22" fill="#fff" letter-spacing="2">TSE</text>
+  <text x="60" y="102" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="7" fill="#fff">TÜRK STANDARTLARI</text>
+</svg>
