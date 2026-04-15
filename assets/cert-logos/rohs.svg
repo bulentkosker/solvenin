@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <circle cx="60" cy="60" r="56" fill="#fff" stroke="#65a30d" stroke-width="4"/>
-  <text x="60" y="66" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="16" fill="#65a30d">RoHS</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="56" fill="#65a30d"/>
+  <text x="60" y="54" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="28" fill="#fff">RoHS</text>
+  <path d="M 30 72 L 90 72" stroke="#fff" stroke-width="2"/>
+  <text x="60" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="9" fill="#fff">COMPLIANT</text>
 </svg>

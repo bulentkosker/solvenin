@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <circle cx="60" cy="60" r="56" fill="#fff" stroke="#0ea5e9" stroke-width="4"/>
-  <text x="60" y="66" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="16" fill="#0ea5e9">FAIRTRADE</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="56" fill="#0a3d82"/>
+  <!-- stylized person/hand -->
+  <path d="M 60 28 Q 50 44 52 60 Q 54 76 45 90 Q 60 82 75 90 Q 66 76 68 60 Q 70 44 60 28 Z" fill="#f59e0b"/>
+  <circle cx="60" cy="38" r="8" fill="#f59e0b"/>
+  <text x="60" y="108" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="10" fill="#fff" letter-spacing="1">FAIRTRADE</text>
 </svg>

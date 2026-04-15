@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <circle cx="60" cy="60" r="56" fill="#fff" stroke="#059669" stroke-width="4"/>
-  <text x="60" y="66" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="16" fill="#059669">HALAL</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="56" fill="#fff" stroke="#0a7a3b" stroke-width="4"/>
+  <!-- crescent -->
+  <path d="M 78 60 A 22 22 0 1 1 55 38 A 17 17 0 1 0 78 60 Z" fill="#0a7a3b"/>
+  <!-- star inside -->
+  <polygon points="60,50 62,56 68,56 63,60 65,66 60,62 55,66 57,60 52,56 58,56" fill="#0a7a3b"/>
+  <text x="60" y="100" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="14" fill="#0a7a3b" letter-spacing="2">HALAL</text>
 </svg>

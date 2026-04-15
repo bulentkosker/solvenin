@@ -95,21 +95,24 @@
   /* LABEL CARD — sized per mm via CSS vars */
   #label{
     --w:80mm;--h:120mm;
+    --title-size:12pt;--body-size:8pt;--logo-size:14mm;--cert-size:10mm;
+    --line-height:1.25;--pad:4mm;
     width:var(--w);min-height:var(--h);
-    background:#fff;border:1px solid #ddd;padding:4mm;font-size:9pt;color:#000;
+    background:#fff;border:1px solid #ddd;padding:var(--pad);font-size:var(--body-size);color:#000;
     font-family:'Inter',Arial,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.06);
-    display:flex;flex-direction:column;gap:2mm
+    display:flex;flex-direction:column;gap:2mm;line-height:var(--line-height)
   }
-  #label .lbl-title{font-size:12pt;font-weight:800;line-height:1.1}
-  #label .lbl-brand{font-size:9pt;font-weight:600;color:#374151}
-  #label .lbl-section{font-size:7pt;font-weight:700;text-transform:uppercase;color:#64748b;margin-top:1mm}
-  #label .lbl-text{font-size:8pt;line-height:1.25}
+  #label .lbl-title{font-size:var(--title-size);font-weight:800;line-height:1.1}
+  #label .lbl-brand{font-size:calc(var(--body-size) + 1pt);font-weight:600;color:#374151}
+  #label .lbl-section{font-size:calc(var(--body-size) - 1pt);font-weight:700;text-transform:uppercase;color:#64748b;margin-top:1mm}
+  #label .lbl-text{font-size:var(--body-size);line-height:var(--line-height)}
   #label .lbl-bold{font-weight:700}
-  #label table.nutr{width:100%;border-collapse:collapse;font-size:7.5pt}
+  #label table.nutr{width:100%;border-collapse:collapse;font-size:calc(var(--body-size) - 0.5pt)}
   #label table.nutr td{padding:1px 2px;border-bottom:.3pt solid #999}
   #label table.nutr td:nth-child(2){text-align:right;font-weight:600}
   #label .lbl-certs{display:flex;flex-wrap:wrap;gap:2mm;margin-top:1mm}
-  #label .lbl-certs img{height:10mm;width:10mm}
+  #label .lbl-certs img{height:var(--cert-size);width:var(--cert-size)}
+  #label .lbl-logos img{max-height:var(--logo-size)!important}
   #label .lbl-barcode{margin-top:2mm;display:flex;justify-content:center}
   #label .lbl-barcode svg,#label .lbl-barcode canvas,#label .lbl-barcode img{max-width:100%;max-height:18mm}
   #label .ghs-row{display:flex;gap:1mm;flex-wrap:wrap}
@@ -359,6 +362,73 @@
       <div class="panel">
         <h3><span class="step-num">4</span> <span data-i18n="label.certifications">Sertifikasyonlar</span></h3>
         <div class="cert-grid" id="cert-grid"></div>
+        <div class="subsec">
+          <h4><span data-i18n="label.custom_cert">Özel Logo Ekle</span></h4>
+          <div class="logo-row">
+            <label class="btn btn-ghost logo-btn">📷 <span data-i18n="label.upload_logo">Logo Yükle</span><input type="file" accept="image/*" onchange="addCustomCert(event)" style="display:none"></label>
+            <span style="font-size:11px;color:var(--gray400)">PNG/SVG, maks 1MB</span>
+          </div>
+          <div id="custom-certs" class="logo-row" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- DESIGN -->
+      <div class="panel">
+        <h3>🎨 <span data-i18n="label.design">Tasarım</span></h3>
+        <div class="grid-3">
+          <div>
+            <label><span data-i18n="label.title_size">Başlık Boyutu</span>: <b id="v-title-size">12pt</b></label>
+            <input type="range" min="8" max="22" step="0.5" value="12" id="d-title-size" oninput="document.getElementById('v-title-size').textContent=this.value+'pt';updatePreview()">
+          </div>
+          <div>
+            <label><span data-i18n="label.body_size">Metin Boyutu</span>: <b id="v-body-size">8pt</b></label>
+            <input type="range" min="5" max="14" step="0.5" value="8" id="d-body-size" oninput="document.getElementById('v-body-size').textContent=this.value+'pt';updatePreview()">
+          </div>
+          <div>
+            <label><span data-i18n="label.logo_size">Logo Yüksekliği</span>: <b id="v-logo-size">14mm</b></label>
+            <input type="range" min="6" max="30" step="1" value="14" id="d-logo-size" oninput="document.getElementById('v-logo-size').textContent=this.value+'mm';updatePreview()">
+          </div>
+          <div>
+            <label><span data-i18n="label.cert_size">Sertifika Boyutu</span>: <b id="v-cert-size">10mm</b></label>
+            <input type="range" min="6" max="20" step="1" value="10" id="d-cert-size" oninput="document.getElementById('v-cert-size').textContent=this.value+'mm';updatePreview()">
+          </div>
+          <div>
+            <label data-i18n="label.align">Hizalama</label>
+            <select id="d-align" onchange="updatePreview()">
+              <option value="left">Sola</option>
+              <option value="center">Ortaya</option>
+              <option value="right">Sağa</option>
+            </select>
+          </div>
+          <div>
+            <label data-i18n="label.rotation">Döndürme</label>
+            <select id="d-rotation" onchange="updatePreview()">
+              <option value="0">0°</option>
+              <option value="90">90° (yatay)</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </div>
+          <div>
+            <label data-i18n="label.padding">İç Boşluk (mm)</label>
+            <input type="number" step="0.5" min="0" max="20" id="d-padding" value="4" oninput="updatePreview()">
+          </div>
+          <div>
+            <label data-i18n="label.line_height">Satır Aralığı</label>
+            <input type="number" step="0.05" min="1" max="2" id="d-line-height" value="1.25" oninput="updatePreview()">
+          </div>
+          <div>
+            <label data-i18n="label.font_family">Yazı Tipi</label>
+            <select id="d-font" onchange="updatePreview()">
+              <option value="Inter,Arial,sans-serif">Inter / Sans-serif</option>
+              <option value="Arial,sans-serif">Arial</option>
+              <option value="Helvetica,Arial,sans-serif">Helvetica</option>
+              <option value="'Courier New',monospace">Courier</option>
+              <option value="Georgia,serif">Georgia (serif)</option>
+              <option value="'Times New Roman',serif">Times New Roman</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- LANGUAGE & TRANSLATION -->
@@ -512,6 +582,25 @@ function setLogo(fieldId, dataUrl){
   updatePreview();
 }
 function clearLogo(fieldId){ setLogo(fieldId, ''); }
+
+// ===== CUSTOM CERTS =====
+function addCustomCert(ev){
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  if (f.size > 1024*1024){ showToast('1MB üzeri olamaz','error'); return; }
+  const r = new FileReader();
+  r.onload = e => { appendCustomCertThumb(e.target.result); updatePreview(); };
+  r.readAsDataURL(f);
+  ev.target.value = '';
+}
+function appendCustomCertThumb(src){
+  const wrap = document.getElementById('custom-certs');
+  const div = document.createElement('div');
+  div.style.cssText = 'position:relative;display:inline-block';
+  div.innerHTML = `<img src="${escapeAttr(src)}" class="logo-thumb" style="width:40px;height:40px">
+    <button type="button" onclick="this.parentNode.remove();updatePreview()" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#dc2626;color:#fff;font-size:11px;cursor:pointer;line-height:1">✕</button>`;
+  wrap.appendChild(div);
+}
 function useCompanyLogo(){
   if (!_companyLogoUrl){ showToast('Şirket logosu ayarlı değil (Ayarlar → Şirket)','info'); return; }
   setLogo('f-mfr-logo', _companyLogoUrl);
@@ -738,6 +827,18 @@ function collectData(){
     elec: { voltage:get('f-voltage'), power:get('f-power'), ip:get('f-ip'), warranty:get('f-warranty') },
     custom: Array.from(document.querySelectorAll('#custom-rows .dyn-row')).map(r => ({ name:r.children[0].value, type:r.children[1].value, value:r.children[2].value })),
     certs: Array.from(document.querySelectorAll('#cert-grid input:checked')).map(x => x.value),
+    customCerts: Array.from(document.querySelectorAll('#custom-certs img')).map(x => x.src),
+    design: {
+      titleSize: +document.getElementById('d-title-size').value,
+      bodySize:  +document.getElementById('d-body-size').value,
+      logoSize:  +document.getElementById('d-logo-size').value,
+      certSize:  +document.getElementById('d-cert-size').value,
+      align:     document.getElementById('d-align').value,
+      rotation:  +document.getElementById('d-rotation').value,
+      padding:   +document.getElementById('d-padding').value,
+      lineHeight:+document.getElementById('d-line-height').value,
+      font:      document.getElementById('d-font').value
+    },
     lang: currentLang,
     output: {
       mode: document.querySelector('input[name=out]:checked').value,
@@ -772,6 +873,20 @@ function applyData(d){
   set('f-size',d.size); set('f-usage',d.usage); set('f-first-aid',d.firstAid);
   const e=d.elec||{}; set('f-voltage',e.voltage);set('f-power',e.power);set('f-ip',e.ip);set('f-warranty',e.warranty);
   document.querySelectorAll('#cert-grid input').forEach(el => { el.checked = (d.certs||[]).includes(el.value); el.parentNode.classList.toggle('active',el.checked); });
+  // Custom certs
+  const ccWrap = document.getElementById('custom-certs'); ccWrap.innerHTML = '';
+  (d.customCerts||[]).forEach(src => appendCustomCertThumb(src));
+  // Design
+  const ds = d.design || {};
+  if (ds.titleSize){ document.getElementById('d-title-size').value = ds.titleSize; document.getElementById('v-title-size').textContent = ds.titleSize+'pt'; }
+  if (ds.bodySize){  document.getElementById('d-body-size').value = ds.bodySize; document.getElementById('v-body-size').textContent = ds.bodySize+'pt'; }
+  if (ds.logoSize){  document.getElementById('d-logo-size').value = ds.logoSize; document.getElementById('v-logo-size').textContent = ds.logoSize+'mm'; }
+  if (ds.certSize){  document.getElementById('d-cert-size').value = ds.certSize; document.getElementById('v-cert-size').textContent = ds.certSize+'mm'; }
+  if (ds.align) document.getElementById('d-align').value = ds.align;
+  if (ds.rotation!=null) document.getElementById('d-rotation').value = ds.rotation;
+  if (ds.padding!=null) document.getElementById('d-padding').value = ds.padding;
+  if (ds.lineHeight) document.getElementById('d-line-height').value = ds.lineHeight;
+  if (ds.font) document.getElementById('d-font').value = ds.font;
   if (d.lang) selectLang(d.lang);
   const o=d.output||{};
   if (o.unit && o.unit !== _unit){ setUnit(o.unit); }
@@ -845,13 +960,26 @@ function applyDimensions(){
 function updatePreview(){
   const d = collectData();
   const lbl = document.getElementById('label');
+  // Apply design
+  const ds = d.design || {};
+  lbl.style.setProperty('--title-size', (ds.titleSize||12)+'pt');
+  lbl.style.setProperty('--body-size',  (ds.bodySize||8)+'pt');
+  lbl.style.setProperty('--logo-size',  (ds.logoSize||14)+'mm');
+  lbl.style.setProperty('--cert-size',  (ds.certSize||10)+'mm');
+  lbl.style.setProperty('--line-height', ds.lineHeight||1.25);
+  lbl.style.setProperty('--pad', (ds.padding||4)+'mm');
+  lbl.style.textAlign = ds.align || 'left';
+  lbl.style.fontFamily = ds.font || "Inter,Arial,sans-serif";
+  lbl.style.padding = 'var(--pad)';
+  lbl.style.transform = ds.rotation ? `rotate(${ds.rotation}deg)` : '';
+  lbl.style.transformOrigin = 'center';
   const parts = [];
   // Logos row (brand left / mfr right) — centered when only one
   if (d.product.brandLogo || d.mfr.logo){
-    const brand = d.product.brandLogo ? `<img src="${escapeAttr(d.product.brandLogo)}" alt="brand" style="max-height:14mm;max-width:40mm;object-fit:contain">` : '<span></span>';
-    const mfr   = d.mfr.logo         ? `<img src="${escapeAttr(d.mfr.logo)}"         alt="mfr"   style="max-height:14mm;max-width:40mm;object-fit:contain">` : '<span></span>';
+    const brand = d.product.brandLogo ? `<img src="${escapeAttr(d.product.brandLogo)}" alt="brand" style="max-height:var(--logo-size);max-width:40mm;object-fit:contain">` : '<span></span>';
+    const mfr   = d.mfr.logo         ? `<img src="${escapeAttr(d.mfr.logo)}"         alt="mfr"   style="max-height:var(--logo-size);max-width:40mm;object-fit:contain">` : '<span></span>';
     const justify = (d.product.brandLogo && d.mfr.logo) ? 'space-between' : 'center';
-    parts.push(`<div style="display:flex;justify-content:${justify};align-items:center;gap:3mm">${brand}${mfr}</div>`);
+    parts.push(`<div class="lbl-logos" style="display:flex;justify-content:${justify};align-items:center;gap:3mm">${brand}${mfr}</div>`);
   }
   if (d.product.name) parts.push(`<div class="lbl-title">${escapeHtml(d.product.name)}</div>`);
   if (d.product.brand) parts.push(`<div class="lbl-brand">${escapeHtml(d.product.brand)}</div>`);
@@ -914,9 +1042,13 @@ function updatePreview(){
     if (impText) parts.push(`<div class="lbl-section">İthalatçı</div><div class="lbl-text">${escapeHtml(impText)}</div>`);
   }
 
-  // Certs
-  if (d.certs.length){
-    parts.push(`<div class="lbl-certs">${d.certs.map(k => `<img src="assets/cert-logos/${k}.svg" alt="${k}">`).join('')}</div>`);
+  // Certs (built-in + custom uploads)
+  const allCerts = [
+    ...d.certs.map(k => `<img src="assets/cert-logos/${k}.svg" alt="${k}">`),
+    ...(d.customCerts||[]).map(src => `<img src="${escapeAttr(src)}" alt="custom-cert">`)
+  ];
+  if (allCerts.length){
+    parts.push(`<div class="lbl-certs">${allCerts.join('')}</div>`);
   }
 
   // Barcode
