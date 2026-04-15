@@ -316,6 +316,12 @@ body {
 
 .dual-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:24px; }
 @media(max-width:1024px){ .dual-grid { grid-template-columns:1fr; } }
+/* Cap chart heights — Chart.js with maintainAspectRatio:false fills parent,
+   and without a ceiling the <canvas> can grow unbounded inside a flex/grid cell. */
+.chart-card canvas { max-height:280px !important; height:auto !important; }
+#revenueChart { max-height:260px !important; }
+#topProductsChart, #categoryChart { max-height:280px !important; }
+.cb-card canvas { max-height:40px !important; }
 
 .quick-stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
 @media(max-width:900px){ .quick-stats-row { grid-template-columns:repeat(2,1fr); } }
@@ -956,7 +962,7 @@ tr:hover td { background: var(--gray50); }
             <button class="period-btn active" onclick="setPeriod(this,'1y')">1Y</button>
           </div>
         </div>
-        <canvas id="revenueChart" height="220"></canvas>
+        <div style="position:relative;height:260px"><canvas id="revenueChart"></canvas></div>
       </div>
 
       <!-- NOTIFICATIONS -->
@@ -991,7 +997,7 @@ tr:hover td { background: var(--gray50); }
             <div class="card-subtitle" data-i18n="dash_top_products_sub">Bu ay ciroya göre ilk 10</div>
           </div>
         </div>
-        <canvas id="topProductsChart" height="260"></canvas>
+        <div style="position:relative;height:280px"><canvas id="topProductsChart"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="card-header">
@@ -1000,7 +1006,7 @@ tr:hover td { background: var(--gray50); }
             <div class="card-subtitle" data-i18n="dash_rev_cat_sub">Bu ay dağılım</div>
           </div>
         </div>
-        <canvas id="categoryChart" height="260"></canvas>
+        <div style="position:relative;height:280px"><canvas id="categoryChart"></canvas></div>
       </div>
     </div>
 
@@ -1847,7 +1853,7 @@ async function loadCashBankStatus(){
       <div class="cb-card">
         <div class="cb-name">${c.kind} ${c.name}</div>
         <div class="cb-bal">${fmtMoneyCur(c.bal, c.cur)}</div>
-        <canvas id="${c.id}-spark" height="40"></canvas>
+        <div style="position:relative;height:40px"><canvas id="${c.id}-spark"></canvas></div>
       </div>`).join('');
     cards.forEach(c => {
       const cv = document.getElementById(c.id+'-spark'); if (!cv) return;
