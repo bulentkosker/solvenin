@@ -4411,10 +4411,15 @@ async function loadUsers() {
 }
 
 async function toggleSuspend(userId, suspended) {
-  const { error } = await sb.from('company_users')
+  const { data, error } = await sb.from('company_users')
     .update({ is_suspended: suspended })
-    .eq('company_id', companyId).eq('user_id', userId);
+    .eq('company_id', companyId).eq('user_id', userId)
+    .select('user_id, is_suspended');
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  if (!data || !data.length) {
+    showToast(t('err_no_permission') || 'Bu işlem için yetkiniz yok', 'error');
+    return;
+  }
   showToast(suspended ? (t('toast_user_suspended') || 'Kullanıcı askıya alındı') : (t('toast_user_unsuspended') || 'Kullanıcı aktif edildi'), 'success');
   await loadUsers();
 }
