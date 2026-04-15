@@ -309,6 +309,52 @@ body {
   overflow: hidden;
 }
 .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.stat-compare { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; margin-top:4px; }
+.stat-compare.up { background:#ecfdf5; color:#059669; }
+.stat-compare.down { background:#fef2f2; color:#dc2626; }
+.stat-compare.flat { background:var(--gray100); color:var(--gray500); }
+
+.dual-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:24px; }
+@media(max-width:1024px){ .dual-grid { grid-template-columns:1fr; } }
+
+.quick-stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+@media(max-width:900px){ .quick-stats-row { grid-template-columns:repeat(2,1fr); } }
+.qs-card { background:#fff; border:1px solid var(--gray200); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+.qs-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.qs-label { font-size:11px; color:var(--gray500); font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+.qs-val { font-size:18px; font-weight:800; color:var(--gray800); line-height:1.1; margin-top:2px; }
+
+.cb-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; padding:4px 0; }
+.cb-card { border:1px solid var(--gray200); border-radius:12px; padding:14px; background:#fff; }
+.cb-card .cb-name { font-size:12px; font-weight:700; color:var(--gray700); display:flex; align-items:center; gap:6px; }
+.cb-card .cb-bal { font-size:20px; font-weight:800; color:var(--gray800); margin-top:4px; }
+.cb-card canvas { max-height:40px; margin-top:8px; }
+
+.activity-timeline { display:flex; flex-direction:column; gap:2px; max-height:420px; overflow-y:auto; }
+.act-row { display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--gray100); font-size:13px; }
+.act-row:last-child { border-bottom:none; }
+.act-ico { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.act-ico.sale { background:#ecfdf5; color:#059669; }
+.act-ico.purchase { background:#eff6ff; color:#2563eb; }
+.act-ico.payment { background:#fef3c7; color:#b45309; }
+.act-desc { flex:1; min-width:0; }
+.act-title { font-weight:600; color:var(--gray800); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.act-sub { font-size:11px; color:var(--gray500); }
+.act-amount { font-weight:700; white-space:nowrap; }
+.act-time { font-size:11px; color:var(--gray400); white-space:nowrap; }
+
+.alerts-list { display:flex; flex-direction:column; gap:8px; max-height:420px; overflow-y:auto; }
+.alert-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; font-size:12.5px; }
+.alert-row.low-stock { background:#fffbeb; border:1px solid #fde68a; }
+.alert-row.overdue { background:#fef2f2; border:1px solid #fecaca; }
+.alert-row.upcoming { background:#eff6ff; border:1px solid #bfdbfe; }
+.alert-row .a-ico { font-size:16px; flex-shrink:0; }
+.alert-row .a-body { flex:1; }
+.alert-row .a-title { font-weight:700; color:var(--gray800); }
+.alert-row .a-sub { font-size:11px; color:var(--gray500); margin-top:1px; }
+
+.skel { background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation:skel 1.2s infinite; border-radius:6px; }
+@keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .stat-card::before {
   content: '';
   position: absolute;
@@ -903,12 +949,14 @@ tr:hover td { background: var(--gray50); }
             <div class="card-subtitle" data-i18n="dash_monthly_perf">Monthly sales performance</div>
           </div>
           <div class="chart-period">
-            <button class="period-btn" onclick="setPeriod(this,'weekly')">7D</button>
-            <button class="period-btn active" onclick="setPeriod(this,'monthly')">30D</button>
-            <button class="period-btn" onclick="setPeriod(this,'yearly')">1Y</button>
+            <button class="period-btn" onclick="setPeriod(this,'7d')">7G</button>
+            <button class="period-btn" onclick="setPeriod(this,'30d')">30G</button>
+            <button class="period-btn" onclick="setPeriod(this,'3m')">3A</button>
+            <button class="period-btn" onclick="setPeriod(this,'6m')">6A</button>
+            <button class="period-btn active" onclick="setPeriod(this,'1y')">1Y</button>
           </div>
         </div>
-        <canvas id="revenueChart" height="200"></canvas>
+        <canvas id="revenueChart" height="220"></canvas>
       </div>
 
       <!-- NOTIFICATIONS -->
@@ -928,6 +976,64 @@ tr:hover td { background: var(--gray50); }
             </div>
           </div>
         </div></div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS ROW -->
+    <div id="quick-stats-row" class="quick-stats-row fade-up fade-up-2"></div>
+
+    <!-- TOP PRODUCTS + CATEGORY DONUT -->
+    <div class="dual-grid fade-up fade-up-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🏆 <span data-i18n="dash_top_products">En Çok Satan Ürünler</span></div>
+            <div class="card-subtitle" data-i18n="dash_top_products_sub">Bu ay ciroya göre ilk 10</div>
+          </div>
+        </div>
+        <canvas id="topProductsChart" height="260"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🥧 <span data-i18n="dash_revenue_by_cat">Kategori Bazlı Gelir</span></div>
+            <div class="card-subtitle" data-i18n="dash_rev_cat_sub">Bu ay dağılım</div>
+          </div>
+        </div>
+        <canvas id="categoryChart" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- CASH & BANK STATUS -->
+    <div class="chart-card fade-up fade-up-2" style="margin-bottom:24px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">💰 <span data-i18n="dash_cash_bank">Kasa & Banka Durumu</span></div>
+          <div class="card-subtitle" data-i18n="dash_cash_bank_sub">Son 7 gün hareket</div>
+        </div>
+      </div>
+      <div id="cash-bank-cards" class="cb-grid"></div>
+    </div>
+
+    <!-- RECENT ACTIVITY + NOTIFICATIONS -->
+    <div class="main-grid fade-up fade-up-3" style="margin-bottom:24px">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🕒 <span data-i18n="dash_recent_activity">Son İşlemler</span></div>
+            <div class="card-subtitle" data-i18n="dash_recent_activity_sub">En son 10 işlem</div>
+          </div>
+        </div>
+        <div id="activity-timeline" class="activity-timeline"><div style="text-align:center;color:var(--gray400);padding:20px">Yükleniyor…</div></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔔 <span data-i18n="dash_alerts">Uyarılar</span></div>
+            <div class="card-subtitle" data-i18n="dash_alerts_sub">Düşük stok · gecikmiş ödeme · yaklaşan vade</div>
+          </div>
+        </div>
+        <div id="alerts-list" class="alerts-list"><div style="text-align:center;color:var(--gray400);padding:20px">Yükleniyor…</div></div>
       </div>
     </div>
 
@@ -1408,13 +1514,20 @@ function renderStatCards(data){
     const val = data[id]?.val ?? '—';
     const sub = data[id]?.sub ?? '';
     const subColor = data[id]?.color || 'var(--gray400)';
+    const diff = data[id]?.diff;  // numeric % or null
+    let badge = '';
+    if (diff != null){
+      const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+      const arrow = diff > 0 ? '▲' : (diff < 0 ? '▼' : '▬');
+      badge = `<span class="stat-compare ${cls}">${arrow} %${Math.abs(diff).toFixed(1)} ${t('dash_vs_last_month')||'geçen aya göre'}</span>`;
+    }
     return `<div class="stat-card ${def.color}">
       <div class="stat-header">
         <span class="stat-label">${t(def.i18n)}</span>
         <div class="stat-icon ${def.color}">${def.icon}</div>
       </div>
       <div class="stat-value">${val}</div>
-      <div class="stat-change" style="font-size:12px;color:${subColor}">${sub}</div>
+      ${badge || `<div class="stat-change" style="font-size:12px;color:${subColor}">${sub}</div>`}
     </div>`;
   }).join('');
 }
@@ -1432,7 +1545,7 @@ async function loadDashboardStats(){
       sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('payments').select('id,amount,order_id').eq('company_id', companyId),
-      sb.from('contacts').select('id').eq('company_id', companyId).eq('is_customer', true),
+      sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true),
       sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId),
       sb.from('products').select('id,quantity,min_stock').eq('company_id', companyId),
     ]);
@@ -1467,32 +1580,60 @@ async function loadDashboardStats(){
     const thisMoPurch   = purchases.filter(p => p.created_at >= thisMonthStart).reduce((s,p) => s + parseFloat(p.total||0), 0);
     const lowStock      = products.filter(p => parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0)).length;
 
+    // This-month order count & purchase diff
+    const thisMoOrders = activeOrders.filter(o => o.created_at >= thisMonthStart);
+    const lastMoOrders = activeOrders.filter(o => o.created_at >= lastMonthStart && o.created_at < lastMonthEnd);
+    const ordersDiff = lastMoOrders.length > 0 ? ((thisMoOrders.length-lastMoOrders.length)/lastMoOrders.length*100) : null;
+    const lastMoPurch = purchases.filter(p => p.created_at >= lastMonthStart && p.created_at < lastMonthEnd).reduce((s,p) => s + parseFloat(p.total||0), 0);
+    const purchDiff = lastMoPurch > 0 ? ((thisMoPurch-lastMoPurch)/lastMoPurch*100) : null;
+
     const data = {
-      revenue:   {val: fmtMoney(totalRevenue),  sub: revDiff!=null ? (revDiff>=0?'↑ ':'↓ ')+Math.abs(revDiff)+'% '+t('dash_vs_last_month') : t('dash_this_month')+': '+fmtMoney(thisMonthRev), color: revDiff>=0?'var(--green)':'var(--red)'},
-      orders:    {val: activeOrders.length,      sub: fmtMoney(activeOrders.reduce((s,o)=>s+parseFloat(o.total||0),0))+' '+t('dash_pending')},
-      cash:      {val: fmtMoney(totalCash+totalBank), sub: t('tab_cash')+': '+fmtMoney(totalCash)+'  ·  '+t('tab_bank')+': '+fmtMoney(totalBank)},
-      pending:   {val: fmtMoney(pendingAmt),     sub: pendingCount+' '+t('dash_active_orders')},
-      customers: {val: customers.length,         sub: t('dash_total_customers')},
-      purchases: {val: fmtMoney(totalPurch),     sub: t('dash_this_month')+': '+fmtMoney(thisMoPurch)},
-      month_rev: {val: fmtMoney(thisMonthRev),   sub: t('dash_vs_last_month')+': '+fmtMoney(lastMonthRev)},
+      revenue:   {val: fmtMoney(thisMonthRev),  diff: revDiff!=null ? +revDiff : null,
+                   sub: t('dash_this_month')+': '+fmtMoney(thisMonthRev), color: revDiff>=0?'var(--green)':'var(--red)'},
+      orders:    {val: activeOrders.length,     diff: ordersDiff,
+                   sub: fmtMoney(activeOrders.reduce((s,o)=>s+parseFloat(o.total||0),0))+' '+t('dash_pending')},
+      cash:      {val: fmtMoney(totalCash+totalBank),
+                   sub: t('tab_cash')+': '+fmtMoney(totalCash)+'  ·  '+t('tab_bank')+': '+fmtMoney(totalBank)},
+      pending:   {val: fmtMoney(pendingAmt),
+                   sub: pendingCount+' '+t('dash_active_orders')},
+      customers: {val: customers.length,        sub: t('dash_total_customers')},
+      purchases: {val: fmtMoney(thisMoPurch),    diff: purchDiff,
+                   sub: t('dash_this_month')+': '+fmtMoney(thisMoPurch)},
+      month_rev: {val: fmtMoney(thisMonthRev),   diff: revDiff!=null ? +revDiff : null,
+                   sub: t('dash_vs_last_month')+': '+fmtMoney(lastMonthRev)},
       low_stock: {val: lowStock,                 sub: lowStock > 0 ? t('dash_need_reorder') : '✓ OK', color: lowStock > 0 ? 'var(--orange)' : 'var(--green)'},
     };
 
     window._statData = data;
     renderStatCards(data);
 
-    // Chart data - last 6 months
-    const months = [], labels = [];
-    for(let i=5;i>=0;i--){
-      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-      const s = d.toISOString();
-      const e = new Date(now.getFullYear(), now.getMonth()-i+1, 1).toISOString();
-      months.push(orders.filter(o=>o.created_at>=s&&o.created_at<e).reduce((s,o)=>s+parseFloat(o.total||0),0));
-      labels.push(d.toLocaleDateString('default',{month:'short'}));
+    // Sales trend: last 12 months, this year vs last year parallel window
+    const thisYear = [], lastYear = [], labels = [];
+    for(let i=11;i>=0;i--){
+      const d  = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const s  = d.toISOString();
+      const e  = new Date(d.getFullYear(), d.getMonth()+1, 1).toISOString();
+      const ds = new Date(d.getFullYear()-1, d.getMonth(), 1).toISOString();
+      const de = new Date(d.getFullYear()-1, d.getMonth()+1, 1).toISOString();
+      thisYear.push(orders.filter(o=>o.created_at>=s&&o.created_at<e).reduce((a,o)=>a+parseFloat(o.total||0),0));
+      lastYear.push(orders.filter(o=>o.created_at>=ds&&o.created_at<de).reduce((a,o)=>a+parseFloat(o.total||0),0));
+      labels.push(d.toLocaleDateString('tr-TR',{month:'short'}));
     }
-    window._chartData = {months, monthLabels: labels};
+    window._chartData = { thisYear, lastYear, monthLabels: labels, allOrders: orders };
+
+    // Quick stats row
+    const newCustThisMonth = customers.filter(c => c.created_at >= thisMonthStart).length;
+    const avgOrderValue = thisMoOrders.length ? thisMonthRev / thisMoOrders.length : 0;
+    renderQuickStats({ newCust: newCustThisMonth, avgOrder: avgOrderValue, pendingInv: pendingCount, lowStock });
 
   } catch(e){ console.error('Dashboard stats error:', e); }
+
+  // Top products + category donut + cash-bank + activity + alerts (all parallel, independent of stats)
+  loadTopProducts();
+  loadCategoryRevenue();
+  loadCashBankStatus();
+  loadActivityTimeline();
+  loadAlerts();
 
   // Load recent transactions
   try {
@@ -1564,48 +1705,255 @@ async function loadDashboardStats(){
 function fmtMoney(n) { const sym = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return sym + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // ===== CHART =====
-let chart = null;
-function initChart() {
+let _currentPeriod = '1y';
+function initChart(period) {
+  if (period) _currentPeriod = period;
   const ctx = document.getElementById('revenueChart');
   if (!ctx) return;
   const cd = window._chartData;
   if (!cd) return;
+  // Slice based on period
+  const sliceMap = { '7d': null, '30d': null, '3m': 3, '6m': 6, '1y': 12 };
+  const monthsBack = sliceMap[_currentPeriod] || 12;
+  let labels = cd.monthLabels.slice(-monthsBack);
+  let thisYr = cd.thisYear.slice(-monthsBack);
+  let lastYr = cd.lastYear.slice(-monthsBack);
+
+  // 7d / 30d: switch to daily aggregation
+  if (_currentPeriod === '7d' || _currentPeriod === '30d'){
+    const days = _currentPeriod === '7d' ? 7 : 30;
+    const today = new Date();
+    labels = []; thisYr = []; lastYr = [];
+    for (let i = days-1; i >= 0; i--){
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i);
+      const ds = d.toISOString().slice(0,10);
+      const next = new Date(d.getTime()+86400000).toISOString().slice(0,10);
+      const lyD = new Date(d.getFullYear()-1, d.getMonth(), d.getDate()).toISOString().slice(0,10);
+      const lyNext = new Date(d.getFullYear()-1, d.getMonth(), d.getDate()+1).toISOString().slice(0,10);
+      thisYr.push((cd.allOrders||[]).filter(o => o.created_at >= ds && o.created_at < next).reduce((a,o)=>a+parseFloat(o.total||0),0));
+      lastYr.push((cd.allOrders||[]).filter(o => o.created_at >= lyD && o.created_at < lyNext).reduce((a,o)=>a+parseFloat(o.total||0),0));
+      labels.push(d.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'}));
+    }
+  }
+
   if (window._chart) window._chart.destroy();
   window._chart = new Chart(ctx.getContext('2d'), {
     type: 'line',
     data: {
-      labels: cd.monthLabels,
-      datasets: [{
-        label: t('dash_total_revenue'),
-        data: cd.months,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.08)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: '#3b82f6',
-        pointRadius: 4,
-      }]
+      labels,
+      datasets: [
+        { label: t('dash_this_year')||'Bu yıl',  data: thisYr, borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,0.08)', borderWidth:2.5, tension:0.4, fill:true, pointRadius:3 },
+        { label: t('dash_last_year')||'Geçen yıl', data: lastYr, borderColor:'#6B7280', borderDash:[4,4], backgroundColor:'transparent', borderWidth:1.5, tension:0.4, fill:false, pointRadius:2 }
+      ]
     },
     options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:true, position:'bottom', labels:{ usePointStyle:true, font:{size:11} } },
+                 tooltip: { callbacks: { label: c => c.dataset.label+': '+fmtMoney(c.parsed.y) } } },
       scales: {
-        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' },
-             ticks: { callback: v => { const s = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return s + (v>=1000?(v/1000).toFixed(0)+'K':v); } }},
-        x: { grid: { display: false }}
+        y: { beginAtZero:true, grid:{ color:'rgba(0,0,0,0.05)' },
+             ticks:{ callback: v => { const s = window.getCurrencySymbol ? window.getCurrencySymbol() : '$'; return s + (v>=1000?(v/1000).toFixed(0)+'K':v); } } },
+        x: { grid:{ display:false } }
       }
     }
   });
 }
 
-// Remove old period buttons handler if any
-function setPeriod(btn, period) { /* no-op, using real data */ }
-
 function setPeriod(btn, period) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   initChart(period);
+}
+
+// ===== TOP PRODUCTS (horizontal bar, this month) =====
+async function loadTopProducts(){
+  const ctx = document.getElementById('topProductsChart');
+  if (!ctx) return;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  try {
+    const { data: items } = await sb.from('sales_order_items')
+      .select('product_id, quantity, total, products(name), sales_orders!inner(company_id, created_at, status)')
+      .eq('sales_orders.company_id', companyId)
+      .gte('sales_orders.created_at', monthStart);
+    const agg = new Map();
+    (items||[]).forEach(r => {
+      if (!r.product_id) return;
+      const name = r.products?.name || '—';
+      agg.set(r.product_id, (agg.get(r.product_id)||{name, total:0}));
+      const cur = agg.get(r.product_id);
+      cur.total += parseFloat(r.total||0);
+    });
+    const top = [...agg.values()].sort((a,b)=>b.total-a.total).slice(0,10);
+    if (window._topChart) window._topChart.destroy();
+    if (!top.length){ ctx.parentNode.innerHTML += `<div style="text-align:center;color:var(--gray400);padding:20px;font-size:12px">${t('no_data')||'Bu ay satış yok'}</div>`; return; }
+    window._topChart = new Chart(ctx.getContext('2d'), {
+      type:'bar',
+      data:{ labels: top.map(t=>t.name), datasets:[{ label:t('dash_revenue')||'Gelir', data: top.map(t=>t.total),
+        backgroundColor: top.map((_,i) => `rgba(37,99,235,${1 - i*0.07})`), borderRadius:6 }] },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => fmtMoney(c.parsed.x) } } },
+        scales:{ x:{ ticks:{ callback: v => { const s=window.getCurrencySymbol?window.getCurrencySymbol():'$'; return s+(v>=1000?(v/1000).toFixed(0)+'K':v); } } }, y:{ grid:{display:false} } } }
+    });
+  } catch(e){ console.error('topProducts error', e); }
+}
+
+// ===== CATEGORY DONUT =====
+const PALETTE = ['#2563EB','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#EC4899','#F97316','#14B8A6','#6366F1','#84CC16'];
+async function loadCategoryRevenue(){
+  const ctx = document.getElementById('categoryChart');
+  if (!ctx) return;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  try {
+    const { data: items } = await sb.from('sales_order_items')
+      .select('total, products(category_id, categories(name)), sales_orders!inner(company_id, created_at)')
+      .eq('sales_orders.company_id', companyId)
+      .gte('sales_orders.created_at', monthStart);
+    const agg = new Map();
+    (items||[]).forEach(r => {
+      const name = r.products?.categories?.name || (t('cat_uncategorized')||'Kategorisiz');
+      agg.set(name, (agg.get(name)||0) + parseFloat(r.total||0));
+    });
+    const arr = [...agg.entries()].sort((a,b)=>b[1]-a[1]);
+    if (window._catChart) window._catChart.destroy();
+    if (!arr.length){ ctx.parentNode.innerHTML += `<div style="text-align:center;color:var(--gray400);padding:20px;font-size:12px">${t('no_data')||'Veri yok'}</div>`; return; }
+    const total = arr.reduce((a,[,v])=>a+v,0);
+    window._catChart = new Chart(ctx.getContext('2d'), {
+      type:'doughnut',
+      data:{ labels: arr.map(x=>x[0]), datasets:[{ data: arr.map(x=>x[1]), backgroundColor: arr.map((_,i)=>PALETTE[i%PALETTE.length]), borderWidth:2, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{position:'right', labels:{ font:{size:11}, boxWidth:12 } },
+                  tooltip:{ callbacks:{ label: c => `${c.label}: ${fmtMoney(c.parsed)} (%${(c.parsed/total*100).toFixed(1)})` } } } }
+    });
+  } catch(e){ console.error('categoryRevenue error', e); }
+}
+
+// ===== CASH & BANK CARDS WITH SPARKLINES =====
+async function loadCashBankStatus(){
+  const wrap = document.getElementById('cash-bank-cards');
+  if (!wrap) return;
+  try {
+    const [regs, banks, ct, bt] = await Promise.all([
+      sb.from('cash_registers').select('id, name, current_balance, currency_code').eq('company_id', companyId).eq('is_active', true),
+      sb.from('bank_accounts').select('id, account_name, current_balance, currency_code, banks(name)').eq('company_id', companyId).eq('is_active', true),
+      sb.from('cash_transactions').select('cash_register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()),
+      sb.from('bank_transactions').select('bank_account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()),
+    ]);
+    const cashTx = ct.data || []; const bankTx = bt.data || [];
+    const cards = [];
+    (regs.data||[]).forEach(r => cards.push({ id:'c-'+r.id, kind:'💵', name:r.name, bal:r.current_balance, cur:r.currency_code, spark: spark7(cashTx.filter(t=>t.cash_register_id===r.id)) }));
+    (banks.data||[]).forEach(b => cards.push({ id:'b-'+b.id, kind:'🏦', name:b.account_name+(b.banks?.name?` · ${b.banks.name}`:''), bal:b.current_balance, cur:b.currency_code, spark: spark7(bankTx.filter(t=>t.bank_account_id===b.id)) }));
+    if (!cards.length){ wrap.innerHTML = `<div style="color:var(--gray400);padding:12px">${t('no_data')||'Aktif kasa veya banka yok'}</div>`; return; }
+    wrap.innerHTML = cards.map(c => `
+      <div class="cb-card">
+        <div class="cb-name">${c.kind} ${c.name}</div>
+        <div class="cb-bal">${fmtMoneyCur(c.bal, c.cur)}</div>
+        <canvas id="${c.id}-spark" height="40"></canvas>
+      </div>`).join('');
+    cards.forEach(c => {
+      const cv = document.getElementById(c.id+'-spark'); if (!cv) return;
+      new Chart(cv.getContext('2d'), {
+        type:'line',
+        data:{ labels: c.spark.map((_,i)=>i), datasets:[{ data:c.spark, borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,.15)', borderWidth:1.5, tension:.35, fill:true, pointRadius:0 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}}, scales:{x:{display:false}, y:{display:false}} }
+      });
+    });
+  } catch(e){ console.error('cashBank error', e); wrap.innerHTML = `<div style="color:#dc2626;padding:12px">${e.message}</div>`; }
+}
+function spark7(tx){
+  const days = 7;
+  const out = new Array(days).fill(0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  tx.forEach(t => {
+    const d = new Date(t.transaction_date); d.setHours(0,0,0,0);
+    const idx = days-1 - Math.floor((today - d)/86400000);
+    if (idx >= 0 && idx < days){
+      const sign = (t.type==='in'||t.type==='income'||t.type==='deposit') ? 1 : -1;
+      out[idx] += sign * parseFloat(t.amount||0);
+    }
+  });
+  // running balance
+  let acc = 0; return out.map(v => acc += v);
+}
+function fmtMoneyCur(n, cur){
+  const sym = cur === 'USD' ? '$' : (cur === 'EUR' ? '€' : (cur === 'TRY' ? '₺' : (window.getCurrencySymbol?window.getCurrencySymbol():'')));
+  return sym + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ===== RECENT ACTIVITY TIMELINE =====
+async function loadActivityTimeline(){
+  const wrap = document.getElementById('activity-timeline');
+  if (!wrap) return;
+  try {
+    const [sales, purch, pays] = await Promise.all([
+      sb.from('sales_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
+      sb.from('purchase_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
+      sb.from('payments').select('id, amount, created_at, order_id').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
+    ]);
+    const acts = [];
+    (sales.data||[]).forEach(o => acts.push({ kind:'sale', ico:'💰', title:`${t('dash_sale')||'Satış'}: ${o.contacts?.name||'—'}`, sub:'#'+o.id.slice(0,8), amount:'+'+fmtMoney(o.total), at:o.created_at }));
+    (purch.data||[]).forEach(o => acts.push({ kind:'purchase', ico:'🛒', title:`${t('dash_purchase')||'Alış'}: ${o.contacts?.name||'—'}`, sub:'#'+o.id.slice(0,8), amount:'-'+fmtMoney(o.total), at:o.created_at }));
+    (pays.data||[]).forEach(p => acts.push({ kind:'payment', ico:'💳', title:`${t('dash_payment')||'Ödeme'}`, sub:p.order_id?'#'+p.order_id.slice(0,8):'', amount:fmtMoney(p.amount), at:p.created_at }));
+    acts.sort((a,b)=> new Date(b.at)-new Date(a.at));
+    const top = acts.slice(0,10);
+    if (!top.length){ wrap.innerHTML = `<div style="text-align:center;color:var(--gray400);padding:20px">${t('no_data')||'Henüz işlem yok'}</div>`; return; }
+    wrap.innerHTML = top.map(a => `
+      <div class="act-row">
+        <div class="act-ico ${a.kind}">${a.ico}</div>
+        <div class="act-desc"><div class="act-title">${a.title}</div><div class="act-sub">${a.sub}</div></div>
+        <div class="act-amount" style="color:${a.kind==='sale'?'#059669':(a.kind==='purchase'?'#dc2626':'var(--gray700)')}">${a.amount}</div>
+        <div class="act-time">${fmtRelTime(a.at)}</div>
+      </div>`).join('');
+  } catch(e){ console.error('activity error', e); wrap.innerHTML = `<div style="color:#dc2626;padding:12px">${e.message}</div>`; }
+}
+function fmtRelTime(d){
+  const diff = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (diff < 60) return 'az önce';
+  if (diff < 3600) return Math.floor(diff/60)+' dk önce';
+  if (diff < 86400) return Math.floor(diff/3600)+' saat önce';
+  if (diff < 604800) return Math.floor(diff/86400)+' gün önce';
+  return new Date(d).toLocaleDateString('tr-TR');
+}
+
+// ===== ALERTS =====
+async function loadAlerts(){
+  const wrap = document.getElementById('alerts-list');
+  if (!wrap) return;
+  try {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const in7 = new Date(today.getTime()+7*86400000).toISOString().slice(0,10);
+    const todayStr = today.toISOString().slice(0,10);
+    const [prods, overdueOrders, upcoming] = await Promise.all([
+      sb.from('products').select('name, quantity, min_stock').eq('company_id', companyId).eq('is_active', true),
+      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','overdue']).lt('due_date', todayStr).order('due_date',{ascending:true}).limit(10),
+      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','confirmed']).gte('due_date', todayStr).lte('due_date', in7).order('due_date',{ascending:true}).limit(10),
+    ]);
+    const lows = (prods.data||[]).filter(p => p.min_stock > 0 && parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0)).slice(0,8);
+    const rows = [];
+    lows.forEach(p => rows.push(`<div class="alert-row low-stock"><span class="a-ico">⚠️</span><div class="a-body"><div class="a-title">${p.name}</div><div class="a-sub">${t('dash_low_stock')||'Düşük stok'} · ${p.quantity}/${p.min_stock}</div></div></div>`));
+    (overdueOrders.data||[]).forEach(o => {
+      const days = Math.floor((today - new Date(o.due_date))/86400000);
+      rows.push(`<div class="alert-row overdue"><span class="a-ico">🔴</span><div class="a-body"><div class="a-title">${o.contacts?.name||'—'} · ${fmtMoney(o.total)}</div><div class="a-sub">${days} ${t('dash_days_overdue')||'gün gecikmiş'}</div></div></div>`);
+    });
+    (upcoming.data||[]).forEach(o => rows.push(`<div class="alert-row upcoming"><span class="a-ico">📅</span><div class="a-body"><div class="a-title">${o.contacts?.name||'—'} · ${fmtMoney(o.total)}</div><div class="a-sub">${t('dash_due')||'Vade'}: ${o.due_date}</div></div></div>`));
+    wrap.innerHTML = rows.length ? rows.join('') : `<div style="text-align:center;color:var(--gray400);padding:20px">✓ ${t('dash_no_alerts')||'Uyarı yok'}</div>`;
+  } catch(e){ console.error('alerts error', e); wrap.innerHTML = `<div style="color:#dc2626;padding:12px">${e.message}</div>`; }
+}
+
+// ===== QUICK STATS ROW =====
+function renderQuickStats({ newCust, avgOrder, pendingInv, lowStock }){
+  const wrap = document.getElementById('quick-stats-row');
+  if (!wrap) return;
+  const items = [
+    { ico:'👤', bg:'#eff6ff', col:'#2563EB', label:t('dash_qs_new_cust')||'Yeni Müşteri (Bu Ay)', val: newCust },
+    { ico:'📊', bg:'#ecfdf5', col:'#10B981', label:t('dash_qs_avg_order')||'Ortalama Sipariş Değeri', val: fmtMoney(avgOrder) },
+    { ico:'⏳', bg:'#fef3c7', col:'#F59E0B', label:t('dash_qs_pending_inv')||'Ödeme Bekleyen Fatura', val: pendingInv },
+    { ico:'⚠️', bg:'#fef2f2', col:'#EF4444', label:t('dash_qs_low_stock')||'Stok Kritik Ürün', val: lowStock },
+  ];
+  wrap.innerHTML = items.map(i => `
+    <div class="qs-card">
+      <div class="qs-icon" style="background:${i.bg};color:${i.col}">${i.ico}</div>
+      <div><div class="qs-label">${i.label}</div><div class="qs-val">${i.val}</div></div>
+    </div>`).join('');
 }
 
 // ===== LOGOUT =====
