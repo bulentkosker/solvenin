@@ -56,8 +56,18 @@ window.getErrorMessage = function(error) {
   }
   if (msg.includes('violates foreign key constraint'))
     return _t('error_related_record') || 'Bu kayıt başka verilerle ilişkili, silinemez';
-  if (msg.includes('violates unique constraint') || msg.includes('duplicate key'))
+  if (msg.includes('violates unique constraint') || msg.includes('duplicate key')) {
+    if (raw.includes('idx_products_barcode')) return 'Bu barkod başka bir ürüne ait';
+    if (raw.includes('idx_products_sku')) return 'Bu SKU başka bir ürüne ait';
+    if (raw.includes('idx_products_plu')) return 'Bu PLU kodu başka bir ürüne ait';
+    if (raw.includes('idx_sales_orders_number')) return 'Bu sipariş numarası zaten kullanılıyor';
+    if (raw.includes('idx_purchase_orders_number')) return 'Bu sipariş numarası zaten kullanılıyor';
+    if (raw.includes('idx_warehouses_name')) return 'Bu depo adı zaten kullanılıyor';
+    if (raw.includes('idx_cash_registers_name')) return 'Bu kasa adı zaten kullanılıyor';
+    if (raw.includes('idx_tax_rates_name')) return 'Bu vergi oranı adı zaten kullanılıyor';
+    if (raw.includes('idx_categories_name')) return 'Bu kategori adı aynı üst kategoride zaten var';
     return _t('error_duplicate') || 'Bu kayıt zaten mevcut';
+  }
   if (msg.includes('row-level security') || msg.includes('rls'))
     return _t('error_permission') || 'Bu işlem için yetkiniz yok';
   if (msg.includes('violates check constraint'))
