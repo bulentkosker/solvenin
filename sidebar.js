@@ -229,29 +229,33 @@
     .user-plan { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
     .user-menu-btn { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 16px; }
 
-    /* ── AI Button (inside sidebar, above user bar) ── */
-    #sb-ai-btn {
+    /* ── AI Button (injected into topbar-actions) ── */
+    #topbar-ai-btn {
       display: none;
-      width: calc(100% - 16px);
-      margin: 0 8px 8px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'DM Sans', system-ui, sans-serif;
-      cursor: pointer;
-      transition: background .15s, transform .1s;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      padding: 0 12px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, #1e3a8a 0%, #38bdf8 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .15s;
+      box-shadow: 0 2px 8px rgba(56,189,248,0.3);
     }
-    #sb-ai-btn.visible { display: flex; }
-    #sb-ai-btn:hover { background: rgba(255,255,255,0.16); }
-    #sb-ai-btn:active { transform: scale(0.98); }
-    #sb-ai-btn .sb-ai-icon { font-size: 14px; }
+    #topbar-ai-btn.visible { display: inline-flex; }
+    #topbar-ai-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(56,189,248,0.45); }
+    #topbar-ai-btn:active { transform: translateY(0); }
+    #topbar-ai-btn .ai-icon { font-size: 14px; }
+    @media (max-width: 640px) {
+      #topbar-ai-btn .ai-label { display: none; }
+      #topbar-ai-btn { padding: 0 10px; }
+    }
 
     /* ── AI Chat Panel ── */
     #ai-chat-panel {
@@ -736,9 +740,6 @@
       </a>
       <div class="sidebar-sections">${sectionsHTML}</div>
       <div class="sidebar-footer">
-        <button id="sb-ai-btn" type="button" onclick="window.sidebarOpenAI && window.sidebarOpenAI()" title="AI Asistan">
-          <span class="sb-ai-icon">✨</span><span>AI Asistan</span>
-        </button>
         <div class="company-menu" id="sb-company-menu" style="display:none">
           <div class="company-menu-list" id="sb-company-menu-list"></div>
           <div class="company-menu-footer" id="sb-company-menu-footer"></div>
@@ -1565,11 +1566,30 @@
   }
 
   async function injectAIFloatingButton() {
-    // Remove legacy floating button if present (from older cache)
+    // Remove legacy locations
     document.getElementById('ai-floating-btn')?.remove();
-    const btn = document.getElementById('sb-ai-btn');
-    if (!btn) return;
-    // Check if enabled for current user
+    document.getElementById('sb-ai-btn')?.remove();
+
+    // Inject into topbar — place between search bar and topbar-actions (bell/help)
+    let btn = document.getElementById('topbar-ai-btn');
+    if (!btn) {
+      const actions = document.querySelector('.topbar .topbar-actions');
+      const topbar = document.querySelector('.topbar');
+      if (!topbar) return;
+      btn = document.createElement('button');
+      btn.id = 'topbar-ai-btn';
+      btn.type = 'button';
+      btn.title = 'AI Asistan';
+      btn.innerHTML = '<span class="ai-icon">✨</span><span class="ai-label">AI Asistan</span>';
+      btn.onclick = () => window.sidebarOpenAI && window.sidebarOpenAI();
+      if (actions && actions.parentNode === topbar) {
+        topbar.insertBefore(btn, actions);
+      } else {
+        topbar.appendChild(btn);
+      }
+    }
+
+    // Visibility gate — ai_assistant_enabled for current user in current company
     try {
       const sb = window._supabase || window.supabase;
       if (!sb || !sb.auth) return;
