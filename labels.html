@@ -381,7 +381,7 @@ const { createClient } = supabase;
 const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
 window._supabase = sb;
 
-const T = window.t || (k=>k);
+const _t = window.t || (k=>k);
 
 // ===== STATE =====
 let companyId = null;
@@ -449,7 +449,7 @@ async function loadContacts(){
       .order('name');
     if (error) throw error;
     contacts = data || [];
-    const placeholder = T('label.select_customer') || 'Müşteri seçiniz';
+    const placeholder = _t('label.select_customer') || 'Müşteri seçiniz';
     if (!contacts.length){
       sel.innerHTML = `<option value="">— ${escapeHtml(placeholder)} (boş) —</option>`;
       return;
@@ -486,10 +486,10 @@ async function onCustomerChange(){
     .select('id, name, label_type, template_data, updated_at')
     .eq('company_id',companyId).eq('contact_id',cid).order('updated_at',{ascending:false});
   if (!data || !data.length){
-    listEl.innerHTML = '<span style="color:var(--gray400)">'+(T('label.no_template')||'Bu müşteri için şablon bulunamadı')+'</span>';
+    listEl.innerHTML = '<span style="color:var(--gray400)">'+(_t('label.no_template')||'Bu müşteri için şablon bulunamadı')+'</span>';
     return;
   }
-  listEl.innerHTML = '<strong>'+(T('label.saved_templates')||'Kayıtlı şablonlar')+':</strong> '
+  listEl.innerHTML = '<strong>'+(_t('label.saved_templates')||'Kayıtlı şablonlar')+':</strong> '
     + data.map(t => `<a href="#" onclick="event.preventDefault();loadTemplate('${t.id}')" style="margin-right:10px;color:var(--blue)">${escapeHtml(t.name)}</a>`).join('');
   // auto-load most recent
   loadTemplate(data[0].id, true);
@@ -503,8 +503,8 @@ async function loadTemplate(id, silent){
   const d = tpl.template_data || {};
   selectType(tpl.label_type || 'food');
   applyData(d);
-  if (!silent) showToast(T('label.template_loaded')||'Şablon yüklendi','success');
-  else showToast(T('label.template_loaded')||'Şablon yüklendi','info');
+  if (!silent) showToast(_t('label.template_loaded')||'Şablon yüklendi','success');
+  else showToast(_t('label.template_loaded')||'Şablon yüklendi','info');
   updatePreview();
 }
 
@@ -512,7 +512,7 @@ async function saveTemplate(){
   if (submitting && submitting()) return;
   const name = document.getElementById('template-name').value.trim();
   const cid = document.getElementById('customer-select').value || null;
-  if (!name){ showToast(T('label.err_name')||'Şablon adı girin','error'); if(submitting)submitting.reset(); return; }
+  if (!name){ showToast(_t('label.err_name')||'Şablon adı girin','error'); if(submitting)submitting.reset(); return; }
   const payload = {
     company_id: companyId,
     contact_id: cid,
@@ -530,7 +530,7 @@ async function saveTemplate(){
       if (error) throw error;
       editingTemplateId = data.id;
     }
-    showToast(T('label.template_saved')||'Şablon kaydedildi','success');
+    showToast(_t('label.template_saved')||'Şablon kaydedildi','success');
     if (cid) onCustomerChange();
   } catch(e){
     showToast((window.getErrorMessage&&getErrorMessage(e))||e.message||'Hata','error');
@@ -713,7 +713,7 @@ function applyDimensions(){
   const gap = +document.getElementById('a4-gap').value||2;
   const cols = Math.max(1, Math.floor((210 - 2*margin + gap) / (w + gap)));
   const rows = Math.max(1, Math.floor((297 - 2*margin + gap) / (h + gap)));
-  document.getElementById('a4-fit').textContent = `A4: ${cols}×${rows} = ${cols*rows} ${T('label.fits')||'etikete sığıyor'}`;
+  document.getElementById('a4-fit').textContent = `A4: ${cols}×${rows} = ${cols*rows} ${_t('label.fits')||'etikete sığıyor'}`;
 }
 
 // ===== PREVIEW =====
@@ -815,11 +815,11 @@ function updatePreview(){
 async function translateAll(){
   const btn = document.getElementById('translate-btn');
   const status = document.getElementById('translate-status');
-  btn.disabled = true; status.textContent = T('label.translating')||'Çeviriliyor…';
+  btn.disabled = true; status.textContent = _t('label.translating')||'Çeviriliyor…';
   try {
     const { data: appSet } = await sb.from('app_settings').select('value').eq('key','anthropic_api_key').maybeSingle();
     const apiKey = appSet?.value;
-    if (!apiKey){ throw new Error(T('label.no_api_key')||'Anthropic API anahtarı yok'); }
+    if (!apiKey){ throw new Error(_t('label.no_api_key')||'Anthropic API anahtarı yok'); }
 
     const target = LANGS.find(l => l.c===currentLang)?.n || currentLang;
     const ids = ['f-name','f-brand','f-model','f-origin','f-storage','f-usage','f-first-aid','f-ip','f-warranty','f-size'];
@@ -832,7 +832,7 @@ async function translateAll(){
     const customs = Array.from(document.querySelectorAll('#custom-rows .dyn-row')).map((r,i) => ({ k:'custom_n_'+i, v:r.children[0].value, k2:'custom_v_'+i, v2:r.children[2].value })).filter(x=>x.v||x.v2);
     customs.forEach(x => { if(x.v)payload[x.k]=x.v; if(x.v2)payload[x.k2]=x.v2; });
 
-    if (!Object.keys(payload).length){ status.textContent = T('label.nothing_to_translate')||'Çevrilecek metin yok'; btn.disabled=false; return; }
+    if (!Object.keys(payload).length){ status.textContent = _t('label.nothing_to_translate')||'Çevrilecek metin yok'; btn.disabled=false; return; }
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
@@ -863,7 +863,7 @@ async function translateAll(){
         const el = document.getElementById(k); if (el) el.value = v;
       }
     });
-    status.textContent = '✓ '+(T('label.translated')||'Çevrildi');
+    status.textContent = '✓ '+(_t('label.translated')||'Çevrildi');
     updatePreview();
   } catch(e){
     status.textContent = '❌ '+e.message;
