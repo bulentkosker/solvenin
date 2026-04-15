@@ -65,6 +65,56 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
 .report-loading{padding:40px 20px;text-align:center;color:var(--gray400);font-size:13px}
 .overdue-row td{background:#fef2f2!important}
 
+/* === Shared filter bar === */
+.report-filters-v2{display:flex;flex-direction:column;gap:10px;padding:12px 20px;background:#fafbfc;border-bottom:1px solid var(--gray100)}
+.rf-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rf-row input[type=text],.rf-row input[type=number],.rf-row input[type=date],.rf-row select{padding:7px 10px;border:1px solid var(--gray200);border-radius:7px;font-size:12px;font-family:var(--font-body);background:#fff;color:var(--gray800)}
+.rf-row input[type=date]{width:140px}
+.rf-row input[type=text],.rf-row input[type=number]{min-width:160px}
+.rf-label{font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.3px;margin-right:4px}
+.rf-preset-group{display:inline-flex;gap:2px;background:var(--gray100);border-radius:7px;padding:2px}
+.rf-preset{padding:5px 10px;border:none;background:transparent;font-size:11px;font-weight:600;color:var(--gray500);cursor:pointer;border-radius:5px;font-family:inherit}
+.rf-preset:hover{color:var(--gray800)}
+.rf-preset.active{background:#fff;color:var(--gray800);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.rf-btn{padding:6px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.rf-btn.primary{background:var(--primary);color:#fff;border:1px solid var(--primary)}
+.rf-btn.primary:hover{background:#1a3a9e}
+.rf-btn.ghost{background:#fff;color:var(--gray600);border:1px solid var(--gray200)}
+.rf-btn.ghost:hover{border-color:var(--primary);color:var(--primary)}
+.rf-badges{display:flex;gap:6px;flex-wrap:wrap;min-height:0}
+.rf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:#eff6ff;color:#1e40af;border:1px solid #dbeafe;border-radius:99px;font-size:11px;font-weight:600}
+.rf-badge button{background:none;border:none;color:#1e40af;cursor:pointer;font-size:13px;padding:0;line-height:1}
+.rf-badge button:hover{color:#dc2626}
+
+/* === Pagination === */
+.rp-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid var(--gray100);background:var(--gray50);font-size:12px;color:var(--gray600);flex-wrap:wrap;gap:10px}
+.rp-pager{display:inline-flex;gap:4px;align-items:center}
+.rp-pager button{width:28px;height:28px;border:1px solid var(--gray200);background:#fff;border-radius:6px;cursor:pointer;font-size:12px;color:var(--gray700)}
+.rp-pager button:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.rp-pager button:disabled{opacity:.4;cursor:not-allowed}
+.rp-pager button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.rp-page-size{padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff}
+
+/* === Sortable headers === */
+.report-body th.sortable{cursor:pointer;user-select:none}
+.report-body th.sortable:hover{color:var(--gray800);background:var(--gray100)}
+.report-body th .sort-ind{opacity:.4;margin-left:4px;font-size:10px}
+.report-body th.sorted .sort-ind{opacity:1;color:var(--primary)}
+
+/* === Skeleton rows === */
+.rp-skel-row td{padding:12px}
+.rp-skel-bar{height:10px;background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:rp-skel 1.2s infinite;border-radius:4px}
+@keyframes rp-skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* === Empty state === */
+.rp-empty{padding:60px 20px;text-align:center;color:var(--gray400)}
+.rp-empty .rp-empty-ico{font-size:42px;margin-bottom:8px}
+.rp-empty .rp-empty-msg{font-size:13px;margin-bottom:14px}
+.rp-empty .rf-btn{display:inline-flex;align-items:center;gap:4px}
+
+/* === Warning banner === */
+.rp-warning{margin:10px 20px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:8px}
+
 #loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
 .loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
 .loading-logo span{color:#38bdf8}
@@ -246,12 +296,160 @@ function sym() { return window.getCurrencySymbol ? window.getCurrencySymbol() : 
 function defaultFrom() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
 function defaultTo() { return new Date().toISOString().split('T')[0]; }
 
+// === SHARED FRAMEWORK ===
+const FW = {
+  state: { sortKey: null, sortDir: 'asc', page: 1, pageSize: 50, rows: [], headers: [], footerRow: null, searchQuery: '' },
+  debounceTimer: null,
+  activePreset: 'month',  // today|week|month|year|custom
+  // i18n helpers with TR fallback
+  tx: (k, tr) => (window.t ? (window.t(k) === k ? tr : window.t(k)) : tr),
+};
+
+function dISO(d){ return d.toISOString().split('T')[0]; }
+function applyDatePreset(preset){
+  FW.activePreset = preset;
+  const now = new Date();
+  let from = '', to = dISO(now);
+  if (preset === 'today'){ from = dISO(now); }
+  else if (preset === 'week'){ const dow = (now.getDay()+6)%7; from = dISO(new Date(now.getFullYear(), now.getMonth(), now.getDate()-dow)); }
+  else if (preset === 'month'){ from = dISO(new Date(now.getFullYear(), now.getMonth(), 1)); }
+  else if (preset === 'year'){ from = dISO(new Date(now.getFullYear(), 0, 1)); to = dISO(new Date(now.getFullYear(), 11, 31)); }
+  const fEl = document.getElementById('f-from'), tEl = document.getElementById('f-to');
+  if (fEl) fEl.value = from;
+  if (tEl) tEl.value = to;
+  document.querySelectorAll('.rf-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+  debouncedRun();
+}
+function buildDatePresetGroup(){
+  return `<div class="rf-preset-group">
+    <button class="rf-preset" data-preset="today" onclick="applyDatePreset('today')">${FW.tx('rp_today','Bugün')}</button>
+    <button class="rf-preset" data-preset="week"  onclick="applyDatePreset('week')">${FW.tx('rp_week','Bu Hafta')}</button>
+    <button class="rf-preset active" data-preset="month" onclick="applyDatePreset('month')">${FW.tx('rp_month','Bu Ay')}</button>
+    <button class="rf-preset" data-preset="year"  onclick="applyDatePreset('year')">${FW.tx('rp_year','Bu Yıl')}</button>
+    <button class="rf-preset" data-preset="custom" onclick="document.querySelectorAll('.rf-preset').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${FW.tx('rp_custom','Özel')}</button>
+  </div>`;
+}
+function debouncedRun(delay){
+  clearTimeout(FW.debounceTimer);
+  FW.debounceTimer = setTimeout(() => runReport(), delay || 500);
+}
+function onSearchInput(){ debouncedRun(300); }
+function onFilterChange(){ debouncedRun(400); }
+function onCustomDateChange(){ FW.activePreset = 'custom'; document.querySelectorAll('.rf-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === 'custom')); debouncedRun(400); }
+
+function resetFilters(){
+  applyDatePreset('month');
+  const s = document.getElementById('f-search'); if (s) s.value = '';
+  document.querySelectorAll('#report-filters select').forEach(el => { el.selectedIndex = 0; });
+  document.querySelectorAll('#report-filters input[type=checkbox]').forEach(el => { el.checked = false; });
+  document.querySelectorAll('#report-filters input[type=number]').forEach(el => { el.value = ''; });
+  FW.state.page = 1; FW.state.sortKey = null; FW.state.searchQuery = '';
+  debouncedRun(50);
+}
+
+function renderSkeletonRows(headers, count){
+  let html = '<table><thead><tr>' + headers.map(h => `<th>${h.label}</th>`).join('') + '</tr></thead><tbody>';
+  for (let i = 0; i < count; i++){
+    html += '<tr class="rp-skel-row">' + headers.map(() => '<td><div class="rp-skel-bar"></div></td>').join('') + '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderEmpty(){
+  return `<div class="rp-empty">
+    <div class="rp-empty-ico">🔍</div>
+    <div class="rp-empty-msg">${FW.tx('rp_no_results','Filtre kriterlerine uygun kayıt bulunamadı')}</div>
+    <button class="rf-btn ghost" onclick="resetFilters()">↺ ${FW.tx('rp_reset','Filtreleri Sıfırla')}</button>
+  </div>`;
+}
+
+function sortRows(rows, key, dir){
+  const sorted = [...rows].sort((a,b) => {
+    let av = a[key], bv = b[key];
+    if (av == null) av = ''; if (bv == null) bv = '';
+    // Strip formatting for numeric compare
+    const ax = parseFloat(String(av).replace(/[^\d.-]/g,''));
+    const bx = parseFloat(String(bv).replace(/[^\d.-]/g,''));
+    if (!isNaN(ax) && !isNaN(bx)) return (ax - bx) * (dir === 'asc' ? 1 : -1);
+    return String(av).localeCompare(String(bv), 'tr') * (dir === 'asc' ? 1 : -1);
+  });
+  return sorted;
+}
+
+function onHeaderClick(key){
+  if (FW.state.sortKey === key){
+    FW.state.sortDir = FW.state.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    FW.state.sortKey = key;
+    FW.state.sortDir = 'asc';
+  }
+  paintTable();
+}
+function changePageSize(size){
+  FW.state.pageSize = size === 'all' ? 999999 : +size;
+  FW.state.page = 1;
+  paintTable();
+}
+function changePage(p){ FW.state.page = p; paintTable(); }
+
+function paintTable(){
+  const { rows, headers, footerRow, page, pageSize, sortKey, sortDir } = FW.state;
+  const body = document.getElementById('report-body');
+  if (!rows.length){ body.innerHTML = renderEmpty(); return; }
+  // 1000+ warning
+  const warning = rows.length > 1000 ? `<div class="rp-warning">⚠️ ${rows.length}+ ${FW.tx('rp_many_records','kayıt bulundu. Filtreleri daraltın veya Excel\'e aktarın.')}</div>` : '';
+  const sortedRows = sortKey ? sortRows(rows, sortKey, sortDir) : rows;
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  const curPage = Math.min(page, totalPages);
+  const start = (curPage - 1) * pageSize;
+  const pageRows = sortedRows.slice(start, start + pageSize);
+
+  let html = warning + '<table><thead><tr>' + headers.map(h => {
+    const sortable = h.key && h.key.startsWith('_') ? '' : 'sortable';
+    const sortedCls = FW.state.sortKey === h.key ? 'sorted' : '';
+    const ind = FW.state.sortKey === h.key ? (FW.state.sortDir === 'asc' ? '▲' : '▼') : '⇅';
+    return `<th class="${h.align||''} ${sortable} ${sortedCls}" ${sortable?`onclick="onHeaderClick('${h.key}')"`:''}>${h.label}<span class="sort-ind">${ind}</span></th>`;
+  }).join('') + '</tr></thead><tbody>';
+  pageRows.forEach(row => {
+    const cls = row._class || '';
+    html += `<tr class="${cls}">` + headers.map(h => `<td class="${h.align||''} ${row._cellClass?.[h.key]||''}">${row[h.key] ?? '—'}</td>`).join('') + '</tr>';
+  });
+  if (footerRow){
+    html += `<tr class="total-row">` + headers.map(h => `<td class="${h.align||''}">${footerRow[h.key] ?? ''}</td>`).join('') + '</tr>';
+  }
+  html += '</tbody></table>';
+
+  // Pagination footer
+  const showingFrom = sortedRows.length === 0 ? 0 : start + 1;
+  const showingTo = Math.min(sortedRows.length, start + pageSize);
+  html += `<div class="rp-footer">
+    <div>${FW.tx('rp_showing','Gösterilen')}: <b>${showingFrom}-${showingTo}</b> / ${sortedRows.length} ${FW.tx('rp_records','kayıt')}</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <select class="rp-page-size" onchange="changePageSize(this.value)">
+        ${[25,50,100,250,'all'].map(s => `<option value="${s}" ${String(s)===String(pageSize===999999?'all':pageSize)?'selected':''}>${s==='all'?'Tümü':s}</option>`).join('')}
+      </select>
+      <div class="rp-pager">
+        <button ${curPage<=1?'disabled':''} onclick="changePage(1)">«</button>
+        <button ${curPage<=1?'disabled':''} onclick="changePage(${curPage-1})">‹</button>
+        <span style="padding:0 8px;font-weight:600">${curPage} / ${totalPages}</span>
+        <button ${curPage>=totalPages?'disabled':''} onclick="changePage(${curPage+1})">›</button>
+        <button ${curPage>=totalPages?'disabled':''} onclick="changePage(${totalPages})">»</button>
+      </div>
+    </div>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
 function switchReport(key, el) {
   currentReport = key;
+  FW.state.page = 1; FW.state.sortKey = null; FW.state.searchQuery = '';
   document.querySelectorAll('.report-nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('report-actions').style.display = 'none';
-  document.getElementById('report-body').innerHTML = '<div class="report-empty">Filtreleri ayarlayın ve "Getir" butonuna tıklayın</div>';
+  // Show skeleton immediately so the user sees something while filters render
+  document.getElementById('report-body').innerHTML = '<div class="report-loading">⏳ Yükleniyor…</div>';
 
   const titles = {
     stock:'📦 Stok Durumu', stock_movements:'🔄 Ürün Stok Hareketleri', low_stock:'⚠️ Düşük Stok', stock_value:'💎 Stok Değeri',
@@ -269,41 +467,133 @@ function switchReport(key, el) {
   document.getElementById('report-title').textContent = titles[key] || key;
 
   const f = document.getElementById('report-filters');
-  const df = defaultFrom(), dt = defaultTo();
+  // Replace the container with the new filter bar layout. Keep the same #report-filters id.
+  const host = f.parentElement; // .report-header
+  // Remove old inline filters node and replace with multi-row bar below the header
+  const card = document.querySelector('.report-card');
+  let bar = document.getElementById('rp-filter-bar');
+  if (bar) bar.remove();
+  bar = document.createElement('div');
+  bar.id = 'rp-filter-bar';
+  bar.className = 'report-filters-v2';
+  // Insert bar just after .report-header
+  const headerRow = document.querySelector('.report-card > .report-header');
+  headerRow.insertAdjacentElement('afterend', bar);
+  // The old inline #report-filters stays but is only a status area now
+  f.innerHTML = '';
 
-  if (key === 'stock') {
-    f.innerHTML = `<select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadWarehouses();
-  } else if (key === 'stock_movements') {
-    f.innerHTML = `<select id="f-product" style="min-width:200px"><option value="">Ürün Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-type"><option value="">Tümü</option><option value="in">Giriş</option><option value="out">Çıkış</option></select> <select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadProducts(); loadWarehouses();
-  } else if (key === 'low_stock') {
-    f.innerHTML = `<select id="f-warehouse"><option value="">Tüm Depolar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadWarehouses();
-  } else if (key === 'stock_value') {
-    f.innerHTML = `<select id="f-category"><option value="">Tüm Kategoriler</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadCategories();
-  } else if (key === 'receivables' || key === 'payables') {
-    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
-  } else if (key === 'sales') {
-    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-group"><option value="daily">Günlük</option><option value="monthly">Aylık</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-  } else if (key === 'cashbank') {
-    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <select id="f-account"><option value="">Tüm Hesaplar</option></select> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadAccounts();
-  } else if (key === 'statement') {
-    f.innerHTML = `<select id="f-contact" style="min-width:160px"><option value="">Cari Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadContacts();
-  } else if (key === 'journal') {
-    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
-  } else if (key === 'trial') {
-    f.innerHTML = `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
-  } else if (['stock_by_category','product_profitability','sales_by_customer','sales_by_product','top_products','top_customers','sales_by_rep','purchase_summary','purchase_by_supplier','purchase_by_product','top_suppliers','contact_aging','contact_summary','cash_flow','balances','payment_methods','crm_pipeline','crm_won_lost','crm_rep_performance'].includes(key)) {
-    const needsDate = !['balances','crm_pipeline'].includes(key);
-    f.innerHTML = (needsDate ? `<input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> ` : '') + `<button class="btn-run" onclick="runReport()">Getir</button>`;
-  } else if (key === 'ledger') {
-    f.innerHTML = `<select id="f-account" style="min-width:200px"><option value="">Hesap Seç...</option></select> <input type="date" id="f-from" value="${df}"> <input type="date" id="f-to" value="${dt}"> <button class="btn-run" onclick="runReport()">Getir</button>`;
-    loadAccountsCoa();
+  const df = defaultFrom(), dt = defaultTo();
+  const REPORTS_WITH_DATE = new Set(['stock_movements','receivables','payables','sales','cashbank','statement','journal','trial',
+    'stock_by_category','product_profitability','sales_by_customer','sales_by_product','top_products','top_customers',
+    'sales_by_rep','purchase_summary','purchase_by_supplier','purchase_by_product','top_suppliers','contact_aging',
+    'contact_summary','cash_flow','payment_methods','crm_won_lost','crm_rep_performance','ledger','low_stock']);
+  const SEARCHABLE = new Set(['stock','stock_movements','low_stock','stock_value','stock_by_category','product_profitability',
+    'sales','sales_by_customer','sales_by_product','top_products','top_customers','purchase_summary','purchase_by_supplier',
+    'purchase_by_product','top_suppliers','receivables','payables','contact_aging','contact_summary','cashbank']);
+
+  let row1 = '', row2 = '';
+  // Date range + presets
+  if (REPORTS_WITH_DATE.has(key)){
+    row1 += `<span class="rf-label">📅 ${FW.tx('rp_date','Tarih')}:</span>`;
+    row1 += `<input type="date" id="f-from" value="${df}" onchange="onCustomDateChange()">`;
+    row1 += `<input type="date" id="f-to" value="${dt}" onchange="onCustomDateChange()">`;
+    row1 += buildDatePresetGroup();
   }
+  // Search box
+  if (SEARCHABLE.has(key)){
+    row1 += `<input type="text" id="f-search" placeholder="🔍 ${FW.tx('rp_search','Ara…')}" oninput="onSearchInput()" style="margin-left:auto">`;
+  }
+  // Per-report additional filters on row2
+  if (key === 'stock' || key === 'low_stock' || key === 'stock_movements'){
+    row2 += `<select id="f-warehouse" onchange="onFilterChange()"><option value="">${FW.tx('rp_all_warehouses','Tüm Depolar')}</option></select>`;
+  }
+  if (key === 'stock' || key === 'stock_value' || key === 'low_stock' || key === 'stock_by_category' || key === 'product_profitability' || key === 'sales_by_product' || key === 'top_products'){
+    row2 += `<select id="f-category" onchange="onFilterChange()"><option value="">${FW.tx('rp_all_categories','Tüm Kategoriler')}</option></select>`;
+  }
+  if (key === 'stock'){
+    row2 += `<select id="f-stock-status" onchange="onFilterChange()">
+      <option value="">${FW.tx('rp_all','Tümü')}</option>
+      <option value="in_stock">${FW.tx('rp_in_stock','Stokta Var')}</option>
+      <option value="low">${FW.tx('rp_low','Düşük Stok')}</option>
+      <option value="out">${FW.tx('rp_out','Stok Yok')}</option>
+      <option value="neg">${FW.tx('rp_negative','Negatif')}</option>
+    </select>`;
+    row2 += `<input type="number" id="f-min-qty" placeholder="Min" style="width:90px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" id="f-max-qty" placeholder="Max" style="width:90px" oninput="onFilterChange()">`;
+  }
+  if (key === 'stock_movements'){
+    row2 += `<select id="f-product" style="min-width:220px" onchange="onFilterChange()"><option value="">${FW.tx('rp_select_product','Ürün Seç…')}</option></select>`;
+    row2 += `<select id="f-type" onchange="onFilterChange()">
+      <option value="">${FW.tx('rp_all','Tümü')}</option>
+      <option value="in">${FW.tx('rp_in','Giriş')}</option>
+      <option value="out">${FW.tx('rp_out_dir','Çıkış')}</option>
+    </select>`;
+  }
+  if (key === 'low_stock'){
+    row2 += `<input type="number" id="f-threshold" placeholder="${FW.tx('rp_threshold_override','Eşik (opsiyonel)')}" style="width:160px" oninput="onFilterChange()">`;
+  }
+  if (key === 'sales' || key === 'purchase_summary'){
+    row2 += `<select id="f-status" onchange="onFilterChange()">
+      <option value="">${FW.tx('rp_all','Tümü')}</option>
+      <option value="draft">${FW.tx('rp_draft','Taslak')}</option>
+      <option value="confirmed">${FW.tx('rp_confirmed','Onaylı')}</option>
+      <option value="invoiced">${FW.tx('rp_invoiced','Faturalı')}</option>
+      <option value="paid">${FW.tx('rp_paid','Ödendi')}</option>
+      <option value="overdue">${FW.tx('rp_overdue','Gecikmiş')}</option>
+      <option value="cancelled">${FW.tx('rp_cancelled','İptal')}</option>
+    </select>`;
+    row2 += `<select id="f-group" onchange="onFilterChange()"><option value="daily">${FW.tx('rp_daily','Günlük')}</option><option value="monthly">${FW.tx('rp_monthly','Aylık')}</option></select>`;
+  }
+  if (key === 'cashbank' || key === 'cash_flow'){
+    row2 += `<select id="f-account" onchange="onFilterChange()"><option value="">${FW.tx('rp_all_accounts','Tüm Hesaplar')}</option></select>`;
+    if (key === 'cash_flow'){
+      row2 += `<select id="f-direction" onchange="onFilterChange()">
+        <option value="">${FW.tx('rp_all','Tümü')}</option>
+        <option value="in">${FW.tx('rp_in','Giriş')}</option>
+        <option value="out">${FW.tx('rp_out_dir','Çıkış')}</option>
+      </select>`;
+    }
+  }
+  if (key === 'statement'){
+    row2 += `<select id="f-contact" style="min-width:220px" onchange="onFilterChange()"><option value="">${FW.tx('rp_select_contact','Cari Seç…')}</option></select>`;
+  }
+  if (key === 'ledger'){
+    row2 += `<select id="f-account" style="min-width:220px" onchange="onFilterChange()"><option value="">${FW.tx('rp_select_account','Hesap Seç…')}</option></select>`;
+  }
+  if (key === 'contact_aging' || key === 'contact_summary'){
+    row2 += `<select id="f-contact-type" onchange="onFilterChange()">
+      <option value="">${FW.tx('rp_all','Tümü')}</option>
+      <option value="customer">${FW.tx('rp_customer','Müşteri')}</option>
+      <option value="supplier">${FW.tx('rp_supplier','Tedarikçi')}</option>
+    </select>`;
+    row2 += `<input type="number" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
+  }
+  if (key === 'receivables' || key === 'payables'){
+    row2 += `<input type="number" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
+  }
+
+  // Action row: manual filter + reset
+  const actions = `<button class="rf-btn primary" onclick="runReport()">🔍 ${FW.tx('rp_apply','Filtrele')}</button>
+                   <button class="rf-btn ghost" onclick="resetFilters()">↺ ${FW.tx('rp_reset','Sıfırla')}</button>`;
+
+  bar.innerHTML = `
+    <div class="rf-row">${row1}</div>
+    ${row2 ? `<div class="rf-row">${row2}</div>` : ''}
+    <div class="rf-row"><div style="flex:1"></div>${actions}</div>
+    <div class="rf-badges" id="rf-badges"></div>
+  `;
+
+  // Load lookups
+  if (document.getElementById('f-warehouse')) loadWarehouses();
+  if (document.getElementById('f-category')) loadCategories();
+  if (document.getElementById('f-product')) loadProducts();
+  if (document.getElementById('f-contact')) loadContacts();
+  if (document.getElementById('f-account') && (key === 'cashbank' || key === 'cash_flow')) loadAccounts();
+  if (document.getElementById('f-account') && key === 'ledger') loadAccountsCoa();
+
+  // Auto-run after a short delay so lookups have a chance
+  FW.activePreset = 'month';
+  setTimeout(() => runReport(), 350);
 }
 
 async function loadAccountsCoa() {
@@ -367,40 +657,55 @@ function runReport() {
 }
 
 function renderTable(headers, rows, footerRow) {
-  lastReportData = { headers, rows, title: document.getElementById('report-title').textContent };
-  document.getElementById('report-actions').style.display = 'flex';
-  document.getElementById('report-summary').textContent = rows.length + ' kayıt';
-  const body = document.getElementById('report-body');
-  if (!rows.length) { body.innerHTML = '<div class="report-empty">Bu filtrelere uygun veri bulunamadı</div>'; return; }
-  let html = '<table><thead><tr>' + headers.map(h => `<th class="${h.align||''}">${h.label}</th>`).join('') + '</tr></thead><tbody>';
-  rows.forEach(row => {
-    const cls = row._class || '';
-    html += `<tr class="${cls}">` + headers.map(h => `<td class="${h.align||''} ${row._cellClass?.[h.key]||''}">${row[h.key] ?? '—'}</td>`).join('') + '</tr>';
-  });
-  if (footerRow) {
-    html += `<tr class="total-row">` + headers.map(h => `<td class="${h.align||''}">${footerRow[h.key] ?? ''}</td>`).join('') + '</tr>';
+  // Apply search filter if a global search input exists
+  const search = document.getElementById('f-search')?.value?.trim().toLowerCase() || '';
+  let filtered = rows;
+  if (search){
+    filtered = rows.filter(r => headers.some(h => String(r[h.key]||'').toLowerCase().includes(search)));
   }
-  html += '</tbody></table>';
-  body.innerHTML = html;
+  lastReportData = { headers, rows: filtered, title: document.getElementById('report-title').textContent };
+  document.getElementById('report-actions').style.display = 'flex';
+  document.getElementById('report-summary').textContent = filtered.length + ' ' + FW.tx('rp_records_found','kayıt bulundu');
+  FW.state.rows = filtered;
+  FW.state.headers = headers;
+  FW.state.footerRow = footerRow;
+  FW.state.page = 1;
+  paintTable();
 }
 
 // ===== RAPOR 1: STOK DURUMU =====
 async function reportStock() {
-  const whId = document.getElementById('f-warehouse')?.value;
-  let q = sb.from('products').select('id,name,sku,unit,cost_price,quantity,categories(name)').eq('company_id', companyId).eq('is_active', true).order('name');
+  const catId    = document.getElementById('f-category')?.value;
+  const status   = document.getElementById('f-stock-status')?.value;
+  const minQty   = parseFloat(document.getElementById('f-min-qty')?.value);
+  const maxQty   = parseFloat(document.getElementById('f-max-qty')?.value);
+  let q = sb.from('products').select('id,name,sku,barcode,unit,cost_price,quantity,min_stock,category_id,categories(name)')
+    .eq('company_id', companyId).eq('is_active', true).order('name');
+  if (catId) q = q.eq('category_id', catId);
   const { data } = await q;
+  let items = data || [];
+  if (status === 'in_stock') items = items.filter(p => parseFloat(p.quantity||0) > 0);
+  else if (status === 'low')  items = items.filter(p => { const q=parseFloat(p.quantity||0), m=parseFloat(p.min_stock||0); return m>0 && q<=m && q>0; });
+  else if (status === 'out')  items = items.filter(p => parseFloat(p.quantity||0) === 0);
+  else if (status === 'neg')  items = items.filter(p => parseFloat(p.quantity||0) < 0);
+  if (!isNaN(minQty)) items = items.filter(p => parseFloat(p.quantity||0) >= minQty);
+  if (!isNaN(maxQty)) items = items.filter(p => parseFloat(p.quantity||0) <= maxQty);
   const headers = [
     {key:'sku',label:'KOD'},{key:'name',label:'ÜRÜN'},{key:'category',label:'KATEGORİ'},
-    {key:'unit',label:'BİRİM'},{key:'qty',label:'STOK',align:'text-right'},
+    {key:'barcode',label:'BARKOD'},{key:'unit',label:'BİRİM'},
+    {key:'qty',label:'STOK',align:'text-right'},{key:'min',label:'MİN STOK',align:'text-right'},
+    {key:'status',label:'DURUM'},
     {key:'cost',label:'MALİYET',align:'text-right'},{key:'value',label:'DEĞER',align:'text-right'}
   ];
   let totalValue = 0;
-  const rows = (data||[]).map(p => {
-    const val = (p.quantity||0) * (p.cost_price||0);
+  const rows = items.map(p => {
+    const qty = parseFloat(p.quantity||0), min = parseFloat(p.min_stock||0);
+    const val = qty * parseFloat(p.cost_price||0);
     totalValue += val;
-    return { sku: p.sku||'—', name: p.name, category: p.categories?.name||'—', unit: p.unit||'—', qty: p.quantity||0, cost: F(p.cost_price||0), value: F(val) };
+    const st = qty < 0 ? '🔴 Negatif' : (qty === 0 ? '⚫ Tükendi' : (min > 0 && qty <= min ? '⚠️ Düşük' : '✅ Yeterli'));
+    return { sku: p.sku||'—', name: p.name, category: p.categories?.name||'—', barcode: p.barcode||'—', unit: p.unit||'—', qty, min: min || '—', status: st, cost: F(p.cost_price||0), value: F(val) };
   });
-  renderTable(headers, rows, { sku:'', name:'', category:'', unit:'TOPLAM', qty:'', cost:'', value: F(totalValue) });
+  renderTable(headers, rows, { sku:'', name:'', category:'', barcode:'', unit:'TOPLAM', qty:'', min:'', status:'', cost:'', value: F(totalValue) });
 }
 
 // ===== RAPOR: ÜRÜN STOK HAREKETLERİ =====
@@ -498,11 +803,15 @@ async function reportStockMovements() {
 
 // ===== RAPOR: DÜŞÜK STOK =====
 async function reportLowStock() {
-  const { data } = await sb.from('products').select('id,name,sku,unit,quantity,min_stock,categories(name)')
+  const catId = document.getElementById('f-category')?.value;
+  const overrideThreshold = parseFloat(document.getElementById('f-threshold')?.value);
+  let q = sb.from('products').select('id,name,sku,unit,quantity,min_stock,category_id,categories(name)')
     .eq('company_id', companyId).eq('is_active', true).order('name');
+  if (catId) q = q.eq('category_id', catId);
+  const { data } = await q;
   const filtered = (data||[]).filter(p => {
     const qty = parseFloat(p.quantity||0);
-    const min = parseFloat(p.min_stock||0);
+    const min = !isNaN(overrideThreshold) ? overrideThreshold : parseFloat(p.min_stock||0);
     return min > 0 && qty <= min;
   });
   const headers = [
@@ -597,11 +906,13 @@ async function reportReceivables() {
     {key:'due',label:'VADE'},{key:'total',label:'TUTAR',align:'text-right'},
     {key:'remaining',label:'KALAN',align:'text-right'},{key:'overdue',label:'GECİKME',align:'text-right'}
   ];
+  const minAmount = parseFloat(document.getElementById('f-min-amount')?.value);
   let totalRemaining = 0;
   const rows = (data||[]).map(o => {
     const paid = paymentMap[o.id] || 0;
     const rem = parseFloat(o.total) - paid;
     if (rem <= 0) return null;
+    if (!isNaN(minAmount) && rem < minAmount) return null;
     totalRemaining += rem;
     const daysOverdue = o.due_date && o.due_date < today ? Math.floor((new Date(today) - new Date(o.due_date)) / 86400000) : 0;
     return {
@@ -635,11 +946,13 @@ async function reportPayables() {
     {key:'due',label:'VADE'},{key:'total',label:'TUTAR',align:'text-right'},
     {key:'remaining',label:'KALAN',align:'text-right'},{key:'overdue',label:'GECİKME',align:'text-right'}
   ];
+  const minAmount = parseFloat(document.getElementById('f-min-amount')?.value);
   let totalRemaining = 0;
   const rows = (data||[]).map(o => {
     const paid = paymentMap[o.id] || 0;
     const rem = parseFloat(o.total) - paid;
     if (rem <= 0) return null;
+    if (!isNaN(minAmount) && rem < minAmount) return null;
     totalRemaining += rem;
     const dueDate = o.expected_date || o.due_date;
     const daysOverdue = dueDate && dueDate < today ? Math.floor((new Date(today) - new Date(dueDate)) / 86400000) : 0;
@@ -658,8 +971,14 @@ async function reportSales() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
   const group = document.getElementById('f-group')?.value || 'daily';
+  const statusFilter = document.getElementById('f-status')?.value;
   let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    .eq('company_id', companyId).eq('is_active', true);
+  if (statusFilter){
+    q = q.eq('status', statusFilter);
+  } else {
+    q = q.in('status', ['invoiced','paid','overdue']);
+  }
   if (from) q = q.gte('issue_date', from);
   if (to) q = q.lte('issue_date', to);
   const { data } = await q.order('issue_date');
@@ -999,7 +1318,9 @@ async function reportSalesByRep() {
 async function reportPurchaseSummary() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
-  const orders = await _getPurchaseOrders(from, to);
+  const statusFilter = document.getElementById('f-status')?.value;
+  let orders = await _getPurchaseOrders(from, to);
+  if (statusFilter) orders = orders.filter(o => o.status === statusFilter);
   const headers = [{key:'date',label:'TARİH'},{key:'doc',label:'FATURA NO'},{key:'supplier',label:'TEDARİKÇİ'},{key:'status',label:'DURUM'},{key:'total',label:'TUTAR',align:'text-right'}];
   let grand = 0;
   const rows = orders.map(o => { grand += parseFloat(o.total||0); return { date: o.issue_date, doc: o.order_number, supplier: o.contacts?.name||'—', status: o.status, total: fmt(o.total) }; });
@@ -1052,8 +1373,10 @@ async function reportTopSuppliers() { await reportPurchaseBySupplier(); }
 
 // ===== CARİ: Yaşlandırma =====
 async function reportContactAging() {
+  const typeFilter = document.getElementById('f-contact-type')?.value;
+  const minAmount = parseFloat(document.getElementById('f-min-amount')?.value);
   const today = new Date();
-  const orders = await _getSalesOrders(null, null);
+  const orders = typeFilter === 'supplier' ? [] : await _getSalesOrders(null, null);
   // Get unpaid portion
   const orderIds = orders.map(o => o.id);
   const payMap = {};
@@ -1077,17 +1400,23 @@ async function reportContactAging() {
   });
   const headers = [{key:'name',label:'CARİ'},{key:'b1',label:'0-30 GÜN',align:'text-right'},{key:'b2',label:'31-60 GÜN',align:'text-right'},{key:'b3',label:'61-90 GÜN',align:'text-right'},{key:'b4',label:'90+ GÜN',align:'text-right'},{key:'total',label:'TOPLAM',align:'text-right'}];
   let tot1=0, tot2=0, tot3=0, tot4=0, grand=0;
-  const rows = Object.values(contacts).sort((a,b) => b.total - a.total).map(c => {
+  const filtered = Object.values(contacts).filter(c => isNaN(minAmount) || c.total >= minAmount);
+  const rows = filtered.sort((a,b) => b.total - a.total).map(c => {
     tot1 += c.b1; tot2 += c.b2; tot3 += c.b3; tot4 += c.b4; grand += c.total;
     return { name: c.name, b1: c.b1 ? fmt(c.b1) : '—', b2: c.b2 ? fmt(c.b2) : '—', b3: c.b3 ? fmt(c.b3) : '—', b4: c.b4 ? fmt(c.b4) : '—', total: fmt(c.total),
-      _cellClass: { b4: 'text-red' } };
+      _cellClass: { b1: c.b1 ? 'text-green' : '', b2: c.b2 ? 'text-orange' : '', b3: c.b3 ? 'text-orange' : '', b4: c.b4 ? 'text-red' : '' } };
   });
   renderTable(headers, rows, { name:'TOPLAM', b1: fmt(tot1), b2: fmt(tot2), b3: fmt(tot3), b4: fmt(tot4), total: fmt(grand) });
 }
 
 // ===== CARİ: Özet =====
 async function reportContactSummary() {
-  const { data: contacts } = await sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true);
+  const typeFilter = document.getElementById('f-contact-type')?.value;
+  const minAmount = parseFloat(document.getElementById('f-min-amount')?.value);
+  let cq = sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true);
+  if (typeFilter === 'customer') cq = cq.eq('is_customer', true);
+  if (typeFilter === 'supplier') cq = cq.eq('is_supplier', true);
+  const { data: contacts } = await cq;
   const { data: salesOrders } = await sb.from('sales_orders').select('customer_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
   const { data: purchaseOrders } = await sb.from('purchase_orders').select('supplier_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
 
@@ -1099,8 +1428,9 @@ async function reportContactSummary() {
   const rows = (contacts||[]).map(c => {
     const s = salesMap[c.id] || 0;
     const p = purchaseMap[c.id] || 0;
-    return { name: c.name, type: c.is_customer && c.is_supplier ? 'Her İkisi' : c.is_customer ? 'Müşteri' : 'Tedarikçi', sales: s ? fmt(s) : '—', purchase: p ? fmt(p) : '—', net: fmt(s - p) };
-  }).filter(r => r.sales !== '—' || r.purchase !== '—');
+    const net = s - p;
+    return { _total: s + p, _net: net, name: c.name, type: c.is_customer && c.is_supplier ? 'Her İkisi' : c.is_customer ? 'Müşteri' : 'Tedarikçi', sales: s ? fmt(s) : '—', purchase: p ? fmt(p) : '—', net: fmt(net) };
+  }).filter(r => (r.sales !== '—' || r.purchase !== '—') && (isNaN(minAmount) || r._total >= minAmount));
   renderTable(headers, rows, null);
 }
 
@@ -1108,8 +1438,10 @@ async function reportContactSummary() {
 async function reportCashFlow() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
+  const dir  = document.getElementById('f-direction')?.value;
   let cq = sb.from('cash_transactions').select('transaction_date,type,amount').eq('company_id', companyId);
   let bq = sb.from('bank_transactions').select('transaction_date,type,amount').eq('company_id', companyId);
+  if (dir){ cq = cq.eq('type', dir); bq = bq.eq('type', dir); }
   if (from) { cq = cq.gte('transaction_date', from); bq = bq.gte('transaction_date', from); }
   if (to) { cq = cq.lte('transaction_date', to); bq = bq.lte('transaction_date', to); }
   const [cashRes, bankRes] = await Promise.all([cq, bq]);
