@@ -1082,10 +1082,6 @@ async function translateAll(){
   const status = document.getElementById('translate-status');
   btn.disabled = true; status.textContent = _t('label.translating')||'Çeviriliyor…';
   try {
-    const { data: appSet } = await sb.from('app_settings').select('value').eq('key','anthropic_api_key').maybeSingle();
-    const apiKey = appSet?.value;
-    if (!apiKey){ throw new Error(_t('label.no_api_key')||'Anthropic API anahtarı yok'); }
-
     const target = LANGS.find(l => l.c===currentLang)?.n || currentLang;
     const ids = ['f-name','f-brand','f-model','f-origin','f-storage','f-usage','f-first-aid','f-ip','f-warranty','f-size'];
     const payload = {};
@@ -1099,17 +1095,16 @@ async function translateAll(){
 
     if (!Object.keys(payload).length){ status.textContent = _t('label.nothing_to_translate')||'Çevrilecek metin yok'; btn.disabled=false; return; }
 
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:2048,
-        messages:[{role:'user', content:`Translate the following product label fields to ${target}. Keep brand names, company names, addresses, numbers unchanged. Translate only descriptive text. Return only valid JSON with the same keys, no commentary.\n\n${JSON.stringify(payload,null,2)}`}]
-      })
+    const { data: body, error: fnErr } = await sb.functions.invoke('claude-proxy', {
+      body: {
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2048,
+        prompt: `Translate the following product label fields to ${target}. Keep brand names, company names, addresses, numbers unchanged. Translate only descriptive text. Return only valid JSON with the same keys, no commentary.\n\n${JSON.stringify(payload,null,2)}`
+      }
     });
-    if (!resp.ok){ const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+resp.status); }
-    const body = await resp.json();
-    const text = body.content?.[0]?.text || '';
+    if (fnErr) throw new Error(fnErr.message || 'edge fn error');
+    if (body?.error) throw new Error(body.error?.message || body.error);
+    const text = body?.content?.[0]?.text || '';
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Geçersiz yanıt');
     const translated = JSON.parse(match[0]);

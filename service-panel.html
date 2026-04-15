@@ -1695,29 +1695,20 @@ async function saveAnthropicKey(){
 async function testAnthropicKey(){
   const result = document.getElementById('anth-test-result');
   result.textContent = '⏳ Test ediliyor…'; result.style.color = 'var(--gray500)';
-  const { data: key, error: e1 } = await sb.rpc('sp_get_anthropic_key_raw', { p_user_id: user.id });
-  if (e1 || !key){ result.textContent = '❌ Anahtar alınamadı'; result.style.color = '#dc2626'; return; }
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'ping' }]
-      })
+    const { data, error } = await sb.functions.invoke('claude-proxy', {
+      body: { prompt: 'ping', max_tokens: 10, model: 'claude-haiku-4-5-20251001' }
     });
-    if (resp.ok){
+    if (error) throw new Error(error.message || 'edge fn error');
+    if (data?.error){
+      result.textContent = '❌ ' + (data.error?.message || data.error);
+      result.style.color = '#dc2626'; return;
+    }
+    if (data?.content){
       result.textContent = '✅ Bağlantı başarılı';
       result.style.color = '#059669';
     } else {
-      const err = await resp.json().catch(()=>({}));
-      result.textContent = '❌ ' + (err.error?.message || ('HTTP '+resp.status));
+      result.textContent = '❌ Beklenmedik yanıt';
       result.style.color = '#dc2626';
     }
   } catch(e){
