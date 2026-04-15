@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Stok Sayımı</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="i18n.js"></script>
+<style>
+  :root{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;
+    --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--orange:#f97316;
+    --gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;
+    --gray400:#94a3b8;--gray500:#64748b;--gray700:#1e293b;--gray800:#1a2744;
+    --radius:12px;--font-body:'Inter',system-ui,sans-serif;
+    --sidebar-w:220px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font-body);background:#f8fafc;color:var(--gray800);min-height:100vh;display:flex}
+  .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+  .topbar{height:60px;background:#fff;border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:40}
+  .topbar-title{font-size:16px;font-weight:700;flex:1}
+  .content{padding:20px;flex:1}
+
+  .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--gray200);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray800);font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+  .btn:hover{border-color:var(--blue);color:var(--blue)}
+  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn-primary:hover{background:var(--blue-dark);color:#fff}
+  .btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+  .btn-amber{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+  .btn-sm{padding:4px 10px;font-size:11px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .card{background:#fff;border:1px solid var(--gray200);border-radius:var(--radius);overflow:hidden}
+  .card-header{padding:14px 18px;border-bottom:1px solid var(--gray100);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .card-title{font-size:15px;font-weight:700}
+  .card-sub{font-size:12px;color:var(--gray500);margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--gray200);background:var(--gray50);white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid var(--gray100);white-space:nowrap}
+  tr:hover td{background:var(--gray50)}
+  .text-right{text-align:right}
+  .text-center{text-align:center}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700}
+  .badge-green{background:#ecfdf5;color:#059669}
+  .badge-blue{background:#eff6ff;color:#1e40af}
+  .badge-amber{background:#fffbeb;color:#92400e}
+  .badge-gray{background:var(--gray100);color:var(--gray500)}
+  .badge-red{background:#fef2f2;color:#991b1b}
+  .badge-orange{background:#fff7ed;color:#9a3412}
+
+  label{display:block;font-size:12px;font-weight:600;color:var(--gray500);margin-bottom:4px}
+  input[type=text],input[type=number],input[type=datetime-local],select,textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--gray800)
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:#fff;border-radius:var(--radius);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+  .modal-hdr{padding:16px 20px;border-bottom:1px solid var(--gray100);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+  .modal-bdy{padding:18px 20px}
+  .modal-ftr{padding:12px 20px;border-top:1px solid var(--gray100);display:flex;justify-content:flex-end;gap:8px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .toast{position:fixed;top:20px;right:20px;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+  .toast.success{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+  .toast.error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+  .toast.info{background:#eff6ff;color:#1e40af;border:1px solid #93c5fd}
+
+  /* Entry view */
+  .entry-grid{display:grid;grid-template-columns:140px 1fr 80px 110px 40px;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--gray100)}
+  .entry-grid.header{background:var(--gray50);font-size:11px;font-weight:700;color:var(--gray500);text-transform:uppercase;border-bottom:2px solid var(--gray200)}
+  .entry-grid.active{background:#eff6ff;border:2px solid var(--blue);border-radius:8px;margin:6px 0}
+  .entry-grid input{padding:8px 10px;font-size:14px}
+  .entry-grid .del{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:13px}
+  .entry-grid .del:hover{background:#fee2e2}
+  .entry-row{cursor:pointer}
+  .entry-row:hover{background:var(--gray50)}
+  .entry-row input{border:none;background:transparent;padding:2px 4px}
+  .entry-row input:focus{background:#fff;border:1px solid var(--blue)}
+  .entry-head{position:sticky;top:60px;background:#fff;z-index:10;padding:14px 18px;border-bottom:1px solid var(--gray200);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+  .stat-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:900px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+  .sc{background:#fff;border:1px solid var(--gray200);border-radius:10px;padding:12px 14px}
+  .sc-lbl{font-size:11px;color:var(--gray500);font-weight:600;text-transform:uppercase}
+  .sc-val{font-size:20px;font-weight:800;margin-top:4px}
+  .variance-0{color:var(--green)}
+  .variance-low{color:var(--amber)}
+  .variance-mid{color:var(--orange)}
+  .variance-high{color:var(--red)}
+
+  @media(max-width:768px){.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:12px!important}.entry-grid{grid-template-columns:120px 1fr 90px 40px}.entry-grid .col-unit{display:none}}
+</style>
+<script src="sidebar.js"></script>
+<script src="utils.js"></script>
+<script src="quickadd.js"></script>
+</head>
+<body>
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="page-title">🔢 Stok Sayımı</div>
+    <div id="topbar-actions"></div>
+  </header>
+  <div class="content" id="content">
+    <div style="text-align:center;color:var(--gray400);padding:40px">⏳ Yükleniyor…</div>
+  </div>
+</div>
+
+<!-- NEW SESSION MODAL -->
+<div class="modal-overlay" id="new-session-modal">
+  <div class="modal">
+    <div class="modal-hdr">🆕 Yeni Sayım <button class="btn btn-sm" onclick="closeModal('new-session-modal')">✕</button></div>
+    <div class="modal-bdy">
+      <div style="margin-bottom:10px"><label>Sayım Adı <span style="color:var(--red)">*</span></label><input type="text" id="ns-name" placeholder="Örn: 2026 Nisan Ayı Sayımı"></div>
+      <div style="margin-bottom:10px"><label>Referans Tarihi / Saati</label>
+        <input type="datetime-local" id="ns-refdate">
+        <div style="font-size:11px;color:var(--amber);margin-top:4px">⚠️ Stok bakiyeleri bu tarih ve saate göre hesaplanacaktır</div>
+      </div>
+      <div class="grid-2" style="margin-bottom:10px">
+        <div><label>Depo (opsiyonel)</label><select id="ns-warehouse"><option value="">Tüm depolar</option></select></div>
+        <div><label>Kategori (opsiyonel)</label><select id="ns-category"><option value="">Tüm kategoriler</option></select></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:10px">
+        <div><label>Tolerans Eşiği (%)</label><input type="number" id="ns-threshold" value="2" step="0.1" min="0"></div>
+        <div></div>
+      </div>
+      <div><label>Notlar</label><textarea id="ns-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('new-session-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="createSession()">Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SHEET MODAL -->
+<div class="modal-overlay" id="new-sheet-modal">
+  <div class="modal">
+    <div class="modal-hdr">🆕 Yeni Fiş <button class="btn btn-sm" onclick="closeModal('new-sheet-modal')">✕</button></div>
+    <div class="modal-bdy">
+      <div style="margin-bottom:10px"><label>Bölüm / Alan Adı</label><input type="text" id="nsh-section" placeholder="Örn: Raf A, Soğuk Depo, 1. Kat"></div>
+      <div style="margin-bottom:10px"><label>Sayımcı</label><select id="nsh-counter"></select></div>
+      <div><label>Notlar</label><textarea id="nsh-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('new-sheet-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="createSheet()">Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUPLICATE MODAL -->
+<div class="modal-overlay" id="dup-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hdr">⚠️ Ürün zaten sayıldı</div>
+    <div class="modal-bdy" id="dup-body"></div>
+    <div class="modal-ftr" id="dup-ftr"></div>
+  </div>
+</div>
+
+<!-- VARIANCE REASON MODAL -->
+<div class="modal-overlay" id="reason-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hdr">📝 Fark Nedeni</div>
+    <div class="modal-bdy">
+      <select id="rsn-val">
+        <option value="">— Seçiniz —</option>
+        <option value="fire">Fire / Hasar</option>
+        <option value="theft">Hırsızlık</option>
+        <option value="entry_error">Giriş/Çıkış Hatası</option>
+        <option value="count_error">Sayım Hatası</option>
+        <option value="other">Diğer</option>
+      </select>
+      <textarea id="rsn-note" rows="2" style="margin-top:10px" placeholder="Açıklama (opsiyonel)"></textarea>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('reason-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="confirmReason()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-hdr">📥 Excel / CSV İmport <button class="btn btn-sm" onclick="closeModal('import-modal')">✕</button></div>
+    <div class="modal-bdy">
+      <div style="margin-bottom:12px">
+        <button class="btn" onclick="downloadImportTemplate()">📄 Şablon İndir</button>
+        <span style="font-size:11px;color:var(--gray500);margin-left:8px">Sütunlar: Barkod · Ürün Adı · Miktar · Birim · Not</span>
+      </div>
+      <input type="file" id="import-file" accept=".xlsx,.csv" onchange="previewImport(event)">
+      <div id="import-preview" style="margin-top:12px;max-height:280px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('import-modal')">İptal</button>
+      <button class="btn btn-primary" id="import-confirm-btn" onclick="runImport()" disabled>İmport Et</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+window._supabase = sb;
+
+let companyId = null, currentUserId = null, baseSymbol = '₸';
+let companyUsers = [];
+let view = 'sessions', currentSessionId = null, currentSheetId = null;
+let _sheets = [], _items = [], _session = null, _sheet = null;
+let _productCache = new Map();
+let _rtChannel = null;
+let _importRows = [];
+let _reasonTargetId = null;
+
+// ===== INIT =====
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){ location.href='/auth.html'; return; }
+  currentUserId = session.user.id;
+  companyId = localStorage.getItem('currentCompanyId');
+  if (!companyId){
+    const { data: cu } = await sb.from('company_users').select('company_id').eq('user_id', currentUserId).limit(1).maybeSingle();
+    if (cu){ companyId = cu.company_id; localStorage.setItem('currentCompanyId', companyId); }
+  }
+  try {
+    const { data: c } = await sb.from('companies').select('base_currency').eq('id', companyId).maybeSingle();
+    if (c?.base_currency === 'USD') baseSymbol = '$';
+    else if (c?.base_currency === 'EUR') baseSymbol = '€';
+    else if (c?.base_currency === 'TRY') baseSymbol = '₺';
+  } catch(e){}
+
+  // Parse URL for deep link
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('session')){
+    currentSessionId = qs.get('session');
+    if (qs.get('sheet')){ currentSheetId = qs.get('sheet'); view = 'entry'; }
+    else if (qs.get('view') === 'results'){ view = 'results'; }
+    else view = 'session';
+  }
+  await render();
+}
+
+function navigate(newView, opts={}){
+  view = newView;
+  if (opts.session) currentSessionId = opts.session;
+  if (opts.sheet) currentSheetId = opts.sheet;
+  const params = new URLSearchParams();
+  if (currentSessionId && newView !== 'sessions') params.set('session', currentSessionId);
+  if (newView === 'entry' && currentSheetId) params.set('sheet', currentSheetId);
+  if (newView === 'results') params.set('view', 'results');
+  history.pushState({}, '', 'stockcount.html' + (params.toString() ? '?'+params.toString() : ''));
+  unsubscribeRealtime();
+  render();
+}
+window.addEventListener('popstate', () => { const qs = new URLSearchParams(location.search);
+  currentSessionId = qs.get('session'); currentSheetId = qs.get('sheet');
+  view = currentSheetId ? 'entry' : (qs.get('view')==='results' ? 'results' : (currentSessionId ? 'session' : 'sessions'));
+  render();
+});
+
+async function render(){
+  const c = document.getElementById('content');
+  const tb = document.getElementById('topbar-actions');
+  c.innerHTML = '<div style="text-align:center;color:var(--gray400);padding:30px">⏳ Yükleniyor…</div>';
+  tb.innerHTML = '';
+  if (view === 'sessions')      await renderSessions();
+  else if (view === 'session')  await renderSession();
+  else if (view === 'entry')    await renderEntry();
+  else if (view === 'results')  await renderResults();
+}
+
+// ===== VIEW 1: Sessions list =====
+async function renderSessions(){
+  document.getElementById('page-title').textContent = '🔢 Stok Sayımı';
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary" onclick="openNewSession()">➕ Yeni Sayım</button>`;
+  const { data: sessions } = await sb.from('inventory_sessions')
+    .select('id,name,reference_datetime,status,created_at,warehouse_id,warehouses(name)')
+    .eq('company_id', companyId).order('created_at', { ascending: false });
+  // Sheet counts
+  const sheetCounts = {};
+  if (sessions && sessions.length){
+    const ids = sessions.map(s => s.id);
+    const { data: sh } = await sb.from('inventory_sheets').select('session_id').in('session_id', ids);
+    (sh||[]).forEach(x => sheetCounts[x.session_id] = (sheetCounts[x.session_id]||0) + 1);
+  }
+  const statusBadge = s => ({ active:'badge-green', completed:'badge-blue', approved:'badge-gray' }[s] || 'badge-gray');
+  const statusLbl = s => ({ active:'🟢 Aktif', completed:'🔵 Tamamlandı', approved:'✅ Onaylandı' }[s] || s);
+  const c = document.getElementById('content');
+  if (!sessions || !sessions.length){
+    c.innerHTML = `<div class="card"><div class="card-header"><div class="card-title">Sayım Oturumları</div></div>
+      <div style="padding:60px;text-align:center;color:var(--gray400)">
+        <div style="font-size:42px;margin-bottom:8px">🔢</div>
+        <div style="margin-bottom:14px">Henüz sayım oluşturulmadı</div>
+        <button class="btn btn-primary" onclick="openNewSession()">➕ İlk Sayımı Oluştur</button>
+      </div></div>`;
+    return;
+  }
+  c.innerHTML = `<div class="card">
+    <div class="card-header"><div class="card-title">Sayım Oturumları (${sessions.length})</div></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Ad</th><th>Referans Tarihi</th><th>Depo</th><th>Durum</th>
+      <th class="text-center">Fiş</th><th>Oluşturma</th><th></th>
+    </tr></thead><tbody>
+      ${sessions.map(s => `<tr>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td>${fmtDateTime(s.reference_datetime)}</td>
+        <td>${s.warehouses?.name || '<span style="color:var(--gray400)">Tümü</span>'}</td>
+        <td><span class="badge ${statusBadge(s.status)}">${statusLbl(s.status)}</span></td>
+        <td class="text-center">${sheetCounts[s.id]||0}</td>
+        <td>${fmtDate(s.created_at)}</td>
+        <td>
+          <button class="btn btn-sm" onclick="navigate('session',{session:'${s.id}'})">📋 Fişler</button>
+          ${s.status !== 'active' ? `<button class="btn btn-sm" onclick="navigate('results',{session:'${s.id}'})">📊 Sonuçlar</button>` : ''}
+          ${s.status !== 'approved' ? `<button class="btn btn-sm btn-red" onclick="deleteSession('${s.id}')">🗑</button>` : ''}
+        </td>
+      </tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+
+function openNewSession(){
+  // Fill selects
+  const now = new Date();
+  const iso = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('ns-refdate').value = iso;
+  document.getElementById('ns-name').value = '';
+  document.getElementById('ns-threshold').value = '2';
+  document.getElementById('ns-notes').value = '';
+  document.getElementById('new-session-modal').classList.add('open');
+  Promise.all([
+    sb.from('warehouses').select('id,name').eq('company_id', companyId).order('name'),
+    sb.from('categories').select('id,name').eq('company_id', companyId).order('name')
+  ]).then(([w, c]) => {
+    document.getElementById('ns-warehouse').innerHTML = '<option value="">Tüm depolar</option>' + (w.data||[]).map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join('');
+    document.getElementById('ns-category').innerHTML = '<option value="">Tüm kategoriler</option>' + (c.data||[]).map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join('');
+  });
+}
+async function createSession(){
+  if (submitting && submitting()) return;
+  const name = document.getElementById('ns-name').value.trim();
+  if (!name){ showToast('Ad zorunludur', 'error'); if(submitting)submitting.reset(); return; }
+  const refdate = document.getElementById('ns-refdate').value;
+  if (!refdate){ showToast('Referans tarihi zorunludur', 'error'); if(submitting)submitting.reset(); return; }
+  try {
+    const { data, error } = await sb.from('inventory_sessions').insert({
+      company_id: companyId, name,
+      reference_datetime: new Date(refdate).toISOString(),
+      warehouse_id: document.getElementById('ns-warehouse').value || null,
+      category_id: document.getElementById('ns-category').value || null,
+      variance_threshold_pct: +document.getElementById('ns-threshold').value || 2.0,
+      notes: document.getElementById('ns-notes').value || null,
+      created_by: currentUserId
+    }).select('id').single();
+    if (error) throw error;
+    closeModal('new-session-modal');
+    showToast('Sayım oluşturuldu', 'success');
+    navigate('session', { session: data.id });
+  } catch(e){ showToast(getErrorMessage ? getErrorMessage(e) : e.message, 'error'); }
+  finally { if (submitting) submitting.reset(); }
+}
+
+async function deleteSession(id){
+  if (!confirm('Bu sayımı silmek istediğinizden emin misiniz? Tüm fişler ve kayıtlar silinecek.')) return;
+  const { error } = await sb.from('inventory_sessions').delete().eq('id', id);
+  if (error){ showToast(error.message, 'error'); return; }
+  showToast('Silindi', 'success');
+  render();
+}
+
+// ===== VIEW 2: Session detail =====
+async function renderSession(){
+  const { data: s } = await sb.from('inventory_sessions').select('*, warehouses(name), categories(name)').eq('id', currentSessionId).maybeSingle();
+  if (!s){ document.getElementById('content').innerHTML = '<div style="padding:30px;color:var(--red)">Sayım bulunamadı</div>'; return; }
+  _session = s;
+  document.getElementById('page-title').textContent = '🔢 ' + s.name;
+  const canEdit = s.status === 'active';
+  const topActions = [
+    `<button class="btn" onclick="navigate('sessions')">← Geri</button>`,
+    canEdit ? `<button class="btn btn-primary" onclick="openNewSheet()">➕ Yeni Fiş</button>` : '',
+    s.status !== 'active' ? `<button class="btn" onclick="navigate('results',{session:'${s.id}'})">📊 Sonuçları Gör</button>` : '',
+    s.status === 'active' ? `<button class="btn btn-green" onclick="completeSession()">✅ Sayımı Tamamla</button>` : ''
+  ].filter(Boolean).join(' ');
+  document.getElementById('topbar-actions').innerHTML = topActions;
+
+  const { data: sheets } = await sb.from('inventory_sheets')
+    .select('id,sheet_number,section_name,counted_by,status,notes,created_at')
+    .eq('session_id', currentSessionId).order('sheet_number');
+  _sheets = sheets || [];
+
+  // Counter names
+  await loadUsers();
+  const nameOf = uid => companyUsers.find(u => u.user_id === uid)?.name || '—';
+  // Item counts per sheet
+  let itemCounts = {};
+  if (_sheets.length){
+    const ids = _sheets.map(x => x.id);
+    const { data: it } = await sb.from('inventory_sheet_items').select('sheet_id').in('sheet_id', ids);
+    (it||[]).forEach(r => itemCounts[r.sheet_id] = (itemCounts[r.sheet_id]||0) + 1);
+  }
+  const stBadge = st => ({ open:'badge-green', completed:'badge-blue', locked:'badge-gray' }[st] || 'badge-gray');
+  const stLbl   = st => ({ open:'🟢 Açık', completed:'🔵 Tamamlandı', locked:'🔒 Kilitli' }[st] || st);
+
+  const c = document.getElementById('content');
+  const refStr = fmtDateTime(s.reference_datetime);
+  const sessionBadge = s.status === 'active' ? 'badge-green' : s.status === 'completed' ? 'badge-blue' : 'badge-gray';
+  c.innerHTML = `
+    <div style="margin-bottom:12px;font-size:13px;color:var(--gray600)">
+      <span class="badge ${sessionBadge}">${s.status}</span>
+      Referans: <strong>${refStr}</strong>
+      ${s.warehouses?.name ? `· Depo: <strong>${escapeHtml(s.warehouses.name)}</strong>` : ''}
+      ${s.categories?.name ? `· Kategori: <strong>${escapeHtml(s.categories.name)}</strong>` : ''}
+      · Tolerans: <strong>%${s.variance_threshold_pct}</strong>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Fişler (${_sheets.length})</div></div></div>
+      ${_sheets.length === 0 ? `<div style="padding:40px;text-align:center;color:var(--gray400)">
+         <div style="font-size:32px;margin-bottom:6px">📋</div>
+         <div style="margin-bottom:10px">Henüz fiş yok</div>
+         ${canEdit ? '<button class="btn btn-primary" onclick="openNewSheet()">➕ İlk Fişi Oluştur</button>' : ''}
+       </div>` : `
+      <div style="overflow-x:auto"><table><thead><tr>
+        <th>#</th><th>Bölüm</th><th>Sayımcı</th><th class="text-center">Ürün</th>
+        <th>Durum</th><th>Tarih</th><th></th>
+      </tr></thead><tbody>
+        ${_sheets.map(sh => `<tr>
+          <td><strong>#${sh.sheet_number}</strong></td>
+          <td>${escapeHtml(sh.section_name || '—')}</td>
+          <td>${nameOf(sh.counted_by)}</td>
+          <td class="text-center">${itemCounts[sh.id] || 0}</td>
+          <td><span class="badge ${stBadge(sh.status)}">${stLbl(sh.status)}</span></td>
+          <td>${fmtDate(sh.created_at)}</td>
+          <td>
+            ${sh.status !== 'locked' && canEdit ? `<button class="btn btn-sm btn-primary" onclick="navigate('entry',{session:'${currentSessionId}',sheet:'${sh.id}'})">✏️ Sayıma Gir</button>` : `<button class="btn btn-sm" onclick="navigate('entry',{session:'${currentSessionId}',sheet:'${sh.id}'})">👁 Görüntüle</button>`}
+            ${sh.status !== 'locked' && canEdit ? `<button class="btn btn-sm btn-red" onclick="deleteSheet('${sh.id}')">🗑</button>` : ''}
+          </td>
+        </tr>`).join('')}
+      </tbody></table></div>`}
+    </div>`;
+}
+
+async function loadUsers(){
+  if (companyUsers.length) return;
+  const { data: cu } = await sb.from('company_users').select('user_id').eq('company_id', companyId);
+  const uids = (cu||[]).map(x => x.user_id);
+  if (uids.length){
+    const { data: profs } = await sb.from('profiles').select('id,full_name').in('id', uids);
+    companyUsers = (cu||[]).map(u => ({ user_id: u.user_id, name: (profs||[]).find(p => p.id === u.user_id)?.full_name || u.user_id.slice(0,8) }));
+  }
+}
+
+function openNewSheet(){
+  loadUsers().then(() => {
+    document.getElementById('nsh-counter').innerHTML = companyUsers.map(u => `<option value="${u.user_id}" ${u.user_id === currentUserId ? 'selected' : ''}>${escapeHtml(u.name)}</option>`).join('');
+  });
+  document.getElementById('nsh-section').value = '';
+  document.getElementById('nsh-notes').value = '';
+  document.getElementById('new-sheet-modal').classList.add('open');
+}
+async function createSheet(){
+  if (submitting && submitting()) return;
+  try {
+    const { data, error } = await sb.from('inventory_sheets').insert({
+      company_id: companyId, session_id: currentSessionId,
+      section_name: document.getElementById('nsh-section').value || null,
+      counted_by: document.getElementById('nsh-counter').value || currentUserId,
+      notes: document.getElementById('nsh-notes').value || null
+    }).select('id').single();
+    if (error) throw error;
+    closeModal('new-sheet-modal');
+    showToast('Fiş oluşturuldu', 'success');
+    navigate('entry', { session: currentSessionId, sheet: data.id });
+  } catch(e){ showToast(getErrorMessage ? getErrorMessage(e) : e.message, 'error'); }
+  finally { if (submitting) submitting.reset(); }
+}
+async function deleteSheet(id){
+  if (!confirm('Bu fiş silinsin mi? Tüm girilen ürünler de silinecek.')) return;
+  await sb.from('inventory_sheets').delete().eq('id', id);
+  render();
+}
+
+async function completeSession(){
+  if (!confirm('Sayım tamamlansın mı? Sonuçlar hesaplanacak, tolerans altı farklar otomatik onaylanacak.')) return;
+  const { data, error } = await sb.rpc('sp_inventory_compute_results', { p_session: currentSessionId });
+  if (error){ showToast(error.message, 'error'); return; }
+  if (data?.error){ showToast(data.error, 'error'); return; }
+  showToast('Sonuçlar hesaplandı', 'success');
+  navigate('results', { session: currentSessionId });
+}
+
+// ===== VIEW 3: Sheet entry =====
+async function renderEntry(){
+  const [{ data: sh }, { data: sess }] = await Promise.all([
+    sb.from('inventory_sheets').select('*').eq('id', currentSheetId).maybeSingle(),
+    sb.from('inventory_sessions').select('*').eq('id', currentSessionId).maybeSingle()
+  ]);
+  if (!sh || !sess){ document.getElementById('content').innerHTML = '<div style="padding:30px;color:var(--red)">Fiş bulunamadı</div>'; return; }
+  _sheet = sh; _session = sess;
+  await loadUsers();
+  const counterName = companyUsers.find(u => u.user_id === sh.counted_by)?.name || '—';
+  const locked = sh.status === 'locked' || _session.status === 'approved';
+  document.getElementById('page-title').textContent = `📋 Fiş #${sh.sheet_number}`;
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn" onclick="navigate('session',{session:'${currentSessionId}'})">← Geri</button>
+    ${!locked ? `<button class="btn" onclick="openImport()">📥 İmport</button>` : ''}
+    ${!locked ? `<button class="btn btn-primary" onclick="completeSheet()">✅ Fişi Tamamla</button>` : ''}
+  `;
+
+  await loadSheetItems();
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div style="margin-bottom:10px;font-size:13px;color:var(--gray600)">
+      <strong>${_session.name}</strong> — Fiş #${sh.sheet_number}
+      ${sh.section_name ? ` · Bölüm: <strong>${escapeHtml(sh.section_name)}</strong>` : ''}
+      · Sayımcı: <strong>${escapeHtml(counterName)}</strong>
+    </div>
+    <div class="card">
+      <div class="entry-grid header">
+        <div>BARKOD</div><div>ÜRÜN ADI</div><div>BİRİM</div><div>MİKTAR</div><div></div>
+      </div>
+      <div id="entry-rows"></div>
+      ${!locked ? `
+      <div class="entry-grid active">
+        <input type="text" id="in-barcode" placeholder="Barkod okut veya yaz → Enter" autocomplete="off" onkeydown="onBarcodeKey(event)">
+        <div id="in-product-name" style="color:var(--gray400);font-size:13px">Ürün adı burada görünecek…</div>
+        <div id="in-unit" class="col-unit" style="color:var(--gray500);font-size:13px"></div>
+        <input type="number" id="in-qty" placeholder="0" step="0.001" onkeydown="onQtyKey(event)">
+        <div></div>
+      </div>` : '<div style="padding:16px;text-align:center;color:var(--gray400)">🔒 Bu fiş kilitli, düzenlenemez</div>'}
+      <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--gray50);font-size:12px">
+        <span id="item-count-lbl">${_items.length} kalem sayıldı</span>
+        ${!locked && _items.length ? '<button class="btn btn-sm" onclick="deleteLast()">↩️ Son Sil</button>' : ''}
+      </div>
+    </div>`;
+
+  paintItems();
+  if (!locked){
+    setTimeout(() => document.getElementById('in-barcode')?.focus(), 100);
+    subscribeRealtime();
+  }
+}
+
+async function loadSheetItems(){
+  const { data } = await sb.from('inventory_sheet_items')
+    .select('id, product_id, barcode, counted_quantity, unit, via_barcode, created_at, notes, products(name, sku, unit)')
+    .eq('sheet_id', currentSheetId).order('counted_at', { ascending: true });
+  _items = data || [];
+}
+
+function paintItems(){
+  const wrap = document.getElementById('entry-rows');
+  if (!wrap) return;
+  wrap.innerHTML = _items.map((it, i) => `
+    <div class="entry-grid entry-row" data-id="${it.id}">
+      <div style="font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--gray500)">${escapeHtml(it.barcode || it.products?.sku || '—')}</div>
+      <div>${i+1}. ${escapeHtml(it.products?.name || '—')}</div>
+      <div class="col-unit" style="color:var(--gray500)">${escapeHtml(it.unit || it.products?.unit || '')}</div>
+      <div><input type="number" value="${it.counted_quantity}" step="0.001" onchange="updateItemQty('${it.id}', this.value)"></div>
+      <div><button class="del" onclick="deleteItem('${it.id}')">✕</button></div>
+    </div>`).join('');
+  const lbl = document.getElementById('item-count-lbl');
+  if (lbl) lbl.textContent = _items.length + ' kalem sayıldı';
+}
+
+async function onBarcodeKey(ev){
+  if (ev.key !== 'Enter') return;
+  ev.preventDefault();
+  const v = ev.target.value.trim();
+  if (!v) return;
+  const p = await lookupProduct(v);
+  if (!p){
+    ev.target.style.borderColor = 'var(--red)';
+    document.getElementById('in-product-name').innerHTML = `<span style="color:var(--red)">❌ Barkod bulunamadı: ${escapeHtml(v)}</span>`;
+    setTimeout(() => { ev.target.style.borderColor = ''; ev.target.select(); }, 1000);
+    return;
+  }
+  // Duplicate detection
+  const dupSame = _items.filter(it => it.product_id === p.id);
+  const { data: others } = await sb.from('inventory_sheet_items')
+    .select('sheet_id,counted_quantity,inventory_sheets(sheet_number,section_name,counted_by)')
+    .eq('session_id', currentSessionId).eq('product_id', p.id).neq('sheet_id', currentSheetId);
+  const dupOther = others || [];
+  if (dupSame.length || dupOther.length){
+    showDuplicateModal(p, dupSame, dupOther, () => addEntry(p));
+    return;
+  }
+  // Fill row & focus qty
+  fillActiveRow(p, v);
+}
+
+function fillActiveRow(p, barcode){
+  document.getElementById('in-barcode').dataset.product = p.id;
+  document.getElementById('in-barcode').dataset.barcode = barcode || p.barcode || '';
+  document.getElementById('in-product-name').innerHTML = `<strong>${escapeHtml(p.name)}</strong> ${p.sku ? `<span style="color:var(--gray400);font-size:11px">· ${escapeHtml(p.sku)}</span>` : ''}`;
+  document.getElementById('in-unit').textContent = p.unit || '';
+  document.getElementById('in-qty').focus();
+  document.getElementById('in-qty').select();
+}
+
+async function onQtyKey(ev){
+  if (ev.key !== 'Enter') return;
+  ev.preventDefault();
+  const bc = document.getElementById('in-barcode');
+  const pid = bc.dataset.product;
+  const qty = parseFloat(ev.target.value);
+  if (!pid){ showToast('Önce barkod okutun', 'error'); bc.focus(); return; }
+  if (!qty || qty <= 0){ showToast('Miktar giriniz', 'error'); return; }
+  const p = _productCache.get(pid);
+  await addEntry(p, qty, bc.dataset.barcode);
+  // Reset row
+  bc.value = ''; bc.dataset.product = ''; bc.dataset.barcode = '';
+  ev.target.value = '';
+  document.getElementById('in-product-name').innerHTML = '<span style="color:var(--gray400);font-size:13px">Ürün adı burada görünecek…</span>';
+  document.getElementById('in-unit').textContent = '';
+  bc.focus();
+}
+
+async function addEntry(product, quantity, barcode){
+  const qty = quantity != null ? quantity : parseFloat(document.getElementById('in-qty').value);
+  if (!qty || qty <= 0){ showToast('Miktar girin', 'error'); return; }
+  const bc = barcode || document.getElementById('in-barcode').dataset.barcode || product.barcode || '';
+  try {
+    const { data, error } = await sb.from('inventory_sheet_items').insert({
+      sheet_id: currentSheetId, session_id: currentSessionId, company_id: companyId,
+      product_id: product.id, barcode: bc, counted_quantity: qty,
+      unit: product.unit, via_barcode: !!bc, created_by: currentUserId
+    }).select('id, product_id, barcode, counted_quantity, unit, via_barcode, created_at, notes, products(name, sku, unit)').single();
+    if (error) throw error;
+    _items.push(data);
+    paintItems();
+  } catch(e){ showToast(e.message, 'error'); }
+}
+
+async function updateItemQty(id, v){
+  const qty = parseFloat(v);
+  if (!qty || qty <= 0){ showToast('Geçersiz miktar', 'error'); loadSheetItems().then(paintItems); return; }
+  await sb.from('inventory_sheet_items').update({ counted_quantity: qty }).eq('id', id);
+  const it = _items.find(x => x.id === id); if (it) it.counted_quantity = qty;
+}
+async function deleteItem(id){
+  await sb.from('inventory_sheet_items').delete().eq('id', id);
+  _items = _items.filter(x => x.id !== id);
+  paintItems();
+}
+async function deleteLast(){
+  if (!_items.length) return;
+  const last = _items[_items.length - 1];
+  if (!confirm(`Son satır silinsin mi? (${last.products?.name})`)) return;
+  await deleteItem(last.id);
+}
+
+async function lookupProduct(codeOrName){
+  if (_productCache.has(codeOrName)) return _productCache.get(codeOrName);
+  // Try barcode exact
+  let { data } = await sb.from('products').select('id,name,sku,barcode,unit').eq('company_id', companyId).eq('is_active', true).eq('barcode', codeOrName).limit(1);
+  let p = data?.[0];
+  if (!p){
+    ({ data } = await sb.from('products').select('id,name,sku,barcode,unit').eq('company_id', companyId).eq('is_active', true).eq('sku', codeOrName).limit(1));
+    p = data?.[0];
+  }
+  if (p){ _productCache.set(codeOrName, p); _productCache.set(p.id, p); }
+  return p || null;
+}
+
+function showDuplicateModal(p, same, other, onConfirmAdd){
+  const m = document.getElementById('dup-modal');
+  const body = document.getElementById('dup-body');
+  const ftr = document.getElementById('dup-ftr');
+  const nameOf = uid => companyUsers.find(u => u.user_id === uid)?.name || '—';
+  let html = `<div style="margin-bottom:12px"><strong>${escapeHtml(p.name)}</strong></div>`;
+  if (same.length){
+    const total = same.reduce((a,b) => a + parseFloat(b.counted_quantity||0), 0);
+    html += `<div style="padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:10px;font-size:13px">
+      ⚠️ Bu fişte ${same.length} satırda sayıldı. Toplam: <strong>${fmtNum(total)} ${p.unit||''}</strong>
+    </div>`;
+  }
+  if (other.length){
+    const groups = {};
+    other.forEach(o => {
+      const k = o.sheet_id;
+      if (!groups[k]) groups[k] = { label: `Fiş #${o.inventory_sheets?.sheet_number} ${o.inventory_sheets?.section_name ? '('+o.inventory_sheets.section_name+')' : ''} — ${nameOf(o.inventory_sheets?.counted_by)}`, total: 0 };
+      groups[k].total += parseFloat(o.counted_quantity||0);
+    });
+    html += `<div style="padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:10px;font-size:13px">
+      ⚠️ Başka fişlerde sayıldı:<br>${Object.values(groups).map(g => `• ${escapeHtml(g.label)}: <strong>${fmtNum(g.total)} ${p.unit||''}</strong>`).join('<br>')}
+    </div>`;
+  }
+  if (same.length){
+    html += `<div style="font-size:12px;color:var(--gray500)">Farklı bir bölüm sayıyorsanız <strong>Ayrı Satır Ekle</strong>, var olan satırı güncellemek istiyorsanız <strong>O Satırı Düzenle</strong> deyin.</div>`;
+  }
+  body.innerHTML = html;
+  const buttons = [`<button class="btn" onclick="closeModal('dup-modal')">❌ İptal</button>`];
+  if (same.length){
+    const last = same[same.length - 1];
+    buttons.push(`<button class="btn btn-amber" onclick="closeModal('dup-modal');focusEditRow('${last.id}')">✏️ Son Satırı Düzenle</button>`);
+  }
+  buttons.push(`<button class="btn btn-primary" id="dup-confirm">➕ Ayrı Satır Ekle</button>`);
+  ftr.innerHTML = buttons.join('');
+  document.getElementById('dup-confirm').onclick = () => { closeModal('dup-modal'); onConfirmAdd(); };
+  // Prep fill
+  fillActiveRow(p);
+  m.classList.add('open');
+}
+
+function focusEditRow(id){
+  paintItems();
+  setTimeout(() => {
+    const row = document.querySelector(`[data-id="${id}"] input[type=number]`);
+    if (row){ row.focus(); row.select(); row.scrollIntoView({ behavior:'smooth', block:'center' }); }
+  }, 50);
+}
+
+async function completeSheet(){
+  if (!_items.length){ if (!confirm('Fişte kayıt yok. Yine de tamamlansın mı?')) return; }
+  await sb.from('inventory_sheets').update({ status: 'completed' }).eq('id', currentSheetId);
+  showToast('Fiş tamamlandı', 'success');
+  navigate('session', { session: currentSessionId });
+}
+
+// Realtime subscription for sheet items
+function subscribeRealtime(){
+  unsubscribeRealtime();
+  _rtChannel = sb.channel('sheet-'+currentSheetId)
+    .on('postgres_changes', { event:'*', schema:'public', table:'inventory_sheet_items', filter: `sheet_id=eq.${currentSheetId}` },
+        () => loadSheetItems().then(paintItems))
+    .subscribe();
+}
+function unsubscribeRealtime(){ if (_rtChannel){ sb.removeChannel(_rtChannel); _rtChannel = null; } }
+
+// ===== IMPORT =====
+function openImport(){
+  _importRows = [];
+  document.getElementById('import-preview').innerHTML = '';
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-confirm-btn').disabled = true;
+  document.getElementById('import-modal').classList.add('open');
+}
+function downloadImportTemplate(){
+  const ws = XLSX.utils.aoa_to_sheet([['Barkod','Ürün Adı','Miktar','Birim','Not']]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sayım');
+  XLSX.writeFile(wb, 'sayim-sablon.xlsx');
+}
+async function previewImport(ev){
+  const f = ev.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  const wb = XLSX.read(buf, { type:'array' });
+  const sh = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sh, { header: 1 });
+  // Skip header row
+  const body = rows.slice(1).filter(r => r[0] || r[1]);
+  // Validate
+  const out = [];
+  for (const r of body){
+    const barcode = String(r[0] || '').trim();
+    const name    = String(r[1] || '').trim();
+    const qty     = parseFloat(r[2] || 0);
+    const unit    = String(r[3] || '').trim();
+    const note    = String(r[4] || '').trim();
+    let p = null;
+    if (barcode) p = await lookupProduct(barcode);
+    if (!p && name){
+      const { data } = await sb.from('products').select('id,name,sku,barcode,unit').eq('company_id', companyId).eq('is_active', true).ilike('name', name).limit(1);
+      p = data?.[0];
+      if (p) _productCache.set(p.id, p);
+    }
+    out.push({ barcode, name: p?.name || name, qty, unit: unit || p?.unit || '', note, productId: p?.id || null, ok: !!p });
+  }
+  _importRows = out;
+  const preview = document.getElementById('import-preview');
+  const okCount = out.filter(r => r.ok).length;
+  preview.innerHTML = `<div style="margin-bottom:8px;font-size:12px">${out.length} satır · ${okCount} eşleşti · ${out.length - okCount} hata</div>
+    <table style="width:100%;font-size:12px"><thead><tr><th>Barkod</th><th>Ürün</th><th>Miktar</th><th></th></tr></thead><tbody>
+      ${out.map(r => `<tr><td>${escapeHtml(r.barcode)}</td><td>${escapeHtml(r.name)}</td><td>${fmtNum(r.qty)}</td><td>${r.ok ? '✅' : '❌'}</td></tr>`).join('')}
+    </tbody></table>`;
+  document.getElementById('import-confirm-btn').disabled = okCount === 0;
+}
+async function runImport(){
+  const rows = _importRows.filter(r => r.ok && r.qty > 0);
+  if (!rows.length) return;
+  const payload = rows.map(r => ({
+    sheet_id: currentSheetId, session_id: currentSessionId, company_id: companyId,
+    product_id: r.productId, barcode: r.barcode, counted_quantity: r.qty,
+    unit: r.unit, via_barcode: false, notes: r.note, created_by: currentUserId
+  }));
+  const { error } = await sb.from('inventory_sheet_items').insert(payload);
+  if (error){ showToast(error.message, 'error'); return; }
+  showToast(`${rows.length} satır eklendi`, 'success');
+  closeModal('import-modal');
+  loadSheetItems().then(paintItems);
+}
+
+// ===== VIEW 4: Results =====
+async function renderResults(){
+  const [{ data: sess }, { data: results }] = await Promise.all([
+    sb.from('inventory_sessions').select('*').eq('id', currentSessionId).maybeSingle(),
+    sb.from('inventory_results').select('*, products(name, sku, unit)').eq('session_id', currentSessionId)
+  ]);
+  if (!sess){ document.getElementById('content').innerHTML = '<div style="padding:30px;color:var(--red)">Sayım bulunamadı</div>'; return; }
+  _session = sess;
+  document.getElementById('page-title').textContent = '📊 ' + sess.name + ' — Sonuçlar';
+  const canApply = sess.status === 'completed';
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn" onclick="navigate('session',{session:'${currentSessionId}'})">← Geri</button>
+    ${canApply ? `<button class="btn btn-green" onclick="approveAll()">✅ Tümünü Onayla</button>
+                  <button class="btn btn-primary" onclick="applyResults()">💾 Bakiyeleri Düzelt</button>` : ''}
+  `;
+  const rows = results || [];
+  const matched    = rows.filter(r => Number(r.variance) === 0).length;
+  const withDiff   = rows.filter(r => Number(r.variance) !== 0);
+  const autoOk     = rows.filter(r => r.status === 'auto_approved').length;
+  const pending    = rows.filter(r => r.status === 'pending').length;
+  const approved   = rows.filter(r => r.status === 'approved').length;
+
+  const varCls = r => {
+    const p = Math.abs(parseFloat(r.variance_pct || 0));
+    if (p === 0) return 'variance-0';
+    if (p < parseFloat(sess.variance_threshold_pct || 2)) return 'variance-0';
+    if (p < 5) return 'variance-low';
+    if (p < 10) return 'variance-mid';
+    return 'variance-high';
+  };
+  const stBadge = s => ({ pending:'badge-amber', approved:'badge-green', auto_approved:'badge-blue', recount:'badge-orange' }[s] || 'badge-gray');
+  const stLbl   = s => ({ pending:'⏳ Bekliyor', approved:'✅ Onaylandı', auto_approved:'🤖 Oto-Onay', recount:'🔄 Yeniden Say' }[s] || s);
+  const reasonLbl = s => ({ fire:'Fire/Hasar', theft:'Hırsızlık', entry_error:'Giriş/Çıkış Hatası', count_error:'Sayım Hatası', other:'Diğer' }[s] || '');
+
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div class="stat-cards">
+      <div class="sc"><div class="sc-lbl">Toplam Ürün</div><div class="sc-val">${rows.length}</div></div>
+      <div class="sc"><div class="sc-lbl">Eşleşen</div><div class="sc-val variance-0">${matched}</div></div>
+      <div class="sc"><div class="sc-lbl">Fark Var</div><div class="sc-val variance-mid">${withDiff.length}</div></div>
+      <div class="sc"><div class="sc-lbl">Oto-Onay</div><div class="sc-val" style="color:var(--blue)">${autoOk}</div></div>
+      <div class="sc"><div class="sc-lbl">İnceleme</div><div class="sc-val" style="color:var(--amber)">${pending}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Sonuç Detayı</div></div>
+        <div>
+          <button class="btn btn-sm" onclick="filterResults('all')">Tümü</button>
+          <button class="btn btn-sm" onclick="filterResults('diff')">Fark Var</button>
+          <button class="btn btn-sm" onclick="filterResults('critical')">Kritik</button>
+          <button class="btn btn-sm" onclick="filterResults('approved')">Onaylı</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr>
+        <th>Ürün</th><th class="text-right">Sistem</th><th class="text-right">Sayılan</th>
+        <th class="text-right">Fark</th><th class="text-right">Fark %</th><th>Durum</th><th>Neden</th><th></th>
+      </tr></thead><tbody id="results-tbody">
+        ${rows.map(r => `<tr data-status="${r.status}" data-variance="${r.variance}">
+          <td><strong>${escapeHtml(r.products?.name || '—')}</strong>${r.products?.sku ? ` <span style="color:var(--gray400);font-size:11px">${escapeHtml(r.products.sku)}</span>` : ''}</td>
+          <td class="text-right">${fmtNum(r.system_quantity)} ${r.products?.unit || ''}</td>
+          <td class="text-right">${fmtNum(r.counted_quantity)} ${r.products?.unit || ''}</td>
+          <td class="text-right ${varCls(r)}"><strong>${parseFloat(r.variance) > 0 ? '+' : ''}${fmtNum(r.variance)}</strong></td>
+          <td class="text-right ${varCls(r)}">${fmtNum(r.variance_pct)}%</td>
+          <td><span class="badge ${stBadge(r.status)}">${stLbl(r.status)}</span></td>
+          <td>${r.variance_reason ? reasonLbl(r.variance_reason) : '<span style="color:var(--gray400)">—</span>'}</td>
+          <td>
+            ${canApply && r.status === 'pending' ? `<button class="btn btn-sm btn-green" onclick="approveResult('${r.id}')">✅</button>` : ''}
+            ${canApply && r.status !== 'approved' ? `<button class="btn btn-sm" onclick="markRecount('${r.id}')">🔄</button>` : ''}
+            ${canApply ? `<button class="btn btn-sm" onclick="openReason('${r.id}')">📝</button>` : ''}
+          </td>
+        </tr>`).join('')}
+      </tbody></table></div>
+    </div>`;
+}
+
+function filterResults(mode){
+  document.querySelectorAll('#results-tbody tr').forEach(tr => {
+    const v = parseFloat(tr.dataset.variance);
+    const st = tr.dataset.status;
+    const pct = parseFloat(tr.cells[4]?.textContent || 0);
+    let show = true;
+    if (mode === 'diff') show = v !== 0;
+    else if (mode === 'critical') show = Math.abs(pct) >= 10;
+    else if (mode === 'approved') show = st === 'approved' || st === 'auto_approved';
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+async function approveResult(id){
+  await sb.from('inventory_results').update({ status:'approved', approved_by: currentUserId, approved_at: new Date().toISOString() }).eq('id', id);
+  render();
+}
+async function markRecount(id){
+  await sb.from('inventory_results').update({ status:'recount' }).eq('id', id);
+  render();
+}
+async function approveAll(){
+  if (!confirm('Tüm bekleyen sonuçlar onaylansın mı?')) return;
+  await sb.from('inventory_results').update({ status:'approved', approved_by: currentUserId, approved_at: new Date().toISOString() })
+    .eq('session_id', currentSessionId).eq('status', 'pending');
+  showToast('Tüm bekleyenler onaylandı', 'success');
+  render();
+}
+function openReason(id){
+  _reasonTargetId = id;
+  document.getElementById('rsn-val').value = '';
+  document.getElementById('rsn-note').value = '';
+  document.getElementById('reason-modal').classList.add('open');
+}
+async function confirmReason(){
+  const val = document.getElementById('rsn-val').value;
+  if (!val){ showToast('Neden seçiniz', 'error'); return; }
+  const note = document.getElementById('rsn-note').value || null;
+  await sb.from('inventory_results').update({ variance_reason: val, notes: note }).eq('id', _reasonTargetId);
+  closeModal('reason-modal');
+  render();
+}
+
+async function applyResults(){
+  if (!confirm('Onaylı ve oto-onaylı farklar stock_movements\'a düzeltme olarak işlensin mi?\nFişler kilitlenecek.')) return;
+  const { data, error } = await sb.rpc('sp_inventory_apply_results', { p_session: currentSessionId });
+  if (error){ showToast(error.message, 'error'); return; }
+  if (data?.error){ showToast(data.error, 'error'); return; }
+  showToast(`${data.adjustments} düzeltme uygulandı`, 'success');
+  navigate('sessions');
+}
+
+// ===== UTILS =====
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtNum(n){ return (parseFloat(n)||0).toLocaleString('tr-TR', { minimumFractionDigits:0, maximumFractionDigits:3 }); }
+function fmtDate(d){ if (!d) return '—'; return new Date(d).toLocaleDateString('tr-TR'); }
+function fmtDateTime(d){ if (!d) return '—'; return new Date(d).toLocaleString('tr-TR'); }
+function showToast(msg, type='info'){
+  const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>

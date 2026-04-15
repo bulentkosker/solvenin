@@ -460,6 +460,7 @@
           children: [
             { key: 'nav_products',        href: 'inventory.html' },
             { key: 'nav_stock_movements', href: 'inventory.html#movements' },
+            { key: 'nav_stockcount',      href: 'stockcount.html' },
             { key: 'nav_warehouses',      href: 'settings.html#warehouses' },
             { key: 'nav_reports',         href: 'reports-stock.html' },
           ]
