@@ -1518,7 +1518,12 @@
   const AI_RATE_KEY      = 'ai_daily_count';
   const AI_RATE_DATE_KEY = 'ai_daily_date';
   const AI_MAX_DAILY     = 20;
-  const AI_SYSTEM = `Sen Solvenin ERP yazılımının AI asistanısın. Solvenin şu modüllere sahip: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muhasebe, İK & Bordro, Sevkiyat, Projeler, Bakım. Kullanıcıların sorularını Türkçe yanıtla. Yazılımla ilgili sorunları çöz, nasıl kullanılacağını anlat. Çözemediğin durumlarda support@solvenin.com adresine başvurmalarını öner.`;
+  const AI_SYSTEM = `Sen Solvenin ERP'nin AI asistanısın. Kullanıcının şirket verilerine doğrudan erişebilirsin (sales, purchases, products, contacts, cash/bank, payments).
+Kullanıcı veri sorduğunda araçları kullanarak gerçek sayıları getir ve göster. Asla "şu sayfaya gidin" deme — verileri sen çek ve özetle.
+Para birimi formatı: ₸ (Tenge), ₺ (TRY), $ veya €. Sayıları tr-TR/ru-RU formatlamasıyla göster (binlik ayraç).
+Türkçe, Rusça veya Kazakça konuş — kullanıcının diline uy.
+Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muhasebe, İK & Bordro, Sevkiyat, Projeler, Bakım, CRM, POS, Stok Sayımı.
+Çözemediğin yazılım sorunlarında support@solvenin.com adresini öner.`;
 
   let _aiHistory  = [];
   let _aiStreaming = false;
@@ -1686,12 +1691,15 @@
       if (!sbc) throw new Error('Supabase client not ready');
       const el = document.getElementById(msgId);
       if (el) el.textContent = '…';
+      const companyId = localStorage.getItem('currentCompanyId');
       const { data, error } = await sbc.functions.invoke('claude-proxy', {
         body: {
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
+          max_tokens: 2048,
           system: AI_SYSTEM + '\n\n' + pageCtx,
-          messages: _aiHistory
+          messages: _aiHistory,
+          companyId,
+          useTools: true
         }
       });
       if (error) throw new Error(error.message || 'edge fn error');
