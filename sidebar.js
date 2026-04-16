@@ -337,6 +337,14 @@
     }
     #ai-send-btn:hover:not(:disabled) { background: #1a2744; }
     #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ai-mic-btn {
+      background: none; border: none; font-size: 18px; cursor: pointer;
+      padding: 0 4px; height: 38px; line-height: 38px; flex-shrink: 0;
+      border-radius: 50%; transition: background .2s, color .2s;
+    }
+    .ai-mic-btn:hover { background: rgba(0,0,0,0.08); }
+    .ai-mic-btn.recording { color: #dc2626; animation: ai-pulse 1s infinite; }
+    @keyframes ai-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
     /* ── New company modal ── */
     .new-company-modal {
@@ -1626,6 +1634,7 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
           <textarea id="ai-chat-input" placeholder="Mesajınızı yazın..." rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSendMessage();}"
             oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+          <button id="ai-mic-btn" class="ai-mic-btn" title="Sesli komut" onclick="aiToggleVoice()">🎤</button>
           <button id="ai-send-btn" onclick="aiSendMessage()">Gönder</button>
         </div>
       </div>`;
@@ -1728,6 +1737,67 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
     if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Gönder'; }
     input.focus();
     aiUpdateRemaining();
+  };
+
+  /* ── VOICE INPUT ──────────────────────────────────────────── */
+  const _SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let _aiRecognition = null;
+  let _aiRecording   = false;
+
+  function aiInitVoice() {
+    const micBtn = document.getElementById('ai-mic-btn');
+    if (!micBtn) return;
+    if (!_SpeechRec) { micBtn.style.display = 'none'; return; }
+    if (_aiRecognition) return;
+
+    const rec = new _SpeechRec();
+    rec.continuous      = false;
+    rec.interimResults  = true;
+    rec.maxAlternatives = 1;
+
+    const langMap = { tr:'tr-TR', en:'en-US', ru:'ru-RU', kz:'kk-KZ', de:'de-DE', fr:'fr-FR', es:'es-ES', ar:'ar-SA', zh:'zh-CN', ja:'ja-JP', pt:'pt-PT' };
+    const lang = localStorage.getItem('solvenin_lang') || 'tr';
+    rec.lang = langMap[lang] || 'tr-TR';
+
+    rec.onstart = () => {
+      _aiRecording = true;
+      if (micBtn) { micBtn.textContent = '⏹️'; micBtn.classList.add('recording'); micBtn.title = 'Dinleniyor…'; }
+      const inp = document.getElementById('ai-chat-input');
+      if (inp) inp.placeholder = 'Dinleniyor…';
+    };
+
+    rec.onresult = (ev) => {
+      let transcript = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) transcript += ev.results[i][0].transcript;
+      const inp = document.getElementById('ai-chat-input');
+      if (inp) inp.value = transcript;
+      if (ev.results[ev.results.length - 1].isFinal) {
+        setTimeout(() => { if (inp && inp.value.trim()) aiSendMessage(); }, 500);
+      }
+    };
+
+    rec.onend = () => {
+      _aiRecording = false;
+      if (micBtn) { micBtn.textContent = '🎤'; micBtn.classList.remove('recording'); micBtn.title = 'Sesli komut'; }
+      const inp = document.getElementById('ai-chat-input');
+      if (inp) inp.placeholder = 'Mesajınızı yazın...';
+    };
+
+    rec.onerror = (ev) => {
+      _aiRecording = false;
+      if (micBtn) { micBtn.textContent = '🎤'; micBtn.classList.remove('recording'); }
+      if (ev.error === 'not-allowed') showToast('Mikrofon erişimine izin verin', 'error');
+      else if (ev.error === 'no-speech') showToast('Ses algılanamadı, tekrar deneyin', 'warning');
+    };
+
+    _aiRecognition = rec;
+  }
+
+  window.aiToggleVoice = function() {
+    aiInitVoice();
+    if (!_aiRecognition) return;
+    if (_aiRecording) { _aiRecognition.stop(); return; }
+    try { _aiRecognition.start(); } catch(e) { /* already started */ }
   };
 
   /* ── LANGUAGE CHANGE — re-render preserving open state ───── */
