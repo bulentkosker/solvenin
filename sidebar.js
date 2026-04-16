@@ -345,6 +345,24 @@
     .ai-mic-btn:hover { background: rgba(0,0,0,0.08); }
     .ai-mic-btn.recording { color: #dc2626; animation: ai-pulse 1s infinite; }
     @keyframes ai-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .ai-speak-btn {
+      background: none; border: none; font-size: 14px; cursor: pointer;
+      opacity: 0.5; padding: 2px 6px; border-radius: 4px; transition: opacity .2s;
+      margin-top: 2px; align-self: flex-start;
+    }
+    .ai-speak-btn:hover { opacity: 1; }
+    .ai-speak-btn.speaking { opacity: 1; color: #2563eb; animation: ai-pulse 1s infinite; }
+    .ai-msg-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; max-width: 85%; }
+    .ai-msg-wrap.ai-wrap-user { align-items: flex-end; align-self: flex-end; }
+    .ai-msg-wrap.ai-wrap-assistant { align-self: flex-start; }
+    .ai-msg-wrap.ai-wrap-system { align-self: center; }
+    .ai-msg-wrap .ai-msg { max-width: 100%; }
+    .ai-autospeak-toggle {
+      display: flex; align-items: center; gap: 6px; margin-right: 6px; cursor: pointer;
+      color: rgba(255,255,255,0.6); font-size: 11px; transition: color .15s;
+    }
+    .ai-autospeak-toggle:hover { color: rgba(255,255,255,0.9); }
+    .ai-autospeak-toggle input { accent-color: #38bdf8; width: 14px; height: 14px; cursor: pointer; }
 
     /* ── New company modal ── */
     .new-company-modal {
@@ -1562,7 +1580,20 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
     div.className = `ai-msg ai-msg-${role}`;
     if (id)   div.id          = id;
     if (text) div.textContent = text;
-    msgs.appendChild(div);
+    if (role === 'assistant') {
+      const wrap = document.createElement('div');
+      wrap.className = 'ai-msg-wrap ai-wrap-assistant';
+      wrap.appendChild(div);
+      const speakBtn = document.createElement('button');
+      speakBtn.className = 'ai-speak-btn';
+      speakBtn.textContent = '🔊';
+      speakBtn.title = 'Sesli oku';
+      speakBtn.onclick = () => aiSpeakText(div.textContent, speakBtn);
+      wrap.appendChild(speakBtn);
+      msgs.appendChild(wrap);
+    } else {
+      msgs.appendChild(div);
+    }
     msgs.scrollTop = msgs.scrollHeight;
     return div;
   }
@@ -1622,6 +1653,11 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
           <strong>Solvenin AI Asistan</strong>
           <span>Her konuda yardımcı olurum</span>
         </div>
+        <label class="ai-autospeak-toggle" title="Otomatik Sesli Yanıt">
+          <input type="checkbox" id="ai-autospeak-cb" onchange="aiSetAutospeak(this.checked)"
+            ${localStorage.getItem('solvenin_ai_autospeak')==='true'?'checked':''}>
+          🔊
+        </label>
         <button class="ai-chat-close" onclick="sidebarCloseAI()">✕</button>
       </div>
       <div class="ai-chat-messages" id="ai-chat-messages"></div>
@@ -1655,6 +1691,8 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
   };
 
   window.sidebarCloseAI = function() {
+    window.speechSynthesis?.cancel();
+    _aiActiveSpeakBtn = null;
     const panel = document.getElementById('ai-chat-panel');
     if (panel) panel.classList.remove('open');
   };
@@ -1667,6 +1705,8 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
 
   window.aiSendMessage = async function() {
     if (_aiStreaming) return;
+    window.speechSynthesis?.cancel();
+    _aiActiveSpeakBtn = null;
     const input = document.getElementById('ai-chat-input');
     if (!input) return;
     const text = input.value.trim();
@@ -1721,6 +1761,12 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
       }
       _aiHistory.push({ role: 'assistant', content: fullText });
 
+      if (localStorage.getItem('solvenin_ai_autospeak') === 'true' && fullText) {
+        const wrap = el?.closest('.ai-msg-wrap');
+        const btn = wrap?.querySelector('.ai-speak-btn');
+        aiSpeakText(fullText, btn);
+      }
+
       // Show support button if AI can't resolve
       if (/support@solvenin\.com|çözemiyorum|bilemiyorum|emin değilim/i.test(fullText)) {
         const sc = document.getElementById('ai-support-container');
@@ -1737,6 +1783,59 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
     if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Gönder'; }
     input.focus();
     aiUpdateRemaining();
+  };
+
+  /* ── TEXT-TO-SPEECH ───────────────────────────────────────── */
+  let _aiActiveSpeakBtn = null;
+
+  const _aiTTSLangMap = { tr:'tr-TR', en:'en-US', ru:'ru-RU', kz:'kk-KZ', de:'de-DE', fr:'fr-FR', es:'es-ES', ar:'ar-SA', zh:'zh-CN', ja:'ja-JP', pt:'pt-PT' };
+
+  function aiCleanTextForTTS(text) {
+    return text
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*/g, '').replace(/\*/g, '')
+      .replace(/\|/g, ' ').replace(/[-]{3,}/g, '')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/`/g, '')
+      .trim();
+  }
+
+  function aiSpeakText(text, btn) {
+    if (!window.speechSynthesis) return;
+    if (_aiActiveSpeakBtn) {
+      window.speechSynthesis.cancel();
+      _aiActiveSpeakBtn.classList.remove('speaking');
+      if (_aiActiveSpeakBtn === btn) { _aiActiveSpeakBtn = null; return; }
+    }
+
+    let clean = aiCleanTextForTTS(text);
+    if (clean.length > 500) {
+      const sentences = clean.match(/[^.!?…]+[.!?…]+/g) || [clean];
+      clean = sentences.slice(0, 3).join(' ').trim() + ' … devamı için metni okuyun.';
+    }
+
+    const utt = new SpeechSynthesisUtterance(clean);
+    const lang = localStorage.getItem('solvenin_lang') || 'tr';
+    utt.lang   = _aiTTSLangMap[lang] || 'tr-TR';
+    utt.rate   = 1.0;
+    utt.pitch  = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const pref = voices.find(v => v.lang.startsWith(utt.lang.split('-')[0]));
+    if (pref) utt.voice = pref;
+
+    _aiActiveSpeakBtn = btn || null;
+
+    utt.onstart = () => { if (_aiActiveSpeakBtn) _aiActiveSpeakBtn.classList.add('speaking'); };
+    utt.onend   = () => { if (_aiActiveSpeakBtn) _aiActiveSpeakBtn.classList.remove('speaking'); _aiActiveSpeakBtn = null; };
+    utt.onerror = () => { if (_aiActiveSpeakBtn) _aiActiveSpeakBtn.classList.remove('speaking'); _aiActiveSpeakBtn = null; };
+
+    window.speechSynthesis.speak(utt);
+  }
+  window.aiSpeakText = aiSpeakText;
+
+  window.aiSetAutospeak = function(on) {
+    localStorage.setItem('solvenin_ai_autospeak', on ? 'true' : 'false');
   };
 
   /* ── VOICE INPUT ──────────────────────────────────────────── */
@@ -1797,6 +1896,8 @@ Solvenin modülleri: Envanter, Satış, Satın Alma, Üretim, Kasa & Banka, Muha
     aiInitVoice();
     if (!_aiRecognition) return;
     if (_aiRecording) { _aiRecognition.stop(); return; }
+    window.speechSynthesis?.cancel();
+    _aiActiveSpeakBtn = null;
     try { _aiRecognition.start(); } catch(e) { /* already started */ }
   };
 
