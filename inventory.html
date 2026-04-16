@@ -544,14 +544,32 @@ tr:hover .action-btns { opacity:1; }
           <div id="p-tax-hint" style="font-size:11px;color:var(--gray500);margin-top:6px"></div>
         </div>
       </div>
+      <div class="form-divider" data-product-only></div>
+      <div class="form-section-title" data-i18n="section_stock_management" data-product-only>📦 Stok Yönetimi</div>
       <div class="form-row" data-product-only>
         <div class="form-group">
           <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
           <input type="number" id="p-min-stock" placeholder="—" min="0">
+          <div style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_min_stock">Acil durum tamponu</div>
         </div>
         <div class="form-group">
           <label data-i18n="label_max_stock">Max. Stock</label>
           <input type="number" id="p-max-stock" placeholder="—" min="0">
+        </div>
+      </div>
+      <div class="form-row" data-product-only>
+        <div class="form-group">
+          <label data-i18n="label_lead_time">Tedarik Süresi (gün)</label>
+          <input type="number" id="p-lead-time" placeholder="—" min="0">
+          <div style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_lead_time">Siparişten teslimata kadar</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_reorder_point">Yeniden Sipariş Noktası</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="p-reorder-point" placeholder="—" min="0" style="flex:1">
+            <button type="button" class="btn btn-outline btn-sm" onclick="calcReorderPoint()" style="white-space:nowrap;padding:6px 10px;font-size:11px" data-i18n="btn_auto_calculate">🔄 Hesapla</button>
+          </div>
+          <div id="reorder-hint" style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_reorder_point">Bu seviyede sipariş ver</div>
         </div>
       </div>
 
@@ -852,8 +870,7 @@ function updateStats() {
   const physical = products.filter(p => !p.is_service);
   const total = products.length;
   const totalValue = physical.reduce((s, p) => s + p.stock * p.unit_cost, 0);
-  const _thr = window._lowStockThreshold || 10;
-  const low = physical.filter(p => p.stock > 0 && p.stock <= (p.min_stock || _thr)).length;
+  const low = physical.filter(p => p.stock > 0 && (p.reorder_point != null ? p.stock <= p.reorder_point : (p.min_stock != null && p.stock <= p.min_stock))).length;
   const out = physical.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
@@ -872,9 +889,40 @@ document.addEventListener('langChanged', () => { if (typeof products !== 'undefi
 
 function getStockStatus(p) {
   if (p.stock <= 0) return 'out';
-  const threshold = p.min_stock || window._lowStockThreshold || 10;
-  if (p.stock <= threshold) return 'low';
+  if (p.min_stock != null && p.stock <= p.min_stock) return 'critical';
+  if (p.reorder_point != null && p.stock <= p.reorder_point) return 'low';
+  if (p.min_stock != null && p.stock <= p.min_stock) return 'low';
   return 'in_stock';
+}
+
+async function calcReorderPoint() {
+  const minStock = parseFloat(document.getElementById('p-min-stock').value) || 0;
+  const leadTime = parseInt(document.getElementById('p-lead-time').value) || 0;
+  const hint = document.getElementById('reorder-hint');
+  if (!leadTime || !companyId) {
+    if (hint) hint.textContent = t('helper_reorder_point') || 'Tedarik süresi girin';
+    return;
+  }
+  const productId = editingId;
+  let avgDaily = 0;
+  if (productId) {
+    const d30 = new Date(); d30.setDate(d30.getDate() - 30);
+    const { data } = await sb.from('stock_movements')
+      .select('quantity').eq('company_id', companyId).eq('product_id', productId)
+      .eq('movement_type', 'out').gte('created_at', d30.toISOString());
+    const totalSold = (data||[]).reduce((s,m) => s + Math.abs(parseFloat(m.quantity||0)), 0);
+    avgDaily = totalSold / 30;
+  }
+  const suggested = Math.ceil(minStock + (avgDaily * leadTime));
+  document.getElementById('p-reorder-point').value = suggested || '';
+  if (hint) {
+    const parts = [];
+    parts.push(`Min ${minStock}`);
+    if (avgDaily > 0) parts.push(`${leadTime} gün × ${avgDaily.toFixed(1)}/gün`);
+    else parts.push(`${leadTime} gün (satış verisi yok)`);
+    hint.textContent = `Önerilen: ${suggested} (${parts.join(' + ')})`;
+    hint.style.color = '#2563eb';
+  }
 }
 
 function applyFilters() {
@@ -888,9 +936,9 @@ function applyFilters() {
     const matchCat = !cat || p.category_id === cat;
     const status = getStockStatus(p);
     // Services have no stock status — only honor status/low-stock filters for products
-    const matchStatus = !statusFilter || (p.is_service ? false : status === statusFilter);
+    const matchStatus = !statusFilter || (p.is_service ? false : (statusFilter === 'low' ? (status === 'low' || status === 'critical') : status === statusFilter));
     const matchTab = currentTab === 'all'
-      || (currentTab === 'low' && !p.is_service && status === 'low')
+      || (currentTab === 'low' && !p.is_service && (status === 'low' || status === 'critical'))
       || (currentTab === 'out' && !p.is_service && status === 'out');
     const matchType = !itemTypeFilter
       || (itemTypeFilter === 'product' && !p.is_service)
@@ -934,11 +982,13 @@ function renderTable() {
   tbody.innerHTML = page.map(p => {
     const status = getStockStatus(p);
     const pct = p.max_stock ? Math.min(100, (p.stock / p.max_stock) * 100) : 50;
-    const fillClass = status === 'out' ? 'critical' : status === 'low' ? 'low' : 'good';
+    const fillClass = status === 'out' ? 'critical' : (status === 'critical' || status === 'low') ? 'low' : 'good';
     const badge = status === 'out'
       ? `<span class="badge badge-red">${t('status_out_of_stock')}</span>`
+      : status === 'critical'
+      ? `<span class="badge badge-red">🔴 ${t('stock_critical')||'Kritik'}</span>`
       : status === 'low'
-      ? `<span class="badge badge-orange">${t('status_low_stock')}</span>`
+      ? `<span class="badge badge-orange">🟡 ${t('stock_order_needed')||'Sipariş Ver'}</span>`
       : `<span class="badge badge-green">${t('status_in_stock')}</span>`;
     const totalVal = p.unit_cost ? fmt(p.stock * p.unit_cost) : '—';
     const catBadge = {Electronics:'badge-blue', 'Raw Material':'badge-gray', Packaging:'badge-purple', 'Finished Goods':'badge-green', Office:'badge-gray'}[p.category] || 'badge-gray';
@@ -1208,6 +1258,9 @@ function openEditModal(id) {
   document.getElementById('p-stock').value = p.stock;
   document.getElementById('p-min-stock').value = p.min_stock != null ? p.min_stock : '';
   document.getElementById('p-max-stock').value = p.max_stock != null ? p.max_stock : '';
+  document.getElementById('p-lead-time').value = p.lead_time_days != null ? p.lead_time_days : '';
+  document.getElementById('p-reorder-point').value = p.reorder_point != null ? p.reorder_point : '';
+  document.getElementById('reorder-hint').textContent = t('helper_reorder_point') || 'Bu seviyede sipariş ver';
   document.getElementById('p-cost').value = p.unit_cost || '';
   document.getElementById('p-price').value = p.price || '';
   resetCatSelector(p.category_id);
@@ -1256,7 +1309,7 @@ function onItemTypeChange() {
 async function loadProducts() {
   if (!companyId) return;
   const { data, error } = await sb.from('products')
-    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override,is_weight_product,plu_code')
+    .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override,is_weight_product,plu_code,reorder_point,lead_time_days')
     .eq('company_id', companyId)
     .eq('is_active', true)
     .order('name');
@@ -1285,6 +1338,8 @@ async function loadProducts() {
     tax_rate_override: p.tax_rate_override,
     is_weight_product: !!p.is_weight_product,
     plu_code: p.plu_code || '',
+    reorder_point: p.reorder_point != null ? parseFloat(p.reorder_point) : null,
+    lead_time_days: p.lead_time_days != null ? parseInt(p.lead_time_days) : null,
   }));
 }
 
@@ -1583,6 +1638,8 @@ async function saveProduct() {
     quantity: isService ? 0 : (parseFloat(document.getElementById('p-stock').value) || 0),
     min_stock: isService ? null : (document.getElementById('p-min-stock').value !== '' ? parseFloat(document.getElementById('p-min-stock').value) : null),
     max_stock: isService ? null : (document.getElementById('p-max-stock').value !== '' ? parseFloat(document.getElementById('p-max-stock').value) : null),
+    reorder_point: isService ? null : (document.getElementById('p-reorder-point').value !== '' ? parseFloat(document.getElementById('p-reorder-point').value) : null),
+    lead_time_days: isService ? null : (document.getElementById('p-lead-time').value !== '' ? parseInt(document.getElementById('p-lead-time').value) : null),
     cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
     company_id: companyId,

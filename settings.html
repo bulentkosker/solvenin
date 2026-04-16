@@ -691,11 +691,7 @@ tr:hover .action-btns { opacity:1; }
                 </div>
                 <div class="manage-item" style="padding:12px 0">
                   <div class="form-row">
-                    <div class="form-group" style="max-width:240px">
-                      <label data-i18n="settings_low_stock_threshold">Düşük stok eşiği</label>
-                      <input type="number" id="stk-low-threshold" value="10" min="0" placeholder="10" style="width:100%">
-                      <div style="font-size:11px;color:var(--gray400);margin-top:4px" data-i18n="settings_low_stock_threshold_helper">Bu miktarın altındaki ürünler düşük stok uyarısı verir</div>
-                    </div>
+                    <div style="font-size:12px;color:var(--gray400);padding:8px 0" data-i18n="settings_low_stock_per_product">Düşük stok eşikleri artık ürün bazında tanımlanıyor (Envanter → Ürün Düzenle → Stok Yönetimi)</div>
                   </div>
                 </div>
               </div>
@@ -1940,8 +1936,7 @@ async function loadCompanyData() {
   // Stock settings
   const negEl = document.getElementById('stk-allow-negative');
   if (negEl) negEl.checked = data.allow_negative_stock !== false;
-  const thrEl = document.getElementById('stk-low-threshold');
-  if (thrEl) thrEl.value = data.low_stock_threshold ?? 10;
+  // low_stock_threshold removed — now per-product
   const bfEl = document.getElementById('stk-barcode-format');
   if (bfEl) bfEl.value = data.default_barcode_format || 'EAN-13';
   // Weight/scale barcode settings
@@ -2947,7 +2942,6 @@ async function saveStockSettings() {
     if (!companyId) return;
     const payload = {
       allow_negative_stock: document.getElementById('stk-allow-negative')?.checked ?? true,
-      low_stock_threshold: parseInt(document.getElementById('stk-low-threshold')?.value) || 10,
       default_barcode_format: document.getElementById('stk-barcode-format')?.value || 'EAN-13',
       weight_barcode_format: document.querySelector('input[name="wb-format"]:checked')?.value || 'EAN-13',
       weight_barcode_plu_length: parseInt(document.getElementById('wb-plu-length')?.value) || 5,

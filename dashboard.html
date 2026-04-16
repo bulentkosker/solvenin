@@ -1505,7 +1505,7 @@ async function loadDashboardStats(){
       sb.from('payments').select('id,amount,order_id').eq('company_id', companyId),
       sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true),
       sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId),
-      sb.from('products').select('id,quantity,min_stock').eq('company_id', companyId),
+      sb.from('products').select('id,quantity,min_stock,reorder_point').eq('company_id', companyId),
     ]);
 
     const orders    = ordersRes.data || [];
@@ -1536,7 +1536,14 @@ async function loadDashboardStats(){
 
     const totalPurch    = purchases.reduce((s,p) => s + parseFloat(p.total||0), 0);
     const thisMoPurch   = purchases.filter(p => p.created_at >= thisMonthStart).reduce((s,p) => s + parseFloat(p.total||0), 0);
-    const lowStock      = products.filter(p => parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0)).length;
+    const lowStock      = products.filter(p => {
+      const qty = parseFloat(p.quantity||0);
+      const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+      const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
+      if (rp != null) return qty <= rp;
+      if (ms != null) return qty <= ms;
+      return false;
+    }).length;
 
     // This-month order count & purchase diff
     const thisMoOrders = activeOrders.filter(o => o.created_at >= thisMonthStart);
@@ -1637,13 +1644,20 @@ async function loadDashboardStats(){
 
     // Use products data already loaded above for low stock
     const { data: allProducts } = await sb.from('products')
-      .select('name, quantity, min_stock')
+      .select('name, quantity, min_stock, reorder_point')
       .eq('company_id', companyId)
       .eq('is_active', true);
 
     const notifContainer = document.getElementById('notif-list-container');
     if (notifContainer && allProducts) {
-      const lowStockItems = allProducts.filter(p => p.min_stock > 0 && p.quantity <= p.min_stock);
+      const lowStockItems = allProducts.filter(p => {
+        const qty = parseFloat(p.quantity||0);
+        const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+        const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
+        if (rp != null) return qty <= rp;
+        if (ms != null && ms > 0) return qty <= ms;
+        return false;
+      });
       if (lowStockItems.length === 0) {
         notifContainer.innerHTML = `<div class="notif-item"><div class="notif-body"><div class="notif-desc" style="color:var(--gray400);text-align:center;padding:16px">${t('no_data')||'No notifications'}</div></div></div>`;
       } else {
@@ -1881,13 +1895,28 @@ async function loadAlerts(){
     const in7 = new Date(today.getTime()+7*86400000).toISOString().slice(0,10);
     const todayStr = today.toISOString().slice(0,10);
     const [prods, overdueOrders, upcoming] = await Promise.all([
-      sb.from('products').select('name, quantity, min_stock').eq('company_id', companyId).eq('is_active', true),
+      sb.from('products').select('name, quantity, min_stock, reorder_point').eq('company_id', companyId).eq('is_active', true),
       sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','overdue']).lt('due_date', todayStr).order('due_date',{ascending:true}).limit(10),
       sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','confirmed']).gte('due_date', todayStr).lte('due_date', in7).order('due_date',{ascending:true}).limit(10),
     ]);
-    const lows = (prods.data||[]).filter(p => p.min_stock > 0 && parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0)).slice(0,8);
+    const lows = (prods.data||[]).filter(p => {
+      const qty = parseFloat(p.quantity||0);
+      const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+      const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
+      if (rp != null) return qty <= rp;
+      if (ms != null && ms > 0) return qty <= ms;
+      return false;
+    }).slice(0,8);
     const rows = [];
-    lows.forEach(p => rows.push(`<div class="alert-row low-stock"><span class="a-ico">⚠️</span><div class="a-body"><div class="a-title">${p.name}</div><div class="a-sub">${t('dash_low_stock')||'Düşük stok'} · ${p.quantity}/${p.min_stock}</div></div></div>`));
+    lows.forEach(p => {
+      const qty = parseFloat(p.quantity||0);
+      const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
+      const isCritical = ms != null && qty <= ms;
+      const ico = isCritical ? '🔴' : '🟡';
+      const label = isCritical ? (t('stock_critical')||'Kritik') : (t('stock_order_needed')||'Sipariş Ver');
+      const threshold = p.reorder_point != null ? p.reorder_point : p.min_stock;
+      rows.push(`<div class="alert-row low-stock"><span class="a-ico">${ico}</span><div class="a-body"><div class="a-title">${p.name}</div><div class="a-sub">${label} · ${p.quantity}/${threshold}</div></div></div>`);
+    });
     (overdueOrders.data||[]).forEach(o => {
       const days = Math.floor((today - new Date(o.due_date))/86400000);
       rows.push(`<div class="alert-row overdue"><span class="a-ico">🔴</span><div class="a-body"><div class="a-title">${o.contacts?.name||'—'} · ${fmtMoney(o.total)}</div><div class="a-sub">${days} ${t('dash_days_overdue')||'gün gecikmiş'}</div></div></div>`);

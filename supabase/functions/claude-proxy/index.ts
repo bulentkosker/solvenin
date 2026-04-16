@@ -193,18 +193,20 @@ async function executeTool(name: string, input: any, sb: any, companyId: string)
     }
 
     case 'get_stock_status': {
-      const fmt = (items:any[]) => items.map((p:any) => ({
-        name: p.name, sku: p.sku, category: p.categories?.name,
-        quantity: parseFloat(p.quantity||0), min_stock: parseFloat(p.min_stock||0), unit: p.unit
-      }))
+      const _sel = 'name, sku, quantity, min_stock, reorder_point, lead_time_days, unit, categories(name)'
+      const fmt = (items:any[]) => items.map((p:any) => {
+        const qty = parseFloat(p.quantity||0), ms = parseFloat(p.min_stock||0), rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null
+        let status = 'ok'
+        if (qty <= 0) status = 'out'
+        else if (ms > 0 && qty <= ms) status = 'critical'
+        else if (rp != null && qty <= rp) status = 'reorder'
+        return { name: p.name, sku: p.sku, category: p.categories?.name, quantity: qty, min_stock: ms, reorder_point: rp, lead_time_days: p.lead_time_days, unit: p.unit, status }
+      })
 
       if (input.product_name) {
-        const base = () => sb.from('products').select('name, sku, quantity, min_stock, unit, categories(name)')
-          .eq('company_id', companyId).eq('is_active', true)
-
+        const base = () => sb.from('products').select(_sel).eq('company_id', companyId).eq('is_active', true)
         const { data } = await base().ilike('name', `%${input.product_name}%`).limit(10)
         if (data?.length) return { products: fmt(data), filter: input.filter }
-
         const words = input.product_name.split(/\s+/).filter((w:string) => w.length > 2)
         let wordResults: any[] = []
         const seen = new Set<string>()
@@ -213,15 +215,13 @@ async function executeTool(name: string, input: any, sb: any, companyId: string)
           for (const p of wd || []) { if (!seen.has(p.name)) { seen.add(p.name); wordResults.push(p) } }
         }
         if (wordResults.length) return { products: fmt(wordResults), filter: input.filter, search_note: 'Yakın eşleşmeler gösteriliyor' }
-
         return { products: [], error: `"${input.product_name}" bulunamadı`, suggestion: 'Ürün adının bir kısmını deneyin' }
       }
 
-      let q = sb.from('products').select('name, sku, quantity, min_stock, unit, categories(name)')
-        .eq('company_id', companyId).eq('is_active', true).limit(30)
+      let q = sb.from('products').select(_sel).eq('company_id', companyId).eq('is_active', true).limit(30)
       const { data } = await q
       let items = data || []
-      if (input.filter === 'low')      items = items.filter((p:any) => parseFloat(p.min_stock||0) > 0 && parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0) && parseFloat(p.quantity||0) > 0)
+      if (input.filter === 'low') items = items.filter((p:any) => { const qty=parseFloat(p.quantity||0), ms=parseFloat(p.min_stock||0), rp=p.reorder_point!=null?parseFloat(p.reorder_point):null; return qty>0 && ((rp!=null && qty<=rp) || (ms>0 && qty<=ms)) })
       else if (input.filter === 'out') items = items.filter((p:any) => parseFloat(p.quantity||0) <= 0)
       return { products: fmt(items), filter: input.filter }
     }
