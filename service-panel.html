@@ -1404,7 +1404,40 @@ async function renderRepair() {
       <h3>📜 Onarım Geçmişi</h3>
       <div id="repair-history" style="font-size:12px;color:var(--gray500)">Şirket seçilince gösterilir</div>
     </div>
+
+    <div class="card" style="border:2px solid #fca5a5">
+      <h3>🗑️ Test Verisi Temizleme</h3>
+      <p style="font-size:12px;color:var(--gray500);margin-bottom:12px">Bir şirketin tüm işlem verilerini temizler. 7 gün içinde geri alınabilir.</p>
+      <div style="display:grid;grid-template-columns:1fr;gap:12px">
+        <div class="field" style="margin:0"><label>Şirket Seç</label>
+          <select id="cleanup-company" onchange="loadCleanupPreview()">
+            <option value="">Şirket seç...</option>
+            ${companies.map(c => \`<option value="\${c.id}">\${c.name} (\${c.plan||'free'})</option>\`).join('')}
+          </select>
+        </div>
+        <div id="cleanup-preview"></div>
+        <div id="cleanup-actions" style="display:none">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('sales')">🗑️ Satış Siparişleri</button>
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('purchases')">🗑️ Alış Siparişleri</button>
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('movements')">🗑️ Stok Hareketleri</button>
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('cash_bank')">🗑️ Kasa/Banka</button>
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('contacts')">🗑️ Cari İşlemler</button>
+            <button class="btn btn-outline btn-sm" onclick="doCleanup('finance')">🗑️ Ödemeler/Muhasebe</button>
+          </div>
+          <button class="btn" style="background:#dc2626;color:#fff;border-color:#dc2626;width:100%;padding:12px;font-size:14px;font-weight:700" onclick="doCleanup('all')">🔴 TÜMÜNÜ TEMİZLE</button>
+        </div>
+        <div id="cleanup-result"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>↩️ Son Temizlemeler</h3>
+      <div id="cleanup-log" style="font-size:12px;color:var(--gray500)">Yükleniyor...</div>
+    </div>
   `;
+
+  loadCleanupLog();
 
   document.getElementById('repair-company').addEventListener('change', (e) => {
     repairCompanyId = e.target.value;
@@ -1580,6 +1613,122 @@ async function loadRepairHistory() {
       </tr>`).join('')}
     </tbody>
   </table>`;
+}
+
+// ===== TEST DATA CLEANUP =====
+let _cleanupPreview = null;
+let _cleanupCompanyId = null;
+
+async function loadCleanupPreview() {
+  const sel = document.getElementById('cleanup-company');
+  const prev = document.getElementById('cleanup-preview');
+  const acts = document.getElementById('cleanup-actions');
+  const res  = document.getElementById('cleanup-result');
+  _cleanupCompanyId = sel?.value || null;
+  if (res) res.innerHTML = '';
+  if (!_cleanupCompanyId) { if (prev) prev.innerHTML = ''; if (acts) acts.style.display='none'; return; }
+
+  if (prev) prev.innerHTML = '<div style="padding:12px;color:var(--gray500)">Yükleniyor...</div>';
+  const { data, error } = await sb.rpc('sp_cleanup_preview', { p_company_id: _cleanupCompanyId });
+  if (error || !data) { if (prev) prev.innerHTML = '<div style="color:#dc2626">Hata: '+(error?.message||'veri yok')+'</div>'; return; }
+  _cleanupPreview = data;
+
+  const fmtN = n => parseFloat(n||0).toLocaleString('tr-TR',{maximumFractionDigits:0});
+  const fmtD = d => d ? new Date(d).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+  const total = (data.sales||0)+(data.purchases||0)+(data.movements||0)+(data.cash_txns||0)+(data.bank_txns||0)+(data.contact_txns||0)+(data.journal_entries||0)+(data.payments||0);
+
+  if (prev) prev.innerHTML = `
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;font-size:12px;line-height:1.8">
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px">🏢 ${data.company_name}</div>
+      <div>👤 Owner: ${data.owner_name||'—'} &nbsp; ${data.owner_email||''}</div>
+      <div>💳 Plan: ${(data.plan||'free').charAt(0).toUpperCase()+(data.plan||'free').slice(1)} &nbsp; 📅 Kayıt: ${fmtD(data.created_at)} &nbsp; 📍 ${(data.country_code||'—').toUpperCase()}</div>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0">
+      <div style="font-weight:600;margin-bottom:4px">Silinecek veriler:</div>
+      <div>📄 ${fmtN(data.sales)} satış siparişi &nbsp;&nbsp; ${fmtN(data.sales_total)} ₸</div>
+      <div>📦 ${fmtN(data.purchases)} alış siparişi &nbsp;&nbsp; ${fmtN(data.purchases_total)} ₸</div>
+      <div>📊 ${fmtN(data.movements)} stok hareketi</div>
+      <div>💰 ${fmtN(data.cash_txns)} kasa hareketi &nbsp; 🏦 ${fmtN(data.bank_txns)} banka hareketi</div>
+      <div>👥 ${fmtN(data.contact_txns)} cari işlem &nbsp; 💳 ${fmtN(data.payments)} ödeme &nbsp; 📒 ${fmtN(data.journal_entries)} muhasebe kaydı</div>
+      <div style="margin-top:6px;font-weight:600;color:#b91c1c">Toplam: ${fmtN(total)} kayıt</div>
+    </div>`;
+  if (acts) acts.style.display = total > 0 ? 'block' : 'none';
+}
+
+async function doCleanup(scope) {
+  if (!_cleanupCompanyId || !_cleanupPreview) return;
+  const name = _cleanupPreview.company_name;
+
+  // Step 1: type company name
+  const typed = prompt(`Devam etmek için şirket adını yazın:\n\n"${name}"`);
+  if (!typed || typed.trim().toLowerCase() !== name.toLowerCase()) {
+    showToast('Şirket adı eşleşmedi', 'error'); return;
+  }
+
+  // Step 2: superadmin password
+  const pwd = prompt('Servis paneli şifrenizi girin:');
+  if (!pwd) return;
+  const { data: auth } = await sb.rpc('sp_login', { p_email: user.email, p_password: pwd });
+  if (!auth?.ok) { showToast('Geçersiz şifre', 'error'); return; }
+
+  // Execute
+  const { data, error } = await sb.rpc('sp_cleanup_execute', {
+    p_company_id: _cleanupCompanyId,
+    p_sp_user_id: user.id,
+    p_scope: scope
+  });
+  if (error) { showToast('Hata: ' + error.message, 'error'); return; }
+
+  const counts = data?.counts || {};
+  const resEl = document.getElementById('cleanup-result');
+  const deadline = new Date(); deadline.setDate(deadline.getDate()+7);
+  const items = Object.entries(counts).filter(([,v])=>v>0).map(([k,v])=>`✅ ${v} ${k}`).join('<br>');
+
+  if (resEl) resEl.innerHTML = `
+    <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:14px;font-size:12px">
+      <div style="font-weight:700;font-size:14px;color:#065f46;margin-bottom:6px">✅ ${name} verileri temizlendi</div>
+      ${items}
+      <div style="margin-top:8px;color:#92400e">⚠️ 7 gün içinde geri alabilirsiniz — Son tarih: ${deadline.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})}</div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="doRestore('${_cleanupCompanyId}')">↩️ Geri Al</button>
+    </div>`;
+
+  document.getElementById('cleanup-actions').style.display = 'none';
+  loadCleanupPreview();
+  loadCleanupLog();
+  sb.rpc('sp_log', { p_user_id: user.id, p_action: 'test_data_cleanup', p_company_id: _cleanupCompanyId, p_details: counts });
+}
+
+async function doRestore(companyId) {
+  if (!confirm('Bu şirketin temizlenen verilerini geri almak istediğinize emin misiniz?')) return;
+  const { data, error } = await sb.rpc('sp_cleanup_restore', { p_company_id: companyId, p_sp_user_id: user.id });
+  if (error) { showToast('Hata: ' + error.message, 'error'); return; }
+  showToast(`${data?.restored||0} kayıt geri alındı`, 'success');
+  loadCleanupPreview();
+  loadCleanupLog();
+}
+
+async function loadCleanupLog() {
+  const el = document.getElementById('cleanup-log');
+  if (!el) return;
+  // Purge expired first
+  await sb.rpc('sp_cleanup_purge_expired');
+  const { data } = await sb.rpc('sp_cleanup_list');
+  if (!data?.length) { el.innerHTML = '<div style="padding:8px;color:var(--gray400)">Bekleyen temizleme yok</div>'; return; }
+
+  el.innerHTML = data.map(r => {
+    const counts = r.details?.counts || {};
+    const autoDelete = r.details?.auto_delete_at ? new Date(r.details.auto_delete_at) : null;
+    const daysLeft = autoDelete ? Math.max(0, Math.ceil((autoDelete - Date.now()) / 86400000)) : 0;
+    const ago = Math.ceil((Date.now() - new Date(r.created_at).getTime()) / 86400000);
+    const parts = Object.entries(counts).filter(([,v])=>v>0).map(([k,v])=>`${v} ${k}`).join(', ');
+    return `<div style="padding:10px;border:1px solid var(--gray100);border-radius:8px;margin-bottom:8px">
+      <div style="font-weight:600">${r.company_name} — ${r.performed_by_name||'—'} — ${ago} gün önce</div>
+      <div style="color:var(--gray500);font-size:11px;margin:4px 0">${parts}</div>
+      <div style="color:#92400e;font-size:11px">⏰ ${daysLeft} gün sonra kalıcı silinecek</div>
+      <div style="margin-top:6px;display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="doRestore('${r.company_id}')">↩️ Geri Al</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function renderPanelUsers() {
