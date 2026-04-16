@@ -193,26 +193,52 @@ async function executeTool(name: string, input: any, sb: any, companyId: string)
     }
 
     case 'get_stock_status': {
-      let q = sb.from('products').select('name, sku, quantity, min_stock, unit, categories(name)')
-        .eq('company_id', companyId).eq('is_active', true).limit(30)
-      if (input.product_name) q = q.ilike('name', `%${input.product_name}%`)
-      const { data } = await q
-      let items = data || []
-      if (!input.product_name){
-        if (input.filter === 'low')      items = items.filter((p:any) => parseFloat(p.min_stock||0) > 0 && parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0) && parseFloat(p.quantity||0) > 0)
-        else if (input.filter === 'out') items = items.filter((p:any) => parseFloat(p.quantity||0) <= 0)
-      }
-      return { products: items.map((p:any) => ({
+      const fmt = (items:any[]) => items.map((p:any) => ({
         name: p.name, sku: p.sku, category: p.categories?.name,
         quantity: parseFloat(p.quantity||0), min_stock: parseFloat(p.min_stock||0), unit: p.unit
-      })), filter: input.filter }
+      }))
+
+      if (input.product_name) {
+        const base = () => sb.from('products').select('name, sku, quantity, min_stock, unit, categories(name)')
+          .eq('company_id', companyId).eq('is_active', true)
+
+        const { data } = await base().ilike('name', `%${input.product_name}%`).limit(10)
+        if (data?.length) return { products: fmt(data), filter: input.filter }
+
+        const words = input.product_name.split(/\s+/).filter((w:string) => w.length > 2)
+        let wordResults: any[] = []
+        const seen = new Set<string>()
+        for (const word of words) {
+          const { data: wd } = await base().ilike('name', `%${word}%`).limit(5)
+          for (const p of wd || []) { if (!seen.has(p.name)) { seen.add(p.name); wordResults.push(p) } }
+        }
+        if (wordResults.length) return { products: fmt(wordResults), filter: input.filter, search_note: 'Yakın eşleşmeler gösteriliyor' }
+
+        return { products: [], error: `"${input.product_name}" bulunamadı`, suggestion: 'Ürün adının bir kısmını deneyin' }
+      }
+
+      let q = sb.from('products').select('name, sku, quantity, min_stock, unit, categories(name)')
+        .eq('company_id', companyId).eq('is_active', true).limit(30)
+      const { data } = await q
+      let items = data || []
+      if (input.filter === 'low')      items = items.filter((p:any) => parseFloat(p.min_stock||0) > 0 && parseFloat(p.quantity||0) <= parseFloat(p.min_stock||0) && parseFloat(p.quantity||0) > 0)
+      else if (input.filter === 'out') items = items.filter((p:any) => parseFloat(p.quantity||0) <= 0)
+      return { products: fmt(items), filter: input.filter }
     }
 
     case 'get_contact_balance': {
-      const { data: contacts } = await sb.from('contacts')
-        .select('id, name, is_customer, is_supplier').eq('company_id', companyId)
-        .ilike('name', `%${input.contact_name}%`).limit(1)
-      if (!contacts || !contacts.length) return { error: 'Cari bulunamadı: ' + input.contact_name }
+      const cBase = () => sb.from('contacts').select('id, name, is_customer, is_supplier')
+        .eq('company_id', companyId).is('deleted_at', null)
+      let { data: contacts } = await cBase().ilike('name', `%${input.contact_name}%`).limit(5)
+      if (!contacts?.length) {
+        const words = (input.contact_name || '').split(/\s+/).filter((w:string) => w.length > 2)
+        for (const word of words) {
+          const { data: wd } = await cBase().ilike('name', `%${word}%`).limit(3)
+          if (wd?.length) { contacts = wd; break }
+        }
+      }
+      if (!contacts?.length) return { error: `"${input.contact_name}" adında cari bulunamadı` }
+      if (contacts.length > 1) return { contacts: contacts.map((c:any) => ({ name: c.name, type: c.is_customer && c.is_supplier ? 'both' : c.is_customer ? 'customer' : 'supplier' })), note: 'Birden fazla eşleşme bulundu' }
       const c = contacts[0]
       let salesTotal = 0, purchTotal = 0, salesPaid = 0, purchPaid = 0
       if (c.is_customer){
