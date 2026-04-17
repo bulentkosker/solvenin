@@ -1494,9 +1494,12 @@ async function runRepair(key, mode) {
         const { data, error } = await sb.rpc('sp_analyze_missing_sales_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
-        const hdr = [{key:'order_number',label:'Fatura No'},{key:'issue_date',label:'Tarih'},{key:'contact_name',label:'Cari'},{key:'product_name',label:'Ürün'},{key:'quantity',label:'Miktar',align:'right',fmt:v=>fmtN(v)}];
+        const fmtD = v => v ? new Date(v+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+        const fmtQ = r => fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '');
+        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD(r.issue_date), qty_fmt: fmtQ(r)}));
+        const hdr = [{key:'order_number',label:'Fatura No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Cari',fmt:v=>v||'—'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
         _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi` +
-          _discrepancyTable(hdr, data.details || []) +
+          _discrepancyTable(hdr, rows) +
           `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
       }
 
@@ -1511,9 +1514,12 @@ async function runRepair(key, mode) {
         const { data, error } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
-        const hdr = [{key:'order_number',label:'Sipariş No'},{key:'issue_date',label:'Tarih'},{key:'contact_name',label:'Tedarikçi'},{key:'product_name',label:'Ürün'},{key:'quantity',label:'Miktar',align:'right',fmt:v=>fmtN(v)}];
+        const fmtD = v => v ? new Date(v+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+        const fmtQ = r => fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '');
+        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD(r.issue_date), qty_fmt: fmtQ(r)}));
+        const hdr = [{key:'order_number',label:'Sipariş No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Tedarikçi',fmt:v=>v||'—'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
         _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi` +
-          _discrepancyTable(hdr, data.details || []) +
+          _discrepancyTable(hdr, rows) +
           `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
       }
 
