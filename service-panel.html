@@ -112,6 +112,16 @@ tr:hover td{background:var(--gray50)}
 .toast.success{background:var(--green)}
 
 @media(max-width:768px){.sp-sidebar{transform:translateX(-100%);transition:transform .25s}.sp-sidebar.open{transform:translateX(0)}.sp-main{margin-left:0}.stats-grid{grid-template-columns:1fr 1fr}}
+.sp-search-select { position:relative; }
+.sp-search-select input { width:100%;padding:8px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;box-sizing:border-box; }
+.sp-search-select input:focus { border-color:var(--primary);outline:none; }
+.sp-search-list { display:none;position:absolute;top:100%;left:0;right:0;max-height:220px;overflow-y:auto;background:#fff;border:1px solid var(--gray200);border-radius:0 0 8px 8px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.sp-search-select.open .sp-search-list { display:block; }
+.sp-search-item { padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid var(--gray50); }
+.sp-search-item:hover { background:var(--gray50); }
+.sp-search-item .co-name { font-weight:600; }
+.sp-search-item .co-email { font-size:11px;color:var(--gray400); }
+.sp-search-item.selected { background:#eff6ff; }
 </style>
 </head>
 <body>
@@ -1367,10 +1377,12 @@ async function renderRepair() {
       <h3>🎯 Şirket ve Tarih Aralığı</h3>
       <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px">
         <div class="field" style="margin:0"><label>Şirket</label>
-          <select id="repair-company">
-            <option value="">Şirket seç...</option>
-            ${companies.map(c => `<option value="${c.id}">${c.name} (${c.plan||'free'})</option>`).join('')}
-          </select>
+          <div class="sp-search-select" id="repair-company-wrap">
+            <input type="text" id="repair-company-search" placeholder="Şirket ara..." autocomplete="off"
+              onfocus="spSearchOpen('repair-company')" oninput="spSearchFilter('repair-company', this.value)">
+            <input type="hidden" id="repair-company">
+            <div class="sp-search-list" id="repair-company-list"></div>
+          </div>
         </div>
         <div class="field" style="margin:0"><label>Başlangıç</label><input type="date" id="repair-start" value="${yearAgoStr}"></div>
         <div class="field" style="margin:0"><label>Bitiş</label><input type="date" id="repair-end" value="${today}"></div>
@@ -1410,10 +1422,12 @@ async function renderRepair() {
       <p style="font-size:12px;color:var(--gray500);margin-bottom:12px">Bir şirketin tüm işlem verilerini temizler. 7 gün içinde geri alınabilir.</p>
       <div style="display:grid;grid-template-columns:1fr;gap:12px">
         <div class="field" style="margin:0"><label>Şirket Seç</label>
-          <select id="cleanup-company" onchange="loadCleanupPreview()">
-            <option value="">Şirket seç...</option>
-            ${companies.map(c => `<option value="${c.id}">${c.name} (${c.plan||'free'})</option>`).join('')}
-          </select>
+          <div class="sp-search-select" id="cleanup-company-wrap">
+            <input type="text" id="cleanup-company-search" placeholder="Şirket ara..." autocomplete="off"
+              onfocus="spSearchOpen('cleanup-company')" oninput="spSearchFilter('cleanup-company', this.value)">
+            <input type="hidden" id="cleanup-company">
+            <div class="sp-search-list" id="cleanup-company-list"></div>
+          </div>
         </div>
         <div id="cleanup-preview"></div>
         <div id="cleanup-actions" style="display:none">
@@ -1438,11 +1452,8 @@ async function renderRepair() {
   `;
 
   loadCleanupLog();
-
-  document.getElementById('repair-company').addEventListener('change', (e) => {
-    repairCompanyId = e.target.value;
-    loadRepairHistory();
-  });
+  spSearchInit('repair-company', (id) => { repairCompanyId = id; loadRepairHistory(); });
+  spSearchInit('cleanup-company', (id) => { _cleanupCompanyId = id; loadCleanupPreview(); });
 }
 
 function repairTool(key, title, desc) {
@@ -1602,14 +1613,20 @@ async function runRepair(key, mode) {
 
     // === CONTACT BALANCES ===
     } else if (key === 'contact_balances') {
-      const { data } = await sb.rpc('get_all_contact_balances', { p_company_id: repairCompanyId });
-      if (!data?.length) {
-        _rtOk(el, '✅ Tüm cariler dengeli');
+      if (mode === 'fix') {
+        await fixAllContactBalances();
+        loadRepairHistory();
       } else {
-        const rows = data.slice(0, 10).map(c =>
-          `<tr><td>${c.contact_name}</td><td class="text-right">${fmt(c.balance)}</td></tr>`
-        ).join('');
-        _rtWarn(el, `⚠️ <strong>${data.length}</strong> caride açık bakiye var<br><table style="margin-top:8px;font-size:11px"><thead><tr><th>Cari</th><th class="text-right">Bakiye</th></tr></thead><tbody>${rows}</tbody></table>${data.length > 10 ? '<div style="margin-top:4px;font-size:10px">...ve ' + (data.length - 10) + ' tane daha</div>' : ''}`);
+        const { data } = await sb.rpc('get_all_contact_balances', { p_company_id: repairCompanyId });
+        if (!data?.length) {
+          _rtOk(el, '✅ Tüm cariler dengeli');
+        } else {
+          const rows = data.map(c => ({ ...c, balance_fmt: fmtN(c.balance) }));
+          const hdr = [{key:'contact_name',label:'Cari'},{key:'balance_fmt',label:'Bakiye',align:'right'}];
+          _rtWarn(el, `<span id="rt-contact-counter">⚠️ <strong>${data.length}</strong> caride açık bakiye var</span>` +
+            _discrepancyTable(hdr, rows, { actionCol: true, rowPrefix: 'rt-contact', actionFn: 'fixSingleContactBalance', actionKey: 'contact_id' }) +
+            `<button id="rt-contact-fixall" class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('contact_balances','fix')">🔧 Tümünü Düzelt (${data.length} kayıt)</button>`);
+        }
       }
     }
   } catch (e) {
@@ -1650,11 +1667,9 @@ let _cleanupPreview = null;
 let _cleanupCompanyId = null;
 
 async function loadCleanupPreview() {
-  const sel = document.getElementById('cleanup-company');
   const prev = document.getElementById('cleanup-preview');
   const acts = document.getElementById('cleanup-actions');
   const res  = document.getElementById('cleanup-result');
-  _cleanupCompanyId = sel?.value || null;
   if (res) res.innerHTML = '';
   if (!_cleanupCompanyId) { if (prev) prev.innerHTML = ''; if (acts) acts.style.display='none'; return; }
 
@@ -1759,6 +1774,66 @@ async function loadCleanupLog() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== SEARCHABLE COMPANY SELECT =====
+const _spSearchCallbacks = {};
+
+function spSearchInit(prefix, onSelect) {
+  _spSearchCallbacks[prefix] = onSelect;
+  const list = document.getElementById(prefix + '-list');
+  if (list) {
+    list.innerHTML = companies.map(c => `<div class="sp-search-item" data-id="${c.id}" onclick="spSearchSelect('${prefix}','${c.id}')"><span class="co-name">${c.name}</span><span class="co-email">${c.owner_email||c.plan||''}</span></div>`).join('');
+  }
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById(prefix + '-wrap');
+    if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+}
+
+function spSearchOpen(prefix) {
+  document.getElementById(prefix + '-wrap')?.classList.add('open');
+  spSearchFilter(prefix, document.getElementById(prefix + '-search')?.value || '');
+}
+
+function spSearchFilter(prefix, q) {
+  const list = document.getElementById(prefix + '-list');
+  if (!list) return;
+  const term = q.toLowerCase();
+  list.querySelectorAll('.sp-search-item').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    el.style.display = !term || text.includes(term) ? '' : 'none';
+  });
+}
+
+function spSearchSelect(prefix, id) {
+  const hidden = document.getElementById(prefix);
+  if (hidden) hidden.value = id;
+  const c = companies.find(x => x.id === id);
+  const search = document.getElementById(prefix + '-search');
+  if (search && c) search.value = c.name;
+  document.getElementById(prefix + '-wrap')?.classList.remove('open');
+  if (_spSearchCallbacks[prefix]) _spSearchCallbacks[prefix](id);
+}
+
+// ===== CARI FIX =====
+async function fixSingleContactBalance(contactId, rowIdx) {
+  const row = document.getElementById('rt-contact-row-' + rowIdx);
+  const { data, error } = await sb.rpc('sp_fix_contact_balance', { p_company_id: repairCompanyId, p_contact_id: contactId });
+  if (error) { showToast(error.message, 'error'); return; }
+  if (row) { row.style.background = '#dcfce7'; row.querySelector('td:last-child').innerHTML = '✅'; }
+  const el = document.getElementById('rt-result-contact_balances');
+  const remaining = el?.querySelectorAll('tbody tr:not([style*=dcfce7]) button')?.length || 0;
+  const counter = document.getElementById('rt-contact-counter');
+  if (counter) counter.textContent = remaining > 0 ? `⚠️ ${remaining} caride açık bakiye var` : '✅ Tümü düzeltildi';
+  if (remaining === 0) { const fixAll = document.getElementById('rt-contact-fixall'); if (fixAll) fixAll.style.display = 'none'; }
+}
+
+async function fixAllContactBalances() {
+  const el = document.getElementById('rt-result-contact_balances');
+  const btns = el?.querySelectorAll('tbody tr:not([style*=dcfce7]) button');
+  if (!btns?.length) return;
+  for (const btn of btns) btn.click();
 }
 
 async function renderPanelUsers() {
