@@ -1056,33 +1056,42 @@ function showReceiptModal(sale) {
   document.getElementById('receipt-modal').classList.add('open');
 }
 
-// Print without showing modal (for auto mode)
 function printReceiptDirect(sale) {
   lastSaleData = sale;
-  const area = document.getElementById('receipt-print-area');
-  if (!area) return;
-  area.innerHTML = generateReceiptHTML(sale);
-  area.style.display = 'block';
-  if (companyInfo.receipt_paper === '80mm') document.body.classList.add('print-80mm');
-  else document.body.classList.remove('print-80mm');
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => { area.style.display = 'none'; }, 500);
-  }, 100);
+  _openPrintWindow(generateReceiptHTML(sale));
 }
 
 function printReceipt() {
-  const area = document.getElementById('receipt-print-area');
-  if (!area || !lastSaleData) return;
-  area.innerHTML = generateReceiptHTML(lastSaleData);
-  area.style.display = 'block';
-  // Set paper size class
-  if (companyInfo.receipt_paper === '80mm') document.body.classList.add('print-80mm');
-  else document.body.classList.remove('print-80mm');
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => { area.style.display = 'none'; }, 500);
-  }, 100);
+  if (!lastSaleData) return;
+  _openPrintWindow(generateReceiptHTML(lastSaleData));
+}
+
+function _openPrintWindow(receiptHtml) {
+  const paper = companyInfo.receipt_paper === '80mm' ? '80mm' : '58mm';
+  const pw = window.open('', '_blank', 'width=320,height=600');
+  if (!pw) { showToast('Popup engellenmiş — tarayıcı ayarlarını kontrol edin', 'error'); return; }
+  pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;font-size:9pt;line-height:1.3;width:${paper};padding:2mm;color:#000;background:#fff}
+.receipt-preview{width:100%}
+.r-center{text-align:center}
+.r-company{font-weight:700;font-size:11pt;margin:2px 0}
+.r-info{font-size:8pt;color:#444}
+.r-sep-major{text-align:center;letter-spacing:1px;margin:3px 0;font-size:8pt}
+.r-sep-minor{text-align:center;letter-spacing:1px;margin:2px 0;font-size:7pt;color:#888}
+.r-row{display:flex;justify-content:space-between;padding:1px 0}
+.r-amt{text-align:right}
+.r-item{margin:2px 0}
+.r-item-name{font-weight:600}
+.r-item-detail{display:flex;justify-content:space-between;font-size:8pt;color:#555}
+.r-total-row{font-size:13px;font-weight:700;letter-spacing:.3px}
+.r-footer{text-align:center;color:#666;margin-top:4px;font-size:9px}
+.r-logo{max-width:18mm;display:block;margin:0 auto 4px}
+@media print{@page{size:${paper} auto;margin:2mm}body{width:${paper}}}
+</style></head><body>${receiptHtml}</body></html>`);
+  pw.document.close();
+  pw.focus();
+  setTimeout(() => { pw.print(); setTimeout(() => pw.close(), 500); }, 250);
 }
 
 function closeReceipt() {
