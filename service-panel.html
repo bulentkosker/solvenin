@@ -1465,13 +1465,38 @@ function _rtOk(el, html) { el.style.background = '#dcfce7'; el.style.color = '#1
 function _rtWarn(el, html) { el.style.background = '#fef3c7'; el.style.color = '#92400e'; el.innerHTML = html; }
 function _rtErr(el, html) { el.style.background = '#fef2f2'; el.style.color = '#991b1b'; el.innerHTML = html; }
 
-function _discrepancyTable(headers, items) {
+function _discrepancyTable(headers, items, opts) {
+  const hasAction = opts?.actionCol;
   return `<table style="width:100%;margin:8px 0;font-size:11px;border-collapse:collapse">
-    <thead><tr>${headers.map(h => `<th style="padding:4px 8px;text-align:${h.align||'left'};border-bottom:1px solid #e5e7eb">${h.label}</th>`).join('')}</tr></thead>
-    <tbody>${items.slice(0, 20).map(r =>
-      `<tr>${headers.map(h => `<td style="padding:3px 8px;text-align:${h.align||'left'};border-bottom:1px solid #f3f4f6">${h.fmt ? h.fmt(r[h.key]) : r[h.key]}</td>`).join('')}</tr>`
+    <thead><tr>${headers.map(h => `<th style="padding:4px 8px;text-align:${h.align||'left'};border-bottom:1px solid #e5e7eb">${h.label}</th>`).join('')}${hasAction ? '<th style="padding:4px 8px;text-align:center;border-bottom:1px solid #e5e7eb">İşlem</th>' : ''}</tr></thead>
+    <tbody>${items.slice(0, 30).map((r, i) =>
+      `<tr id="${opts?.rowPrefix||'rt'}-row-${i}">${headers.map(h => `<td style="padding:3px 8px;text-align:${h.align||'left'};border-bottom:1px solid #f3f4f6">${h.fmt ? h.fmt(r[h.key], r) : (r[h.key] ?? '—')}</td>`).join('')}${hasAction ? `<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #f3f4f6"><button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:10px" onclick="${opts.actionFn}('${r[opts.actionKey]}',${i})">🔧</button></td>` : ''}</tr>`
     ).join('')}</tbody>
-  </table>${items.length > 20 ? `<div style="font-size:10px;color:var(--gray400)">...ve ${items.length - 20} kayıt daha</div>` : ''}`;
+  </table>${items.length > 30 ? `<div style="font-size:10px;color:var(--gray400)">...ve ${items.length - 30} kayıt daha</div>` : ''}`;
+}
+
+async function fixSingleSalesStock(orderId, rowIdx) {
+  const row = document.getElementById('rt-sales-row-' + rowIdx);
+  const { data, error } = await sb.rpc('sp_fix_single_sales_stock', { p_company_id: repairCompanyId, p_order_id: orderId });
+  if (error) { showToast(error.message, 'error'); return; }
+  if (row) { row.style.background = '#dcfce7'; row.querySelector('td:last-child').innerHTML = '✅'; }
+  const el = document.getElementById('rt-result-sales_stock');
+  const remaining = el?.querySelectorAll('tbody tr:not([style*=dcfce7]) button')?.length || 0;
+  const counter = document.getElementById('rt-sales-counter');
+  if (counter) counter.textContent = remaining > 0 ? `⚠️ ${remaining} eksik kaldı` : '✅ Tümü düzeltildi';
+  if (remaining === 0) { const fixAll = document.getElementById('rt-sales-fixall'); if (fixAll) fixAll.style.display = 'none'; }
+}
+
+async function fixSinglePurchaseStock(orderId, rowIdx) {
+  const row = document.getElementById('rt-purch-row-' + rowIdx);
+  const { data, error } = await sb.rpc('sp_fix_single_purchase_stock', { p_company_id: repairCompanyId, p_order_id: orderId });
+  if (error) { showToast(error.message, 'error'); return; }
+  if (row) { row.style.background = '#dcfce7'; row.querySelector('td:last-child').innerHTML = '✅'; }
+  const el = document.getElementById('rt-result-purchase_stock');
+  const remaining = el?.querySelectorAll('tbody tr:not([style*=dcfce7]) button')?.length || 0;
+  const counter = document.getElementById('rt-purch-counter');
+  if (counter) counter.textContent = remaining > 0 ? `⚠️ ${remaining} eksik kaldı` : '✅ Tümü düzeltildi';
+  if (remaining === 0) { const fixAll = document.getElementById('rt-purch-fixall'); if (fixAll) fixAll.style.display = 'none'; }
 }
 
 async function runRepair(key, mode) {
@@ -1495,12 +1520,12 @@ async function runRepair(key, mode) {
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
         const fmtD = v => v ? new Date(v+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
-        const fmtQ = r => fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '');
-        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD(r.issue_date), qty_fmt: fmtQ(r)}));
-        const hdr = [{key:'order_number',label:'Fatura No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Cari',fmt:v=>v||'—'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
-        _rtWarn(el, `⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi` +
-          _discrepancyTable(hdr, rows) +
-          `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
+        const fmtQ = (v, r) => fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '');
+        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD(r.issue_date), qty_fmt: fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '')}));
+        const hdr = [{key:'order_number',label:'Fatura No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Cari'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
+        _rtWarn(el, `<span id="rt-sales-counter">⚠️ <strong>${data.orders}</strong> faturada <strong>${data.items}</strong> eksik stok hareketi</span>` +
+          _discrepancyTable(hdr, rows, { actionCol: true, rowPrefix: 'rt-sales', actionFn: 'fixSingleSalesStock', actionKey: 'order_id' }) +
+          `<button id="rt-sales-fixall" class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('sales_stock','fix')">🔧 Tümünü Düzelt (${data.items} kayıt)</button>`);
       }
 
     // === PURCHASE STOCK ===
@@ -1514,13 +1539,12 @@ async function runRepair(key, mode) {
         const { data, error } = await sb.rpc('sp_analyze_missing_purchase_stock', { p_company_id: repairCompanyId, p_start: start, p_end: end });
         if (error) throw new Error(error.message);
         if (!data || !data.items) { _rtOk(el, '✅ Eksik stok hareketi yok'); return; }
-        const fmtD = v => v ? new Date(v+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
-        const fmtQ = r => fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '');
-        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD(r.issue_date), qty_fmt: fmtQ(r)}));
-        const hdr = [{key:'order_number',label:'Sipariş No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Tedarikçi',fmt:v=>v||'—'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
-        _rtWarn(el, `⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi` +
-          _discrepancyTable(hdr, rows) +
-          `<button class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Düzelt (${data.items} kayıt)</button>`);
+        const fmtD2 = v => v ? new Date(v+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+        const rows = (data.details || []).map(r => ({...r, issue_date_fmt: fmtD2(r.issue_date), qty_fmt: fmtN(r.quantity) + (r.unit ? ' ' + r.unit : '')}));
+        const hdr = [{key:'order_number',label:'Sipariş No'},{key:'issue_date_fmt',label:'Tarih'},{key:'contact_name',label:'Tedarikçi'},{key:'product_name',label:'Ürün'},{key:'qty_fmt',label:'Miktar',align:'right'}];
+        _rtWarn(el, `<span id="rt-purch-counter">⚠️ <strong>${data.orders}</strong> alışta <strong>${data.items}</strong> eksik stok hareketi</span>` +
+          _discrepancyTable(hdr, rows, { actionCol: true, rowPrefix: 'rt-purch', actionFn: 'fixSinglePurchaseStock', actionKey: 'order_id' }) +
+          `<button id="rt-purch-fixall" class="btn btn-primary btn-sm" style="margin-top:4px;background:#dc2626;border-color:#dc2626" onclick="runRepair('purchase_stock','fix')">🔧 Tümünü Düzelt (${data.items} kayıt)</button>`);
       }
 
     // === RECALC STOCK ===
