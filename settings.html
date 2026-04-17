@@ -1144,10 +1144,6 @@ tr:hover .action-btns { opacity:1; }
             </div>
             <div class="form-row" style="gap:24px">
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-                <input type="checkbox" id="pos-receipt-logo" checked>
-                <span data-i18n="pos_receipt_show_logo">Fişte logo göster</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
                 <input type="checkbox" id="pos-receipt-show-subtotal" checked>
                 <span data-i18n="pos_show_subtotal">Ara toplamı göster</span>
               </label>
@@ -3820,7 +3816,6 @@ async function loadPosSettings() {
   _rcEl('pos-receipt-footer', rs.receipt_footer || '');
   _rcEl('pos-receipt-paper', rs.receipt_paper || '58mm');
   _rcEl('pos-receipt-print-mode', rs.receipt_print_mode || 'ask');
-  _rcEl('pos-receipt-logo', rs.receipt_show_logo !== false);
   _rcEl('pos-receipt-show-subtotal', rs.receipt_show_subtotal !== false);
   _rcEl('pos-receipt-show-vat', rs.receipt_show_vat !== false);
   _rcEl('pos-receipt-show-cashier', rs.receipt_show_cashier !== false);
@@ -3904,7 +3899,6 @@ async function savePosReceiptSettings() {
     receipt_footer:       _rv('pos-receipt-footer')?.trim() || '',
     receipt_paper:        _rv('pos-receipt-paper') || '58mm',
     receipt_print_mode:   _rv('pos-receipt-print-mode') || 'ask',
-    receipt_show_logo:    _rv('pos-receipt-logo'),
     receipt_show_subtotal: _rv('pos-receipt-show-subtotal'),
     receipt_show_vat:     _rv('pos-receipt-show-vat'),
     receipt_show_cashier: _rv('pos-receipt-show-cashier'),

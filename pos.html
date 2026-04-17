@@ -314,7 +314,7 @@ async function init() {
       phone: (rs.pos_receipt_phone || '').trim() || comp.phone || '',
       logo_url: resolvedLogo,
       receipt_footer: rs.receipt_footer || '',
-      receipt_show_logo: rs.receipt_show_logo !== false && logoMode !== 'none',
+      receipt_show_logo: logoMode !== 'none',
       receipt_paper: rs.receipt_paper || '58mm',
       receipt_print_mode: rs.receipt_print_mode || 'ask',  // 'auto'|'ask'|'none'
       receipt_show_subtotal: rs.receipt_show_subtotal !== false,
