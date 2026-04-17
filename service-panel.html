@@ -1412,7 +1412,7 @@ async function renderRepair() {
         <div class="field" style="margin:0"><label>Şirket Seç</label>
           <select id="cleanup-company" onchange="loadCleanupPreview()">
             <option value="">Şirket seç...</option>
-            ${companies.map(c => \`<option value="\${c.id}">\${c.name} (\${c.plan||'free'})</option>\`).join('')}
+            ${companies.map(c => `<option value="${c.id}">${c.name} (${c.plan||'free'})</option>`).join('')}
           </select>
         </div>
         <div id="cleanup-preview"></div>
