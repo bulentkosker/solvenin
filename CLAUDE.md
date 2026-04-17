@@ -1,3 +1,24 @@
+# CRITICAL RULES — ALWAYS FOLLOW
+
+## NO APPROVAL ASKING
+NEVER ask for approval before making changes.
+NEVER say "shall I proceed?", "should I make this change?",
+"do you want me to?", "would you like me to?".
+Just DO IT directly.
+
+## NO CONFIRMATION STEPS
+Do not ask "is this correct?", "does this look right?",
+"should I continue?" — just proceed.
+
+## EXCEPTIONS (only these require confirmation):
+- Dropping/deleting database tables or columns
+- Deleting production data
+- Changing authentication or security settings
+
+Everything else: just do it without asking.
+
+---
+
 # Solvenin ERP - Claude Code Bağlamı
 
 ## Proje Bilgileri
