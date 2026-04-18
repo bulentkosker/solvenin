@@ -351,6 +351,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('integrations', this)"><span class="settings-nav-icon">🔗</span> <span data-i18n="nav_integrations">Entegrasyonlar</span></button>
         <button class="settings-nav-item" onclick="switchSection('pos-settings', this)"><span class="settings-nav-icon">🖥️</span> <span data-i18n="nav_pos_settings">POS Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
+        <button class="settings-nav-item" onclick="switchSection('keyboard', this)"><span class="settings-nav-icon">⌨️</span> <span data-i18n="nav_keyboard">Klavye Kısayolları</span></button>
         <button class="settings-nav-item" onclick="switchSection('data', this)"><span class="settings-nav-icon">💾</span> Veri Yönetimi</button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
@@ -1221,6 +1222,30 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- ===== KLAVYE KISAYOLLARI ===== -->
+      <div class="settings-section" id="section-keyboard">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n="nav_keyboard">⌨️ Klavye Kısayolları</div>
+            <div class="settings-card-desc" data-i18n="settings_keyboard_desc">Kısayolları özelleştirin</div>
+          </div>
+          <div class="settings-card-body">
+            <table style="width:100%;border-collapse:collapse" id="kb-table">
+              <thead><tr>
+                <th style="text-align:left;padding:8px;border-bottom:1px solid var(--gray200);font-size:12px" data-i18n="col_action">Aksiyon</th>
+                <th style="text-align:left;padding:8px;border-bottom:1px solid var(--gray200);font-size:12px" data-i18n="col_shortcut">Kısayol</th>
+                <th style="width:70px;padding:8px;border-bottom:1px solid var(--gray200)"></th>
+              </tr></thead>
+              <tbody id="kb-rows"></tbody>
+            </table>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+              <button class="btn-secondary" onclick="resetAllShortcuts()" data-i18n="settings_shortcut_reset_all">↺ Tümünü Sıfırla</button>
+              <button class="btn-primary" onclick="saveShortcuts()" data-action="save" data-i18n="btn_save">💾 Kaydet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== VERİ YÖNETİMİ ===== -->
       <div class="settings-section" id="section-data">
         <div class="settings-card">
@@ -1675,7 +1700,109 @@ function showToast(msg, type='success') {
 function openModal(id) { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
+// ===== KEYBOARD SHORTCUTS SETTINGS =====
+const KB_LABELS = {
+  save: { tr:'Kaydet', en:'Save', ru:'Сохранить' },
+  newLine: { tr:'Yeni Satır Ekle', en:'Add New Line', ru:'Добавить строку' },
+  closeModal: { tr:'Modal Kapat', en:'Close Modal', ru:'Закрыть окно' },
+  nextField: { tr:'Sonraki Alan', en:'Next Field', ru:'Следующее поле' },
+  search: { tr:'Arama', en:'Search', ru:'Поиск' },
+  newRecord: { tr:'Yeni Kayıt', en:'New Record', ru:'Новая запись' }
+};
+let _kbEditing = null;
+
+function renderShortcutRows() {
+  const lang = (typeof detectLang === 'function' ? detectLang() : 'tr') || 'tr';
+  const tbody = document.getElementById('kb-rows');
+  if (!tbody) return;
+  const kb = window.KB || window.KB_DEFAULTS;
+  tbody.innerHTML = Object.keys(KB_LABELS).map(key => {
+    const label = KB_LABELS[key][lang] || KB_LABELS[key].en;
+    const val = kb[key] || window.KB_DEFAULTS[key] || '';
+    const display = val.replace(/\+/g, ' + ').replace('ctrl','Ctrl').replace('shift','Shift').replace('alt','Alt').replace('enter','Enter').replace('escape','Esc').replace('space','Space');
+    return `<tr>
+      <td style="padding:8px;border-bottom:1px solid var(--gray100);font-size:13px;font-weight:500">${label}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--gray100)">
+        <input type="text" id="kb-${key}" value="${display}" readonly
+          style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;font-family:monospace;width:180px;cursor:pointer;background:var(--gray50)"
+          onclick="startCapture('${key}')"
+          data-key="${key}" data-raw="${val}">
+      </td>
+      <td style="padding:8px;border-bottom:1px solid var(--gray100);text-align:center">
+        <button class="btn-secondary" style="padding:4px 8px;font-size:11px" onclick="resetShortcut('${key}')" data-i18n="settings_shortcut_reset">Sıfırla</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function startCapture(key) {
+  const inp = document.getElementById('kb-' + key);
+  if (!inp) return;
+  _kbEditing = key;
+  inp.value = t('settings_shortcut_press') || 'Kısayolu girin...';
+  inp.style.borderColor = '#2563eb';
+  inp.style.background = '#eff6ff';
+  const handler = function(e) {
+    e.preventDefault(); e.stopPropagation();
+    if (['Control','Shift','Alt','Meta'].includes(e.key)) return;
+    document.removeEventListener('keydown', handler, true);
+    const parts = [];
+    if (e.ctrlKey || e.metaKey) parts.push('ctrl');
+    if (e.shiftKey) parts.push('shift');
+    if (e.altKey) parts.push('alt');
+    const k = e.key === ' ' ? 'space' : e.key.toLowerCase();
+    parts.push(k);
+    const combo = parts.join('+');
+    if ((window.KB_RESERVED || []).includes(combo)) {
+      showToast((t('settings_shortcut_reserved') || 'Bu kısayol tarayıcı tarafından kullanılıyor') + ': ' + combo.toUpperCase(), 'error');
+      inp.value = inp.dataset.raw.replace(/\+/g,' + ');
+      inp.style.borderColor = ''; inp.style.background = '';
+      _kbEditing = null;
+      return;
+    }
+    const kb = window.KB;
+    const dup = Object.entries(kb).find(([k2,v]) => k2 !== key && v === combo);
+    if (dup) {
+      const dupLabel = KB_LABELS[dup[0]]?.[(typeof detectLang==='function'?detectLang():'tr')] || dup[0];
+      showToast((t('settings_shortcut_duplicate') || 'Bu kısayol zaten kullanılıyor') + ': ' + dupLabel, 'error');
+      inp.value = inp.dataset.raw.replace(/\+/g,' + ');
+      inp.style.borderColor = ''; inp.style.background = '';
+      _kbEditing = null;
+      return;
+    }
+    kb[key] = combo;
+    inp.dataset.raw = combo;
+    inp.value = combo.replace(/\+/g,' + ').replace('ctrl','Ctrl').replace('shift','Shift').replace('alt','Alt').replace('enter','Enter').replace('escape','Esc');
+    inp.style.borderColor = ''; inp.style.background = '';
+    _kbEditing = null;
+  };
+  document.addEventListener('keydown', handler, true);
+}
+
+function resetShortcut(key) {
+  window.KB[key] = window.KB_DEFAULTS[key];
+  renderShortcutRows();
+}
+
+function resetAllShortcuts() {
+  window.KB = { ...window.KB_DEFAULTS };
+  renderShortcutRows();
+  showToast(t('toast_reset_success') || 'Varsayılana sıfırlandı', 'success');
+}
+
+async function saveShortcuts() {
+  if (submitting()) return;
+  try {
+    const uid = localStorage.getItem('currentUserId');
+    const cid = localStorage.getItem('currentCompanyId');
+    const { error } = await sb.from('company_users').update({ keyboard_shortcuts: window.KB }).eq('user_id', uid).eq('company_id', cid);
+    if (error) throw error;
+    showToast(t('toast_saved') || 'Kaydedildi', 'success');
+  } catch (e) { showToast(getErrorMessage(e), 'error'); }
+}
+
 function switchSection(name, el) {
+  if (name === 'keyboard') renderShortcutRows();
   if (name === 'recycle') loadRecycleBin();
   if (name === 'users') loadUsers();
   if (name === 'currency') loadExchangeRates();

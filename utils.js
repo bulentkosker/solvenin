@@ -157,25 +157,72 @@ function fmtDate(dateStr) {
   return d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// ===== KEYBOARD: Enter navigates to next field =====
+// ===== KEYBOARD SHORTCUTS ENGINE =====
+window.KB_DEFAULTS = {
+  save: 'ctrl+enter', newLine: 'ctrl+shift+enter', closeModal: 'escape',
+  nextField: 'enter', search: 'ctrl+f', newRecord: 'ctrl+shift+n'
+};
+window.KB = { ...window.KB_DEFAULTS };
+window.KB_RESERVED = ['ctrl+s','ctrl+p','ctrl+n','ctrl+t','ctrl+w','ctrl+r'];
+
+window.kbMatch = function(e, shortcut) {
+  if (!shortcut) return false;
+  const parts = shortcut.toLowerCase().split('+');
+  const key = parts[parts.length - 1];
+  const needCtrl = parts.includes('ctrl');
+  const needShift = parts.includes('shift');
+  const needAlt = parts.includes('alt');
+  const eKey = e.key === ' ' ? 'space' : e.key.toLowerCase();
+  return eKey === key && (e.ctrlKey || e.metaKey) === needCtrl && e.shiftKey === needShift && e.altKey === needAlt;
+};
+
+window.loadKeyboardShortcuts = async function() {
+  try {
+    const sb = window._supabase || window.supabase;
+    if (!sb) return;
+    const uid = localStorage.getItem('currentUserId');
+    const cid = localStorage.getItem('currentCompanyId');
+    if (!uid || !cid) return;
+    const { data } = await sb.from('company_users').select('keyboard_shortcuts').eq('user_id', uid).eq('company_id', cid).single();
+    if (data?.keyboard_shortcuts) window.KB = { ...window.KB_DEFAULTS, ...data.keyboard_shortcuts };
+  } catch (e) {}
+};
+
 document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const el = document.activeElement;
-  if (!el || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON') return;
-  if (el.tagName === 'SELECT') return;
-  // Skip if inside QA dropdown
-  if (el.closest && el.closest('.qa-wrap')) return;
-  // Skip if custom handler
-  if (el.dataset.col) return;
-  if (el.tagName === 'INPUT') {
-    e.preventDefault();
-    const form = el.closest('form, .form-grid, .modal-body, .content, #order-form-view');
-    if (!form) return;
-    const inputs = [...form.querySelectorAll('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])')];
-    const idx = inputs.indexOf(el);
-    if (idx >= 0 && idx < inputs.length - 1) {
-      inputs[idx + 1].focus();
+  // Next field (Enter in inputs)
+  if (kbMatch(e, window.KB.nextField)) {
+    const el = document.activeElement;
+    if (!el || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON' || el.tagName === 'SELECT') return;
+    if (el.closest && el.closest('.qa-wrap')) return;
+    if (el.dataset.col || el.dataset.noEnter) return;
+    if (el.tagName === 'INPUT') {
+      e.preventDefault();
+      const form = el.closest('form, .form-grid, .modal-body, .content, #order-form-view');
+      if (!form) return;
+      const inputs = [...form.querySelectorAll('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])')];
+      const idx = inputs.indexOf(el);
+      if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
     }
+    return;
+  }
+  // Save
+  if (kbMatch(e, window.KB.save)) {
+    const btn = document.querySelector('.modal.open [data-action="save"], .modal.open .btn-save, .pm.open [data-action="save"], #order-form-view [data-action="save"]');
+    if (btn) { e.preventDefault(); btn.click(); }
+    return;
+  }
+  // Close modal
+  if (kbMatch(e, window.KB.closeModal)) {
+    if (document.querySelector('.qa-panel.qa-open')) return;
+    const close = document.querySelector('.modal.open .modal-close, .pm.open .pm-close, .drawer.open .drawer-close');
+    if (close) { e.preventDefault(); close.click(); }
+    return;
+  }
+  // Search
+  if (kbMatch(e, window.KB.search)) {
+    const inp = document.querySelector('#table-search, #global-search, .search-input, input[type="search"]');
+    if (inp) { e.preventDefault(); inp.focus(); inp.select(); }
+    return;
   }
 });
 
