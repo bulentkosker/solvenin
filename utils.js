@@ -179,11 +179,12 @@ window.kbMatch = function(e, shortcut) {
 window.loadKeyboardShortcuts = async function() {
   try {
     const sb = window._supabase || window.supabase;
-    if (!sb) return;
-    const uid = localStorage.getItem('currentUserId');
+    if (!sb || !sb.auth) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
     const cid = localStorage.getItem('currentCompanyId');
-    if (!uid || !cid) return;
-    const { data } = await sb.from('company_users').select('keyboard_shortcuts').eq('user_id', uid).eq('company_id', cid).single();
+    if (!cid) return;
+    const { data } = await sb.from('company_users').select('keyboard_shortcuts').eq('user_id', user.id).eq('company_id', cid).single();
     if (data?.keyboard_shortcuts) window.KB = { ...window.KB_DEFAULTS, ...data.keyboard_shortcuts };
   } catch (e) {}
 };

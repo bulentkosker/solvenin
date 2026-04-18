@@ -1793,12 +1793,14 @@ function resetAllShortcuts() {
 async function saveShortcuts() {
   if (submitting()) return;
   try {
-    const uid = localStorage.getItem('currentUserId');
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const cid = localStorage.getItem('currentCompanyId');
-    const { error } = await sb.from('company_users').update({ keyboard_shortcuts: window.KB }).eq('user_id', uid).eq('company_id', cid);
+    if (!cid) throw new Error('No company selected');
+    const { error } = await sb.from('company_users').update({ keyboard_shortcuts: window.KB }).eq('user_id', user.id).eq('company_id', cid);
     if (error) throw error;
     showToast(t('toast_saved') || 'Kaydedildi', 'success');
-  } catch (e) { showToast(getErrorMessage(e), 'error'); }
+  } catch (e) { console.error('Keyboard shortcuts save error:', e); showToast(getErrorMessage(e), 'error'); }
 }
 
 function switchSection(name, el) {
