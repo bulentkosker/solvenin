@@ -550,7 +550,7 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('customer-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCustomer()"><span data-i18n="btn_save_customer">Save Customer</span></button>
+      <button class="btn btn-primary" onclick="saveCustomer()" data-action="save"><span data-i18n="btn_save_customer">Save Customer</span></button>
     </div>
   </div>
 </div>
@@ -589,7 +589,7 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('payment-modal')" data-i18n="btn_cancel">İptal</button>
-      <button class="btn btn-primary" onclick="savePayment()" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
+      <button class="btn btn-primary" onclick="savePayment()" data-action="save" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
     </div>
   </div>
 </div>
@@ -622,7 +622,7 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-header">
       <div class="modal-title">Invoice Preview</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="savePDF()">⬇ PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="savePDF()" data-action="save">⬇ PDF</button>
         <button class="btn btn-outline btn-sm" onclick="printPDF()">🖨️</button>
         <button class="modal-close" onclick="closeModal('invoice-modal')">✕</button>
       </div>
@@ -678,7 +678,7 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQAProduct()" data-i18n="btn_add">Add</button>
+      <button class="btn btn-primary" onclick="saveQAProduct()" data-action="save" data-i18n="btn_add">Add</button>
     </div>
   </div>
 </div>
@@ -708,7 +708,7 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeQACustomerModal()" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQACustomer()" data-i18n="btn_add">Add</button>
+      <button class="btn btn-primary" onclick="saveQACustomer()" data-action="save" data-i18n="btn_add">Add</button>
     </div>
   </div>
 </div>

@@ -364,7 +364,7 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title"><span data-i18n="lbl_company_info">Company Information</span></div><div class="settings-card-desc"><span data-i18n="lbl_company_info_sub">Basic details about your company</span></div></div>
-              <button class="btn-primary" onclick="saveCompanyInfo()"><span data-i18n="btn_save_changes">Save Changes</span></button>
+              <button class="btn-primary" onclick="saveCompanyInfo()" data-action="save"><span data-i18n="btn_save_changes">Save Changes</span></button>
             </div>
             <div class="settings-card-body">
               <div class="form-row">
@@ -531,7 +531,7 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title" data-i18n="lbl_base_currency_title">Base Currency</div><div class="settings-card-desc" data-i18n="desc_base_currency">All reports and balances are shown in this currency</div></div>
-              <button class="btn-primary" onclick="saveBaseCurrency()" data-i18n="btn_save">Save</button>
+              <button class="btn-primary" onclick="saveBaseCurrency()" data-action="save" data-i18n="btn_save">Save</button>
             </div>
             <div class="settings-card-body">
               <div class="form-row" style="margin-bottom:0">
@@ -680,7 +680,7 @@ tr:hover .action-btns { opacity:1; }
                   <div class="settings-card-title" data-i18n="settings_stock_control">Stok Kontrolü</div>
                   <div class="settings-card-desc" data-i18n="settings_stock_control_desc">Stok yönetimi ve uyarı ayarları</div>
                 </div>
-                <button class="btn-primary" onclick="saveStockSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+                <button class="btn-primary" onclick="saveStockSettings()" data-action="save" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
               </div>
               <div class="settings-card-body">
                 <div class="manage-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
@@ -722,7 +722,7 @@ tr:hover .action-btns { opacity:1; }
                 <div class="settings-card-title" data-i18n="settings_scale_barcode">Terazi Barkodu</div>
                 <div class="settings-card-desc">Terazi barkod okuma ayarları</div>
               </div>
-              <button class="btn-primary" onclick="saveStockSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+              <button class="btn-primary" onclick="saveStockSettings()" data-action="save" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
             </div>
             <div class="settings-card-body">
               <div class="form-row">
@@ -931,7 +931,7 @@ tr:hover .action-btns { opacity:1; }
               <div class="settings-card-title" data-i18n="nav_invoice_settings">Fatura Ayarları</div>
               <div class="settings-card-desc">Numaralama, PDF görünümü ve dil ayarları</div>
             </div>
-            <button class="btn-primary" onclick="saveInvoiceSettings()" data-i18n="btn_save_changes">Kaydet</button>
+            <button class="btn-primary" onclick="saveInvoiceSettings()" data-action="save" data-i18n="btn_save_changes">Kaydet</button>
           </div>
           <!-- Tabs -->
           <div style="display:flex;border-bottom:2px solid var(--gray200);padding:0 20px">
@@ -1039,7 +1039,7 @@ tr:hover .action-btns { opacity:1; }
               <div class="settings-card-title">POS Yönetici PIN</div>
               <div class="settings-card-desc">POS'ta ürün silme gibi işlemler için 4 haneli PIN</div>
             </div>
-            <button class="btn-primary" onclick="savePosPin()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+            <button class="btn-primary" onclick="savePosPin()" data-action="save" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
           </div>
           <div class="settings-card-body">
             <div class="form-row">
@@ -1058,7 +1058,7 @@ tr:hover .action-btns { opacity:1; }
               <div class="settings-card-title" data-i18n="pos_receipt_settings">Fiş Ayarları</div>
               <div class="settings-card-desc" data-i18n="pos_receipt_settings_desc">Termal yazıcı fiş görünümü</div>
             </div>
-            <button class="btn-primary" onclick="savePosReceiptSettings()" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
+            <button class="btn-primary" onclick="savePosReceiptSettings()" data-action="save" style="padding:8px 16px;font-size:12px" data-i18n="btn_save_changes">Kaydet</button>
           </div>
           <div class="settings-card-body">
             <!-- RECEIPT HEADER -->
@@ -1240,7 +1240,7 @@ tr:hover .action-btns { opacity:1; }
             </table>
             <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
               <button class="btn-secondary" onclick="resetAllShortcuts()" data-i18n="settings_shortcut_reset_all">↺ Tümünü Sıfırla</button>
-              <button class="btn-primary" onclick="saveShortcuts()" data-action="save" data-i18n="btn_save">💾 Kaydet</button>
+              <button class="btn-primary" onclick="saveShortcuts()" data-action="save" data-action="save" data-i18n="btn_save">💾 Kaydet</button>
             </div>
           </div>
         </div>
@@ -1451,7 +1451,7 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeModal('pos-button-modal')">İptal</button>
-      <button class="btn-primary" onclick="savePosButton()">Kaydet</button>
+      <button class="btn-primary" onclick="savePosButton()" data-action="save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -1479,7 +1479,7 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeModal('pos-group-modal')" data-i18n="btn_cancel">İptal</button>
-      <button class="btn-primary" onclick="savePosGroup()" data-i18n="btn_save">Kaydet</button>
+      <button class="btn-primary" onclick="savePosGroup()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -1548,7 +1548,7 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('warehouse-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn-primary" onclick="saveWarehouse()" data-i18n="btn_save">Save</button>
+      <button class="btn-primary" onclick="saveWarehouse()" data-action="save" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -1569,7 +1569,7 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('tax-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn-primary" onclick="saveTax()" data-i18n="btn_save">Save</button>
+      <button class="btn-primary" onclick="saveTax()" data-action="save" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -1637,7 +1637,7 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('regime-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn-primary" onclick="saveRegime()" data-i18n="btn_save">Save</button>
+      <button class="btn-primary" onclick="saveRegime()" data-action="save" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -2987,7 +2987,7 @@ function openAddCatForm(parentId, depth) {
     <div style="font-size:11px;color:var(--gray400);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${label}</div>
     <div style="display:flex;gap:8px">
       <input type="text" id="new-cat-input" placeholder="${t('placeholder_category_name')}" style="flex:1;padding:8px 12px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none">
-      <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')">Save</button>
+      <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')" data-action="save">Save</button>
       <button class="btn-secondary" style="padding:8px 14px" onclick="document.getElementById('inline-add-cat')?.remove()">✕</button>
     </div>
   `;

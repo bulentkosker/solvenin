@@ -891,7 +891,7 @@ tr:hover td { background: var(--gray50); }
       <h3>📊 <span data-i18n="dash_customize_cards">Customize Cards</span></h3>
       <p data-i18n="dash_customize_desc">Select up to 4 cards to display</p>
       <div id="stat-options-list"></div>
-      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveStatSettings()">Save</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveStatSettings()" data-action="save">Save</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('stat-modal').classList.remove('open')">Cancel</button>
     </div>
   </div>
@@ -911,7 +911,7 @@ tr:hover td { background: var(--gray50); }
       <div id="t-commodity"></div>
       <div class="t-group-title">Oil API Key (optional)</div>
       <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Brent oil price sourced from Yahoo Finance (free, no API key required).</p>
-      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()">Save</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()" data-action="save">Save</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')">Cancel</button>
     </div>
   </div>

@@ -457,7 +457,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('account-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveAccount()" data-i18n="btn_save">Save</button>
+      <button class="btn btn-primary" onclick="saveAccount()" data-action="save" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>
@@ -513,7 +513,7 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('journal-modal')" data-i18n="btn_cancel">Cancel</button>
       <button class="btn btn-outline" onclick="saveJournalEntry(false)" data-i18n="btn_save_draft">Save Draft</button>
-      <button class="btn btn-primary" onclick="saveJournalEntry(true)">✓ <span data-i18n="btn_post">Post Entry</span></button>
+      <button class="btn btn-primary" onclick="saveJournalEntry(true)" data-action="save">✓ <span data-i18n="btn_post">Post Entry</span></button>
     </div>
   </div>
 </div>
@@ -558,7 +558,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('tax-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTaxRate()" data-i18n="btn_save">Save</button>
+      <button class="btn btn-primary" onclick="saveTaxRate()" data-action="save" data-i18n="btn_save">Save</button>
     </div>
   </div>
 </div>

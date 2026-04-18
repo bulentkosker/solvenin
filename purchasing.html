@@ -563,7 +563,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('supplier-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSupplier()">Save Supplier</button>
+      <button class="btn btn-primary" onclick="saveSupplier()" data-action="save">Save Supplier</button>
     </div>
   </div>
 </div>
@@ -660,7 +660,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('po-payment-modal')" data-i18n="btn_cancel">İptal</button>
-      <button class="btn btn-primary" onclick="savePoPayment()" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
+      <button class="btn btn-primary" onclick="savePoPayment()" data-action="save" data-i18n="btn_save_payment">Ödemeyi Kaydet</button>
     </div>
   </div>
 </div>
@@ -694,7 +694,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQAProduct()" data-i18n="btn_add">Add</button>
+      <button class="btn btn-primary" onclick="saveQAProduct()" data-action="save" data-i18n="btn_add">Add</button>
     </div>
   </div>
 </div>
@@ -712,7 +712,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeQASupplierModal()" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQASupplier()" data-i18n="btn_add">Add</button>
+      <button class="btn btn-primary" onclick="saveQASupplier()" data-action="save" data-i18n="btn_add">Add</button>
     </div>
   </div>
 </div>

@@ -252,7 +252,7 @@ textarea{min-height:60px;resize:vertical}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('manual-tx-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveManualTx()">Kaydet</button>
+      <button class="btn btn-primary" onclick="saveManualTx()" data-action="save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -294,7 +294,7 @@ textarea{min-height:60px;resize:vertical}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('contact-modal')" data-i18n="btn_cancel">İptal</button>
-      <button class="btn btn-primary" onclick="saveContact()" data-i18n="btn_save">Kaydet</button>
+      <button class="btn btn-primary" onclick="saveContact()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>

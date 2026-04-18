@@ -207,14 +207,14 @@ document.addEventListener('keydown', function(e) {
   }
   // Save
   if (kbMatch(e, window.KB.save)) {
-    const btn = document.querySelector('.modal.open [data-action="save"], .modal.open .btn-save, .pm.open [data-action="save"], #order-form-view [data-action="save"]');
+    const btn = document.querySelector('.modal-overlay.open [data-action="save"], .modal.open [data-action="save"], .pm.open [data-action="save"], #order-form-view [data-action="save"]');
     if (btn) { e.preventDefault(); btn.click(); }
     return;
   }
   // Close modal
   if (kbMatch(e, window.KB.closeModal)) {
     if (document.querySelector('.qa-panel.qa-open')) return;
-    const close = document.querySelector('.modal.open .modal-close, .pm.open .pm-close, .drawer.open .drawer-close');
+    const close = document.querySelector('.modal-overlay.open .modal-close, .modal.open .modal-close, .pm.open .pm-close, .drawer.open .drawer-close');
     if (close) { e.preventDefault(); close.click(); }
     return;
   }

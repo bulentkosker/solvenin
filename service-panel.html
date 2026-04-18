@@ -746,7 +746,7 @@ function openEditFlag(name) {
 
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-outline" onclick="document.getElementById('flag-edit-overlay').classList.remove('open')">İptal</button>
-        <button class="btn btn-primary" onclick="saveFlagEdit()">Kaydet</button>
+        <button class="btn btn-primary" onclick="saveFlagEdit()" data-action="save">Kaydet</button>
       </div>
     </div>
   `;
@@ -1917,7 +1917,7 @@ async function renderSystem() {
         <button class="btn btn-ghost" type="button" onclick="toggleApiKeyVisibility()">👁</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-        <button class="btn btn-primary" type="button" onclick="saveAnthropicKey()">💾 Kaydet</button>
+        <button class="btn btn-primary" type="button" onclick="saveAnthropicKey()" data-action="save">💾 Kaydet</button>
         <button class="btn btn-outline" type="button" onclick="testAnthropicKey()" ${has ? '' : 'disabled'}>🧪 Test Et</button>
         <span id="anth-test-result" style="font-size:12px;margin-left:6px"></span>
       </div>

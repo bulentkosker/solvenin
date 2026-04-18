@@ -196,7 +196,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
         <div style="display:flex;gap:6px;align-items:center">
           <input type="text" id="act-next" placeholder="Sonraki adım..." data-i18n-placeholder="crm_act_next_placeholder" style="flex:1;padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
           <input type="date" id="act-next-date" style="padding:5px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px">
-          <button class="btn btn-primary btn-sm" onclick="saveActivity()" data-i18n="crm_btn_save">Kaydet</button>
+          <button class="btn btn-primary btn-sm" onclick="saveActivity()" data-action="save" data-i18n="crm_btn_save">Kaydet</button>
         </div>
       </div>
       <div class="timeline" id="dr-timeline"></div>
@@ -234,7 +234,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('opp-modal')" data-i18n="crm_btn_cancel">İptal</button>
-      <button class="btn btn-primary" onclick="saveOpp()" data-i18n="crm_btn_save">Kaydet</button>
+      <button class="btn btn-primary" onclick="saveOpp()" data-action="save" data-i18n="crm_btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -275,7 +275,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('quote-modal')" data-i18n="crm_btn_cancel">İptal</button>
-      <button class="btn btn-primary" onclick="saveQuote()" data-i18n="crm_btn_save">Kaydet</button>
+      <button class="btn btn-primary" onclick="saveQuote()" data-action="save" data-i18n="crm_btn_save">Kaydet</button>
     </div>
   </div>
 </div>
