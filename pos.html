@@ -407,7 +407,7 @@ async function loadProducts() {
   }
   // Online path
   const [prodRes, catRes, qbRes, grpRes] = await Promise.all([
-    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode,plu_code').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode,plu_code,sku,is_weight_product').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
     sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('pos_quick_buttons').select('*, products(id,name,sale_price,category_id)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
     sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
@@ -540,18 +540,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check weight barcode first
       const wb = parseWeightBarcode(code);
       if (wb) { addWeightProductToCart(wb); return; }
-      // Normal barcode — first check local cache
-      let p = products.find(x => x.barcode === code);
+      // Normal barcode — search local cache by barcode, plu_code, sku
+      let p = products.find(x => x.barcode === code || x.plu_code === code || x.sku === code);
       if (!p) {
-        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode,plu_code,stock_quantity')
-          .eq('company_id', companyId).eq('barcode', code).eq('is_active', true).single();
+        // Fallback: query Supabase with OR filter
+        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode,plu_code,sku,stock_quantity,is_weight_product')
+          .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null)
+          .or(`barcode.eq.${code},plu_code.eq.${code},sku.eq.${code}`)
+          .limit(1).maybeSingle();
         if (data) {
           p = data;
           if (!products.find(x => x.id === data.id)) products.push(data);
         }
       }
-      if (p) { addToCart(p.id); }
-      else { showToast(t('pos_toast_barcode_not_found') + ': ' + code, 'error'); }
+      if (p) { addToCart(p.id); console.log('[POS] Found:', p.name, 'via code:', code); }
+      else { showToast((t('pos_toast_barcode_not_found')||'Barkod bulunamadı') + ': ' + code, 'error'); console.warn('[POS] Not found:', code); }
     }
   });
   // Always refocus barcode after any click (unless in modal)
