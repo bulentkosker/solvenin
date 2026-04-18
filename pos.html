@@ -407,8 +407,8 @@ async function loadProducts() {
   }
   // Online path
   const [prodRes, catRes, qbRes, grpRes] = await Promise.all([
-    sb.from('products').select('id,name,sale_price,stock_quantity,unit,category_id,barcode,plu_code,sku,is_weight_product').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
-    sb.from('categories').select('id,name').eq('company_id', companyId).eq('is_active', true).order('name'),
+    sb.from('products').select('id,name,sale_price,quantity,unit,category_id,barcode,plu_code,sku,is_weight_product').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
+    sb.from('categories').select('id,name').eq('company_id', companyId).is('deleted_at', null).order('name'),
     sb.from('pos_quick_buttons').select('*, products(id,name,sale_price,category_id)').eq('company_id', companyId).eq('is_active', true).order('button_order'),
     sb.from('pos_button_groups').select('*').eq('company_id', companyId).order('sort_order'),
   ]);
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let p = products.find(x => x.barcode === code || x.plu_code === code || x.sku === code);
       if (!p) {
         // Fallback: query Supabase with OR filter
-        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode,plu_code,sku,stock_quantity,is_weight_product')
+        const { data } = await sb.from('products').select('id,name,sale_price,unit,barcode,plu_code,sku,quantity,is_weight_product')
           .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null)
           .or(`barcode.eq.${code},plu_code.eq.${code},sku.eq.${code}`)
           .limit(1).maybeSingle();
@@ -574,7 +574,7 @@ function addToCart(pid) {
   // Negative stock check
   if (!companyInfo.allow_negative_stock) {
     const currentInCart = cart.find(c => c.pid === pid)?.qty || 0;
-    const available = parseFloat(p.stock_quantity || 0) - currentInCart;
+    const available = parseFloat(p.quantity || 0) - currentInCart;
     if (available <= 0) {
       showToast(t('error_insufficient_stock') || 'Stok yetersiz', 'error');
       return;
@@ -928,9 +928,9 @@ async function completeSale() {
       // Update product quantity
       const prod = products.find(p => p.id === c.pid);
       if (prod) {
-        const newQty = Math.max(0, (prod.stock_quantity || 0) - c.qty);
+        const newQty = Math.max(0, (prod.quantity || 0) - c.qty);
         await sb.from('products').update({ quantity: newQty }).eq('id', c.pid);
-        prod.stock_quantity = newQty;
+        prod.quantity = newQty;
       }
     }
     console.log('[pos] Stock movements created for', orderNum);
