@@ -200,14 +200,23 @@
       window.addEventListener('online', async () => {
         this.isOnline = true;
         this._updateBanner(false, 0);
-        if (window.PosSync) await window.PosSync.syncPendingSales();
+        this._setExitEnabled(true);
+        if (window.PosSync) {
+          const before = (await PosOfflineDB.getPendingSales()).length;
+          await window.PosSync.syncPendingSales();
+          const after = (await PosOfflineDB.getPendingSales()).length;
+          const synced = before - after;
+          if (synced > 0 && typeof showToast === 'function') showToast(`${synced} satış senkronize edildi`, 'success');
+        }
       });
       window.addEventListener('offline', () => {
         this.isOnline = false;
         this._updateBanner(true, 0);
+        this._setExitEnabled(false);
       });
       // Initial paint
       this._updateBanner(!this.isOnline, 0);
+      if (!this.isOnline) this._setExitEnabled(false);
       // Periodic pending count refresh
       setInterval(async () => {
         try {
@@ -235,6 +244,15 @@
       } else {
         banner.style.display = 'none';
       }
+    },
+
+    _setExitEnabled(enabled) {
+      const btn = document.querySelector('.pos-exit');
+      if (!btn) return;
+      btn.disabled = !enabled;
+      btn.style.opacity = enabled ? '' : '0.5';
+      btn.style.cursor = enabled ? '' : 'not-allowed';
+      btn.title = enabled ? '' : 'Çevrimdışı modda çıkış yapamazsınız. İnternet bağlantısı sağlandıktan sonra çıkış yapın.';
     },
   };
 

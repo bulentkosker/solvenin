@@ -1100,10 +1100,31 @@ function closeReceipt() {
   document.getElementById('barcode-input').focus();
 }
 
-function exitPOS() {
+async function exitPOS() {
+  if (window.PosConnectivity && !window.PosConnectivity.isOnline) {
+    showToast(t('pos_offline_no_exit') || 'Çevrimdışı modda çıkış yapamazsınız', 'error');
+    return;
+  }
+
+  // Check pending offline sales
+  if (window.PosOfflineDB) {
+    const pending = await window.PosOfflineDB.getPendingSales();
+    if (pending.length > 0) {
+      if (window.PosSync && window.PosConnectivity?.isOnline) {
+        showToast(`${pending.length} bekleyen satış senkronize ediliyor...`, 'info');
+        await window.PosSync.syncPendingSales();
+        const remaining = await window.PosOfflineDB.getPendingSales();
+        if (remaining.length > 0) {
+          if (!confirm(`${remaining.length} adet bekleyen satış senkronize edilemedi.\nÇıkarsanız bu satışlar kaybolabilir.\nYine de çıkmak istiyor musunuz?`)) return;
+        }
+      } else {
+        if (!confirm(`${pending.length} adet bekleyen satış var.\nÇıkarsanız bu satışlar kaybolabilir.\nYine de çıkmak istiyor musunuz?`)) return;
+      }
+    }
+  }
+
   if (cart.length === 0) { window.location.href = 'dashboard.html'; return; }
   requestPin(t('pos_cancel_receipt_pin'), async () => {
-    // Log cancelled cart
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const { data: { user } } = await sb.auth.getUser();
     await sb.from('pos_cancelled_carts').insert({
@@ -1117,8 +1138,14 @@ function exitPOS() {
 }
 
 // ===== EXIT PROTECTION =====
+let _posPendingCount = 0;
+if (window.PosOfflineDB) {
+  setInterval(async () => {
+    try { _posPendingCount = (await window.PosOfflineDB.getPendingSales()).length; } catch(e) {}
+  }, 3000);
+}
 window.addEventListener('beforeunload', (e) => {
-  if (cart.length > 0) { e.preventDefault(); e.returnValue = ''; }
+  if (cart.length > 0 || _posPendingCount > 0) { e.preventDefault(); e.returnValue = ''; }
 });
 
 // Prevent back button
