@@ -1210,7 +1210,7 @@ function switchTab(tab, btn) {
 }
 
 // ===== MODAL HELPERS =====
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) { const m = document.getElementById(id); m.classList.add('open'); const b = m.querySelector('.modal-body'); if (b) b.scrollTop = 0; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function openAddModal() {
