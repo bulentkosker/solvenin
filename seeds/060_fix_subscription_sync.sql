@@ -55,7 +55,11 @@ BEGIN
 END;
 $BODY$;
 
--- Fix 2: sp_update_user_plan was NOT saving plan_user_count
+-- Fix 2: sp_update_user_plan — drop all overloads first (varchar vs text ambiguity)
+DROP FUNCTION IF EXISTS public.sp_update_user_plan(uuid, character varying, timestamptz, character varying);
+DROP FUNCTION IF EXISTS public.sp_update_user_plan(uuid, text, timestamptz, text, integer);
+DROP FUNCTION IF EXISTS public.sp_update_user_plan(uuid, character varying, timestamptz, character varying, integer);
+
 CREATE OR REPLACE FUNCTION sp_update_user_plan(
   p_user_id uuid,
   p_plan text DEFAULT NULL,
