@@ -1,17 +1,18 @@
 -- ============================================================
--- M059: Bank Import Templates (Universal Parser System)
+-- M059: Import Templates (Universal Parser System)
 -- ============================================================
--- Her banka/format için template tabanlı parser sistemi.
+-- Her banka/kasa/format için template tabanlı parser sistemi.
 -- System templates (onaylanmış), community (paylaşılan), private (kullanıcı).
 -- AI tarafından oluşturulan template'ler buraya kaydedilir.
+-- target_module: bank_statement, cash_register (genişletilebilir)
 -- ============================================================
 
 BEGIN;
 
 -- ──────────────────────────────────────────────────────────
--- 1. bank_import_templates tablosu
+-- 1. import_templates tablosu
 -- ──────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS bank_import_templates (
+CREATE TABLE IF NOT EXISTS import_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Sahiplik
@@ -30,6 +31,9 @@ CREATE TABLE IF NOT EXISTS bank_import_templates (
 
   -- Format
   file_format VARCHAR(10) NOT NULL,
+
+  -- Hedef modül
+  target_module VARCHAR(30) NOT NULL DEFAULT 'bank_statement',
 
   -- Auto-detection
   detection_rules JSONB,
@@ -53,37 +57,41 @@ CREATE TABLE IF NOT EXISTS bank_import_templates (
 
   -- Versiyonlama
   version INT DEFAULT 1,
-  parent_template_id UUID REFERENCES bank_import_templates(id),
+  parent_template_id UUID REFERENCES import_templates(id),
 
   -- Standart alanlar
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
 
-  CONSTRAINT bit_file_format_check
+  CONSTRAINT it_file_format_check
     CHECK (file_format IN ('pdf', 'xlsx', 'xls', 'csv', 'txt')),
-  CONSTRAINT bit_country_format_check
-    CHECK (country_code IS NULL OR length(country_code) = 2)
+  CONSTRAINT it_country_format_check
+    CHECK (country_code IS NULL OR length(country_code) = 2),
+  CONSTRAINT it_target_module_check
+    CHECK (target_module IN ('bank_statement', 'cash_register'))
 );
 
-CREATE INDEX idx_bit_company ON bank_import_templates(company_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_bit_system ON bank_import_templates(is_system) WHERE is_system = TRUE AND deleted_at IS NULL;
-CREATE INDEX idx_bit_public ON bank_import_templates(is_public) WHERE is_public = TRUE AND deleted_at IS NULL;
-CREATE INDEX idx_bit_country ON bank_import_templates(country_code) WHERE deleted_at IS NULL;
-CREATE INDEX idx_bit_bank_identifier ON bank_import_templates(bank_identifier) WHERE deleted_at IS NULL;
-CREATE INDEX idx_bit_usage ON bank_import_templates(usage_count DESC) WHERE deleted_at IS NULL;
+CREATE INDEX idx_it_company ON import_templates(company_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_it_system ON import_templates(is_system) WHERE is_system = TRUE AND deleted_at IS NULL;
+CREATE INDEX idx_it_public ON import_templates(is_public) WHERE is_public = TRUE AND deleted_at IS NULL;
+CREATE INDEX idx_it_country ON import_templates(country_code) WHERE deleted_at IS NULL;
+CREATE INDEX idx_it_bank_identifier ON import_templates(bank_identifier) WHERE deleted_at IS NULL;
+CREATE INDEX idx_it_usage ON import_templates(usage_count DESC) WHERE deleted_at IS NULL;
+CREATE INDEX idx_it_target_module ON import_templates(target_module) WHERE deleted_at IS NULL;
 
-COMMENT ON COLUMN bank_import_templates.parser_config IS 'JSONB — field extraction rules. Her field için { method, pattern/position, transform } yapısı.';
-COMMENT ON COLUMN bank_import_templates.locale IS 'Tarih/sayı/para formatları. { decimal_separator, thousand_separator, date_format, currency, timezone }';
-COMMENT ON COLUMN bank_import_templates.detection_rules IS 'Yüklenen dosyanın bu template ile eşleşip eşleşmediğini tespit. { header_contains, bank_identifier_pattern, filename_pattern }';
+COMMENT ON COLUMN import_templates.parser_config IS 'JSONB — field extraction rules. Her field için { method, pattern/position, transform } yapısı.';
+COMMENT ON COLUMN import_templates.locale IS 'Tarih/sayı/para formatları. { decimal_separator, thousand_separator, date_format, currency, timezone }';
+COMMENT ON COLUMN import_templates.detection_rules IS 'Yüklenen dosyanın bu template ile eşleşip eşleşmediğini tespit. { header_contains, bank_identifier_pattern, filename_pattern }';
+COMMENT ON COLUMN import_templates.target_module IS 'bank_statement = banka ekstresi, cash_register = kasa fişi';
 
 -- ──────────────────────────────────────────────────────────
 -- 2. RLS
 -- ──────────────────────────────────────────────────────────
-ALTER TABLE bank_import_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE import_templates ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: system + public + kendi company
-CREATE POLICY "bit_select_policy" ON bank_import_templates
+CREATE POLICY "it_select_policy" ON import_templates
   FOR SELECT TO authenticated
   USING (
     deleted_at IS NULL AND (
@@ -94,7 +102,7 @@ CREATE POLICY "bit_select_policy" ON bank_import_templates
   );
 
 -- INSERT: sadece kendi company, is_system = FALSE zorunlu
-CREATE POLICY "bit_insert_policy" ON bank_import_templates
+CREATE POLICY "it_insert_policy" ON import_templates
   FOR INSERT TO authenticated
   WITH CHECK (
     company_id = ANY(get_my_company_ids())
@@ -102,7 +110,7 @@ CREATE POLICY "bit_insert_policy" ON bank_import_templates
   );
 
 -- UPDATE: sadece kendi template
-CREATE POLICY "bit_update_policy" ON bank_import_templates
+CREATE POLICY "it_update_policy" ON import_templates
   FOR UPDATE TO authenticated
   USING (company_id = ANY(get_my_company_ids()))
   WITH CHECK (
@@ -111,7 +119,7 @@ CREATE POLICY "bit_update_policy" ON bank_import_templates
   );
 
 -- DELETE: sadece kendi template
-CREATE POLICY "bit_delete_policy" ON bank_import_templates
+CREATE POLICY "it_delete_policy" ON import_templates
   FOR DELETE TO authenticated
   USING (company_id = ANY(get_my_company_ids()));
 
@@ -119,18 +127,18 @@ CREATE POLICY "bit_delete_policy" ON bank_import_templates
 -- 3. data_imports → template referansı
 -- ──────────────────────────────────────────────────────────
 ALTER TABLE data_imports
-  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES bank_import_templates(id);
+  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES import_templates(id);
 
 CREATE INDEX IF NOT EXISTS idx_data_imports_template
   ON data_imports(template_id) WHERE template_id IS NOT NULL;
 
 -- ──────────────────────────────────────────────────────────
--- 4. Storage bucket: bank-imports
+-- 4. Storage bucket: imports
 -- ──────────────────────────────────────────────────────────
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
-  'bank-imports',
-  'bank-imports',
+  'imports',
+  'imports',
   false,
   10485760,
   ARRAY['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv', 'text/plain']
@@ -138,24 +146,24 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies: dosya yolu = {company_id}/{import_id}/{filename}
-CREATE POLICY "bank_imports_select" ON storage.objects
+CREATE POLICY "imports_select" ON storage.objects
   FOR SELECT TO authenticated
   USING (
-    bucket_id = 'bank-imports'
+    bucket_id = 'imports'
     AND (storage.foldername(name))[1]::uuid = ANY(get_my_company_ids())
   );
 
-CREATE POLICY "bank_imports_insert" ON storage.objects
+CREATE POLICY "imports_insert" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
-    bucket_id = 'bank-imports'
+    bucket_id = 'imports'
     AND (storage.foldername(name))[1]::uuid = ANY(get_my_company_ids())
   );
 
-CREATE POLICY "bank_imports_delete" ON storage.objects
+CREATE POLICY "imports_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (
-    bucket_id = 'bank-imports'
+    bucket_id = 'imports'
     AND (storage.foldername(name))[1]::uuid = ANY(get_my_company_ids())
   );
 
@@ -163,8 +171,8 @@ CREATE POLICY "bank_imports_delete" ON storage.objects
 -- 5. Migrations log
 -- ──────────────────────────────────────────────────────────
 INSERT INTO migrations_log (file_name, notes)
-VALUES ('059_bank_import_templates.sql',
-  'Universal template sistemi: bank_import_templates, storage bucket bank-imports, data_imports.template_id FK')
+VALUES ('059_import_templates.sql',
+  'Universal import template sistemi (banka + kasa): import_templates tablosu, storage bucket, data_imports.template_id FK')
 ON CONFLICT (file_name) DO NOTHING;
 
 COMMIT;
