@@ -14,8 +14,11 @@
 
   "row_detection": {
     "method": "y_coordinate_grouping",
-    "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}",
-    "y_tolerance": 5
+    "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}$",
+    "y_tolerance": 6,
+    "skip_header_y": 290,
+    "date_x_min": 60,
+    "date_x_max": 115
   },
 
   "fields": {
@@ -45,15 +48,18 @@
     },
     "debit": {
       "method": "x_coordinate_range",
-      "x_min": 425, "x_max": 520
+      "x_min": 425, "x_max": 498,
+      "use_all_rows": true
     },
     "credit": {
       "method": "x_coordinate_range",
-      "x_min": 520, "x_max": 575
+      "x_min": 498, "x_max": 570,
+      "use_all_rows": true
     },
     "knp_code": {
       "method": "x_coordinate_range",
-      "x_min": 565, "x_max": 598
+      "x_min": 568, "x_max": 598,
+      "use_all_rows": true
     },
     "counterparty_name": {
       "method": "x_coordinate_range",

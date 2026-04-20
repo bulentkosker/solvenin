@@ -14,9 +14,10 @@ function parseNumber(str, locale) {
   if (!s) return 0;
   const tsep = locale?.thousand_separator || ' ';
   const dsep = locale?.decimal_separator || ',';
-  // Thousand separator'ı kaldır (birden fazla karakter olabilir — boşluk, nokta, virgül)
-  if (tsep === ' ' || tsep === '\u00a0') s = s.replace(/[\s\u00a0]/g, '');
-  else s = s.split(tsep).join('');
+  // Tüm whitespace türlerini temizle (regular space, NBSP, thin space)
+  s = s.replace(/[\s\u00a0\u2009\u202f]+/g, '');
+  // Thousand separator'ı kaldır (virgül veya nokta)
+  if (tsep && tsep !== ' ' && tsep !== dsep) s = s.split(tsep).join('');
   // Decimal separator'ı '.' yap
   if (dsep !== '.') s = s.replace(dsep, '.');
   // Negatif işareti veya parantez: (123.45) → -123.45
@@ -49,8 +50,8 @@ function parseDate(str, format) {
   }
   if (!d || !m || !y || d > 31 || m > 12) return null;
   if (y < 100) y += 2000;
-  const date = new Date(y, m - 1, d);
-  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+  // Timezone-safe: doğrudan YYYY-MM-DD string oluştur, Date objesine çevirme
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 
 /** PDF: textItems'ları Y koordinatına göre satırlara grupla */
@@ -113,15 +114,17 @@ function parsePdf(rawData, template) {
   const warnings = [];
   const transactions = [];
 
-  // Metadata — tüm sayfa text'lerini birleştir
+  // Metadata — tüm sayfa text'lerini birleştir + whitespace normalize (multi-line regex fix)
   const allText = pages.map(p => p.text).join('\n');
-  const metadata = extractMetadata(allText, meta, locale);
+  const normalizedText = allText.replace(/\s+/g, ' ');
+  const metadata = extractMetadata(normalizedText, meta, locale);
 
   // Her sayfadaki textItems'ı Y-grupla
   const tolerance = template.row_detection?.y_tolerance || 2;
   const datePattern = template.row_detection?.pattern || '^\\d{2}\\.\\d{2}\\.\\d{4}';
   const dateRe = new RegExp(datePattern);
 
+  const skipHeaderY = template.row_detection?.skip_header_y || 0;
   let lineNum = 0;
 
   for (const page of pages) {
@@ -132,10 +135,17 @@ function parsePdf(rawData, template) {
     let continuationRows = [];
 
     for (const yRow of yRows) {
+      // İlk sayfada header bölgesini atla
+      if (skipHeaderY && page.pageNumber === 1 && yRow[0]?.y < skipHeaderY) continue;
       const firstText = yRow[0]?.text?.trim() || '';
       const rowText = rowToText(yRow);
+      // Tarih pattern: ilk non-empty item'da veya belirli x aralığındaki item'da ara
+      const dateItems = template.row_detection?.date_x_min != null
+        ? yRow.filter(ti => ti.x >= template.row_detection.date_x_min && ti.x <= (template.row_detection.date_x_max || 120))
+        : [yRow.find(ti => ti.text?.trim()) || yRow[0]];
+      const hasDateMatch = dateItems.some(ti => dateRe.test(ti?.text?.trim()));
 
-      if (dateRe.test(firstText)) {
+      if (hasDateMatch) {
         // Önceki pending tx'i bitir
         if (pendingTx) {
           transactions.push(finalizePdfTx(pendingTx, continuationRows, fields, locale, warnings));
