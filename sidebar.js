@@ -641,7 +641,7 @@
     clinic:      ['nav_clinic'],
     elevator:    ['nav_elevator'],
     ecommerce:   ['nav_ecommerce'],
-    cash_bank:   ['nav_cashbank'], // legacy alias
+    // cash_bank legacy alias removed — finance already maps nav_cashbank
   };
   if (window.ModulesConfig && window.ModulesConfig.MODULE_NAV_MAP) {
     Object.assign(MODULE_NAV_MAP, window.ModulesConfig.MODULE_NAV_MAP);
