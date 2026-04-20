@@ -1418,6 +1418,14 @@ function onTxCategoryChange(prefix) {
   const empGrp = document.getElementById(prefix + '-employee-group');
   if (contactGrp) contactGrp.style.display = ['sale','purchase'].includes(cat) ? '' : 'none';
   if (empGrp) empGrp.style.display = cat === 'salary' ? '' : 'none';
+  // Auto-set type based on category
+  const typeEl = document.getElementById(prefix + '-type');
+  if (typeEl) {
+    const inCats = ['sale'];
+    const outCats = ['purchase','expense','salary','tax','fee'];
+    if (inCats.includes(cat)) typeEl.value = 'in';
+    else if (outCats.includes(cat)) typeEl.value = 'out';
+  }
 }
 
 // ===== SAVE CASH TX =====
