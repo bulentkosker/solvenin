@@ -568,7 +568,7 @@
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="col_category">Category</label>
-          <select id="ctx-category">
+          <select id="ctx-category" onchange="onTxCategoryChange('ctx')">
             <option value="sale">💰 Sale</option>
             <option value="purchase">🛒 Purchase</option>
             <option value="expense">📋 Expense</option>
@@ -582,6 +582,14 @@
           <label data-i18n="col_date">Date *</label>
           <input type="date" id="ctx-date">
         </div>
+      </div>
+      <div class="form-group" id="ctx-contact-group">
+        <label data-i18n="label_contact">Cari Hesap</label>
+        <select id="ctx-contact"><option value="">— Seçiniz —</option></select>
+      </div>
+      <div class="form-group" id="ctx-employee-group" style="display:none">
+        <label data-i18n="label_employee">Personel</label>
+        <select id="ctx-employee"><option value="">— Seçiniz —</option></select>
       </div>
       <div class="form-group">
         <label data-i18n="col_ref">Reference</label>
@@ -693,7 +701,7 @@
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="col_category">Category</label>
-          <select id="btx-category">
+          <select id="btx-category" onchange="onTxCategoryChange('btx')">
             <option value="sale">💰 Sale Collection</option>
             <option value="purchase">🛒 Supplier Payment</option>
             <option value="expense">📋 Expense</option>
@@ -708,6 +716,14 @@
           <label data-i18n="col_date">Date *</label>
           <input type="date" id="btx-date">
         </div>
+      </div>
+      <div class="form-group" id="btx-contact-group">
+        <label data-i18n="label_contact">Cari Hesap</label>
+        <select id="btx-contact"><option value="">— Seçiniz —</option></select>
+      </div>
+      <div class="form-group" id="btx-employee-group" style="display:none">
+        <label data-i18n="label_employee">Personel</label>
+        <select id="btx-employee"><option value="">— Seçiniz —</option></select>
       </div>
       <div class="form-group">
         <label data-i18n="counterparty">Counterparty</label>
@@ -1378,12 +1394,42 @@ function deleteRegister(id) {
   openModal('delete-modal');
 }
 
+// ===== TX MODAL HELPERS — Contact/Employee selectors =====
+let _txContacts = null, _txEmployees = null;
+
+async function loadTxSelectors() {
+  if (!_txContacts) {
+    const { data } = await sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name');
+    _txContacts = data || [];
+  }
+  if (!_txEmployees) {
+    const { data } = await sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name');
+    _txEmployees = data || [];
+  }
+  const contactOpts = '<option value="">— Seçiniz —</option>' + _txContacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const empOpts = '<option value="">— Seçiniz —</option>' + _txEmployees.map(e => `<option value="${e.id}">${e.first_name} ${e.last_name}</option>`).join('');
+  ['ctx-contact','btx-contact'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = contactOpts; });
+  ['ctx-employee','btx-employee'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = empOpts; });
+}
+
+function onTxCategoryChange(prefix) {
+  const cat = document.getElementById(prefix + '-category')?.value;
+  const contactGrp = document.getElementById(prefix + '-contact-group');
+  const empGrp = document.getElementById(prefix + '-employee-group');
+  if (contactGrp) contactGrp.style.display = ['sale','purchase'].includes(cat) ? '' : 'none';
+  if (empGrp) empGrp.style.display = cat === 'salary' ? '' : 'none';
+}
+
 // ===== SAVE CASH TX =====
 function openCashTxModal() {
   document.getElementById('ctx-type').value = 'in';
   document.getElementById('ctx-amount').value = '';
   document.getElementById('ctx-desc').value = '';
   document.getElementById('ctx-ref').value = '';
+  document.getElementById('ctx-contact').value = '';
+  document.getElementById('ctx-employee').value = '';
+  onTxCategoryChange('ctx');
+  loadTxSelectors();
   openModal('cash-tx-modal');
 }
 
@@ -1402,9 +1448,12 @@ async function saveCashTx() {
   if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
 
   const reg = registers.find(r => r.id === selectedRegisterId);
+  const contactId = document.getElementById('ctx-contact').value || null;
+  const counterparty = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : null;
   const { error } = await sb.from('cash_transactions').insert({
     company_id: companyId, register_id: selectedRegisterId, type, amount, currency_code: reg.currency_code,
-    description: desc, category, reference: ref, transaction_date: date, source_type: 'manual'
+    description: desc, category, reference: ref, transaction_date: date, source_type: 'manual',
+    contact_id: contactId, counterparty
   });
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
@@ -1562,6 +1611,10 @@ function openBankTxModal() {
   document.getElementById('btx-desc').value = '';
   document.getElementById('btx-counterparty').value = '';
   document.getElementById('btx-ref').value = '';
+  document.getElementById('btx-contact').value = '';
+  document.getElementById('btx-employee').value = '';
+  onTxCategoryChange('btx');
+  loadTxSelectors();
   openModal('bank-tx-modal');
 }
 
@@ -1581,9 +1634,12 @@ async function saveBankTx() {
   if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
 
   const acc = accounts.find(a => a.id === selectedAccountId);
+  const contactId = document.getElementById('btx-contact').value || null;
+  const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : counterparty;
   const { error } = await sb.from('bank_transactions').insert({
     company_id: companyId, account_id: selectedAccountId, type, amount, currency_code: acc.currency_code,
-    description: desc, category, counterparty, reference: ref, transaction_date: date, source_type: 'manual'
+    description: desc, category, counterparty: counterpartyName || counterparty, reference: ref,
+    transaction_date: date, source_type: 'manual', contact_id: contactId
   });
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
