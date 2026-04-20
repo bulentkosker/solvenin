@@ -959,8 +959,8 @@ async function savePlan(companyId) {
 // ===== USER PLAN MANAGEMENT (per-user subscription) =====
 async function openUserPlanModal(u) {
   const planEnd = u.plan_end ? new Date(u.plan_end).toISOString().split('T')[0] : '';
-  // Fetch current plan_user_count + active user count across all owned companies
-  const { data: prof } = await sb.from('profiles').select('plan_user_count').eq('id', u.id).single();
+  // Fetch via SECURITY DEFINER RPC (anon key can't read profiles directly)
+  const { data: prof } = await sb.rpc('sp_get_user_plan', { p_user_id: u.id });
   const { data: ownedCompanies } = await sb.from('companies').select('id').eq('owner_id', u.id);
   const coIds = (ownedCompanies||[]).map(c=>c.id);
   let activeUsers = 0;
