@@ -1,3 +1,7 @@
 node_modules/
 .env
 .env.local
+
+# Bank import test samples and outputs
+scripts/bank-import-test/samples/
+scripts/bank-import-test/samples/*.txt
