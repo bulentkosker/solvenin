@@ -587,6 +587,10 @@
         <label data-i18n="label_contact">Cari Hesap</label>
         <select id="ctx-contact"><option value="">— Seçiniz —</option></select>
       </div>
+      <div class="form-group" id="ctx-account-group" style="display:none">
+        <label data-i18n="label_expense_account">Gider/Vergi Hesabı</label>
+        <select id="ctx-account"><option value="">— Seçiniz —</option></select>
+      </div>
       <div class="form-group" id="ctx-employee-group" style="display:none">
         <label data-i18n="label_employee">Personel</label>
         <select id="ctx-employee"><option value="">— Seçiniz —</option></select>
@@ -720,6 +724,10 @@
       <div class="form-group" id="btx-contact-group">
         <label data-i18n="label_contact">Cari Hesap</label>
         <select id="btx-contact"><option value="">— Seçiniz —</option></select>
+      </div>
+      <div class="form-group" id="btx-account-group" style="display:none">
+        <label data-i18n="label_expense_account">Gider/Vergi Hesabı</label>
+        <select id="btx-account"><option value="">— Seçiniz —</option></select>
       </div>
       <div class="form-group" id="btx-employee-group" style="display:none">
         <label data-i18n="label_employee">Personel</label>
@@ -1395,7 +1403,7 @@ function deleteRegister(id) {
 }
 
 // ===== TX MODAL HELPERS — Contact/Employee selectors =====
-let _txContacts = null, _txEmployees = null;
+let _txContacts = null, _txEmployees = null, _txAccounts = null;
 
 async function loadTxSelectors() {
   if (!_txContacts) {
@@ -1406,17 +1414,25 @@ async function loadTxSelectors() {
     const { data } = await sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name');
     _txEmployees = data || [];
   }
+  if (!_txAccounts) {
+    const { data } = await sb.from('chart_of_accounts').select('id, code, name, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code');
+    _txAccounts = data || [];
+  }
   const contactOpts = '<option value="">— Seçiniz —</option>' + _txContacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   const empOpts = '<option value="">— Seçiniz —</option>' + _txEmployees.map(e => `<option value="${e.id}">${e.first_name} ${e.last_name}</option>`).join('');
+  const accOpts = '<option value="">— Seçiniz —</option>' + _txAccounts.map(a => `<option value="${a.id}">${a.code} — ${a.name}</option>`).join('');
   ['ctx-contact','btx-contact'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = contactOpts; });
   ['ctx-employee','btx-employee'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = empOpts; });
+  ['ctx-account','btx-account'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = accOpts; });
 }
 
 function onTxCategoryChange(prefix) {
   const cat = document.getElementById(prefix + '-category')?.value;
   const contactGrp = document.getElementById(prefix + '-contact-group');
+  const accountGrp = document.getElementById(prefix + '-account-group');
   const empGrp = document.getElementById(prefix + '-employee-group');
   if (contactGrp) contactGrp.style.display = ['sale','purchase'].includes(cat) ? '' : 'none';
+  if (accountGrp) accountGrp.style.display = ['expense','tax','fee'].includes(cat) ? '' : 'none';
   if (empGrp) empGrp.style.display = cat === 'salary' ? '' : 'none';
   // Auto-set type based on category
   const typeEl = document.getElementById(prefix + '-type');
@@ -1435,6 +1451,7 @@ function openCashTxModal() {
   document.getElementById('ctx-desc').value = '';
   document.getElementById('ctx-ref').value = '';
   document.getElementById('ctx-contact').value = '';
+  document.getElementById('ctx-account').value = '';
   document.getElementById('ctx-employee').value = '';
   onTxCategoryChange('ctx');
   loadTxSelectors();
@@ -1620,6 +1637,7 @@ function openBankTxModal() {
   document.getElementById('btx-counterparty').value = '';
   document.getElementById('btx-ref').value = '';
   document.getElementById('btx-contact').value = '';
+  document.getElementById('btx-account').value = '';
   document.getElementById('btx-employee').value = '';
   onTxCategoryChange('btx');
   loadTxSelectors();
