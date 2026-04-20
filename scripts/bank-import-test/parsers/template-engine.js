@@ -125,6 +125,7 @@ function parsePdf(rawData, template) {
   const dateRe = new RegExp(datePattern);
 
   const skipHeaderY = template.row_detection?.skip_header_y || 0;
+  const stopRe = template.row_detection?.stop_pattern ? new RegExp(template.row_detection.stop_pattern, 'i') : null;
   let lineNum = 0;
 
   for (const page of pages) {
@@ -154,6 +155,13 @@ function parsePdf(rawData, template) {
         pendingTx = { lineNum, items: yRow, text: rowText };
         continuationRows = [];
       } else if (pendingTx) {
+        // Stop pattern: totals/summary satırına ulaşınca tx'i bitir, devam etme
+        if (stopRe && stopRe.test(rowText)) {
+          transactions.push(finalizePdfTx(pendingTx, continuationRows, fields, locale, warnings));
+          pendingTx = null;
+          continuationRows = [];
+          continue;
+        }
         // Devam satırı — karşı taraf detayları çok satırlı olabilir
         continuationRows.push({ items: yRow, text: rowText });
       }
@@ -343,7 +351,8 @@ function extractMetadata(allText, metaConfig, locale) {
       if (key.includes('balance') || key.includes('total')) {
         result[key] = raw ? parseNumber(raw, locale) : null;
       } else if (key.includes('date') || key.includes('period')) {
-        result[key] = raw ? parseDate(raw, rule.date_format || locale.date_format) : raw;
+        const cleanRaw = raw ? raw.replace(/\s/g, '') : raw;
+        result[key] = cleanRaw ? parseDate(cleanRaw, rule.date_format || locale.date_format) : raw;
       } else {
         result[key] = raw;
       }

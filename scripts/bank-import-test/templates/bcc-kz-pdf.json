@@ -18,7 +18,8 @@
     "y_tolerance": 6,
     "skip_header_y": 290,
     "date_x_min": 60,
-    "date_x_max": 115
+    "date_x_max": 115,
+    "stop_pattern": "Итого|Обороты|Исходящ"
   },
 
   "fields": {
@@ -48,12 +49,12 @@
     },
     "debit": {
       "method": "x_coordinate_range",
-      "x_min": 425, "x_max": 498,
+      "x_min": 425, "x_max": 495,
       "use_all_rows": true
     },
     "credit": {
       "method": "x_coordinate_range",
-      "x_min": 498, "x_max": 570,
+      "x_min": 495, "x_max": 560,
       "use_all_rows": true
     },
     "knp_code": {
