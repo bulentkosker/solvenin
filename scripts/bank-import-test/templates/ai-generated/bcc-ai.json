@@ -1,0 +1,127 @@
+{
+  "name": "Bank CenterCredit KZ — Обороты по счетам (PDF)",
+  "file_format": "pdf",
+  "country_code": "KZ",
+  "language_code": "ru",
+  "bank_name": "Bank CenterCredit",
+  "bank_identifier": "KCJBKZKX",
+  "locale": {
+    "decimal_separator": ",",
+    "thousand_separator": " ",
+    "date_format": "DD.MM.YYYY"
+  },
+  "row_detection": {
+    "method": "y_coordinate_grouping",
+    "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}$",
+    "y_tolerance": 4,
+    "skip_header_y": 295,
+    "date_x_min": 60,
+    "date_x_max": 110,
+    "stop_pattern": "Жиынтығы|Итого|Шығыс сальдо|Исходящее сальдо"
+  },
+  "fields": {
+    "transaction_date": {
+      "method": "x_coordinate_range",
+      "x_min": 67,
+      "x_max": 103
+    },
+    "document_number": {
+      "method": "x_coordinate_range",
+      "x_min": 30,
+      "x_max": 60
+    },
+    "transaction_time": {
+      "method": "x_coordinate_range",
+      "x_min": 67,
+      "x_max": 103
+    },
+    "counterparty_bik": {
+      "method": "x_coordinate_range",
+      "x_min": 117,
+      "x_max": 153
+    },
+    "counterparty_iban": {
+      "method": "x_coordinate_range",
+      "x_min": 162,
+      "x_max": 238
+    },
+    "sender_bin": {
+      "method": "x_coordinate_range",
+      "x_min": 238,
+      "x_max": 295
+    },
+    "counterparty_name": {
+      "method": "x_coordinate_range",
+      "x_min": 297,
+      "x_max": 367,
+      "use_all_rows": true
+    },
+    "receiver_bin": {
+      "method": "x_coordinate_range",
+      "x_min": 369,
+      "x_max": 430
+    },
+    "debit": {
+      "method": "x_coordinate_range",
+      "x_min": 430,
+      "x_max": 495
+    },
+    "credit": {
+      "method": "x_coordinate_range",
+      "x_min": 495,
+      "x_max": 570
+    },
+    "knp_code": {
+      "method": "x_coordinate_range",
+      "x_min": 571,
+      "x_max": 600
+    },
+    "bank_correspondent": {
+      "method": "x_coordinate_range",
+      "x_min": 598,
+      "x_max": 697
+    },
+    "payment_details": {
+      "method": "x_coordinate_range",
+      "x_min": 697,
+      "x_max": 850,
+      "use_all_rows": true
+    }
+  },
+  "metadata": {
+    "account_iban": {
+      "method": "regex",
+      "pattern": "ЖСК / ИИК[:\\s]+(KZ\\d{18,20})"
+    },
+    "opening_balance": {
+      "method": "regex",
+      "pattern": "Кіріс\\s+сальдо\\s*/\\s*Входящее\\s+сальдо\\s*:\\s*([\\d\\s,]+)"
+    },
+    "closing_balance": {
+      "method": "regex",
+      "pattern": "Шығыс сальдо\\s*/\\s*Исходящее\\s+сальдо\\s*:\\s*([\\d\\s,]+)"
+    },
+    "period_start": {
+      "method": "regex",
+      "pattern": "бастап\\s+(\\d{2}\\.\\d{2}\\.\\d{4})",
+      "date_format": "DD.MM.YYYY"
+    },
+    "period_end": {
+      "method": "regex",
+      "pattern": "дейінгі\\s+қозғалыс.*?(\\d{2}\\.\\d{2}\\.\\d{4})",
+      "date_format": "DD.MM.YYYY"
+    },
+    "client_bin": {
+      "method": "regex",
+      "pattern": "ИИН / БИН[:\\s]+(\\d{12})"
+    },
+    "bank_bik": {
+      "method": "regex",
+      "pattern": "БСК / БИК[:\\s]+(\\w+)"
+    },
+    "client_name": {
+      "method": "regex",
+      "pattern": "Клиент / Клиент[:\\s]+([^\\n]+)"
+    }
+  }
+}

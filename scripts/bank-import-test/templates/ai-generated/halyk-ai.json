@@ -1,0 +1,94 @@
+{
+  "name": "Halyk Bank KZ — Выписка по счету (PDF)",
+  "file_format": "pdf",
+  "country_code": "KZ",
+  "language_code": "ru",
+  "bank_name": "Народный Банк Казахстана",
+  "bank_identifier": "HSBKKZKX",
+  "locale": {
+    "decimal_separator": ".",
+    "thousand_separator": ",",
+    "date_format": "DD.MM.YYYY"
+  },
+  "row_detection": {
+    "method": "y_coordinate_grouping",
+    "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}",
+    "y_tolerance": 4,
+    "skip_header_y": 300,
+    "date_x_min": 25,
+    "date_x_max": 70,
+    "stop_pattern": "Итого|Исходящий остаток"
+  },
+  "fields": {
+    "transaction_date": {
+      "method": "x_coordinate_range",
+      "x_min": 25,
+      "x_max": 70
+    },
+    "document_number": {
+      "method": "x_coordinate_range",
+      "x_min": 80,
+      "x_max": 175
+    },
+    "debit": {
+      "method": "x_coordinate_range",
+      "x_min": 175,
+      "x_max": 250
+    },
+    "credit": {
+      "method": "x_coordinate_range",
+      "x_min": 250,
+      "x_max": 305
+    },
+    "counterparty_name": {
+      "method": "x_coordinate_range",
+      "x_min": 305,
+      "x_max": 410,
+      "use_all_rows": true
+    },
+    "payment_details": {
+      "method": "x_coordinate_range",
+      "x_min": 410,
+      "x_max": 570,
+      "use_all_rows": true
+    },
+    "counterparty_bin": {
+      "method": "regex_in_field",
+      "pattern": "БИН\\s*(\\d{12})",
+      "group": 1
+    },
+    "external_reference": {
+      "method": "regex_in_field",
+      "pattern": "Внешний референс[:\\s]+([\\w\\d]+)",
+      "group": 1
+    }
+  },
+  "metadata": {
+    "account_iban": {
+      "method": "regex",
+      "pattern": "Счет\\(Валюта\\)\\s+(KZ\\d{18,20})"
+    },
+    "opening_balance": {
+      "method": "regex",
+      "pattern": "Входящий остаток:\\s*([\\d\\s,.]+)"
+    },
+    "period_start": {
+      "method": "regex",
+      "pattern": "За период с\\s+(\\d{2}-\\d{2}-\\d{4})",
+      "date_format": "DD-MM-YYYY"
+    },
+    "period_end": {
+      "method": "regex",
+      "pattern": "по\\s+(\\d{2}-\\d{2}-\\d{4})",
+      "date_format": "DD-MM-YYYY"
+    },
+    "client_bin": {
+      "method": "regex",
+      "pattern": "ИИН/БИН\\s+(\\d{12})"
+    },
+    "bank_bik": {
+      "method": "regex",
+      "pattern": "БИК\\s+(\\w+)"
+    }
+  }
+}
