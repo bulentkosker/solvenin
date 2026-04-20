@@ -1357,6 +1357,17 @@ async function saveRegister() {
 
 function deleteRegister(id) {
   deleteCallback = async () => {
+    const [txs, sessions] = await Promise.all([
+      sb.from('cash_transactions').select('id', {count:'exact',head:true}).eq('register_id', id),
+      sb.from('pos_sessions').select('id', {count:'exact',head:true}).eq('cash_register_id', id),
+    ]);
+    const total = (txs.count||0) + (sessions.count||0);
+    if (total > 0) {
+      const parts = [];
+      if (txs.count) parts.push(txs.count + ' kasa hareketi');
+      if (sessions.count) parts.push(sessions.count + ' POS oturumu');
+      showToast('Önce hareketleri silin: ' + parts.join(', ') + ' var', 'error'); return;
+    }
     const { data: { user: _u } } = await sb.auth.getUser();
     await sb.from('cash_registers').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     if (selectedRegisterId === id) { selectedRegisterId = null; document.getElementById('cash-detail').style.display = 'none'; }
@@ -1529,7 +1540,7 @@ async function saveAccount() {
 function deleteAccount(id) {
   deleteCallback = async () => {
     const { count } = await sb.from('bank_transactions').select('id', {count:'exact',head:true}).eq('account_id', id);
-    if (count > 0) { showToast('Silinemez: Bu hesabın ' + count + ' işlemi var', 'error'); return; }
+    if (count > 0) { showToast('Önce hareketleri silin: ' + count + ' banka hareketi var', 'error'); return; }
     const { data: { user: _u } } = await sb.auth.getUser();
     await sb.from('bank_accounts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     if (selectedAccountId === id) { selectedAccountId = null; document.getElementById('bank-detail').style.display = 'none'; }

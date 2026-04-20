@@ -1682,7 +1682,7 @@ async function deleteOrder(id) {
     if (payments.count) parts.push(payments.count + ' ödeme');
     if (movements.count) parts.push(movements.count + ' stok hareketi');
     if (journals.count) parts.push(journals.count + ' muhasebe kaydı');
-    showToast((t('err_has_related')||'Silinemez: ') + parts.join(', ') + ' var', 'error'); return;
+    showToast((t('err_has_related')||'Önce hareketleri silin: ') + parts.join(', ') + ' var', 'error'); return;
   }
   if (!await showConfirm(t('confirm_delete_order'), t('lbl_delete')||'Delete')) return;
   const { data: { user: _u } } = await sb.auth.getUser();
