@@ -82,6 +82,13 @@ async function getApiKey() {
   console.log(`   Time: ${elapsed}s, Attempts: ${aiResult.attempts}, Confidence: ${aiResult.confidence}`);
   console.log(`   Tokens: input=${aiResult.tokens_used.input_tokens}, output=${aiResult.tokens_used.output_tokens}`);
 
+  // Show AI analysis
+  if (aiResult.analysis) {
+    console.log('\n─── AI ANALİZ ───');
+    console.log(aiResult.analysis.slice(0, 600));
+    if (aiResult.analysis.length > 600) console.log('... (truncated)');
+  }
+
   if (aiResult.validation.errors.length) console.log(`   ❌ Errors: ${aiResult.validation.errors.join(', ')}`);
   if (aiResult.validation.warnings.length) console.log(`   ⚠ Warnings: ${aiResult.validation.warnings.join(', ')}`);
 

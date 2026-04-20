@@ -10,13 +10,14 @@
     "thousand_separator": "",
     "date_format": "DD.MM.YYYY"
   },
+  "sheet_pattern": "\\d{2}\\.\\d{2}\\.\\d{4}",
   "sheet_date_format": "DD.MM.YYYY",
   "sections": [
     {
       "name": "cash",
       "sheet_pattern": ".*",
-      "start_row": 6,
-      "end_detection": "first_empty_in_col_B",
+      "start_row": 7,
+      "end_pattern": "T O P L A M L A R",
       "columns": {
         "number": "B",
         "description": "C",
@@ -27,8 +28,8 @@
     {
       "name": "bank",
       "sheet_pattern": ".*",
-      "start_row": 6,
-      "end_detection": "first_empty_in_col_I",
+      "start_row": 7,
+      "end_pattern": "T O P L A M L A R",
       "columns": {
         "number": "I",
         "description": "J",
@@ -41,35 +42,63 @@
     "transaction_date": {
       "method": "sheet_name_date"
     },
-    "document_number": {
-      "method": "column"
+    "entry_number": {
+      "method": "column_value"
     },
-    "payment_details": {
-      "method": "column"
+    "description": {
+      "method": "column_value"
     },
     "debit": {
-      "method": "column"
+      "method": "column_value"
     },
     "credit": {
-      "method": "column"
+      "method": "column_value"
     }
   },
   "metadata": {
     "cash_opening_balance": {
-      "method": "regex",
-      "pattern": "D E V R E D E N.*?(\\d+(?:\\.\\d+)?)"
+      "method": "cell_regex",
+      "pattern": "D E V R E D E N",
+      "value_column": "D"
     },
     "bank_opening_balance": {
-      "method": "regex",
-      "pattern": "D E V R E D E N.*?(\\d+(?:\\.\\d+)?)"
+      "method": "cell_regex",
+      "pattern": "D E V R E D E N",
+      "value_column": "K"
     },
     "cash_closing_balance": {
-      "method": "regex",
-      "pattern": "GUN KASA DEVIR BAKIYE.*?(\\d+(?:\\.\\d+)?)"
+      "method": "cell_regex",
+      "pattern": "DEVIR BAKIYE",
+      "value_column": "D"
     },
     "bank_closing_balance": {
-      "method": "regex",
-      "pattern": "GUN KASA DEVIR BAKIYE.*?(\\d+(?:\\.\\d+)?)"
+      "method": "cell_regex",
+      "pattern": "DEVIR BAKIYE",
+      "value_column": "K"
+    },
+    "cash_total_debit": {
+      "method": "cell_regex",
+      "pattern": "T O P L A M L A R",
+      "value_column": "D"
+    },
+    "cash_total_credit": {
+      "method": "cell_regex",
+      "pattern": "T O P L A M L A R",
+      "value_column": "E"
+    },
+    "bank_total_debit": {
+      "method": "cell_regex",
+      "pattern": "T O P L A M L A R",
+      "value_column": "K"
+    },
+    "bank_total_credit": {
+      "method": "cell_regex",
+      "pattern": "T O P L A M L A R",
+      "value_column": "L"
+    },
+    "period_date": {
+      "method": "sheet_name_date",
+      "date_format": "DD.MM.YYYY"
     }
   }
 }

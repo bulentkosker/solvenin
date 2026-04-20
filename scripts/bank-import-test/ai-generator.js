@@ -1,5 +1,5 @@
 /**
- * AI Template Generator
+ * AI Template Generator v2 — Chain-of-Thought + X-Coordinate Measurement
  * Bilinmeyen formatta ekstre yüklendiğinde Claude API ile template JSON üretir.
  */
 const fs = require('fs');
@@ -13,8 +13,8 @@ function compressPdfExtract(rawData, maxPages = 2) {
       pageNumber: p.pageNumber,
       width: p.width,
       height: p.height,
-      text: p.text.slice(0, 2000),
-      textItems: p.textItems.slice(0, 150).map(ti => ({
+      text: p.text.slice(0, 2500),
+      textItems: p.textItems.slice(0, 200).map(ti => ({
         text: ti.text,
         x: Math.round(ti.x * 10) / 10,
         y: Math.round(ti.y * 10) / 10,
@@ -25,14 +25,21 @@ function compressPdfExtract(rawData, maxPages = 2) {
   };
 }
 
-function compressExcelExtract(rawData, maxSheets = 3, maxRows = 30) {
+function compressExcelExtract(rawData, maxSheets = 3, maxRows = 25) {
   return {
     sheets: rawData.sheets.slice(0, maxSheets).map(s => ({
       sheetName: s.sheetName,
       totalRows: s.totalRows,
       totalCols: s.totalCols,
       rows: s.rows.slice(0, maxRows),
-      merges: s.merges.slice(0, 10),
+      merges: s.merges.slice(0, 15),
+      // Cell map for first sheet — helps AI see dual-section layout
+      cellMap: Object.fromEntries(
+        Object.entries(s.cellMap).filter(([addr]) => {
+          const row = parseInt(addr.replace(/[A-Z]/g, ''));
+          return row <= maxRows;
+        }).slice(0, 80)
+      ),
     })),
     fileName: rawData.fileName,
     sheetCount: rawData.sheetCount,
@@ -47,9 +54,9 @@ function loadFewShotExamples() {
   const examples = [];
 
   const pairs = [
-    { template: 'halyk-kz-pdf.json', output: 'output-halyk.txt', label: 'Halyk Bank KZ PDF' },
+    { template: 'halyk-kz-pdf.json', output: 'output-halyk.txt', label: 'Halyk Bank KZ PDF (portrait)' },
     { template: 'bcc-kz-pdf.json', output: 'output-bcc.txt', label: 'BCC Bank KZ PDF (landscape)' },
-    { template: 'generic-cashbook.json', output: 'output-cashbook.txt', label: 'Cash/Bank Ledger Excel' },
+    { template: 'generic-cashbook.json', output: 'output-cashbook.txt', label: 'Cash/Bank Ledger Excel (dual-section)' },
   ];
 
   for (const pair of pairs) {
@@ -58,136 +65,148 @@ function loadFewShotExamples() {
       const outputPath = path.join(sDir, pair.output);
       let rawSample = '';
       if (fs.existsSync(outputPath)) {
-        rawSample = fs.readFileSync(outputPath, 'utf8').slice(0, 1200);
+        rawSample = fs.readFileSync(outputPath, 'utf8').slice(0, 1500);
       }
       examples.push({ label: pair.label, rawSample, template });
-    } catch (e) {
-      // Skip missing examples
-    }
+    } catch (e) {}
   }
   return examples;
 }
 
-// ─── SYSTEM PROMPT ──────────────────────────────────────
+// ─── SYSTEM PROMPT v2 ───────────────────────────────────
 
-const SYSTEM_PROMPT = `Sen bir banka ekstresi / kasa defteri parser template üreticisisin.
+const SYSTEM_PROMPT = `Sen banka ekstresi ve muhasebe defterleri için parser template üreten bir uzman AI'sın.
 
-Kullanıcı sana bir finansal dosyanın ham extract çıktısını gönderecek. Senin görevin bu dosyayı parse edebilecek bir template JSON üretmek.
+Görevin: Verilen ham dosya extract çıktısını analiz edip, parse için kullanılacak TEMPLATE JSON üretmek.
 
-## Template JSON Schema
+KRİTİK KURAL: Few-shot örneklerindeki x koordinatlarını, sütun pozisyonlarını veya regex pattern'lerini KOPYALAMA. Her dosyanın kendine özgü layoutu vardır. Tüm değerleri RAW DATA'DAN ÖLÇEREK tespit et.
 
+CEVABIN İKİ KISIMDAN OLUŞACAK:
+
+═══════════════════════════════════════════
+KISIM 1 — ANALİZ (100-200 kelime, düz metin)
+═══════════════════════════════════════════
+Aşağıdaki soruları yanıtla:
+
+1. FORMAT: PDF mi Excel mi? Landscape mi portrait? Kaç sayfa/sheet?
+2. LOCALE:
+   - Bir sayısal tutar örneği göster (raw data'dan kopyala)
+   - Decimal separator: virgül mü nokta mı?
+   - Thousand separator: boşluk mu virgül mü nokta mı?
+   - Tarih formatı: örnek tarih göster → format çıkar
+3. PDF İÇİN — KOLON ANALİZİ:
+   - En az 3 transaction satırının textItems'larını incele
+   - Her kolonun x aralığını ölç (x_min — x_max):
+     * Tarih: x=?-?
+     * Debit: x=?-?  (3 örnekten min/max al)
+     * Credit: x=?-? (3 örnekten min/max al)
+     * Counterparty: x=?-?
+   - Debit ve credit x aralıkları çakışıyor mu? Aralarındaki mesafe?
+4. EXCEL İÇİN — SECTION ANALİZİ:
+   - Tek tablo mu, yoksa yanyana 2+ tablo mu? (cell adreslerine bak!)
+   - Boş kolon var mı tablolar arasında? (F,G,H boşsa → dual section)
+   - Her section hangi kolonları kullanıyor?
+   - Transaction verisi kaçıncı satırdan başlıyor?
+   - Sheet adı tarih mi? Format?
+5. METADATA: Opening/closing balance, period, IBAN nerede?
+6. PATTERN'LER: BIN (12 hane), IBAN (KZ ile başlayan), KNP kodu var mı?
+
+═══════════════════════════════════════════
+KISIM 2 — TEMPLATE JSON
+═══════════════════════════════════════════
+Analiz sonucuna göre template JSON üret.
+MUTLAKA \`\`\`json ... \`\`\` code block içinde yaz.
+
+TEMPLATE SCHEMA:
 {
-  "name": "Template adı (banka adı + format)",
+  "name": "string",
   "file_format": "pdf" | "xlsx",
-  "country_code": "KZ" | "TR" | "US" | ...,
-  "language_code": "ru" | "tr" | "en" | ...,
-  "bank_name": "Banka adı (null if not a bank statement)",
-  "bank_identifier": "SWIFT/BIC kodu (varsa)",
-
+  "country_code": "KZ" | "TR" | ...,
+  "language_code": "ru" | "tr" | "en",
+  "bank_name": "string | null",
+  "bank_identifier": "SWIFT/BIC | null",
   "locale": {
-    "decimal_separator": "." veya ",",
-    "thousand_separator": " " veya "," veya "." (decimal_separator'dan farklı olmalı!),
-    "date_format": "DD.MM.YYYY" | "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"
+    "decimal_separator": "." | ",",
+    "thousand_separator": " " | "," | "." (decimal_separator'dan FARKLI!),
+    "date_format": "DD.MM.YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"
   },
-
-  "row_detection": {          // Sadece PDF için
+  "row_detection": {
     "method": "y_coordinate_grouping",
-    "pattern": "regex — her transaction satırı bu pattern'le tanınır (genelde tarih)",
-    "y_tolerance": 2-6,        // Aynı Y (±tolerans) = aynı satır
-    "skip_header_y": number,   // İlk sayfada bu Y'den öncekileri atla (header bölgesi)
-    "date_x_min": number,      // Tarih item'ının beklenen x aralığı (header tarihlerini filtrelemek için)
-    "date_x_max": number,
-    "stop_pattern": "regex — bu pattern'e uyan satırda transaction'ları durdur (ör: Итого|Total)"
+    "pattern": "regex — transaction başlangıç pattern'i",
+    "y_tolerance": 2-6,
+    "skip_header_y": number,
+    "date_x_min": number, "date_x_max": number,
+    "stop_pattern": "Итого|Total|Toplam"
   },
-
-  "sections": [               // Sadece Excel için — bir sheet'te birden fazla tablo
-    {
-      "name": "cash" | "bank" | ...,
-      "sheet_pattern": "regex — hangi sheet'lerde",
-      "start_row": number,     // 1-indexed, data başlangıcı (header'lar atlanır)
-      "end_detection": "first_empty_in_col_B",
-      "columns": {
-        "number": "B", "description": "C", "debit": "D", "credit": "E"
-      }
-    }
-  ],
-
-  "sheet_date_format": "DD.MM.YYYY",  // Excel: sheet adından tarih çıkarma formatı
-
-  "fields": {                 // Her transaction'dan çıkarılacak alanlar
-    "transaction_date": {
-      "method": "x_coordinate_range" | "regex" | "regex_in_field",
-      "x_min": number, "x_max": number,        // PDF x-range
-      "use_all_rows": true | false,             // continuation satırları da dahil et
-      "pattern": "regex pattern",
-      "group": 1                                // regex group numarası
-    },
-    "document_number": { ... },
-    "debit": { ... },
-    "credit": { ... },
-    "counterparty_name": { ... },
-    "counterparty_bin": {
-      "method": "regex_in_field",
-      "pattern": "BIN/IIN regex — ör: БИН\\\\s*(\\\\d{12})"
-    },
+  "sections": [ ... ],
+  "sheet_pattern": "regex",
+  "sheet_date_format": "DD.MM.YYYY",
+  "fields": {
+    "transaction_date": { "method": "x_coordinate_range", "x_min": N, "x_max": N },
+    "debit": { "method": "x_coordinate_range", "x_min": N, "x_max": N, "use_all_rows": true },
+    "credit": { "method": "x_coordinate_range", "x_min": N, "x_max": N, "use_all_rows": true },
+    "counterparty_name": { "method": "x_coordinate_range", "x_min": N, "x_max": N, "use_all_rows": true },
+    "counterparty_bin": { "method": "regex_in_field", "pattern": "regex" },
     "payment_details": { ... },
     "knp_code": { ... },
     "external_reference": { ... }
   },
-
-  "metadata": {               // Dosya geneli bilgiler
-    "account_iban": { "method": "regex", "pattern": "IBAN regex" },
+  "metadata": {
+    "account_iban": { "method": "regex", "pattern": "..." },
     "opening_balance": { "method": "regex", "pattern": "..." },
     "closing_balance": { "method": "regex", "pattern": "..." },
-    "period_start": { "method": "regex", "pattern": "...", "date_format": "DD-MM-YYYY" },
-    "period_end": { "method": "regex", "pattern": "...", "date_format": "DD-MM-YYYY" }
+    "period_start": { "method": "regex", "pattern": "...", "date_format": "..." },
+    "period_end": { "method": "regex", "pattern": "...", "date_format": "..." }
   }
 }
 
-## PDF Template Kuralları
+X KOORDİNAT TESPİTİ (PDF için):
 
-1. textItems x,y koordinatlarını analiz et:
-   - Aynı y (±tolerance) = aynı satır
-   - X kümeleri = tablo kolonları (tarih, belge no, debit, credit, karşı taraf...)
-   - Header/metadata bölgesi genelde y < 250-300
+Raw data'da textItems şöyle görünür:
+{"text": "128 591,10", "x": 432.0, "y": 312.0, "w": 45.0}
+{"text": "KZ5896503F0007358", "x": 162.0, "y": 308.0, "w": 80.0}
 
-2. Transaction başlangıcını tespit et:
-   - Genelde tarih pattern'i ile (DD.MM.YYYY)
-   - date_x_min/date_x_max ile header tarihlerini filtrele
+Aynı y'de (±tolerance) olan item'lar aynı satırdadır. Kolonları tespit etmek için:
 
-3. Çok satırlı alanlar (counterparty, payment details):
-   - use_all_rows: true → continuation satırları da dahil eder
+1. Bir transaction satırındaki TÜM item'ları bul (aynı y ± 3-6)
+2. x'lerini küçükten büyüğe sırala
+3. Hangi item'ın hangi field olduğunu İÇERİĞİNDEN anla:
+   - DD.MM.YYYY formatında → tarih
+   - KZ ile başlayan 20+ karakter → IBAN
+   - 12 haneli sayı → BIN
+   - Sayısal tutar (locale'e uygun) → debit VEYA credit
+   - 3 haneli sayı → KNP kodu
+4. Aynı field'ın 3+ örneğinin x değerlerinden RANGE çıkar:
+   x_min = min(x_values) - 5
+   x_max = max(x_values) + max(width_values) + 5
 
-4. Sayı formatını locale'den belirle:
-   - "128 591,10" → thousand=" ", decimal=","
-   - "32,291.25" → thousand=",", decimal="."
+DEBIT vs CREDIT AYIRIMI:
+- Her iki kolon da sayısal tutar içerir
+- İkisi genelde yan yana ama FARKLI x aralıklarında
+- Debit solu, credit sağı (veya tersi) — birden fazla örneğe bak
+- x aralıkları KESINLIKLE çakışmamalı
 
-## Excel Template Kuralları
+EXCEL DUAL-SECTION TESPİTİ:
+- Eğer tek sheet'te B-E ve I-L gibi iki ayrı kolon grubu kullanılıyorsa → sections array kullan
+- Ortadaki boş kolonlar (F,G,H) iki section'ı ayırır
+- Her section için ayrı "columns" mapping yaz
+- Sheet adı tarih ise → sheet_date_format ekle, transaction_date section'dan değil sheet adından gelir
 
-1. Sheet yapısını analiz et (rows, merges)
-2. Sections ile yanyana tablolar tanımla (ör: kasa sol, banka sağ)
-3. sheet_date_format ile sheet adından tarih çıkar
-4. start_row ile header satırlarını atla
-5. end_detection ile data sonu tespit et
-
-## Zorunlu Alanlar
-- transaction_date, debit, credit (en az biri > 0 olmalı)
-- counterparty_name (varsa)
-
-## ÖNEMLİ
-- locale.decimal_separator ≠ locale.thousand_separator
-- Çıktı YALNIZCA valid JSON. Açıklama, markdown, code fence YAZMA.
-- Regex'lerde backslash'ları JSON escape et (\\\\d değil \\d yaz — JSON string'de \\ gerekli)`;
+METADATA REGEX YAZARKEN:
+- Opening/closing balance: "Входящий остаток", "Исходящий остаток", "Devir bakiye" gibi label'ları ara
+- IBAN: KZ ile başlayan 20 haneli, veya TR ile başlayan 26 haneli string
+- Regex'te boşluk/whitespace esnek tut: \\s+ kullan`;
 
 // ─── CLAUDE API CALL ────────────────────────────────────
 
 async function callClaude(messages, apiKey, maxRetries = 2) {
   let lastError = null;
+  let analysis = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const body = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 5000,
       system: SYSTEM_PROMPT,
       messages,
     };
@@ -213,26 +232,38 @@ async function callClaude(messages, apiKey, maxRetries = 2) {
     const text = (data.content || []).map(b => b.text || '').join('');
     const usage = data.usage || {};
 
-    // JSON parse
-    try {
-      // Clean: remove code fences if present
-      let jsonStr = text.trim();
-      if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    // Extract analysis (text before JSON block) and JSON
+    const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonBlockMatch) {
+      analysis = text.slice(0, text.indexOf('```json')).trim();
+      try {
+        const template = JSON.parse(jsonBlockMatch[1]);
+        return { template, analysis, tokens_used: usage, raw_response: text, attempts: attempt + 1 };
+      } catch (parseErr) {
+        lastError = `JSON parse error in code block: ${parseErr.message}`;
+        console.error(`JSON parse failed (attempt ${attempt + 1}):`, parseErr.message);
       }
-      const template = JSON.parse(jsonStr);
-      return { template, tokens_used: usage, raw_response: text, attempts: attempt + 1 };
-    } catch (parseErr) {
-      lastError = `JSON parse error: ${parseErr.message}`;
-      console.error(`JSON parse failed (attempt ${attempt + 1}):`, parseErr.message);
-      // Retry with hint
-      if (attempt < maxRetries) {
-        messages = [
-          ...messages,
-          { role: 'assistant', content: text },
-          { role: 'user', content: 'JSON parse hatası oldu. SADECE geçerli JSON döndür, başka hiçbir şey yazma. Code fence (```) kullanma.' },
-        ];
+    } else {
+      // No code block — try parsing entire response as JSON
+      try {
+        let jsonStr = text.trim();
+        if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+        const template = JSON.parse(jsonStr);
+        return { template, analysis: '', tokens_used: usage, raw_response: text, attempts: attempt + 1 };
+      } catch (parseErr) {
+        lastError = `No JSON block found and raw parse failed: ${parseErr.message}`;
+        analysis = text.slice(0, 500);
+        console.error(`JSON not found (attempt ${attempt + 1})`);
       }
+    }
+
+    // Retry
+    if (attempt < maxRetries) {
+      messages = [
+        ...messages,
+        { role: 'assistant', content: text },
+        { role: 'user', content: 'Cevabındaki JSON parse edilemedi. Lütfen KISIM 1 (analiz) yazıp, sonra ```json ... ``` code block içinde VALID JSON template döndür.' },
+      ];
     }
   }
 
@@ -247,34 +278,23 @@ function validateTemplate(template) {
 
   if (!template.name) errors.push('name eksik');
   if (!template.file_format) errors.push('file_format eksik');
-  if (!['pdf', 'xlsx', 'xls', 'csv', 'txt'].includes(template.file_format)) errors.push('file_format geçersiz: ' + template.file_format);
+  if (!['pdf', 'xlsx', 'xls', 'csv', 'txt'].includes(template.file_format)) errors.push('file_format geçersiz');
 
-  // Locale
   if (!template.locale) errors.push('locale eksik');
   else {
     if (!template.locale.decimal_separator) warnings.push('locale.decimal_separator eksik');
-    if (template.locale.decimal_separator === template.locale.thousand_separator) {
-      errors.push('decimal_separator ve thousand_separator aynı olamaz: ' + template.locale.decimal_separator);
-    }
+    if (template.locale.decimal_separator === template.locale.thousand_separator)
+      errors.push('decimal_separator ve thousand_separator aynı olamaz');
     if (!template.locale.date_format) warnings.push('locale.date_format eksik');
   }
 
-  // Fields
-  if (!template.fields) errors.push('fields eksik');
-  else {
-    if (!template.fields.transaction_date) warnings.push('fields.transaction_date eksik');
-    if (!template.fields.debit && !template.fields.credit) errors.push('fields.debit veya fields.credit en az biri olmalı');
+  if (!template.fields && !template.sections) errors.push('fields veya sections eksik');
+  if (template.fields && !template.sections) {
+    if (!template.fields.debit && !template.fields.credit) errors.push('fields.debit veya credit gerekli');
   }
 
-  // PDF specifics
-  if (template.file_format === 'pdf' && !template.row_detection) {
-    warnings.push('PDF template için row_detection önerilir');
-  }
-
-  // Excel specifics
-  if (['xlsx', 'xls'].includes(template.file_format) && (!template.sections || !template.sections.length)) {
-    warnings.push('Excel template için sections önerilir');
-  }
+  if (template.file_format === 'pdf' && !template.row_detection) warnings.push('PDF için row_detection önerilir');
+  if (['xlsx', 'xls'].includes(template.file_format) && (!template.sections || !template.sections.length)) warnings.push('Excel için sections önerilir');
 
   return { valid: errors.length === 0, errors, warnings };
 }
@@ -282,41 +302,48 @@ function validateTemplate(template) {
 // ─── MAIN GENERATOR ─────────────────────────────────────
 
 async function generateTemplate(rawExtract, fileInfo, anthropicApiKey) {
-  // 1. Compress
   const compressed = fileInfo.format === 'pdf'
     ? compressPdfExtract(rawExtract)
     : compressExcelExtract(rawExtract);
 
-  // 2. Few-shot examples
   const examples = loadFewShotExamples();
   let fewShotText = '';
   for (const ex of examples) {
-    fewShotText += `\n--- ÖRNEK: ${ex.label} ---\nRAW EXTRACT (ilk kısım):\n${ex.rawSample}\n\nÜRETİLEN TEMPLATE:\n${JSON.stringify(ex.template, null, 2)}\n`;
+    fewShotText += `\n--- ÖRNEK: ${ex.label} ---\nRAW EXTRACT ÖZETİ:\n${ex.rawSample}\n\nÜRETİLEN TEMPLATE:\n${JSON.stringify(ex.template, null, 2)}\n`;
   }
 
-  // 3. User message
-  const userMessage = `Sana şu dosyanın ham extract çıktısını gönderiyorum. Bu bir ${fileInfo.target_module === 'bank_statement' ? 'banka ekstresi' : 'kasa defteri'}.
+  // Cashbook dual-section vurgusu
+  const dualSectionHint = fileInfo.format !== 'pdf' ? `
+ÖNEMLİ — DUAL SECTION TESPİTİ:
+Eğer sheet'te B-E kolonları (sol tablo) ve I-L kolonları (sağ tablo) gibi iki ayrı bölge varsa,
+sections array KULLANMALISIN. Ortadaki boş kolonlar (F,G,H) iki section'ı ayırır.
+Örnek: sections = [
+  {"name": "cash", "columns": {"number":"B", "description":"C", "debit":"D", "credit":"E"}, "start_row": 7},
+  {"name": "bank", "columns": {"number":"I", "description":"J", "debit":"K", "credit":"L"}, "start_row": 7}
+]
+Sheet adı tarih formatındaysa: "sheet_date_format": "DD.MM.YYYY"
+` : '';
 
-FILE INFO:
-${JSON.stringify(fileInfo, null, 2)}
+  const userMessage = `Bu bir ${fileInfo.target_module === 'bank_statement' ? 'BANKA EKSTRESİ' : 'KASA DEFTERİ'}.
+
+FILE INFO: ${JSON.stringify(fileInfo)}
 
 RAW EXTRACT:
 ${JSON.stringify(compressed, null, 2)}
-
-ÖRNEKLER (referans — bu formatlara benzer template üret):
+${dualSectionHint}
+REFERANS ÖRNEKLER (layoutları KOPYALAMA, sadece yapıyı anla):
 ${fewShotText}
 
-Cevabını SADECE JSON olarak ver. Başka açıklama yazma.`;
+Önce ANALİZ yap (KISIM 1), sonra \`\`\`json ... \`\`\` içinde TEMPLATE JSON üret (KISIM 2).`;
 
-  // 4. API call
   const messages = [{ role: 'user', content: userMessage }];
   const result = await callClaude(messages, anthropicApiKey);
 
-  // 5. Validate
   const validation = validateTemplate(result.template);
 
   return {
     template: result.template,
+    analysis: result.analysis || '',
     confidence: validation.valid ? (validation.warnings.length === 0 ? 'high' : 'medium') : 'low',
     validation,
     tokens_used: result.tokens_used,

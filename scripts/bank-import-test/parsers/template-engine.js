@@ -272,8 +272,8 @@ function parseExcel(rawData, template) {
       for (let ri = startRow; ri < rows.length; ri++) {
         const row = rows[ri];
 
-        // End detection
-        if (section.end_detection === 'first_empty_in_col_B') {
+        // End detection — always check, default to empty-col-number + TOPLAMLAR
+        {
           const bIdx = colToIndex(cols.number || 'B');
           const cIdx = colToIndex(cols.description || 'C');
           const dIdx = colToIndex(cols.debit || 'D');
@@ -283,7 +283,8 @@ function parseExcel(rawData, template) {
           const debVal = row[dIdx];
           const creVal = row[eIdx];
           // Sıra numarası yoksa veya "TOPLAM" benzeri ise dur
-          if (numVal == null || numVal === '' || /toplam|итого|total/i.test(String(descVal))) break;
+          const descNorm = String(descVal || '').replace(/\s/g, '');
+          if (numVal == null || numVal === '' || /toplam|итого|total|toplamlar/i.test(descNorm)) break;
           // Sayı değilse (başlık satırı olabilir) atla
           if (isNaN(parseInt(numVal))) continue;
         }
