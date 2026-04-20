@@ -1,60 +1,49 @@
 #!/usr/bin/env node
-/**
- * Halyk Bank PDF — raw text extraction test
- * Output: samples/output-halyk.txt
- */
 const fs = require('fs');
 const path = require('path');
 const { extractTextFromPdf } = require('./parsers/pdf-parser');
+const { parseWithTemplate } = require('./parsers/template-engine');
 
 const SAMPLE = path.join(__dirname, 'samples', 'halyk.pdf');
-const OUTPUT = path.join(__dirname, 'samples', 'output-halyk.txt');
+const TEMPLATE = JSON.parse(fs.readFileSync(path.join(__dirname, 'templates', 'halyk-kz-pdf.json'), 'utf8'));
+const OUTPUT_RAW = path.join(__dirname, 'samples', 'output-halyk.txt');
+const OUTPUT_PARSED = path.join(__dirname, 'samples', 'output-halyk-parsed.json');
 
 (async () => {
   console.log('Extracting:', SAMPLE);
-  const { pages, metadata } = await extractTextFromPdf(SAMPLE);
+  const rawData = await extractTextFromPdf(SAMPLE);
 
+  // Raw output (unchanged)
   const lines = [];
-  lines.push('═══════════════════════════════════════════════════');
-  lines.push('HALYK BANK PDF — RAW EXTRACTION');
-  lines.push('═══════════════════════════════════════════════════');
-  lines.push(`File: ${metadata.fileName}`);
-  lines.push(`Size: ${(metadata.fileSize / 1024).toFixed(1)} KB`);
-  lines.push(`Pages: ${metadata.numPages}`);
-  lines.push('');
+  lines.push('═══ HALYK BANK PDF — RAW ═══');
+  lines.push(`Pages: ${rawData.metadata.numPages}, Size: ${(rawData.metadata.fileSize/1024).toFixed(0)}KB`);
+  rawData.pages.forEach(p => lines.push(`  Page ${p.pageNumber}: ${p.textItems.length} items`));
+  fs.writeFileSync(OUTPUT_RAW, lines.join('\n'), 'utf8');
 
-  for (const page of pages) {
-    lines.push(`─── PAGE ${page.pageNumber} (${page.width}x${page.height}) ───`);
-    lines.push('');
+  // Parse with template
+  console.log('\nParsing with template:', TEMPLATE.name);
+  const result = parseWithTemplate(rawData, TEMPLATE);
 
-    // Plain text (first 3000 chars)
-    lines.push('▸ PLAIN TEXT:');
-    lines.push(page.text.slice(0, 3000));
-    lines.push('');
+  fs.writeFileSync(OUTPUT_PARSED, JSON.stringify(result, null, 2), 'utf8');
+  console.log(`Output: ${OUTPUT_PARSED}`);
 
-    // Text items with positions (first 40)
-    lines.push('▸ TEXT ITEMS (first 40 — x, y, text):');
-    page.textItems.slice(0, 40).forEach((ti, i) => {
-      lines.push(`  [${String(i).padStart(2)}] x=${String(ti.x).padStart(6)} y=${String(ti.y).padStart(6)} w=${String(ti.width).padStart(5)} | "${ti.text}"`);
-    });
-    lines.push('');
+  // Summary
+  console.log('\n─── METADATA ───');
+  Object.entries(result.metadata).forEach(([k,v]) => console.log(`  ${k}: ${v}`));
 
-    // X-coordinate distribution (to identify column positions)
-    const xBuckets = {};
-    page.textItems.forEach(ti => {
-      const xKey = Math.round(ti.x / 5) * 5; // bucket by 5px
-      xBuckets[xKey] = (xBuckets[xKey] || 0) + 1;
-    });
-    const topX = Object.entries(xBuckets).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    lines.push('▸ X-COORDINATE CLUSTERS (column detection):');
-    topX.forEach(([x, count]) => lines.push(`  x≈${x}: ${count} items`));
-    lines.push('');
+  console.log(`\n─── TRANSACTIONS: ${result.transactions.length} ───`);
+  let totalDebit = 0, totalCredit = 0;
+  result.transactions.forEach(tx => { totalDebit += tx.debit || 0; totalCredit += tx.credit || 0; });
+  console.log(`  Total Debit:  ${totalDebit.toLocaleString()}`);
+  console.log(`  Total Credit: ${totalCredit.toLocaleString()}`);
+
+  console.log('\n─── FIRST 3 TRANSACTIONS ───');
+  result.transactions.slice(0, 3).forEach((tx, i) => {
+    console.log(`  [${i+1}] ${tx.transaction_date} | D:${tx.debit||0} C:${tx.credit||0} | ${(tx.counterparty_name||'—').slice(0,40)} | BIN:${tx.counterparty_bin||'—'}`);
+  });
+
+  if (result.warnings.length) {
+    console.log(`\n─── WARNINGS (${result.warnings.length}) ───`);
+    result.warnings.slice(0, 5).forEach(w => console.log(`  ⚠ ${w}`));
   }
-
-  fs.writeFileSync(OUTPUT, lines.join('\n'), 'utf8');
-  console.log(`Output: ${OUTPUT} (${lines.length} lines)`);
-
-  // Also print summary to console
-  console.log(`\nPages: ${metadata.numPages}, File: ${(metadata.fileSize/1024).toFixed(0)}KB`);
-  pages.forEach(p => console.log(`  Page ${p.pageNumber}: ${p.textItems.length} text items, ${p.text.split('\n').length} lines`));
 })().catch(e => { console.error('FATAL:', e.message); process.exit(1); });

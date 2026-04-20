@@ -1,0 +1,111 @@
+{
+  "name": "BCC Bank KZ — Обороты по счетам (PDF, landscape)",
+  "file_format": "pdf",
+  "country_code": "KZ",
+  "language_code": "ru",
+  "bank_name": "Bank CenterCredit",
+  "bank_identifier": "KCJBKZKX",
+
+  "locale": {
+    "decimal_separator": ",",
+    "thousand_separator": " ",
+    "date_format": "DD.MM.YYYY"
+  },
+
+  "row_detection": {
+    "method": "y_coordinate_grouping",
+    "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}",
+    "y_tolerance": 5
+  },
+
+  "fields": {
+    "transaction_date": {
+      "method": "x_coordinate_range",
+      "x_min": 60, "x_max": 115
+    },
+    "document_number": {
+      "method": "x_coordinate_range",
+      "x_min": 28, "x_max": 58
+    },
+    "counterparty_bik": {
+      "method": "x_coordinate_range",
+      "x_min": 110, "x_max": 160
+    },
+    "counterparty_iban": {
+      "method": "x_coordinate_range",
+      "x_min": 155, "x_max": 240
+    },
+    "sender_bin": {
+      "method": "x_coordinate_range",
+      "x_min": 230, "x_max": 300
+    },
+    "receiver_bin": {
+      "method": "x_coordinate_range",
+      "x_min": 360, "x_max": 425
+    },
+    "debit": {
+      "method": "x_coordinate_range",
+      "x_min": 425, "x_max": 520
+    },
+    "credit": {
+      "method": "x_coordinate_range",
+      "x_min": 520, "x_max": 575
+    },
+    "knp_code": {
+      "method": "x_coordinate_range",
+      "x_min": 565, "x_max": 598
+    },
+    "counterparty_name": {
+      "method": "x_coordinate_range",
+      "x_min": 290, "x_max": 420,
+      "use_all_rows": true
+    },
+    "bank_correspondent": {
+      "method": "x_coordinate_range",
+      "x_min": 595, "x_max": 700
+    },
+    "payment_details": {
+      "method": "x_coordinate_range",
+      "x_min": 690, "x_max": 850,
+      "use_all_rows": true
+    },
+    "counterparty_bin": {
+      "method": "regex_in_field",
+      "pattern": "\\b(\\d{12})\\b",
+      "group": 1
+    },
+    "external_reference": {
+      "method": "regex_in_field",
+      "pattern": "Внешний референс[:\\s]+([\\w\\d]+)",
+      "group": 1
+    },
+    "transaction_time": {
+      "method": "regex_in_field",
+      "pattern": "(\\d{2}:\\d{2})",
+      "group": 1
+    }
+  },
+
+  "metadata": {
+    "account_iban": {
+      "method": "regex",
+      "pattern": "ЖСК / ИИК[:\\s]+(KZ\\d{18,20})"
+    },
+    "opening_balance": {
+      "method": "regex",
+      "pattern": "Входящее\\s+сальдо\\s*:\\s*([\\d\\s,.]+)"
+    },
+    "closing_balance": {
+      "method": "regex",
+      "pattern": "Исходящее\\s+сальдо\\s*:\\s*([\\d\\s,.]+)"
+    },
+    "client_bin": {
+      "method": "regex",
+      "pattern": "ИИН / БИН[:\\s]+(\\d{12})"
+    },
+    "bank_bik": {
+      "method": "regex",
+      "pattern": "БСК / БИК[:\\s]+(\\w+)"
+    }
+  }
+}

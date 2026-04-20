@@ -1,56 +1,39 @@
 #!/usr/bin/env node
-/**
- * BCC Bank PDF — raw text extraction test
- * Output: samples/output-bcc.txt
- */
 const fs = require('fs');
 const path = require('path');
 const { extractTextFromPdf } = require('./parsers/pdf-parser');
+const { parseWithTemplate } = require('./parsers/template-engine');
 
 const SAMPLE = path.join(__dirname, 'samples', 'bcc.pdf');
-const OUTPUT = path.join(__dirname, 'samples', 'output-bcc.txt');
+const TEMPLATE = JSON.parse(fs.readFileSync(path.join(__dirname, 'templates', 'bcc-kz-pdf.json'), 'utf8'));
+const OUTPUT_PARSED = path.join(__dirname, 'samples', 'output-bcc-parsed.json');
 
 (async () => {
   console.log('Extracting:', SAMPLE);
-  const { pages, metadata } = await extractTextFromPdf(SAMPLE);
+  const rawData = await extractTextFromPdf(SAMPLE);
 
-  const lines = [];
-  lines.push('═══════════════════════════════════════════════════');
-  lines.push('BCC BANK PDF — RAW EXTRACTION');
-  lines.push('═══════════════════════════════════════════════════');
-  lines.push(`File: ${metadata.fileName}`);
-  lines.push(`Size: ${(metadata.fileSize / 1024).toFixed(1)} KB`);
-  lines.push(`Pages: ${metadata.numPages}`);
-  lines.push('');
+  console.log('\nParsing with template:', TEMPLATE.name);
+  const result = parseWithTemplate(rawData, TEMPLATE);
 
-  for (const page of pages) {
-    lines.push(`─── PAGE ${page.pageNumber} (${page.width}x${page.height}) ───`);
-    lines.push('');
+  fs.writeFileSync(OUTPUT_PARSED, JSON.stringify(result, null, 2), 'utf8');
+  console.log(`Output: ${OUTPUT_PARSED}`);
 
-    lines.push('▸ PLAIN TEXT:');
-    lines.push(page.text.slice(0, 3000));
-    lines.push('');
+  console.log('\n─── METADATA ───');
+  Object.entries(result.metadata).forEach(([k,v]) => console.log(`  ${k}: ${v}`));
 
-    lines.push('▸ TEXT ITEMS (first 40 — x, y, text):');
-    page.textItems.slice(0, 40).forEach((ti, i) => {
-      lines.push(`  [${String(i).padStart(2)}] x=${String(ti.x).padStart(6)} y=${String(ti.y).padStart(6)} w=${String(ti.width).padStart(5)} | "${ti.text}"`);
-    });
-    lines.push('');
+  console.log(`\n─── TRANSACTIONS: ${result.transactions.length} ───`);
+  let totalDebit = 0, totalCredit = 0;
+  result.transactions.forEach(tx => { totalDebit += tx.debit || 0; totalCredit += tx.credit || 0; });
+  console.log(`  Total Debit:  ${totalDebit.toLocaleString()}`);
+  console.log(`  Total Credit: ${totalCredit.toLocaleString()}`);
 
-    const xBuckets = {};
-    page.textItems.forEach(ti => {
-      const xKey = Math.round(ti.x / 5) * 5;
-      xBuckets[xKey] = (xBuckets[xKey] || 0) + 1;
-    });
-    const topX = Object.entries(xBuckets).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    lines.push('▸ X-COORDINATE CLUSTERS (column detection):');
-    topX.forEach(([x, count]) => lines.push(`  x≈${x}: ${count} items`));
-    lines.push('');
+  console.log('\n─── FIRST 3 TRANSACTIONS ───');
+  result.transactions.slice(0, 3).forEach((tx, i) => {
+    console.log(`  [${i+1}] ${tx.transaction_date} | D:${tx.debit||0} C:${tx.credit||0} | KNP:${tx.knp_code||'—'} | ${(tx.counterparty_name||'—').slice(0,40)}`);
+  });
+
+  if (result.warnings.length) {
+    console.log(`\n─── WARNINGS (${result.warnings.length}) ───`);
+    result.warnings.slice(0, 5).forEach(w => console.log(`  ⚠ ${w}`));
   }
-
-  fs.writeFileSync(OUTPUT, lines.join('\n'), 'utf8');
-  console.log(`Output: ${OUTPUT} (${lines.length} lines)`);
-
-  console.log(`\nPages: ${metadata.numPages}, File: ${(metadata.fileSize/1024).toFixed(0)}KB`);
-  pages.forEach(p => console.log(`  Page ${p.pageNumber}: ${p.textItems.length} text items, ${p.text.split('\n').length} lines`));
 })().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
