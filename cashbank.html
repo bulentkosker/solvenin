@@ -1451,9 +1451,11 @@ async function saveBank() {
 
   const id = document._editBankId;
   if (id) {
-    await sb.from('banks').update({ name, swift_code: swift }).eq('id', id);
+    const { error } = await sb.from('banks').update({ name, swift_code: swift }).eq('id', id);
+    if (error) throw error;
   } else {
-    await sb.from('banks').insert({ company_id: companyId, name, swift_code: swift });
+    const { error } = await sb.from('banks').insert({ company_id: companyId, name, swift_code: swift });
+    if (error) throw error;
   }
   showToast(t('toast_bank_saved'), 'success');
   closeModal('bank-modal');
@@ -1527,9 +1529,11 @@ async function saveAccount() {
   }
 
   if (editingAccountId) {
-    await sb.from('bank_accounts').update({ bank_id: bankId, account_name: name, iban: iban || null, currency_code: currency }).eq('id', editingAccountId);
+    const { error } = await sb.from('bank_accounts').update({ bank_id: bankId, account_name: name, iban: iban || null, currency_code: currency }).eq('id', editingAccountId);
+    if (error) throw error;
   } else {
-    await sb.from('bank_accounts').insert({ company_id: companyId, bank_id: bankId, account_name: name, iban: iban || null, account_number: null, currency_code: currency, opening_balance: opening, current_balance: opening });
+    const { error } = await sb.from('bank_accounts').insert({ company_id: companyId, bank_id: bankId, account_name: name, iban: iban || null, account_number: null, currency_code: currency, opening_balance: opening, current_balance: opening });
+    if (error) throw error;
   }
   showToast(t('toast_account_saved'), 'success');
   closeModal('account-modal');
