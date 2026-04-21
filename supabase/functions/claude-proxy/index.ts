@@ -368,7 +368,70 @@ Deno.serve(async (req) => {
 
     // ─── TEMPLATE GENERATION MODE ───
     if (body.mode === 'template_generation') {
-      const tgSystem = `Sen banka ekstresi parser template üreten AI'sın. Kullanıcı raw extract gönderecek. SADECE valid JSON template döndür. \`\`\`json ... \`\`\` içinde yaz.`
+      const tgSystem = `Sen banka ekstresi ve kasa/banka defteri parser template üreten AI'sın. Kullanıcı raw extract gönderecek. SADECE valid JSON template döndür. \`\`\`json ... \`\`\` içinde yaz.
+
+═══ PDF İÇİN ZORUNLU YAPI ═══
+{
+  "file_format": "pdf",
+  "locale": { "date_format": "DD.MM.YYYY", "decimal_separator": ",", "thousand_separator": " " },
+  "row_detection": {
+    "method": "y_coordinate_grouping",
+    "pattern": "^\\\\d{2}\\\\.\\\\d{2}\\\\.\\\\d{4}",
+    "y_tolerance": 3
+  },
+  "fields": {
+    "transaction_date": { "method": "x_coordinate_range", "x_min": 30, "x_max": 75 },
+    "debit":            { "method": "x_coordinate_range", "x_min": 165, "x_max": 248 },
+    "credit":           { "method": "x_coordinate_range", "x_min": 248, "x_max": 340 }
+  },
+  "metadata": {
+    "opening_balance": { "method": "regex", "pattern": "Входящ[еи][ей]\\\\s+[ос]альдо[:\\\\s]+([\\\\d\\\\s,.]+)" },
+    "closing_balance": { "method": "regex", "pattern": "Исходящ[еи][ей]\\\\s+[ос]альдо[:\\\\s]+([\\\\d\\\\s,.]+)" }
+  }
+}
+
+═══ EXCEL İÇİN ZORUNLU YAPI ═══
+Excel template'leri MUTLAKA "sections" array'i içermelidir. Her section bir tabloyu temsil eder (sol kasa tablosu, sağ banka tablosu gibi).
+
+Zorunlu yapı:
+{
+  "file_format": "xlsx",
+  "locale": { "date_format": "DD.MM.YYYY", "decimal_separator": ".", "thousand_separator": "" },
+  "sheet_pattern": ".*",
+  "sheet_date_format": "DD.MM.YYYY",
+  "sections": [
+    {
+      "name": "cash",
+      "sheet_pattern": ".*",
+      "start_row": 7,
+      "end_detection": "first_empty_in_col_B",
+      "columns": {
+        "number":      "B",
+        "description": "C",
+        "debit":       "D",
+        "credit":      "E"
+      }
+    }
+  ],
+  "metadata": {
+    "cash_opening_balance": { "method": "cell", "sheet": 0, "cell": "D5" }
+  }
+}
+
+HATALI (sections yok) — KULLANMA:
+{
+  "file_format": "xlsx",
+  "fields": { "debit": { "method": "column", "column": "D" } }
+}
+
+DOĞRU: Her zaman sections kullan. Tek tablo olsa bile sections:[{name:"main", ...}] formatında yaz.
+
+═══ ZORUNLU ALANLAR (her template için) ═══
+• file_format (pdf | xlsx | csv)
+• locale (decimal_separator, thousand_separator, date_format)
+• PDF: fields.transaction_date, fields.debit, fields.credit
+• Excel: sections[*].columns.debit, sections[*].columns.credit, sections[*].columns.description`
+
       const tgUser = `FILE: ${JSON.stringify(body.file_info)}\nRAW:\n${JSON.stringify(body.raw_extract).slice(0, 12000)}\n\nTemplate JSON üret.`
       const tgRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -377,12 +440,70 @@ Deno.serve(async (req) => {
       })
       const tgData = await tgRes.json()
       const tgText = (tgData.content || []).map((b: any) => b.text || '').join('')
-      let template = null
+      let template: any = null
       try {
         const jsonMatch = tgText.match(/```json\s*([\s\S]*?)\s*```/)
         template = JSON.parse(jsonMatch ? jsonMatch[1] : tgText.trim())
       } catch (e) { /* parse failed */ }
-      return new Response(JSON.stringify({ template, analysis: tgText.slice(0, 500), usage: tgData.usage }), {
+
+      const validation_warnings: any[] = []
+      if (template && typeof template === 'object') {
+        const fileInfo = body.file_info || {}
+
+        // Deterministic inject — AI'ya güvenmiyoruz
+        if (!template.file_format) {
+          template.file_format = fileInfo.format
+          validation_warnings.push({ level: 'warning', msg: 'file_format injected from fileInfo' })
+        }
+        if (!template.name) {
+          template.name = `AI Generated - ${fileInfo.filename || 'template'}`
+          validation_warnings.push({ level: 'warning', msg: 'name injected (AI did not provide)' })
+        }
+        if (!template.target_module && fileInfo.target_module) {
+          template.target_module = fileInfo.target_module
+        }
+        if (!template.locale) {
+          template.locale = { date_format: 'DD.MM.YYYY', decimal_separator: ',', thousand_separator: ' ' }
+          validation_warnings.push({ level: 'warning', msg: 'locale injected with defaults' })
+        }
+
+        // Structural validation
+        const fmt = template.file_format
+        if (fmt === 'pdf') {
+          if (!template.fields) {
+            validation_warnings.push({ level: 'error', msg: 'PDF template missing: fields' })
+          } else {
+            for (const f of ['transaction_date', 'debit', 'credit']) {
+              if (!template.fields[f]) validation_warnings.push({ level: 'error', msg: `PDF fields missing: ${f}` })
+            }
+          }
+          if (!template.row_detection) validation_warnings.push({ level: 'warning', msg: 'PDF template missing: row_detection (defaults will be used)' })
+        } else if (fmt === 'xlsx' || fmt === 'xls' || fmt === 'csv') {
+          if (!Array.isArray(template.sections) || !template.sections.length) {
+            validation_warnings.push({ level: 'error', msg: 'Excel template missing: sections[] (required)' })
+          } else {
+            template.sections.forEach((s: any, i: number) => {
+              if (!s.columns) validation_warnings.push({ level: 'error', msg: `sections[${i}] missing: columns` })
+              else {
+                for (const c of ['debit', 'credit']) {
+                  if (!s.columns[c]) validation_warnings.push({ level: 'error', msg: `sections[${i}].columns missing: ${c}` })
+                }
+              }
+            })
+          }
+        } else {
+          validation_warnings.push({ level: 'error', msg: `Unknown file_format: ${fmt}` })
+        }
+      } else {
+        validation_warnings.push({ level: 'error', msg: 'AI did not return a valid JSON template' })
+      }
+
+      return new Response(JSON.stringify({
+        template,
+        analysis: tgText.slice(0, 500),
+        validation_warnings,
+        usage: tgData.usage
+      }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }

@@ -110,11 +110,15 @@ function parsePdf(rawData, template) {
     let pendingTx = null;
     let continuationRows = [];
 
+    const txDateField = template.fields?.transaction_date;
+    const dateXMin = template.row_detection?.date_x_min ?? (txDateField?.x_min != null ? txDateField.x_min - 2 : null);
+    const dateXMax = template.row_detection?.date_x_max ?? (txDateField?.x_max != null ? txDateField.x_max + 2 : 120);
+
     for (const yRow of yRows) {
       if (skipHeaderY && page.pageNumber === 1 && yRow[0]?.y < skipHeaderY) continue;
       const rowText = rowToText(yRow);
-      const dateItems = template.row_detection?.date_x_min != null
-        ? yRow.filter(ti => ti.x >= template.row_detection.date_x_min && ti.x <= (template.row_detection.date_x_max || 120))
+      const dateItems = dateXMin != null
+        ? yRow.filter(ti => ti.x >= dateXMin && ti.x <= dateXMax)
         : [yRow.find(ti => ti.text?.trim()) || yRow[0]];
       const hasDateMatch = dateItems.some(ti => dateRe.test(ti?.text?.trim()));
 

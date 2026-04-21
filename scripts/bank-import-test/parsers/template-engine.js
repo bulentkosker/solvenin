@@ -135,14 +135,20 @@ function parsePdf(rawData, template) {
     let pendingTx = null;
     let continuationRows = [];
 
+    // Fallback: fields.transaction_date.x_min/x_max if row_detection.date_x_* missing.
+    // Apply ±2px margin on fallback (AI x-coords can be off by sub-pixel).
+    const txDateField = template.fields?.transaction_date;
+    const dateXMin = template.row_detection?.date_x_min ?? (txDateField?.x_min != null ? txDateField.x_min - 2 : null);
+    const dateXMax = template.row_detection?.date_x_max ?? (txDateField?.x_max != null ? txDateField.x_max + 2 : 120);
+
     for (const yRow of yRows) {
       // İlk sayfada header bölgesini atla
       if (skipHeaderY && page.pageNumber === 1 && yRow[0]?.y < skipHeaderY) continue;
       const firstText = yRow[0]?.text?.trim() || '';
       const rowText = rowToText(yRow);
-      // Tarih pattern: ilk non-empty item'da veya belirli x aralığındaki item'da ara
-      const dateItems = template.row_detection?.date_x_min != null
-        ? yRow.filter(ti => ti.x >= template.row_detection.date_x_min && ti.x <= (template.row_detection.date_x_max || 120))
+      // Tarih pattern: date_x_min varsa veya transaction_date.x_min fallback'iyle, yoksa ilk item
+      const dateItems = dateXMin != null
+        ? yRow.filter(ti => ti.x >= dateXMin && ti.x <= dateXMax)
         : [yRow.find(ti => ti.text?.trim()) || yRow[0]];
       const hasDateMatch = dateItems.some(ti => dateRe.test(ti?.text?.trim()));
 

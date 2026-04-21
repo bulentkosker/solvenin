@@ -282,13 +282,17 @@ async function startAnalysis() {
     let template = await findMatchingTemplate(rawData, format);
     if (!template) {
       // AI generation via claude-proxy
-      const aiTemplate = await generateTemplateViaProxy(rawData, { filename: selectedFile.name, format, size: selectedFile.size, target_module: 'bank_statement' });
+      const aiResult = await generateTemplateViaProxy(rawData, { filename: selectedFile.name, format, size: selectedFile.size, target_module: 'bank_statement' });
+      const aiTemplate = aiResult?.template;
+      if (aiResult?.validation_warnings?.length) console.warn('AI template validation:', aiResult.validation_warnings);
       if (aiTemplate) {
         template = aiTemplate;
-        // Save for future use
+        // Save for future use — respect server-side injected values
         await sb.from('import_templates').insert({
-          company_id: companyId, name: `AI — ${selectedFile.name}`, file_format: format,
-          target_module: 'bank_statement', parser_config: template, locale: template.locale || {},
+          company_id: companyId, name: aiTemplate.name || `AI — ${selectedFile.name}`,
+          file_format: aiTemplate.file_format || format,
+          target_module: aiTemplate.target_module || 'bank_statement',
+          parser_config: aiTemplate, locale: aiTemplate.locale || {},
           is_ai_generated: true, is_system: false
         });
       }
@@ -364,7 +368,7 @@ async function startAnalysis() {
 async function findMatchingTemplate(rawData, format) {
   const { data: templates } = await sb.from('import_templates')
     .select('*')
-    .eq('target_module', 'bank_statement')
+    .in('target_module', ['bank_statement', 'cash_register'])
     .eq('file_format', format)
     .is('deleted_at', null);
 
@@ -375,18 +379,40 @@ async function findMatchingTemplate(rawData, format) {
     : rawData.sheets?.map(s => s.rows?.flat()?.join(' ')).join(' ');
 
   for (const t of templates) {
-    const rules = t.detection_rules;
-    if (!rules) continue;
-    if (rules.header_contains && allText.includes(rules.header_contains)) return t.parser_config || t;
-    if (rules.bank_identifier && allText.match(new RegExp(rules.bank_identifier))) return t.parser_config || t;
-  }
+    const rules = t.detection_rules || {};
+    let matched = false;
 
-  // Check bank_identifier field directly
-  for (const t of templates) {
-    if (t.bank_identifier && allText.includes(t.bank_identifier)) return t.parser_config || t;
+    if (rules.header_contains) {
+      if (Array.isArray(rules.header_contains)) {
+        matched = rules.header_contains.some(h => allText.includes(h));
+      } else {
+        matched = allText.includes(rules.header_contains);
+      }
+    }
+
+    if (!matched && rules.bank_identifier_pattern) {
+      matched = new RegExp(rules.bank_identifier_pattern).test(allText);
+    }
+
+    if (matched) return mergeTemplate(t);
   }
 
   return null;
+}
+
+// Merge parser_config with row-level columns so file_format / locale /
+// metadata_config fall through when parser_config is incomplete.
+function mergeTemplate(row) {
+  const pc = row.parser_config || {};
+  return {
+    ...pc,
+    name:           pc.name          || row.name,
+    file_format:    pc.file_format   || row.file_format,
+    target_module:  pc.target_module || row.target_module,
+    bank_name:      pc.bank_name     || row.bank_name,
+    locale:         pc.locale        || row.locale         || {},
+    metadata:       pc.metadata      || row.metadata_config || {},
+  };
 }
 
 async function generateTemplateViaProxy(rawData, fileInfo) {
@@ -404,7 +430,7 @@ async function generateTemplateViaProxy(rawData, fileInfo) {
     });
 
     if (error || data?.error) { console.error('AI template error:', error || data.error); return null; }
-    return data?.template || null;
+    return data ? { template: data.template || null, validation_warnings: data.validation_warnings || [] } : null;
   } catch (e) { console.error('AI proxy error:', e); return null; }
 }
 
