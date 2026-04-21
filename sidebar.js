@@ -538,6 +538,7 @@
           icon: '💳', key: 'nav_finance', href: null,
           children: [
             { key: 'nav_cashbank',        href: 'cashbank.html' },
+            { key: 'nav_bank_import',     href: 'bank-import.html' },
             { key: 'nav_cashier_report',  href: 'cashbank.html?tab=cashier-report' },
             { key: 'nav_reports',         href: 'reports-finance.html' },
           ]
@@ -625,7 +626,7 @@
     sales:       ['nav_sales'],
     purchasing:  ['nav_purchasing'],
     contacts:    ['nav_contacts', 'nav_cariler'],
-    finance:     ['nav_cashbank', 'nav_finance'],
+    finance:     ['nav_cashbank', 'nav_finance', 'nav_bank_import'],
     accounting:  ['nav_accounting'],
     hr:          ['nav_hr'],
     production:  ['nav_production'],

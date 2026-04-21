@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banka Mutabakatı — Solvenin</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="i18n.js"></script>
+  <script src="js/bank-import/pdf-parser.js"></script>
+  <script src="js/bank-import/excel-parser.js"></script>
+  <script src="js/bank-import/template-engine.js"></script>
+<style>
+:root{--font-body:'Inter',sans-serif;--font-display:'Plus Jakarta Sans',sans-serif;--navy:#1a2744;--blue:#1e40af;--blue-light:#eff6ff;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;--white:#fff;--shadow-sm:0 1px 3px rgba(0,0,0,.08);--topbar-h:56px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:#f5f3ef;min-height:100vh}
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+.content{padding:28px;flex:1}
+h1{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--navy);margin-bottom:20px}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray200);padding:24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+
+/* Wizard steps */
+.wizard-steps{display:flex;gap:8px;margin-bottom:24px;padding:16px;background:var(--gray50);border-radius:12px}
+.wizard-step{flex:1;text-align:center;padding:10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--gray400);transition:all .2s}
+.wizard-step.active{background:var(--blue);color:#fff}
+.wizard-step.done{background:var(--green);color:#fff}
+.wizard-step .step-num{display:block;font-size:16px;margin-bottom:2px}
+
+/* Upload area */
+.upload-area{border:2px dashed var(--gray200);border-radius:16px;padding:40px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-area:hover,.upload-area.dragover{border-color:var(--blue);background:var(--blue-light)}
+.upload-area-icon{font-size:40px;margin-bottom:12px}
+.upload-area-text{font-size:14px;color:var(--gray500)}
+
+/* Progress */
+.progress-list{list-style:none;padding:0}
+.progress-list li{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;color:var(--gray500);border-bottom:1px solid var(--gray100)}
+.progress-list li.done{color:var(--green);font-weight:600}
+.progress-list li.active{color:var(--navy);font-weight:600}
+.progress-list li .picon{width:20px;text-align:center}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px;border-bottom:1px solid var(--gray200);font-size:11px;text-transform:uppercase;color:var(--gray400);font-weight:600}
+td{padding:10px;border-bottom:1px solid var(--gray100)}
+.badge{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-orange{background:#fef3c7;color:#92400e}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-gray{background:var(--gray100);color:var(--gray500)}
+
+.btn{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1a2744}
+.btn-outline{background:none;border:1px solid var(--gray200);color:var(--gray600)}
+.btn-outline:hover{background:var(--gray50)}
+
+@media(max-width:768px){.main{margin-left:0}}
+#loading-screen{position:fixed;inset:0;background:#1a2744;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff}.loading-logo span{color:#38bdf8}
+</style>
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+
+<div class="main">
+  <div class="content">
+    <h1>🏦 Banka Mutabakatı</h1>
+
+    <!-- WIZARD STEPS -->
+    <div class="wizard-steps" id="wizard-steps">
+      <div class="wizard-step" data-step="0"><span class="step-num">📋</span>Import'lar</div>
+      <div class="wizard-step" data-step="1"><span class="step-num">1</span>Dosya Yükle</div>
+      <div class="wizard-step" data-step="2"><span class="step-num">2</span>Analiz</div>
+      <div class="wizard-step" data-step="3"><span class="step-num">3</span>Eşleştirme</div>
+      <div class="wizard-step" data-step="4"><span class="step-num">4</span>Onayla</div>
+    </div>
+
+    <!-- STEP 0: Past imports -->
+    <div class="step-view" id="step-0">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:15px;font-weight:700">Geçmiş Import'lar</h3>
+          <button class="btn btn-primary" onclick="showStep(1)">+ Yeni İmport</button>
+        </div>
+        <div id="imports-table">Yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: File upload -->
+    <div class="step-view" id="step-1" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Dosya Yükle</h3>
+        <div class="form-group" style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:600;margin-bottom:6px;display:block">Banka Hesabı *</label>
+          <select id="import-account" style="width:100%;padding:10px;border:1px solid var(--gray200);border-radius:10px;font-size:13px">
+            <option value="">Hesap seçin...</option>
+          </select>
+        </div>
+        <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+          <div class="upload-area-icon">📄</div>
+          <div class="upload-area-text">PDF, Excel veya CSV dosyası sürükleyip bırakın<br>veya tıklayarak seçin</div>
+          <div id="file-name" style="margin-top:10px;font-size:13px;font-weight:600;color:var(--navy);display:none"></div>
+        </div>
+        <input type="file" id="file-input" accept=".pdf,.xlsx,.xls,.csv" style="display:none" onchange="onFileSelected(event)">
+        <div style="margin-top:16px;display:flex;justify-content:space-between">
+          <button class="btn btn-outline" onclick="showStep(0)">← Geri</button>
+          <button class="btn btn-primary" id="btn-analyze" disabled onclick="startAnalysis()">Devam →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Analysis -->
+    <div class="step-view" id="step-2" style="display:none">
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Analiz Ediliyor...</h3>
+        <ul class="progress-list" id="progress-list">
+          <li id="prog-upload"><span class="picon">⏳</span> Dosya yükleniyor...</li>
+          <li id="prog-extract"><span class="picon">⏳</span> İçerik çıkarılıyor...</li>
+          <li id="prog-template"><span class="picon">⏳</span> Şablon aranıyor...</li>
+          <li id="prog-parse"><span class="picon">⏳</span> İşlemler parse ediliyor...</li>
+          <li id="prog-balance"><span class="picon">⏳</span> Bakiye kontrol ediliyor...</li>
+        </ul>
+        <div id="analysis-result" style="display:none;margin-top:16px;padding:16px;background:var(--gray50);border-radius:10px;font-size:13px"></div>
+        <div style="margin-top:16px;display:flex;justify-content:space-between">
+          <button class="btn btn-outline" onclick="showStep(1)">← Geri</button>
+          <button class="btn btn-primary" id="btn-to-step3" style="display:none" onclick="showStep(3)">Eşleştirmeye Geç →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Matching (placeholder) -->
+    <div class="step-view" id="step-3" style="display:none">
+      <div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:40px;margin-bottom:12px">🚧</div>
+        <h3>Eşleştirme Adımı</h3>
+        <p style="color:var(--gray500);margin-top:8px">Bu adım sonraki güncellemede eklenecek.</p>
+      </div>
+    </div>
+
+    <!-- STEP 4: Confirm (placeholder) -->
+    <div class="step-view" id="step-4" style="display:none">
+      <div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:40px;margin-bottom:12px">🚧</div>
+        <h3>Onaylama Adımı</h3>
+        <p style="color:var(--gray500);margin-top:8px">Bu adım sonraki güncellemede eklenecek.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="sidebar.js"></script>
+<script src="utils.js"></script>
+<script>
+// ===== INIT =====
+const { createClient } = supabase;
+const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+
+let companyId = null;
+let currentStep = 0;
+let selectedFile = null;
+let currentImport = null; // {id, rawData, template, parsed}
+
+// pdfjs worker
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  companyId = localStorage.getItem('currentCompanyId');
+  if (!companyId) { window.location.href = 'dashboard.html'; return; }
+
+  await loadBankAccounts();
+  await loadPastImports();
+
+  const ls = document.getElementById('loading-screen');
+  ls.style.opacity = '0'; setTimeout(() => ls.style.display = 'none', 200);
+}
+
+function showStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-view').forEach(el => el.style.display = 'none');
+  document.getElementById('step-' + n).style.display = '';
+  document.querySelectorAll('.wizard-step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (s === n) el.classList.add('active');
+    else if (s < n) el.classList.add('done');
+  });
+}
+
+// ===== STEP 0: Past imports =====
+async function loadPastImports() {
+  const { data } = await sb.from('data_imports').select('id, file_name, source, status, created_at, period_start, period_end, total_debit, total_credit, bank_account_id, bank_accounts(account_name)')
+    .eq('company_id', companyId).is('deleted_at', null).order('created_at', { ascending: false }).limit(20);
+
+  const el = document.getElementById('imports-table');
+  if (!data?.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray400);padding:20px">Henüz import yok</div>'; return; }
+
+  const statusBadge = s => ({ parsed:'badge-blue', reviewing:'badge-orange', imported:'badge-green', error:'badge-red' }[s] || 'badge-gray');
+  el.innerHTML = `<table><thead><tr><th>Tarih</th><th>Hesap</th><th>Dönem</th><th>Durum</th><th>Debit</th><th>Credit</th></tr></thead><tbody>
+    ${data.map(d => `<tr>
+      <td>${new Date(d.created_at).toLocaleDateString('tr-TR')}</td>
+      <td>${d.bank_accounts?.account_name || '—'}</td>
+      <td>${d.period_start||'—'} — ${d.period_end||'—'}</td>
+      <td><span class="badge ${statusBadge(d.status)}">${d.status}</span></td>
+      <td>${d.total_debit ? fmtNum(d.total_debit) : '—'}</td>
+      <td>${d.total_credit ? fmtNum(d.total_credit) : '—'}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ===== STEP 1: File upload =====
+async function loadBankAccounts() {
+  const { data } = await sb.from('bank_accounts').select('id, account_name, currency_code, banks(name)')
+    .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('account_name');
+  const sel = document.getElementById('import-account');
+  (data || []).forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.banks?.name || ''} — ${a.account_name} (${a.currency_code})`;
+    sel.appendChild(opt);
+  });
+}
+
+function onFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('Dosya 10MB limitini aşıyor', 'error'); return; }
+  selectedFile = file;
+  document.getElementById('file-name').textContent = `📎 ${file.name} (${(file.size/1024).toFixed(0)} KB)`;
+  document.getElementById('file-name').style.display = '';
+  document.getElementById('upload-area').classList.add('dragover');
+  document.getElementById('btn-analyze').disabled = false;
+}
+
+// Drag & drop
+const ua = document.getElementById('upload-area');
+ua.addEventListener('dragover', e => { e.preventDefault(); ua.classList.add('dragover'); });
+ua.addEventListener('dragleave', () => ua.classList.remove('dragover'));
+ua.addEventListener('drop', e => { e.preventDefault(); ua.classList.remove('dragover'); if (e.dataTransfer.files[0]) { document.getElementById('file-input').files = e.dataTransfer.files; onFileSelected({ target: { files: e.dataTransfer.files } }); } });
+
+// ===== STEP 2: Analysis =====
+function setProgress(id, status) {
+  const li = document.getElementById(id);
+  if (!li) return;
+  li.className = status; // 'done' | 'active' | ''
+  li.querySelector('.picon').textContent = status === 'done' ? '✅' : status === 'active' ? '⏳' : '⏳';
+}
+
+async function startAnalysis() {
+  const accountId = document.getElementById('import-account').value;
+  if (!accountId) { showToast('Banka hesabı seçin', 'error'); return; }
+  if (!selectedFile) { showToast('Dosya seçin', 'error'); return; }
+
+  showStep(2);
+  const isPdf = selectedFile.name.toLowerCase().endsWith('.pdf');
+  const format = isPdf ? 'pdf' : 'xlsx';
+
+  try {
+    // 1. Upload to storage
+    setProgress('prog-upload', 'active');
+    const importId = crypto.randomUUID();
+    const filePath = `${companyId}/${importId}/${selectedFile.name}`;
+    // Note: storage upload may fail if bucket doesn't exist — handle gracefully
+    try {
+      await sb.storage.from('imports').upload(filePath, selectedFile);
+    } catch (e) { console.warn('Storage upload skipped:', e.message); }
+    setProgress('prog-upload', 'done');
+
+    // 2. Extract content
+    setProgress('prog-extract', 'active');
+    let rawData;
+    if (isPdf) rawData = await window.BankImportPdfParser.extractTextFromPdf(selectedFile);
+    else rawData = await window.BankImportExcelParser.extractSheetsFromExcel(selectedFile);
+    setProgress('prog-extract', 'done');
+
+    // 3. Find matching template
+    setProgress('prog-template', 'active');
+    let template = await findMatchingTemplate(rawData, format);
+    if (!template) {
+      // AI generation via claude-proxy
+      const aiTemplate = await generateTemplateViaProxy(rawData, { filename: selectedFile.name, format, size: selectedFile.size, target_module: 'bank_statement' });
+      if (aiTemplate) {
+        template = aiTemplate;
+        // Save for future use
+        await sb.from('import_templates').insert({
+          company_id: companyId, name: `AI — ${selectedFile.name}`, file_format: format,
+          target_module: 'bank_statement', parser_config: template, locale: template.locale || {},
+          is_ai_generated: true, is_system: false
+        });
+      }
+    }
+    if (!template) { showToast('Şablon bulunamadı ve AI oluşturamadı', 'error'); return; }
+    setProgress('prog-template', 'done');
+
+    // 4. Parse with template
+    setProgress('prog-parse', 'active');
+    const parsed = window.BankImportEngine.parseWithTemplate(rawData, template);
+    setProgress('prog-parse', 'done');
+
+    // 5. Balance check
+    setProgress('prog-balance', 'active');
+    const balance = window.BankImportEngine.checkBalance(parsed.metadata, parsed.transactions);
+    setProgress('prog-balance', 'done');
+
+    // Save to DB
+    const totalDebit = parsed.transactions.reduce((s, t) => s + (t.debit || 0), 0);
+    const totalCredit = parsed.transactions.reduce((s, t) => s + (t.credit || 0), 0);
+
+    const { data: importRow, error: impErr } = await sb.from('data_imports').insert({
+      id: importId, company_id: companyId, bank_account_id: accountId,
+      import_type: 'bank_statement', source: template.bank_name || 'unknown',
+      file_name: selectedFile.name, status: 'parsed',
+      period_start: parsed.metadata?.period_start, period_end: parsed.metadata?.period_end,
+      opening_balance: parsed.metadata?.opening_balance, closing_balance: parsed.metadata?.closing_balance,
+      total_debit: totalDebit, total_credit: totalCredit,
+      template_id: template.id || null,
+    }).select('id').single();
+
+    if (impErr) console.error('Import save error:', impErr.message);
+
+    // Save lines
+    if (parsed.transactions.length && importRow) {
+      const lines = parsed.transactions.map((tx, i) => ({
+        import_id: importRow.id, company_id: companyId, line_number: i + 1,
+        transaction_date: tx.transaction_date || new Date().toISOString().split('T')[0],
+        debit: tx.debit || 0, credit: tx.credit || 0,
+        counterparty_name: tx.counterparty_name || null,
+        counterparty_bin: tx.counterparty_bin || null,
+        payment_details: tx.payment_details || tx.description || null,
+        knp_code: tx.knp_code || null,
+        external_reference: tx.external_reference || null,
+        document_number: tx.document_number || null,
+        match_type: 'unmatched',
+      }));
+      const BATCH = 100;
+      for (let i = 0; i < lines.length; i += BATCH) {
+        await sb.from('data_import_lines').insert(lines.slice(i, i + BATCH));
+      }
+    }
+
+    // Show result
+    const resEl = document.getElementById('analysis-result');
+    resEl.style.display = '';
+    resEl.innerHTML = `
+      <div style="font-weight:700;margin-bottom:8px">✅ Analiz Tamamlandı</div>
+      <div>📊 ${parsed.transactions.length} işlem bulundu</div>
+      <div>💰 Debit: ${fmtNum(totalDebit)} | Credit: ${fmtNum(totalCredit)}</div>
+      ${parsed.metadata?.opening_balance != null ? `<div>📥 Açılış: ${fmtNum(parsed.metadata.opening_balance)} | Kapanış: ${fmtNum(parsed.metadata.closing_balance || 0)}</div>` : ''}
+      <div style="margin-top:8px">${balance.ok === true ? '✅ Bakiye tutarlı' : balance.ok === false ? '⚠️ Bakiye uyuşmazlığı (fark: ' + fmtNum(Math.abs(balance.diff || 0)) + ')' : 'ℹ️ Bakiye kontrolü yapılamadı'}</div>
+    `;
+    document.getElementById('btn-to-step3').style.display = '';
+    currentImport = { id: importRow?.id, rawData, template, parsed };
+
+  } catch (e) {
+    console.error('Analysis error:', e);
+    showToast('Analiz hatası: ' + e.message, 'error');
+  }
+}
+
+async function findMatchingTemplate(rawData, format) {
+  const { data: templates } = await sb.from('import_templates')
+    .select('*')
+    .eq('target_module', 'bank_statement')
+    .eq('file_format', format)
+    .is('deleted_at', null);
+
+  if (!templates?.length) return null;
+
+  const allText = format === 'pdf'
+    ? rawData.pages?.map(p => p.text).join(' ')
+    : rawData.sheets?.map(s => s.rows?.flat()?.join(' ')).join(' ');
+
+  for (const t of templates) {
+    const rules = t.detection_rules;
+    if (!rules) continue;
+    if (rules.header_contains && allText.includes(rules.header_contains)) return t.parser_config || t;
+    if (rules.bank_identifier && allText.match(new RegExp(rules.bank_identifier))) return t.parser_config || t;
+  }
+
+  // Check bank_identifier field directly
+  for (const t of templates) {
+    if (t.bank_identifier && allText.includes(t.bank_identifier)) return t.parser_config || t;
+  }
+
+  return null;
+}
+
+async function generateTemplateViaProxy(rawData, fileInfo) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return null;
+
+    // Compress raw data for API
+    const compressed = fileInfo.format === 'pdf'
+      ? { pages: rawData.pages?.slice(0, 2).map(p => ({ pageNumber: p.pageNumber, text: p.text?.slice(0, 2000), textItems: p.textItems?.slice(0, 150).map(ti => ({ text: ti.text, x: Math.round(ti.x), y: Math.round(ti.y), w: Math.round(ti.width) })) })) }
+      : { sheets: rawData.sheets?.slice(0, 3).map(s => ({ sheetName: s.sheetName, rows: s.rows?.slice(0, 25), merges: s.merges?.slice(0, 10) })) };
+
+    const { data, error } = await sb.functions.invoke('claude-proxy', {
+      body: { mode: 'template_generation', raw_extract: compressed, file_info: fileInfo, companyId }
+    });
+
+    if (error || data?.error) { console.error('AI template error:', error || data.error); return null; }
+    return data?.template || null;
+  } catch (e) { console.error('AI proxy error:', e); return null; }
+}
+
+// ===== TOAST =====
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;background:${type==='error'?'#dc2626':'#1e40af'}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+(async () => { try { await init(); } catch(e) { console.error(e); } })();
+</script>
+</body>
+</html>

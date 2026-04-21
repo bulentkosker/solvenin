@@ -365,6 +365,29 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}))
+
+    // ─── TEMPLATE GENERATION MODE ───
+    if (body.mode === 'template_generation') {
+      const tgSystem = `Sen banka ekstresi parser template üreten AI'sın. Kullanıcı raw extract gönderecek. SADECE valid JSON template döndür. \`\`\`json ... \`\`\` içinde yaz.`
+      const tgUser = `FILE: ${JSON.stringify(body.file_info)}\nRAW:\n${JSON.stringify(body.raw_extract).slice(0, 12000)}\n\nTemplate JSON üret.`
+      const tgRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4000, system: tgSystem, messages: [{ role: 'user', content: tgUser }] })
+      })
+      const tgData = await tgRes.json()
+      const tgText = (tgData.content || []).map((b: any) => b.text || '').join('')
+      let template = null
+      try {
+        const jsonMatch = tgText.match(/```json\s*([\s\S]*?)\s*```/)
+        template = JSON.parse(jsonMatch ? jsonMatch[1] : tgText.trim())
+      } catch (e) { /* parse failed */ }
+      return new Response(JSON.stringify({ template, analysis: tgText.slice(0, 500), usage: tgData.usage }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // ─── NORMAL CHAT MODE ───
     const { prompt, messages, system, model, max_tokens, companyId, useTools } = body
     const msgs = Array.isArray(messages) && messages.length
       ? [...messages]
