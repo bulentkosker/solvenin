@@ -12,6 +12,8 @@
   <script src="js/bank-import/pdf-parser.js"></script>
   <script src="js/bank-import/excel-parser.js"></script>
   <script src="js/bank-import/template-engine.js"></script>
+  <script src="js/bank-import/fuzzy-match.js"></script>
+  <script src="js/bank-import/matching-engine.js"></script>
 <style>
 :root{--font-body:'Inter',sans-serif;--font-display:'Plus Jakarta Sans',sans-serif;--navy:#1a2744;--blue:#1e40af;--blue-light:#eff6ff;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray800:#1e293b;--white:#fff;--shadow-sm:0 1px 3px rgba(0,0,0,.08);--topbar-h:56px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -60,6 +62,72 @@ td{padding:10px;border-bottom:1px solid var(--gray100)}
 @media(max-width:768px){.main{margin-left:0}}
 #loading-screen{position:fixed;inset:0;background:#1a2744;display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .3s}
 .loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff}.loading-logo span{color:#38bdf8}
+
+/* ─── Step 3 specific ─── */
+.banner{padding:12px 16px;border-radius:10px;margin-bottom:12px;font-size:13px;display:flex;align-items:center;gap:10px}
+.banner-red{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.banner-orange{background:#ffedd5;color:#9a3412;border:1px solid #fed7aa}
+.banner-blue{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.summary-tile{background:var(--gray50);border-radius:10px;padding:12px}
+.summary-tile .label{font-size:11px;color:var(--gray500);text-transform:uppercase;font-weight:600;letter-spacing:.4px}
+.summary-tile .value{font-size:20px;font-weight:700;color:var(--navy);margin-top:4px;font-family:var(--font-display)}
+.summary-tile .sub{font-size:12px;color:var(--gray500);margin-top:2px}
+
+.match-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.legend-pill{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--gray100);color:var(--gray600)}
+.legend-pill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+.filter-bar{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;background:var(--white);border:1px solid var(--gray200);color:var(--gray600);cursor:pointer;transition:all .15s}
+.filter-btn:hover{background:var(--gray50)}
+.filter-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.filter-spacer{flex:1}
+
+#step3-table{table-layout:auto}
+#step3-table th{font-size:10px;padding:10px 8px}
+#step3-table td{padding:10px 8px;vertical-align:top;font-size:12.5px}
+#step3-table tr.confirmed{background:#f0fdf4}
+#step3-table tr.skipped{opacity:.5}
+#step3-table .status-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.cp-name{font-weight:600;color:var(--navy)}
+.cp-bin{font-size:11px;color:var(--gray500);margin-top:2px}
+.details-cell{max-width:260px;color:var(--gray600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amount-debit{color:var(--red);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.amount-credit{color:var(--green);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+
+.match-cell{min-width:260px}
+.match-entity{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600}
+.match-entity.contact{background:#dcfce7;color:#166534}
+.match-entity.own-transfer{background:#dbeafe;color:#1e40af}
+.match-entity.expense-account{background:#ffedd5;color:#9a3412}
+.match-entity.employee{background:#fce7f3;color:#9d174d}
+.match-entity.duplicate{background:var(--gray100);color:var(--gray500)}
+.match-entity.unmatched{background:#fee2e2;color:#991b1b}
+.match-entity.suggestion{background:#fef3c7;color:#92400e}
+.match-btn{margin-left:6px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;background:var(--white);border:1px solid var(--gray200);color:var(--gray600);cursor:pointer}
+.match-btn:hover{background:var(--gray50)}
+.match-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.match-btn.primary:hover{background:var(--navy)}
+.auto-bin-note{display:block;font-size:10.5px;color:var(--gray500);margin-top:4px;font-style:italic}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:9500}
+.modal-backdrop.open{display:flex}
+.modal-card{background:#fff;border-radius:16px;padding:24px;min-width:460px;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(15,23,42,.25)}
+.modal-card h3{font-family:var(--font-display);font-size:16px;color:var(--navy);margin-bottom:16px}
+.modal-tab-nav{display:flex;gap:4px;border-bottom:1px solid var(--gray200);margin-bottom:16px}
+.modal-tab-nav button{padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;font-size:12px;font-weight:600;color:var(--gray500);cursor:pointer}
+.modal-tab-nav button.active{color:var(--navy);border-bottom-color:var(--blue)}
+.modal-field{margin-bottom:12px}
+.modal-field label{display:block;font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:4px}
+.modal-field input,.modal-field select{width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:13px}
+.modal-list{max-height:240px;overflow-y:auto;border:1px solid var(--gray200);border-radius:10px;padding:6px}
+.modal-list-item{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+.modal-list-item:hover{background:var(--gray50)}
+.modal-list-item.selected{background:var(--blue-light);color:var(--navy);font-weight:600}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1px solid var(--gray100);padding-top:14px}
 </style>
 </head>
 <body>
@@ -131,12 +199,75 @@ td{padding:10px;border-bottom:1px solid var(--gray100)}
       </div>
     </div>
 
-    <!-- STEP 3: Matching (placeholder) -->
+    <!-- STEP 3: Matching -->
     <div class="step-view" id="step-3" style="display:none">
-      <div class="card" style="text-align:center;padding:40px">
-        <div style="font-size:40px;margin-bottom:12px">🚧</div>
-        <h3>Eşleştirme Adımı</h3>
-        <p style="color:var(--gray500);margin-top:8px">Bu adım sonraki güncellemede eklenecek.</p>
+      <div id="step3-banners"></div>
+
+      <div class="card">
+        <div id="step3-summary-head" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+          <div>
+            <h3 style="font-size:15px;font-weight:700;color:var(--navy)">Önizleme &amp; Eşleştirme</h3>
+            <div id="step3-meta" style="font-size:12px;color:var(--gray500);margin-top:4px"></div>
+          </div>
+          <div id="step3-balance" style="text-align:right;font-size:12.5px;color:var(--gray600)"></div>
+        </div>
+        <div class="summary-grid" id="step3-summary"></div>
+        <div class="match-legend" id="step3-legend"></div>
+      </div>
+
+      <div class="card" style="padding:16px">
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all" onclick="setStep3Filter('all')">Tümü (<span data-count="all">0</span>)</button>
+          <button class="filter-btn" data-filter="matched" onclick="setStep3Filter('matched')">Eşleşti (<span data-count="matched">0</span>)</button>
+          <button class="filter-btn" data-filter="attention" onclick="setStep3Filter('attention')">Dikkat (<span data-count="attention">0</span>)</button>
+          <button class="filter-btn" data-filter="unconfirmed" onclick="setStep3Filter('unconfirmed')">Onay Bekliyor (<span data-count="unconfirmed">0</span>)</button>
+          <span class="filter-spacer"></span>
+          <button class="btn btn-outline" onclick="bulkConfirmAuto()" style="padding:7px 12px;font-size:12px">✓ Otomatik Eşleşenleri Onayla</button>
+          <button class="btn btn-outline" onclick="bulkConfirmSuggestions()" style="padding:7px 12px;font-size:12px">✓ Önerileri Onayla</button>
+          <button class="btn btn-outline" onclick="bulkSkipSelected()" style="padding:7px 12px;font-size:12px">Seçilenleri Atla</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="step3-table">
+            <thead>
+              <tr>
+                <th style="width:30px"><input type="checkbox" id="step3-select-all" onchange="toggleSelectAll(event)"></th>
+                <th style="width:20px"></th>
+                <th style="width:95px">Tarih</th>
+                <th>Karşı Taraf</th>
+                <th>Açıklama</th>
+                <th style="width:110px;text-align:right">Borç</th>
+                <th style="width:110px;text-align:right">Alacak</th>
+                <th style="width:320px">Eşleştirme</th>
+              </tr>
+            </thead>
+            <tbody id="step3-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between">
+        <button class="btn btn-outline" onclick="showStep(2)">← Geri</button>
+        <button class="btn btn-primary" id="btn-to-step4" disabled onclick="showStep(4)">Devam →</button>
+      </div>
+    </div>
+
+    <!-- Change-match modal -->
+    <div class="modal-backdrop" id="step3-modal">
+      <div class="modal-card">
+        <h3 id="step3-modal-title">Eşleştirmeyi Değiştir</h3>
+        <div class="modal-tab-nav" id="step3-modal-tabs">
+          <button data-tab="contact" class="active">Cari</button>
+          <button data-tab="expense">Gider Hesabı</button>
+          <button data-tab="employee">Çalışan</button>
+          <button data-tab="own-transfer">Kendi Hesap</button>
+          <button data-tab="new-contact">Yeni Cari</button>
+          <button data-tab="skip">Atla</button>
+        </div>
+        <div id="step3-modal-body"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeStep3Modal()">Vazgeç</button>
+          <button class="btn btn-primary" id="step3-modal-save" onclick="saveStep3Modal()">Kaydet</button>
+        </div>
       </div>
     </div>
 
@@ -189,6 +320,7 @@ function showStep(n) {
     if (s === n) el.classList.add('active');
     else if (s < n) el.classList.add('done');
   });
+  if (n === 3) enterStep3().catch(e => { console.error(e); showToast('Step 3 hatası: ' + e.message, 'error'); });
 }
 
 // ===== STEP 0: Past imports =====
@@ -442,6 +574,613 @@ function showToast(msg, type) {
   document.body.appendChild(el);
   requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===================================================================
+// STEP 3 — Preview & Matching
+// ===================================================================
+
+const step3 = {
+  importId: null,
+  accountId: null,
+  importRow: null,        // data_imports row with metadata
+  lines: [],              // data_import_lines rows + transient { _entity } display fields
+  context: null,          // matcher context snapshot
+  filter: 'all',
+  selected: new Set(),    // selected line ids for bulk actions
+  modal: { lineId: null, tab: 'contact', pick: null, ctx: null }
+};
+
+async function enterStep3() {
+  step3.importId = currentImport?.id;
+  step3.accountId = document.getElementById('import-account').value;
+  if (!step3.importId) { showToast('Import bulunamadı', 'error'); return; }
+
+  const btn = document.getElementById('btn-to-step4');
+  if (btn) btn.disabled = true;
+
+  // 1. import + lines + context in parallel.
+  const [impRes, lineRes] = await Promise.all([
+    sb.from('data_imports').select('id, file_name, source, bank_account_id, period_start, period_end, opening_balance, closing_balance, total_debit, total_credit, bank_accounts(account_name, iban, banks(name))')
+      .eq('id', step3.importId).single(),
+    sb.from('data_import_lines').select('*').eq('import_id', step3.importId).order('line_number')
+  ]);
+  if (impRes.error) throw new Error(impRes.error.message);
+  if (lineRes.error) throw new Error(lineRes.error.message);
+  step3.importRow = impRes.data;
+  step3.lines = lineRes.data || [];
+
+  await loadStep3Context();
+  await runInitialMatching();
+  hydrateLineEntities();
+  renderStep3();
+}
+
+async function loadStep3Context() {
+  const [contactsRes, empsRes, banksRes, accountsRes, companyRes, existingRes] = await Promise.all([
+    sb.from('contacts').select('id, name, tax_number, type, is_customer, is_supplier, email')
+      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
+    sb.from('employees').select('id, first_name, last_name, tax_number, employee_number')
+      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
+    sb.from('bank_accounts').select('id, account_name, iban, currency_code, banks(name)')
+      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
+    sb.from('chart_of_accounts').select('id, code, name, type')
+      .eq('company_id', companyId).is('deleted_at', null),
+    sb.from('companies').select('tax_number').eq('id', companyId).single(),
+    // Existing bank_transactions on this account for duplicate detection
+    sb.from('bank_transactions').select('id, external_reference')
+      .eq('company_id', companyId).eq('account_id', step3.accountId).not('external_reference', 'is', null)
+  ]);
+
+  const expenseAccounts = (accountsRes.data || []).filter(a => a.type === 'expense');
+
+  step3.context = window.BankImportMatcher.buildContext({
+    contacts: contactsRes.data || [],
+    employees: empsRes.data || [],
+    bankAccounts: banksRes.data || [],
+    expenseAccounts,
+    ownBin: companyRes.data?.tax_number || null,
+    currentAccountId: step3.accountId,
+    existingBankTransactions: existingRes.data || [],
+    settings: {
+      bank_import_commission_mode: 'expense_account',
+      bank_import_tax_mode: 'expense_account',
+      bank_import_salary_mode: 'employee'
+    }
+  });
+  // Also keep all accounts (not just expense) for modal
+  step3.context.allAccounts = accountsRes.data || [];
+}
+
+// Classify lines that haven't been touched yet (match_type='unmatched' and no human
+// confirmation). Re-matching confirmed rows would erase user decisions.
+async function runInitialMatching() {
+  const fresh = step3.lines.filter(l => !l.is_confirmed && (l.match_type === 'unmatched' || !l.match_type));
+  if (!fresh.length) return;
+
+  const updates = [];
+  for (const line of fresh) {
+    const r = window.BankImportMatcher.matchTransaction(line, step3.context);
+    // Apply locally
+    Object.assign(line, {
+      match_type: r.match_type,
+      matched_contact_id: r.matched_contact_id || null,
+      matched_account_id: r.matched_account_id || null,
+      matched_employee_id: r.matched_employee_id || null,
+      target_bank_account_id: r.target_bank_account_id || null,
+      suggested_contact_id: r.suggested_contact_id || null,
+      suggestion_reason: r.suggestion_reason || null,
+      confidence: r.confidence ?? null,
+      auto_bin_update: r.auto_bin_update || null,
+      duplicate_of_bank_tx_id: r.duplicate_of_bank_tx_id || null,
+      is_duplicate: r.match_type === 'duplicate'
+    });
+    updates.push({
+      id: line.id, match_type: line.match_type,
+      matched_contact_id: line.matched_contact_id, matched_account_id: line.matched_account_id,
+      matched_employee_id: line.matched_employee_id, target_bank_account_id: line.target_bank_account_id,
+      suggested_contact_id: line.suggested_contact_id, suggestion_reason: line.suggestion_reason,
+      confidence: line.confidence, auto_bin_update: line.auto_bin_update,
+      duplicate_of_bank_tx_id: line.duplicate_of_bank_tx_id, is_duplicate: line.is_duplicate
+    });
+  }
+  const BATCH = 50;
+  for (let i = 0; i < updates.length; i += BATCH) {
+    const chunk = updates.slice(i, i + BATCH);
+    for (const u of chunk) {
+      const { id, ...rest } = u;
+      await sb.from('data_import_lines').update(rest).eq('id', id);
+    }
+  }
+}
+
+// Attach human-readable entity info to each line for easy rendering.
+function hydrateLineEntities() {
+  const findContact = id => step3.context.contacts.find(c => c.id === id);
+  const findEmp     = id => step3.context.employees.find(e => e.id === id);
+  const findAcc     = id => step3.context.allAccounts.find(a => a.id === id);
+  const findBank    = id => step3.context.bankAccounts.find(b => b.id === id);
+
+  for (const line of step3.lines) {
+    let entity = null, label = null;
+    switch (line.match_type) {
+      case 'contact':        entity = findContact(line.matched_contact_id); label = entity?.name; break;
+      case 'suggestion':     entity = findContact(line.suggested_contact_id); label = entity?.name; break;
+      case 'expense_account':entity = findAcc(line.matched_account_id); label = entity && `${entity.code} ${entity.name}`; break;
+      case 'employee':       entity = findEmp(line.matched_employee_id); label = entity && `${entity.first_name} ${entity.last_name}`.trim(); break;
+      case 'own_transfer':   entity = findBank(line.target_bank_account_id); label = entity?.account_name || 'Kendi Hesap'; break;
+      case 'duplicate':      label = 'Zaten kayıtlı'; break;
+    }
+    line._entity = entity;
+    line._entityLabel = label;
+  }
+}
+
+function renderStep3() {
+  renderStep3Meta();
+  renderStep3Summary();
+  renderStep3Banners();
+  renderStep3Rows();
+  updateProceedButton();
+}
+
+function renderStep3Meta() {
+  const r = step3.importRow;
+  const ba = r?.bank_accounts;
+  document.getElementById('step3-meta').textContent =
+    `${ba?.banks?.name || ''} — ${ba?.account_name || ''} ${ba?.iban ? '('+ba.iban+')' : ''} | ${r.file_name}`;
+  const tb = document.getElementById('step3-balance');
+  if (r.opening_balance != null || r.closing_balance != null) {
+    tb.innerHTML = `Dönem: <b>${r.period_start || '—'} - ${r.period_end || '—'}</b><br>`
+      + (r.opening_balance != null ? `Açılış: <b>${fmtNum(r.opening_balance)}</b> ` : '')
+      + (r.closing_balance != null ? `| Kapanış: <b>${fmtNum(r.closing_balance)}</b>` : '');
+  } else { tb.textContent = ''; }
+}
+
+function step3Distribution() {
+  const dist = { all: step3.lines.length, matched: 0, attention: 0, unconfirmed: 0,
+                 contact: 0, suggestion: 0, expense_account: 0, employee: 0,
+                 own_transfer: 0, duplicate: 0, unmatched: 0, skipped: 0 };
+  for (const l of step3.lines) {
+    dist[l.match_type] = (dist[l.match_type] || 0) + 1;
+    if (!l.is_confirmed && !l.is_skipped) dist.unconfirmed++;
+    if (['contact','expense_account','employee','own_transfer'].includes(l.match_type)) dist.matched++;
+    if (['suggestion','unmatched'].includes(l.match_type)) dist.attention++;
+  }
+  return dist;
+}
+
+function renderStep3Summary() {
+  const d = step3Distribution();
+  const totalDebit  = step3.lines.reduce((s, l) => s + Number(l.debit  || 0), 0);
+  const totalCredit = step3.lines.reduce((s, l) => s + Number(l.credit || 0), 0);
+  const tiles = [
+    { label: 'Toplam İşlem',  value: d.all,   sub: `${step3.lines.filter(l => l.is_confirmed).length} onaylandı` },
+    { label: 'Toplam Borç',   value: fmtNum(totalDebit) },
+    { label: 'Toplam Alacak', value: fmtNum(totalCredit) },
+    { label: 'Net',           value: fmtNum(totalCredit - totalDebit) }
+  ];
+  document.getElementById('step3-summary').innerHTML = tiles.map(t =>
+    `<div class="summary-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div>${t.sub?`<div class="sub">${t.sub}</div>`:''}</div>`
+  ).join('');
+
+  document.getElementById('step3-legend').innerHTML = [
+    { color: '#16a34a', label: 'Otomatik Eşleşti', n: d.contact },
+    { color: '#f59e0b', label: 'Öneri',             n: d.suggestion },
+    { color: '#1e40af', label: 'Kendi Transfer',    n: d.own_transfer },
+    { color: '#ea580c', label: 'Gider Hesabı',      n: d.expense_account },
+    { color: '#db2777', label: 'Çalışan',           n: d.employee },
+    { color: '#64748b', label: 'Duplicate',         n: d.duplicate },
+    { color: '#dc2626', label: 'Eşleşmedi',         n: d.unmatched }
+  ].filter(x => x.n).map(x => `<span class="legend-pill"><span class="dot" style="background:${x.color}"></span>${x.label}: ${x.n}</span>`).join('');
+
+  for (const k of ['all','matched','attention','unconfirmed']) {
+    const el = document.querySelector(`[data-count="${k}"]`);
+    if (el) el.textContent = d[k] || 0;
+  }
+}
+
+function renderStep3Banners() {
+  const d = step3Distribution();
+  const r = step3.importRow;
+  const banners = [];
+  const opening = Number(r.opening_balance ?? 0), closing = Number(r.closing_balance ?? 0);
+  const debit = step3.lines.reduce((s, l) => s + Number(l.debit || 0), 0);
+  const credit = step3.lines.reduce((s, l) => s + Number(l.credit || 0), 0);
+  if (r.opening_balance != null && r.closing_balance != null) {
+    const actual = opening + credit - debit;
+    const diff = actual - closing;
+    if (Math.abs(diff) > Math.max(0.02, Math.abs(opening) * 0.0001)) {
+      banners.push({ cls: 'banner-red', html: `⚠️ Bakiye tutmuyor — fark: <b>${fmtNum(Math.abs(diff))}</b>. Import öncesi kontrol edin.` });
+    }
+  }
+  if (d.all && d.unmatched / d.all >= 0.5) banners.push({ cls: 'banner-orange', html: `ℹ️ ${d.unmatched}/${d.all} satır eşleşmedi — cari listesini kontrol edin.` });
+  if (d.all && d.duplicate / d.all >= 0.2) banners.push({ cls: 'banner-blue',   html: `🔁 ${d.duplicate} satır daha önce import edilmiş — bu ekstrenin bir kısmı zaten kayıtlı olabilir.` });
+  document.getElementById('step3-banners').innerHTML = banners.map(b => `<div class="banner ${b.cls}">${b.html}</div>`).join('');
+}
+
+function setStep3Filter(f) { step3.filter = f; document.querySelectorAll('#step-3 .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f)); renderStep3Rows(); }
+
+function step3FilterPass(line) {
+  switch (step3.filter) {
+    case 'matched':     return ['contact','expense_account','employee','own_transfer'].includes(line.match_type);
+    case 'attention':   return ['suggestion','unmatched'].includes(line.match_type);
+    case 'unconfirmed': return !line.is_confirmed && !line.is_skipped;
+    default: return true;
+  }
+}
+
+function matchTypeMeta(type) {
+  return ({
+    contact:         { color: '#16a34a', label: '🟢 Cari' },
+    suggestion:      { color: '#f59e0b', label: '🟡 Öneri' },
+    expense_account: { color: '#ea580c', label: '🟠 Gider' },
+    employee:        { color: '#db2777', label: '🟣 Çalışan' },
+    own_transfer:    { color: '#1e40af', label: '🔵 Kendi' },
+    duplicate:       { color: '#64748b', label: '⚪ Duplicate' },
+    unmatched:       { color: '#dc2626', label: '🔴 Eşleşmedi' },
+    skipped:         { color: '#94a3b8', label: '⏭ Atlandı' }
+  })[type] || { color: '#94a3b8', label: '—' };
+}
+
+function renderStep3Rows() {
+  const rows = step3.lines.filter(step3FilterPass);
+  const el = document.getElementById('step3-rows');
+  if (!rows.length) { el.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gray400)">Bu filtrede satır yok</td></tr>'; return; }
+  el.innerHTML = rows.map(renderStep3Row).join('');
+}
+
+function renderStep3Row(line) {
+  const m = matchTypeMeta(line.match_type);
+  const rowCls = line.is_confirmed ? 'confirmed' : line.is_skipped ? 'skipped' : '';
+  const checked = step3.selected.has(line.id) ? 'checked' : '';
+  const cpName = line.counterparty_name ? escapeHtml(line.counterparty_name).slice(0, 60) : '<span style="color:var(--gray400)">—</span>';
+  const cpBin  = line.counterparty_bin ? `<div class="cp-bin">BIN: ${line.counterparty_bin}</div>` : '';
+  const details = line.payment_details ? escapeHtml(line.payment_details).slice(0, 100) : '';
+  return `<tr class="${rowCls}" data-line-id="${line.id}">
+    <td><input type="checkbox" ${checked} onchange="toggleSelectLine('${line.id}', event.target.checked)"></td>
+    <td><span class="status-dot" style="background:${m.color}" title="${m.label}"></span></td>
+    <td>${line.transaction_date || '—'}</td>
+    <td><div class="cp-name">${cpName}</div>${cpBin}</td>
+    <td class="details-cell" title="${escapeAttr(line.payment_details || '')}">${details}</td>
+    <td class="amount-debit">${Number(line.debit)  ? fmtNum(line.debit)  : ''}</td>
+    <td class="amount-credit">${Number(line.credit) ? fmtNum(line.credit) : ''}</td>
+    <td class="match-cell">${renderMatchCell(line)}</td>
+  </tr>`;
+}
+
+function renderMatchCell(line) {
+  const m = matchTypeMeta(line.match_type);
+  const confirmed = line.is_confirmed;
+  const label = line._entityLabel ? escapeHtml(line._entityLabel) : '—';
+  const autoBinNote = line.auto_bin_update
+    ? `<div class="auto-bin-note">ℹ️ Carinin BIN'i eklenecek: ${line.auto_bin_update}</div>`
+    : '';
+
+  let entityClass = line.match_type.replace('_', '-');
+
+  if (line.match_type === 'suggestion') {
+    return `<span class="match-entity ${entityClass}">${m.label} ${label}?</span>
+      <button class="match-btn primary" onclick="confirmLine('${line.id}')">Onayla</button>
+      <button class="match-btn" onclick="openChangeModal('${line.id}')">Başka</button>${autoBinNote}`;
+  }
+  if (line.match_type === 'duplicate') {
+    return `<span class="match-entity duplicate">${m.label}</span>
+      <button class="match-btn" onclick="markSkipped('${line.id}')">Atla</button>
+      <button class="match-btn" onclick="forceIncludeDuplicate('${line.id}')">Yine de ekle</button>`;
+  }
+  if (line.match_type === 'unmatched') {
+    return `<span class="match-entity unmatched">${m.label}</span>
+      <button class="match-btn primary" onclick="openChangeModal('${line.id}', 'new-contact')">${line.counterparty_name ? 'Yeni Cari' : 'Seç'}</button>
+      <button class="match-btn" onclick="openChangeModal('${line.id}')">Mevcut</button>
+      <button class="match-btn" onclick="markSkipped('${line.id}')">Atla</button>`;
+  }
+  if (line.match_type === 'skipped') {
+    return `<span class="match-entity">⏭ Atlandı</span>
+      <button class="match-btn" onclick="openChangeModal('${line.id}')">Geri Al</button>`;
+  }
+  // Auto-matched types: contact / expense / employee / own_transfer
+  return `<span class="match-entity ${entityClass}">${m.label} ${label}</span>
+    ${confirmed ? '✓' : `<button class="match-btn primary" onclick="confirmLine('${line.id}')">Onayla</button>`}
+    <button class="match-btn" onclick="openChangeModal('${line.id}')">Değiştir</button>${autoBinNote}`;
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]); }
+function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+function toggleSelectLine(id, v) { v ? step3.selected.add(id) : step3.selected.delete(id); }
+function toggleSelectAll(e) {
+  const all = step3.lines.filter(step3FilterPass).map(l => l.id);
+  if (e.target.checked) all.forEach(id => step3.selected.add(id)); else all.forEach(id => step3.selected.delete(id));
+  renderStep3Rows();
+}
+
+async function confirmLine(id) {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const line = step3.lines.find(l => l.id === id);
+    if (!line) return;
+    // If a suggestion, promote to contact match on confirm.
+    if (line.match_type === 'suggestion' && line.suggested_contact_id) {
+      line.match_type = 'contact';
+      line.matched_contact_id = line.suggested_contact_id;
+      line.suggested_contact_id = null;
+    }
+    line.is_confirmed = true;
+    if (line.auto_bin_update && line.matched_contact_id) {
+      await sb.from('contacts').update({ tax_number: line.auto_bin_update }).eq('id', line.matched_contact_id);
+      const c = step3.context.contacts.find(c => c.id === line.matched_contact_id);
+      if (c) c.tax_number = line.auto_bin_update;
+      line.auto_bin_update = null;
+    }
+    await sb.from('data_import_lines').update({
+      match_type: line.match_type, matched_contact_id: line.matched_contact_id,
+      suggested_contact_id: line.suggested_contact_id, is_confirmed: true, auto_bin_update: null
+    }).eq('id', id);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+async function markSkipped(id) {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const line = step3.lines.find(l => l.id === id);
+    if (!line) return;
+    line.is_skipped = true; line.is_confirmed = true; line.match_type = 'skipped';
+    await sb.from('data_import_lines').update({ is_skipped: true, is_confirmed: true, match_type: 'skipped' }).eq('id', id);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+async function forceIncludeDuplicate(id) {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const line = step3.lines.find(l => l.id === id);
+    if (!line) return;
+    line.is_duplicate = false;
+    line.duplicate_of_bank_tx_id = null;
+    // Re-run matching on this single line now that duplicate is off
+    const r = window.BankImportMatcher.matchTransaction(line, step3.context);
+    Object.assign(line, {
+      match_type: r.match_type,
+      matched_contact_id: r.matched_contact_id || null,
+      matched_account_id: r.matched_account_id || null,
+      matched_employee_id: r.matched_employee_id || null,
+      target_bank_account_id: r.target_bank_account_id || null,
+      suggested_contact_id: r.suggested_contact_id || null,
+      suggestion_reason: r.suggestion_reason || null,
+      confidence: r.confidence ?? null,
+      is_duplicate: false
+    });
+    await sb.from('data_import_lines').update({
+      is_duplicate: false, duplicate_of_bank_tx_id: null,
+      match_type: line.match_type, matched_contact_id: line.matched_contact_id,
+      matched_account_id: line.matched_account_id, matched_employee_id: line.matched_employee_id,
+      target_bank_account_id: line.target_bank_account_id, suggested_contact_id: line.suggested_contact_id,
+      suggestion_reason: line.suggestion_reason, confidence: line.confidence
+    }).eq('id', id);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+async function bulkConfirmAuto() {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const targets = step3.lines.filter(l => !l.is_confirmed && ['contact','expense_account','employee','own_transfer'].includes(l.match_type));
+    for (const l of targets) l.is_confirmed = true;
+    if (targets.length) {
+      for (const l of targets) {
+        await sb.from('data_import_lines').update({ is_confirmed: true, auto_bin_update: null }).eq('id', l.id);
+        if (l.auto_bin_update && l.matched_contact_id) {
+          await sb.from('contacts').update({ tax_number: l.auto_bin_update }).eq('id', l.matched_contact_id);
+          const c = step3.context.contacts.find(c => c.id === l.matched_contact_id);
+          if (c) c.tax_number = l.auto_bin_update;
+          l.auto_bin_update = null;
+        }
+      }
+    }
+    showToast(`${targets.length} satır onaylandı`);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+async function bulkConfirmSuggestions() {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const targets = step3.lines.filter(l => !l.is_confirmed && l.match_type === 'suggestion');
+    for (const l of targets) {
+      l.match_type = 'contact';
+      l.matched_contact_id = l.suggested_contact_id;
+      l.suggested_contact_id = null;
+      l.is_confirmed = true;
+    }
+    for (const l of targets) {
+      await sb.from('data_import_lines').update({
+        match_type: 'contact', matched_contact_id: l.matched_contact_id,
+        suggested_contact_id: null, is_confirmed: true, auto_bin_update: null
+      }).eq('id', l.id);
+      if (l.auto_bin_update && l.matched_contact_id) {
+        await sb.from('contacts').update({ tax_number: l.auto_bin_update }).eq('id', l.matched_contact_id);
+        l.auto_bin_update = null;
+      }
+    }
+    showToast(`${targets.length} öneri onaylandı`);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+async function bulkSkipSelected() {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const ids = Array.from(step3.selected);
+    if (!ids.length) { showToast('Satır seçilmedi'); return; }
+    for (const id of ids) {
+      const line = step3.lines.find(l => l.id === id);
+      if (!line) continue;
+      line.is_skipped = true; line.is_confirmed = true; line.match_type = 'skipped';
+    }
+    for (const id of ids) await sb.from('data_import_lines').update({ is_skipped: true, is_confirmed: true, match_type: 'skipped' }).eq('id', id);
+    step3.selected.clear();
+    showToast(`${ids.length} satır atlandı`);
+    hydrateLineEntities();
+    renderStep3();
+  });
+}
+
+function updateProceedButton() {
+  const btn = document.getElementById('btn-to-step4');
+  if (!btn) return;
+  const unconfirmed = step3.lines.filter(l => !l.is_confirmed && !l.is_skipped).length;
+  btn.disabled = unconfirmed > 0;
+  btn.textContent = unconfirmed > 0 ? `Devam → (${unconfirmed} onay bekliyor)` : 'Devam →';
+}
+
+// ─── CHANGE MATCH MODAL ───
+function openChangeModal(lineId, defaultTab) {
+  const line = step3.lines.find(l => l.id === lineId);
+  if (!line) return;
+  step3.modal = { lineId, tab: defaultTab || 'contact', pick: null, ctx: { line } };
+  document.getElementById('step3-modal').classList.add('open');
+  document.getElementById('step3-modal-title').textContent =
+    `Eşleştir: ${line.counterparty_name || '(isimsiz)'} — ${fmtNum(line.debit || line.credit)}`;
+  document.querySelectorAll('#step3-modal-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === step3.modal.tab));
+  renderStep3ModalBody();
+  // Tab clicks (idempotent)
+  document.querySelectorAll('#step3-modal-tabs button').forEach(b => {
+    b.onclick = () => { step3.modal.tab = b.dataset.tab; step3.modal.pick = null;
+      document.querySelectorAll('#step3-modal-tabs button').forEach(x => x.classList.toggle('active', x === b));
+      renderStep3ModalBody();
+    };
+  });
+}
+function closeStep3Modal() { document.getElementById('step3-modal').classList.remove('open'); }
+
+function renderStep3ModalBody() {
+  const body = document.getElementById('step3-modal-body');
+  const tab = step3.modal.tab;
+  const line = step3.modal.ctx.line;
+  const renderList = (items, fmt) => items.slice(0, 100).map(item =>
+    `<div class="modal-list-item ${step3.modal.pick?.id === item.id ? 'selected' : ''}" onclick="modalPick('${item.id}')">${fmt(item)}</div>`
+  ).join('') || '<div style="padding:12px;color:var(--gray400)">Kayıt yok</div>';
+
+  if (tab === 'contact') {
+    const items = step3.context.contacts;
+    body.innerHTML = `<div class="modal-field"><label>Cari ara</label><input id="modal-search" placeholder="İsim veya BIN..." oninput="filterModalList()"></div>
+      <div class="modal-list" id="modal-list">${renderList(items, c => `<b>${escapeHtml(c.name)}</b>${c.tax_number ? ` <span style="color:var(--gray500)">BIN: ${c.tax_number}</span>` : ''}`)}</div>`;
+  } else if (tab === 'expense') {
+    const items = step3.context.expenseAccounts;
+    body.innerHTML = `<div class="modal-field"><label>Gider hesabı</label><input id="modal-search" placeholder="Kod veya isim..." oninput="filterModalList()"></div>
+      <div class="modal-list" id="modal-list">${renderList(items, a => `<span style="font-family:monospace">${a.code}</span> ${escapeHtml(a.name)}`)}</div>`;
+  } else if (tab === 'employee') {
+    const items = step3.context.employees;
+    body.innerHTML = `<div class="modal-list" id="modal-list">${renderList(items, e => `${escapeHtml([e.first_name, e.last_name].filter(Boolean).join(' '))}${e.tax_number ? ` <span style="color:var(--gray500)">${e.tax_number}</span>` : ''}`)}</div>`;
+  } else if (tab === 'own-transfer') {
+    const items = step3.context.bankAccounts.filter(b => b.id !== step3.accountId);
+    body.innerHTML = `<div class="modal-list" id="modal-list">${renderList(items, b => `${b.banks?.name || ''} — ${escapeHtml(b.account_name)} (${b.currency_code})`)}</div>`;
+  } else if (tab === 'new-contact') {
+    const suggestedType = (Number(line.debit) > 0) ? 'supplier' : 'customer';
+    body.innerHTML = `<div class="modal-field"><label>Ad</label><input id="nc-name" value="${escapeAttr(line.counterparty_name || '')}"></div>
+      <div class="modal-field"><label>BIN / Vergi No</label><input id="nc-bin" value="${escapeAttr(line.counterparty_bin || '')}"></div>
+      <div class="modal-field"><label>IBAN</label><input id="nc-iban" value="${escapeAttr(line.counterparty_iban || '')}"></div>
+      <div class="modal-field"><label>Tip</label>
+        <select id="nc-type">
+          <option value="customer" ${suggestedType==='customer'?'selected':''}>Müşteri</option>
+          <option value="supplier" ${suggestedType==='supplier'?'selected':''}>Tedarikçi</option>
+          <option value="both">Her İkisi</option>
+        </select>
+      </div>`;
+    document.getElementById('step3-modal-save').textContent = 'Oluştur ve Eşleştir';
+    return;
+  } else if (tab === 'skip') {
+    body.innerHTML = `<div style="padding:14px;color:var(--gray600);font-size:13px">Bu satır import'a dahil edilmeyecek. Yine de eklemek için "Geri Al" kullanın.</div>`;
+  }
+  document.getElementById('step3-modal-save').textContent = 'Kaydet';
+}
+
+function filterModalList() {
+  const q = (document.getElementById('modal-search').value || '').toLowerCase();
+  const list = document.getElementById('modal-list');
+  list.querySelectorAll('.modal-list-item').forEach(it => {
+    it.style.display = it.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+function modalPick(id) {
+  step3.modal.pick = { id };
+  document.querySelectorAll('#step3-modal .modal-list-item').forEach(el => el.classList.remove('selected'));
+  event.target.closest('.modal-list-item').classList.add('selected');
+}
+
+async function saveStep3Modal() {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const { lineId, tab, pick } = step3.modal;
+    const line = step3.lines.find(l => l.id === lineId);
+    if (!line) { closeStep3Modal(); return; }
+
+    if (tab === 'new-contact') {
+      const name = (document.getElementById('nc-name').value || '').trim();
+      if (!name) { showToast('Ad zorunlu', 'error'); return; }
+      const bin = (document.getElementById('nc-bin').value || '').trim();
+      const type = document.getElementById('nc-type').value;
+      const { data: created, error } = await sb.from('contacts').insert({
+        company_id: companyId, name,
+        tax_number: bin || null,
+        type: type === 'both' ? 'customer' : type,
+        is_customer: type !== 'supplier',
+        is_supplier: type !== 'customer',
+        is_active: true
+      }).select('id, name, tax_number').single();
+      if (error) { showToast('Oluşturulamadı: ' + error.message, 'error'); return; }
+      step3.context.contacts.push(created);
+      line.match_type = 'contact';
+      line.matched_contact_id = created.id;
+      line.suggested_contact_id = null;
+      line.is_confirmed = true;
+    } else if (tab === 'skip') {
+      line.is_skipped = true; line.is_confirmed = true; line.match_type = 'skipped';
+    } else if (!pick) {
+      showToast('Seçim yapın', 'error'); return;
+    } else if (tab === 'contact') {
+      line.match_type = 'contact'; line.matched_contact_id = pick.id;
+      line.suggested_contact_id = null; line.matched_account_id = null;
+      line.matched_employee_id = null; line.target_bank_account_id = null;
+      line.is_confirmed = true;
+    } else if (tab === 'expense') {
+      line.match_type = 'expense_account'; line.matched_account_id = pick.id;
+      line.matched_contact_id = null; line.suggested_contact_id = null;
+      line.matched_employee_id = null; line.target_bank_account_id = null;
+      line.is_confirmed = true;
+    } else if (tab === 'employee') {
+      line.match_type = 'employee'; line.matched_employee_id = pick.id;
+      line.matched_contact_id = null; line.suggested_contact_id = null;
+      line.matched_account_id = null; line.target_bank_account_id = null;
+      line.is_confirmed = true;
+    } else if (tab === 'own-transfer') {
+      line.match_type = 'own_transfer'; line.target_bank_account_id = pick.id;
+      line.matched_contact_id = null; line.matched_account_id = null;
+      line.matched_employee_id = null; line.suggested_contact_id = null;
+      line.is_confirmed = true;
+    }
+
+    await sb.from('data_import_lines').update({
+      match_type: line.match_type,
+      matched_contact_id: line.matched_contact_id,
+      matched_account_id: line.matched_account_id,
+      matched_employee_id: line.matched_employee_id,
+      target_bank_account_id: line.target_bank_account_id,
+      suggested_contact_id: line.suggested_contact_id,
+      is_confirmed: line.is_confirmed,
+      is_skipped: line.is_skipped
+    }).eq('id', lineId);
+    closeStep3Modal();
+    hydrateLineEntities();
+    renderStep3();
+  });
 }
 
 (async () => { try { await init(); } catch(e) { console.error(e); } })();
