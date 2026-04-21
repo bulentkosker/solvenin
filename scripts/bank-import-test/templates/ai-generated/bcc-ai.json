@@ -1,5 +1,5 @@
 {
-  "name": "BCC Bank KZ — Есепшоттар бойынша айналым (PDF, landscape)",
+  "name": "Bank CenterCredit KZ — Обороты по счетам (PDF, landscape)",
   "file_format": "pdf",
   "country_code": "KZ",
   "language_code": "ru",
@@ -13,86 +13,86 @@
   "row_detection": {
     "method": "y_coordinate_grouping",
     "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}$",
-    "y_tolerance": 4,
-    "skip_header_y": 300,
-    "date_x_min": 62,
-    "date_x_max": 107,
-    "stop_pattern": "Жиынтығы|Итого|Исходящее"
+    "y_tolerance": 6,
+    "skip_header_y": 290,
+    "date_x_min": 60,
+    "date_x_max": 95,
+    "stop_pattern": "Итого|Жиынтығы|Исходящее"
   },
   "fields": {
     "transaction_date": {
       "method": "x_coordinate_range",
-      "x_min": 62,
-      "x_max": 107
+      "x_min": 60,
+      "x_max": 95
     },
     "document_number": {
       "method": "x_coordinate_range",
-      "x_min": 28,
+      "x_min": 30,
       "x_max": 60
     },
     "counterparty_bik": {
       "method": "x_coordinate_range",
-      "x_min": 112,
-      "x_max": 159
+      "x_min": 95,
+      "x_max": 142
     },
     "counterparty_iban": {
       "method": "x_coordinate_range",
-      "x_min": 157,
-      "x_max": 237
+      "x_min": 142,
+      "x_max": 220
     },
     "sender_bin": {
       "method": "x_coordinate_range",
-      "x_min": 233,
-      "x_max": 290
+      "x_min": 220,
+      "x_max": 285
     },
     "receiver_bin": {
       "method": "x_coordinate_range",
-      "x_min": 364,
-      "x_max": 421
+      "x_min": 340,
+      "x_max": 415
     },
     "debit": {
       "method": "x_coordinate_range",
-      "x_min": 427,
-      "x_max": 545,
+      "x_min": 415,
+      "x_max": 485,
       "use_all_rows": true
     },
     "credit": {
       "method": "x_coordinate_range",
-      "x_min": 490,
-      "x_max": 565,
+      "x_min": 485,
+      "x_max": 560,
       "use_all_rows": true
     },
     "knp_code": {
       "method": "x_coordinate_range",
-      "x_min": 566,
-      "x_max": 588
-    },
-    "bank_correspondent": {
-      "method": "x_coordinate_range",
-      "x_min": 593,
-      "x_max": 681
+      "x_min": 560,
+      "x_max": 595,
+      "use_all_rows": true
     },
     "counterparty_name": {
       "method": "x_coordinate_range",
-      "x_min": 292,
-      "x_max": 367,
+      "x_min": 285,
+      "x_max": 415,
+      "use_all_rows": true
+    },
+    "bank_correspondent": {
+      "method": "x_coordinate_range",
+      "x_min": 595,
+      "x_max": 690,
       "use_all_rows": true
     },
     "payment_details": {
       "method": "x_coordinate_range",
-      "x_min": 692,
+      "x_min": 690,
       "x_max": 850,
       "use_all_rows": true
     },
     "counterparty_bin": {
       "method": "regex_in_field",
-      "pattern": "\\b(\\d{12})\\b",
-      "group": 1
+      "pattern": "\\b(\\d{12})\\b"
     },
     "transaction_time": {
       "method": "regex_in_field",
-      "pattern": "(\\d{2}:\\d{2})",
-      "group": 1
+      "pattern": "(\\d{2}:\\d{2})"
     }
   },
   "metadata": {
@@ -102,20 +102,20 @@
     },
     "opening_balance": {
       "method": "regex",
-      "pattern": "Входящее\\s+сальдо\\s*[:/]\\s*([\\d\\s,.]+)"
+      "pattern": "Входящее\\s+сальдо\\s*[:/]\\s*([\\d\\s,]+)"
     },
     "closing_balance": {
       "method": "regex",
-      "pattern": "Исходящее\\s+сальдо\\s*[:/]\\s*([\\d\\s,.]+)"
+      "pattern": "Исходящее\\s+сальдо\\s*[:/]\\s*([\\d\\s,]+)"
     },
     "period_start": {
       "method": "regex",
-      "pattern": "c\\s+(\\d{2}\\.\\d{2}\\.\\d{4})",
+      "pattern": "бастап\\s+(\\d{2}\\.\\d{2}\\.\\d{4})",
       "date_format": "DD.MM.YYYY"
     },
     "period_end": {
       "method": "regex",
-      "pattern": "по\\s+(\\d{2}\\.\\d{2}\\.\\d{4})",
+      "pattern": "дейінгі\\s+(\\d{2}\\.\\d{2}\\.\\d{4})|по\\s+(\\d{2}\\.\\d{2}\\.\\d{4})",
       "date_format": "DD.MM.YYYY"
     },
     "client_bin": {
@@ -125,6 +125,15 @@
     "bank_bik": {
       "method": "regex",
       "pattern": "БСК\\s*/\\s*БИК[:\\s]+(\\w+)"
+    },
+    "document_number": {
+      "method": "regex",
+      "pattern": "Регистрационный номер Исх\\. №\\s+(\\d+)"
+    },
+    "creation_date": {
+      "method": "regex",
+      "pattern": "Дата формирования[:\\s]+(\\d{2}\\.\\d{2}\\.\\d{4}\\s+\\d{2}:\\d{2}:\\d{2})",
+      "date_format": "DD.MM.YYYY HH:mm:ss"
     }
   }
 }

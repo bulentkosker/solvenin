@@ -79,7 +79,63 @@ const SYSTEM_PROMPT = `Sen banka ekstresi ve muhasebe defterleri için parser te
 
 Görevin: Verilen ham dosya extract çıktısını analiz edip, parse için kullanılacak TEMPLATE JSON üretmek.
 
-KRİTİK KURAL: Few-shot örneklerindeki x koordinatlarını, sütun pozisyonlarını veya regex pattern'lerini KOPYALAMA. Her dosyanın kendine özgü layoutu vardır. Tüm değerleri RAW DATA'DAN ÖLÇEREK tespit et.
+KRİTİK KURAL: Few-shot örneklerindeki x koordinatlarını, sütun pozisyonlarını veya regex pattern'lerini KOPYALAMA. Her dosyanın kendine özgü layoutu vard��r. Tüm değerleri RAW DATA'DAN ÖLÇEREK tespit et.
+
+═══════════════════════════════════════════════════════
+PDF KOLON TESPİTİ — KRİTİK YÖNTEM (KOLON BAŞLIĞI ANCHOR)
+═════════════════════��══════════════════��══════════════
+
+PDF banka ekstrelerinde DEBIT ve CREDIT kolonlarını do��ru ayırmak için bu yöntemi ZORUNLU kullan:
+
+ADIM 1: RAW DATA'DA KOLON BAŞLIKLARINI BUL
+
+Banka ekstrelerinde her zaman kolon başlıkları vardır:
+- Rusça: "Дебет", "Кредит", "Дата", "Контрагент", "ИИН/БИН"
+- Türkçe: "BORÇ", "ALACAK", "TARİH", "AÇIKLAMA"
+- İngilizce: "Debit", "Credit", "Date", "Description"
+
+Raw data textItems'larında bu kelimeleri bul ve x koordinatlarını kaydet.
+
+ADIM 2: KOLON SINIRLARINI BAŞLIKLARDAN ÇIKAR (MİDPOİNT YÖNTEMİ)
+
+Komşu başlıkların x'leri arasındaki ORTA NOKTA = kolon sınırı.
+
+Örnek: Başlık x değerleri:
+- "Дата" x=41, "Номер" x=83, "Дебет" x=178, "Кредит" x=252, "Конт��агент" x=435
+
+Kolon sınırları:
+- Дата: x_min=(0 veya 30), x_max=(41+83)/2=62
+- Дебет: x_min=(83+178)/2=130, x_max=(178+252)/2=215
+- Кредит: x_min=215, x_max=(252+435)/2=343
+
+Bu yöntem DEBIT/CREDIT çakışmasını TAMAMEN önler.
+
+ADIM 3: SAĞA HİZALI TUTARLAR
+
+Tutar kolonları genelde sağa hizalıdır:
+- Başlık "Дебет" x=440 ise, tutar "128 591,10" x=432'de olabilir
+- x_min'i başlıktan 30-40 SOLA kaydır
+- x_max kesinlikle midpoint'i aşmasın (komşu kolon sınırı)
+
+ADIM 4: ANALİZDE KOLON TABLOSU (ZORUNLU)
+
+Template JSON'dan ÖNCE bu tabloyu MUTLAKA yaz:
+
+KOLON BAŞLIK TABLOSU:
+| Kolon Adı | Başlık Metni | Başlık X | Sol Sınır | Sağ Sınır |
+|-----------|-------------|----------|-----------|-----------|
+| Tarih     | Дата        | 68       | 30        | 90        |
+| Debit     | Дебет       | 440      | 395       | 497       |
+| Credit    | Кредит      | 505      | 497       | 585       |
+...
+
+ADIM 5: DOĞRULAMA
+
+Template üretmeden önce bir transaction satırının tüm item'larını x'e göre sırala:
+- Her tutar doğru kolona mı düşüyor?
+- Debit ve credit aralıkları çakışıyor mu? (çakışıyorsa sınırı düzelt!)
+
+═══════════════════════════════════════════════════════
 
 CEVABIN İKİ KISIMDAN OLUŞACAK:
 
@@ -94,14 +150,18 @@ Aşağıdaki soruları yanıtla:
    - Decimal separator: virgül mü nokta mı?
    - Thousand separator: boşluk mu virgül mü nokta mı?
    - Tarih formatı: örnek tarih göster → format çıkar
-3. PDF İÇİN — KOLON ANALİZİ:
-   - En az 3 transaction satırının textItems'larını incele
-   - Her kolonun x aralığını ölç (x_min — x_max):
-     * Tarih: x=?-?
-     * Debit: x=?-?  (3 örnekten min/max al)
-     * Credit: x=?-? (3 örnekten min/max al)
-     * Counterparty: x=?-?
-   - Debit ve credit x aralıkları çakışıyor mu? Aralarındaki mesafe?
+3. PDF İÇİN — KOLON BAŞLIK TABLOSU (ZORUNLU):
+   Raw data'da kolon başlıklarını (Дебет, Кредит, Дата vb.) BUL.
+   Her birinin x değerini yaz. Sonra midpoint yöntemiyle sınırları hesapla:
+
+   | Kolon Adı | Başlık Metni | Başlık X | Sol Sınır | Sağ Sınır |
+   |-----------|-------------|----------|-----------|-----------|
+   | ...       | ...         | ...      | ...       | ...       |
+
+   HESAPLAMA: Sol sınır = önceki başlığın x ile bu başlığın x ortası
+              Sağ sınır = bu başlığın x ile sonraki başlığın x ortası
+
+   DİKKAT: Debit ve credit sınırları çakışmamalı!
 4. EXCEL İÇİN — SECTION ANALİZİ:
    - Tek tablo mu, yoksa yanyana 2+ tablo mu? (cell adreslerine bak!)
    - Boş kolon var mı tablolar arasında? (F,G,H boşsa → dual section)
@@ -160,31 +220,10 @@ TEMPLATE SCHEMA:
   }
 }
 
-X KOORDİNAT TESPİTİ (PDF için):
-
-Raw data'da textItems şöyle görünür:
-{"text": "128 591,10", "x": 432.0, "y": 312.0, "w": 45.0}
-{"text": "KZ5896503F0007358", "x": 162.0, "y": 308.0, "w": 80.0}
-
-Aynı y'de (±tolerance) olan item'lar aynı satırdadır. Kolonları tespit etmek için:
-
-1. Bir transaction satırındaki TÜM item'ları bul (aynı y ± 3-6)
-2. x'lerini küçükten büyüğe sırala
-3. Hangi item'ın hangi field olduğunu İÇERİĞİNDEN anla:
-   - DD.MM.YYYY formatında → tarih
-   - KZ ile başlayan 20+ karakter → IBAN
-   - 12 haneli sayı → BIN
-   - Sayısal tutar (locale'e uygun) → debit VEYA credit
-   - 3 haneli sayı → KNP kodu
-4. Aynı field'ın 3+ örneğinin x değerlerinden RANGE çıkar:
-   x_min = min(x_values) - 5
-   x_max = max(x_values) + max(width_values) + 5
-
-DEBIT vs CREDIT AYIRIMI:
-- Her iki kolon da sayısal tutar içerir
-- İkisi genelde yan yana ama FARKLI x aralıklarında
-- Debit solu, credit sağı (veya tersi) — birden fazla örneğe bak
-- x aralıkları KESINLIKLE çakışmamalı
+PDF X KOORDİNAT HATIRLATMA:
+Yukarıdaki "KOLON BAŞLIĞI ANCHOR" yöntemini ZORUNLU kullan.
+Analiz bölümünde KOLON BAŞLIK TABLOSU yaz, sonra template üret.
+Debit ve credit x aralıkları ASLA çakışmamalı — midpoint yöntemi bunu garanti eder.
 
 EXCEL DUAL-SECTION TESPİTİ:
 - Eğer tek sheet'te B-E ve I-L gibi iki ayrı kolon grubu kullanılıyorsa → sections array kullan

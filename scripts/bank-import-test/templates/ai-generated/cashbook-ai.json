@@ -1,5 +1,5 @@
 {
-  "name": "Turkish Cashbook — Günlük Kasa/Banka Defteri (XLSX)",
+  "name": "Generic Cashbook — Günlük Kasa/Banka Defteri (XLSX)",
   "file_format": "xlsx",
   "country_code": "TR",
   "language_code": "tr",
@@ -17,87 +17,117 @@
       "name": "cash",
       "sheet_pattern": ".*",
       "start_row": 7,
-      "end_pattern": "T O P L A M L A R",
+      "end_detection": "stop_pattern",
+      "stop_pattern": "T O P L A M L A R",
       "columns": {
         "number": "B",
         "description": "C",
         "debit": "D",
         "credit": "E"
+      },
+      "filters": {
+        "skip_empty_description": true,
+        "skip_zero_amounts": false
       }
     },
     {
       "name": "bank",
       "sheet_pattern": ".*",
       "start_row": 7,
-      "end_pattern": "T O P L A M L A R",
+      "end_detection": "stop_pattern",
+      "stop_pattern": "T O P L A M L A R",
       "columns": {
         "number": "I",
         "description": "J",
         "debit": "K",
         "credit": "L"
+      },
+      "filters": {
+        "skip_empty_description": true,
+        "skip_zero_amounts": false
       }
     }
   ],
   "fields": {
     "transaction_date": {
-      "method": "sheet_name_date"
+      "method": "sheet_name",
+      "date_format": "DD.MM.YYYY"
     },
     "entry_number": {
-      "method": "column_value"
+      "method": "section_column",
+      "section": "cash",
+      "column": "number"
     },
     "description": {
-      "method": "column_value"
+      "method": "section_column",
+      "section": "cash",
+      "column": "description"
     },
-    "debit": {
-      "method": "column_value"
+    "cash_debit": {
+      "method": "section_column",
+      "section": "cash",
+      "column": "debit"
     },
-    "credit": {
-      "method": "column_value"
+    "cash_credit": {
+      "method": "section_column",
+      "section": "cash",
+      "column": "credit"
+    },
+    "bank_debit": {
+      "method": "section_column",
+      "section": "bank",
+      "column": "debit"
+    },
+    "bank_credit": {
+      "method": "section_column",
+      "section": "bank",
+      "column": "credit"
+    },
+    "bank_description": {
+      "method": "section_column",
+      "section": "bank",
+      "column": "description"
     }
   },
   "metadata": {
     "cash_opening_balance": {
-      "method": "cell_regex",
+      "method": "cell_pattern",
       "pattern": "D E V R E D E N",
-      "value_column": "D"
+      "value_offset": [
+        0,
+        1
+      ],
+      "section": "cash"
     },
     "bank_opening_balance": {
-      "method": "cell_regex",
+      "method": "cell_pattern",
       "pattern": "D E V R E D E N",
-      "value_column": "K"
+      "value_offset": [
+        0,
+        1
+      ],
+      "section": "bank"
     },
     "cash_closing_balance": {
-      "method": "cell_regex",
-      "pattern": "DEVIR BAKIYE",
-      "value_column": "D"
+      "method": "cell_pattern",
+      "pattern": "GUN KASA DEVIR BAKIYE",
+      "value_offset": [
+        0,
+        1
+      ],
+      "section": "cash"
     },
     "bank_closing_balance": {
-      "method": "cell_regex",
-      "pattern": "DEVIR BAKIYE",
-      "value_column": "K"
-    },
-    "cash_total_debit": {
-      "method": "cell_regex",
-      "pattern": "T O P L A M L A R",
-      "value_column": "D"
-    },
-    "cash_total_credit": {
-      "method": "cell_regex",
-      "pattern": "T O P L A M L A R",
-      "value_column": "E"
-    },
-    "bank_total_debit": {
-      "method": "cell_regex",
-      "pattern": "T O P L A M L A R",
-      "value_column": "K"
-    },
-    "bank_total_credit": {
-      "method": "cell_regex",
-      "pattern": "T O P L A M L A R",
-      "value_column": "L"
+      "method": "cell_pattern",
+      "pattern": "GUN KASA DEVIR BAKIYE",
+      "value_offset": [
+        0,
+        1
+      ],
+      "section": "bank"
     },
     "period_date": {
-      "method": "sheet_name_date",
+      "method": "sheet_name",
       "date_format": "DD.MM.YYYY"
     }
   }

@@ -14,44 +14,44 @@
     "method": "y_coordinate_grouping",
     "pattern": "^\\d{2}\\.\\d{2}\\.\\d{4}$",
     "y_tolerance": 4,
-    "skip_header_y": 300,
-    "date_x_min": 25,
+    "skip_header_y": 285,
+    "date_x_min": 30,
     "date_x_max": 70,
     "stop_pattern": "Итого|Исходящий остаток"
   },
   "fields": {
     "transaction_date": {
       "method": "x_coordinate_range",
-      "x_min": 25,
-      "x_max": 70
+      "x_min": 30,
+      "x_max": 62
     },
     "document_number": {
       "method": "x_coordinate_range",
-      "x_min": 75,
-      "x_max": 175
+      "x_min": 62,
+      "x_max": 131
     },
     "debit": {
       "method": "x_coordinate_range",
-      "x_min": 175,
-      "x_max": 248,
+      "x_min": 131,
+      "x_max": 214,
       "use_all_rows": true
     },
     "credit": {
       "method": "x_coordinate_range",
-      "x_min": 248,
-      "x_max": 305,
+      "x_min": 214,
+      "x_max": 294,
       "use_all_rows": true
     },
     "counterparty_name": {
       "method": "x_coordinate_range",
-      "x_min": 300,
-      "x_max": 405,
+      "x_min": 294,
+      "x_max": 384,
       "use_all_rows": true
     },
     "payment_details": {
       "method": "x_coordinate_range",
-      "x_min": 405,
-      "x_max": 520,
+      "x_min": 384,
+      "x_max": 535,
       "use_all_rows": true
     },
     "counterparty_bin": {
@@ -63,25 +63,34 @@
       "method": "regex_in_field",
       "pattern": "Внешний референс[:\\s]+([\\w\\d]+)",
       "group": 1
+    },
+    "vat_amount": {
+      "method": "regex_in_field",
+      "pattern": "НДС\\s*=\\s*([\\d,\\.\\s]+)",
+      "group": 1
     }
   },
   "metadata": {
     "account_iban": {
       "method": "regex",
-      "pattern": "Счет\\(Валюта\\)\\s+(KZ\\d{18,20})"
+      "pattern": "(KZ\\d{18,20})"
     },
     "opening_balance": {
       "method": "regex",
-      "pattern": "Входящий остаток[:\\s]+([\\d\\s,.]+)"
+      "pattern": "Входящий остаток[:\\s]+([\\d\\s,\\.]+)"
+    },
+    "closing_balance": {
+      "method": "regex",
+      "pattern": "Исходящий остаток[:\\s]+([\\d\\s,\\.]+)"
     },
     "period_start": {
       "method": "regex",
-      "pattern": "За период с (\\d{2}-\\d{2}-\\d{4})",
+      "pattern": "За период с\\s+(\\d{2}-\\d{2}-\\d{4})",
       "date_format": "DD-MM-YYYY"
     },
     "period_end": {
       "method": "regex",
-      "pattern": "по (\\d{2}-\\d{2}-\\d{4})",
+      "pattern": "по\\s+(\\d{2}-\\d{2}-\\d{4})",
       "date_format": "DD-MM-YYYY"
     },
     "client_bin": {
@@ -91,6 +100,11 @@
     "bank_bik": {
       "method": "regex",
       "pattern": "БИК\\s+(\\w+)"
+    },
+    "client_name": {
+      "method": "regex",
+      "pattern": "Клиент\\s+(.+?)\\s*$",
+      "multiline": true
     }
   }
 }
