@@ -390,16 +390,217 @@ function extractExcelMetadata(rawData, metaConfig, locale) {
   return result;
 }
 
+// ─── AUTO-CALIBRATION (PDF only) ────────────────────────
+
+/** Tüm sayısal text items'ı bul (locale-aware) */
+function findNumericItems(pages, locale) {
+  const dsep = locale?.decimal_separator || ',';
+  // Match numbers like: 128 591,10 or 32,291.25 or 5180000
+  const numRe = dsep === ',' ? /^[\d\s]+,\d{1,2}$/ : /^[\d,]+\.\d{1,2}$/;
+  const items = [];
+  for (const page of pages) {
+    for (const ti of page.textItems) {
+      const t = ti.text.trim().replace(/[\s\u00a0]/g, '');
+      if (numRe.test(ti.text.trim()) || /^\d[\d\s,.]{2,}\d$/.test(ti.text.trim())) {
+        const val = parseNumber(ti.text, locale);
+        if (val > 0) items.push({ ...ti, numericValue: val });
+      }
+    }
+  }
+  return items;
+}
+
+/** Balance check: opening + credit - debit ≈ closing */
+function checkBalance(metadata, transactions) {
+  const opening = metadata?.opening_balance;
+  const closing = metadata?.closing_balance;
+  if (opening == null || closing == null) return { ok: null, reason: 'missing_metadata' };
+
+  const totalDebit = transactions.reduce((s, t) => s + (t.debit || 0), 0);
+  const totalCredit = transactions.reduce((s, t) => s + (t.credit || 0), 0);
+  const expected = closing;
+  const actual = opening + totalCredit - totalDebit;
+  const tolerance = Math.max(0.02, Math.abs(opening) * 0.0001);
+  const ok = Math.abs(actual - expected) <= tolerance;
+  return { ok, expected, actual, diff: actual - expected, totalDebit, totalCredit };
+}
+
+/** Auto-calibrate x ranges based on actual numeric item positions */
+function autoCalibrateRanges(transactions, template, rawData) {
+  const locale = template.locale || {};
+  const fields = template.fields || {};
+  const changes = [];
+  let changed = false;
+
+  // Deep clone template
+  const cal = JSON.parse(JSON.stringify(template));
+
+  // Find all numeric items in raw data
+  const numItems = findNumericItems(rawData.pages, locale);
+  if (!numItems.length) return { template: cal, changed: false, changes };
+
+  // Collect actual x positions of parsed debit/credit values
+  const debitXs = [], creditXs = [];
+  const tolerance = cal.row_detection?.y_tolerance || 3;
+
+  // Find which numeric items actually correspond to transactions
+  for (const tx of transactions) {
+    if (!tx._items) continue; // Need raw items info
+  }
+
+  // Strategy: look at numeric items in transaction Y zones
+  // and see which x ranges have values
+  const txYZones = []; // y ranges where transactions were detected
+  const datePattern = cal.row_detection?.pattern || '^\\d{2}\\.\\d{2}\\.\\d{4}';
+  const dateRe = new RegExp(datePattern);
+
+  for (const page of rawData.pages) {
+    const yRows = groupByY(page.textItems, tolerance);
+    for (const row of yRows) {
+      const dateItems = cal.row_detection?.date_x_min != null
+        ? row.filter(ti => ti.x >= cal.row_detection.date_x_min && ti.x <= (cal.row_detection.date_x_max || 120))
+        : [row.find(ti => ti.text?.trim()) || row[0]];
+      if (dateItems.some(ti => dateRe.test(ti?.text?.trim()))) {
+        const yMin = Math.min(...row.map(r => r.y));
+        const yMax = Math.max(...row.map(r => r.y));
+        txYZones.push({ yMin: yMin - 2, yMax: yMax + 20 }); // Include continuation rows
+      }
+    }
+  }
+
+  // Find numeric items within transaction zones
+  for (const ni of numItems) {
+    const inZone = txYZones.some(z => ni.y >= z.yMin && ni.y <= z.yMax);
+    if (!inZone) continue;
+
+    const debitRule = fields.debit;
+    const creditRule = fields.credit;
+    if (!debitRule || !creditRule) continue;
+
+    const inDebit = ni.x >= debitRule.x_min && ni.x <= debitRule.x_max;
+    const inCredit = ni.x >= creditRule.x_min && ni.x <= creditRule.x_max;
+
+    if (inDebit) debitXs.push(ni.x);
+    else if (inCredit) creditXs.push(ni.x);
+    else {
+      // Numeric item not in either range — potential miss
+      // Assign to closer one
+      const distToDebit = Math.min(Math.abs(ni.x - debitRule.x_min), Math.abs(ni.x - debitRule.x_max));
+      const distToCredit = Math.min(Math.abs(ni.x - creditRule.x_min), Math.abs(ni.x - creditRule.x_max));
+      if (distToDebit < distToCredit && distToDebit < 30) debitXs.push(ni.x);
+      else if (distToCredit < 30) creditXs.push(ni.x);
+    }
+  }
+
+  // Simple calibration: check if any transactions have both debit AND credit > 0
+  // (overlap indicator) or if many transactions have both = 0 (range too narrow)
+  const bothNonZero = transactions.filter(tx => (tx.debit || 0) > 0 && (tx.credit || 0) > 0).length;
+  const bothZero = transactions.filter(tx => (tx.debit || 0) === 0 && (tx.credit || 0) === 0).length;
+
+  if (fields.debit?.method === 'x_coordinate_range' && fields.credit?.method === 'x_coordinate_range') {
+    const dRule = cal.fields.debit, cRule = cal.fields.credit;
+
+    // Fix overlap: debit x_max >= credit x_min
+    if (dRule.x_max >= cRule.x_min) {
+      const mid = Math.round((dRule.x_max + cRule.x_min) / 2);
+      const oldD = [dRule.x_min, dRule.x_max], oldC = [cRule.x_min, cRule.x_max];
+      dRule.x_max = mid - 2;
+      cRule.x_min = mid + 2;
+      changes.push({ field: 'debit_credit_split', old_debit: oldD, old_credit: oldC, new_debit: [dRule.x_min, dRule.x_max], new_credit: [cRule.x_min, cRule.x_max], reason: 'overlap' });
+      changed = true;
+    }
+
+    // If too many both-zero → widen ranges by 15px each
+    if (bothZero > transactions.length * 0.3) {
+      dRule.x_min -= 15; dRule.x_max += 15;
+      cRule.x_min -= 15; cRule.x_max += 15;
+      // Re-fix overlap
+      if (dRule.x_max >= cRule.x_min) {
+        const mid = Math.round((dRule.x_max + cRule.x_min) / 2);
+        dRule.x_max = mid - 2; cRule.x_min = mid + 2;
+      }
+      changes.push({ field: 'both_widened', reason: `${bothZero}/${transactions.length} transactions had both=0` });
+      changed = true;
+    }
+  }
+
+  return { template: cal, changed, changes };
+}
+
+/** Widen all x ranges by given pixels */
+function widenRanges(template, px) {
+  const t = JSON.parse(JSON.stringify(template));
+  if (!t.fields) return t;
+  for (const [key, rule] of Object.entries(t.fields)) {
+    if (rule?.method === 'x_coordinate_range') {
+      rule.x_min = (rule.x_min || 0) - px;
+      rule.x_max = (rule.x_max || 0) + px;
+    }
+  }
+  return t;
+}
+
 // ─── MAIN ENTRY POINT ───────────────────────────────────
 
 function parseWithTemplate(rawData, template) {
   if (template.file_format === 'pdf') {
-    return parsePdf(rawData, template);
+    return parsePdfWithCalibration(rawData, template);
   } else if (['xlsx', 'xls', 'csv'].includes(template.file_format)) {
     return parseExcel(rawData, template);
   } else {
     return { metadata: {}, transactions: [], warnings: [`Desteklenmeyen format: ${template.file_format}`] };
   }
+}
+
+/** PDF parse with auto-calibration loop */
+function parsePdfWithCalibration(rawData, template) {
+  // First pass
+  let result = parsePdf(rawData, template);
+  let calibration_info = { auto_calibrated: false, iterations: 1, changes: [], balance_check: null };
+
+  // Balance check
+  let balCheck = checkBalance(result.metadata, result.transactions);
+  calibration_info.balance_check = balCheck;
+
+  if (balCheck.ok === true) {
+    // Perfect — no calibration needed
+    result.calibration_info = calibration_info;
+    return result;
+  }
+
+  // Try auto-calibration
+  const calResult = autoCalibrateRanges(result.transactions, template, rawData);
+  if (calResult.changed) {
+    calibration_info.auto_calibrated = true;
+    calibration_info.changes = calResult.changes;
+    calibration_info.iterations = 2;
+
+    // Re-parse with calibrated template
+    result = parsePdf(rawData, calResult.template);
+    balCheck = checkBalance(result.metadata, result.transactions);
+    calibration_info.balance_check = balCheck;
+
+    if (balCheck.ok === true) {
+      result.calibration_info = calibration_info;
+      return result;
+    }
+
+    // Third attempt — widen ranges
+    const wider = widenRanges(calResult.template, 10);
+    const result3 = parsePdf(rawData, wider);
+    const balCheck3 = checkBalance(result3.metadata, result3.transactions);
+
+    if (balCheck3.ok === true || (balCheck3.diff != null && Math.abs(balCheck3.diff) < Math.abs(balCheck.diff))) {
+      calibration_info.iterations = 3;
+      calibration_info.balance_check = balCheck3;
+      result3.calibration_info = calibration_info;
+      return result3;
+    }
+  }
+
+  // Return best result
+  result.calibration_info = calibration_info;
+  return result;
 }
 
 module.exports = { parseWithTemplate, parseNumber, parseDate, groupByY, filterByXRange, matchRegex };

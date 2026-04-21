@@ -92,6 +92,7 @@ async function getApiKey() {
   if (aiResult.validation.errors.length) console.log(`   ❌ Errors: ${aiResult.validation.errors.join(', ')}`);
   if (aiResult.validation.warnings.length) console.log(`   ⚠ Warnings: ${aiResult.validation.warnings.join(', ')}`);
 
+
   // 3. Parse with AI template
   console.log('\n📊 Parsing with AI template...');
   let aiParsed;
@@ -109,7 +110,14 @@ async function getApiKey() {
   console.log(`   Total Debit:  ${aiDebit.toLocaleString()}`);
   console.log(`   Total Credit: ${aiCredit.toLocaleString()}`);
   console.log(`   Metadata:`, JSON.stringify(aiParsed.metadata));
-  if (aiParsed.warnings.length) console.log(`   Warnings: ${aiParsed.warnings.slice(0, 3).join('; ')}`);
+  if (aiParsed.warnings?.length) console.log(`   Warnings: ${aiParsed.warnings.slice(0, 3).join('; ')}`);
+  if (aiParsed.calibration_info) {
+    const ci = aiParsed.calibration_info;
+    console.log(`\n─── CALIBRATION ───`);
+    console.log(`   Auto-calibrated: ${ci.auto_calibrated}, Iterations: ${ci.iterations}`);
+    if (ci.changes?.length) ci.changes.forEach(c => console.log(`   ${c.field}: [${c.old_range}] → [${c.new_range}] (${c.samples||''} samples)`));
+    if (ci.balance_check) console.log(`   Balance: ${ci.balance_check.ok ? '✅' : '❌'} expected=${ci.balance_check.expected} actual=${ci.balance_check.actual?.toFixed(2)} diff=${ci.balance_check.diff?.toFixed(2)}`);
+  }
 
   // 4. Compare with manual template (if exists)
   const manualFile = MANUAL_TEMPLATES[FILE_ARG];
