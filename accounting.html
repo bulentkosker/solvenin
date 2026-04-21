@@ -277,7 +277,7 @@
           <p data-i18n="coa_sub">Manage your account structure</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline" onclick="loadCoaFromTemplates()" id="btn-load-coa" style="display:none">📥 <span data-i18n="btn_load_coa">Load Standard Plan</span></button>
+          <button class="btn btn-outline" onclick="showCoaTemplateModal()">📥 <span data-i18n="btn_load_coa">Şablondan Oluştur</span></button>
           <button class="btn btn-outline" onclick="exportCOA()">⬆️ <span data-i18n="btn_export">Export</span></button>
           <button class="btn btn-primary" onclick="openAccountModal()">+ <span data-i18n="btn_add_account_coa">Add Account</span></button>
         </div>
@@ -580,6 +580,23 @@
   </div>
 </div>
 
+<!-- COA TEMPLATE MODAL -->
+<div class="modal-overlay" id="coa-template-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Şablondan Hesap Planı Oluştur</div>
+      <button class="modal-close" onclick="closeModal('coa-template-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="coa-template-body">
+      Yükleniyor...
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('coa-template-modal')">İptal</button>
+      <button class="btn btn-primary" onclick="loadCoaFromTemplate()" data-action="save">📥 Yükle</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -664,25 +681,38 @@ async function loadAccounts() {
   if (btn) btn.style.display = accounts.length === 0 ? '' : 'none';
 }
 
-async function loadCoaFromTemplates() {
-  // Get company country_code
-  const { data: company } = await sb.from('companies')
-    .select('country_code').eq('id', companyId).single();
-  const cc = company?.country_code;
-  if (!cc) { showToast('No country set for this company. Go to Settings > Company.', 'error'); return; }
+async function showCoaTemplateModal() {
+  // Mevcut ülkeleri çek
+  const { data: countries } = await sb.from('chart_of_accounts_templates')
+    .select('country_code').limit(500);
+  const unique = [...new Set((countries||[]).map(c => c.country_code))].sort();
+  const countryNames = { TR:'Türkiye', KZ:'Kazakistan', US:'ABD', GB:'İngiltere', DE:'Almanya', FR:'Fransa', ES:'İspanya', BE:'Belçika', IFRS:'IFRS Uluslararası' };
 
-  const ok = await window.showConfirm(
-    (t('confirm_load_coa') || 'Load standard chart of accounts for {0}?').replace('{0}', cc),
-    t('btn_load_coa') || 'Load Standard Plan',
-    t('btn_confirm') || 'Load'
-  );
-  if (!ok) return;
+  const opts = unique.map(cc => `<option value="${cc}">${countryNames[cc] || cc} (${cc})</option>`).join('');
+
+  openModal('coa-template-modal');
+  document.getElementById('coa-template-body').innerHTML = `
+    <div class="form-group">
+      <label>Ülke Hesap Planı Seçin</label>
+      <select id="coa-country-select" style="width:100%;padding:10px;border:1px solid var(--gray200);border-radius:8px;font-size:14px">
+        ${opts}
+      </select>
+    </div>
+    <div style="font-size:12px;color:var(--gray500);margin-top:8px">
+      ⚠️ Mevcut hesap planınıza ek olarak yüklenecek. Aynı kodlu hesaplar güncellenir.
+    </div>
+  `;
+}
+
+async function loadCoaFromTemplate() {
+  const cc = document.getElementById('coa-country-select')?.value;
+  if (!cc) { showToast('Ülke seçin', 'error'); return; }
 
   const { data: templates, error: tErr } = await sb.from('chart_of_accounts_templates')
     .select('account_code, account_name_local, account_name_en, account_type, parent_code, level')
     .eq('country_code', cc);
   if (tErr || !templates || !templates.length) {
-    showToast('No templates found for country: ' + cc, 'error'); return;
+    showToast('Bu ülke için şablon bulunamadı: ' + cc, 'error'); return;
   }
 
   const BATCH = 200;
@@ -692,14 +722,15 @@ async function loadCoaFromTemplates() {
         company_id: companyId, code: t.account_code,
         name: t.account_name_en, name_local: t.account_name_local,
         type: t.account_type, parent_code: t.parent_code,
-        level: t.level, country_code: cc, is_system: true, is_active: true
+        level: t.level, country_code: cc, is_system: false, is_active: true
       })),
       { onConflict: 'company_id,code' }
     );
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
 
-  showToast(templates.length + ' accounts loaded!', 'success');
+  closeModal('coa-template-modal');
+  showToast(templates.length + ' hesap yüklendi (' + cc + ')', 'success');
   await loadAccounts();
   updateStats();
 }
@@ -765,8 +796,8 @@ function renderCOA() {
         <span style="font-size:11px;color:var(--gray400)">${acc.subtype?.replace(/_/g,' ')||''}</span>
         <span class="acc-balance ${balClass}">${fmtAmt(Math.abs(bal))}</span>
         <div class="row-actions" style="justify-content:flex-end">
-          ${!acc.is_system ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editAccount('${acc.id}')">✏️</button>` : ''}
-          ${!acc.is_system ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteAccount('${acc.id}')">🗑️</button>` : ''}
+          <button class="btn btn-sm btn-outline btn-icon" onclick="editAccount('${acc.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deleteAccount('${acc.id}')">🗑️</button>
         </div>
       </div>`;
     }).join('');
@@ -859,12 +890,10 @@ async function saveAccount() {
 }
 
 function deleteAccount(id) {
-  // Check is_system before even opening modal
   const acc = accounts.find(a => a.id === id);
-  if (acc?.is_system) { showToast(t('err_system_account') || 'Sistem hesapları silinemez', 'error'); return; }
   deleteCallback = async () => {
     const { count } = await sb.from('journal_lines').select('id', {count:'exact',head:true}).eq('account_id', id);
-    if (count > 0) { showToast((t('err_has_journal_lines') || 'Silinemez: Bu hesabın {0} yevmiye kaydı var').replace('{0}', count), 'error'); return; }
+    if (count > 0) { showToast((t('err_has_journal_lines') || 'Önce yevmiye kayıtlarını silin: {0} kayıt var').replace('{0}', count), 'error'); return; }
     const { data: { user: _u } } = await sb.auth.getUser();
     await sb.from('chart_of_accounts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     await loadAccounts(); updateStats();
