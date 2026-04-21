@@ -128,6 +128,14 @@ td{padding:10px;border-bottom:1px solid var(--gray100)}
 .modal-list-item:hover{background:var(--gray50)}
 .modal-list-item.selected{background:var(--blue-light);color:var(--navy);font-weight:600}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1px solid var(--gray100);padding-top:14px}
+
+@keyframes s4pulse { 0%{width:10%} 50%{width:85%} 100%{width:10%} }
+#step4-summary .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--gray100);font-size:13px}
+#step4-summary .row .k{color:var(--gray600)}
+#step4-summary .row .v{font-weight:700;color:var(--navy)}
+#step4-summary h4{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray500);margin:14px 0 6px;font-weight:700}
+#step5-summary .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--gray100);font-size:13px}
+#step5-summary .row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -271,12 +279,40 @@ td{padding:10px;border-bottom:1px solid var(--gray100)}
       </div>
     </div>
 
-    <!-- STEP 4: Confirm (placeholder) -->
+    <!-- STEP 4: Onayla + Execute -->
     <div class="step-view" id="step-4" style="display:none">
-      <div class="card" style="text-align:center;padding:40px">
-        <div style="font-size:40px;margin-bottom:12px">🚧</div>
-        <h3>Onaylama Adımı</h3>
-        <p style="color:var(--gray500);margin-top:8px">Bu adım sonraki güncellemede eklenecek.</p>
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px">İçeri Aktarma Özeti</h3>
+        <div id="step4-summary"></div>
+        <div id="step4-progress" style="display:none;margin-top:16px;padding:14px;background:var(--gray50);border-radius:10px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px" id="step4-progress-label">İşleniyor…</div>
+          <div style="height:6px;background:var(--gray200);border-radius:999px;overflow:hidden">
+            <div id="step4-progress-bar" style="height:100%;background:var(--blue);width:30%;animation:s4pulse 1.2s ease-in-out infinite"></div>
+          </div>
+        </div>
+        <div style="margin-top:18px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;font-size:12.5px;color:#92400e">
+          ⚠️ İçeri aktarma geri alınamaz. Hata durumunda otomatik rollback çalışır; başarılı import'lar sadece data_imports silinerek geri alınabilir.
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <button class="btn btn-outline" onclick="showStep(3)">← Geri</button>
+        <button class="btn btn-primary" id="btn-execute-import" onclick="executeImportNow()">📥 İçeri Aktar</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Success -->
+    <div class="step-view" id="step-5" style="display:none">
+      <div class="card" style="padding:32px">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:56px;margin-bottom:8px">✅</div>
+          <h3 style="font-size:18px;font-weight:800;color:var(--navy)">İçeri Aktarma Tamamlandı</h3>
+        </div>
+        <div id="step5-summary" style="max-width:520px;margin:0 auto"></div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:24px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="location.href='cashbank.html'">🏦 Banka Hareketlerini Görüntüle</button>
+          <button class="btn btn-outline" onclick="resetWizard()">➕ Yeni İmport</button>
+          <button class="btn btn-outline" onclick="location.href='dashboard.html'">Dashboard</button>
+        </div>
       </div>
     </div>
   </div>
@@ -321,6 +357,7 @@ function showStep(n) {
     else if (s < n) el.classList.add('done');
   });
   if (n === 3) enterStep3().catch(e => { console.error(e); showToast('Step 3 hatası: ' + e.message, 'error'); });
+  if (n === 4) enterStep4().catch(e => { console.error(e); showToast('Step 4 hatası: ' + e.message, 'error'); });
 }
 
 // ===== STEP 0: Past imports =====
@@ -1181,6 +1218,140 @@ async function saveStep3Modal() {
     hydrateLineEntities();
     renderStep3();
   });
+}
+
+// ===================================================================
+// STEP 4 — Import Execution (calls execute_import RPC)
+// ===================================================================
+
+function countStep4Buckets() {
+  const b = { total: 0, new_tx: 0, duplicate: 0, contact: 0, new_contact: 0,
+              updated_bin: 0, expense: 0, own_transfer: 0, employee: 0,
+              suggestion: 0, unmatched: 0, skipped: 0 };
+  for (const l of step3.lines) {
+    b.total++;
+    if (l.is_skipped) { b.skipped++; continue; }
+    if (l.match_type === 'duplicate') { b.duplicate++; continue; }
+    b.new_tx++;
+    if (['contact','suggestion'].includes(l.match_type)) b.contact++;
+    if (l.match_type === 'suggestion') b.suggestion++;
+    if (l.match_type === 'expense_account') b.expense++;
+    if (l.match_type === 'own_transfer') b.own_transfer++;
+    if (l.match_type === 'employee') b.employee++;
+    if (l.match_type === 'unmatched') b.unmatched++;
+    if (l.auto_bin_update && l.matched_contact_id) b.updated_bin++;
+  }
+  // new_contact count = contacts matched in this session but created after import created_at.
+  const importCreatedAt = step3.importRow?.created_at;
+  if (importCreatedAt) {
+    const matchedIds = new Set(step3.lines.map(l => l.matched_contact_id).filter(Boolean));
+    for (const c of step3.context.contacts) {
+      if (matchedIds.has(c.id) && c.created_at && c.created_at >= importCreatedAt) b.new_contact++;
+    }
+  }
+  return b;
+}
+
+async function enterStep4() {
+  if (!step3.importRow) { showToast('Önce Step 3 tamamlanmalı', 'error'); return; }
+  // Refresh lines from DB (user may have made changes right before pressing Devam)
+  const { data } = await sb.from('data_import_lines').select('*').eq('import_id', step3.importId).order('line_number');
+  if (data) step3.lines = data;
+  hydrateLineEntities();
+
+  const b = countStep4Buckets();
+  const r = step3.importRow;
+  const ba = r.bank_accounts;
+  const debit  = step3.lines.reduce((s, l) => s + Number(l.debit  || 0), 0);
+  const credit = step3.lines.reduce((s, l) => s + Number(l.credit || 0), 0);
+  const opening = Number(r.opening_balance ?? 0);
+  const projected = opening + credit - debit;
+
+  const row = (k, v) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  document.getElementById('step4-summary').innerHTML = `
+    <h4>Kaynak</h4>
+    ${row('🏦 Hesap', `${ba?.banks?.name || ''} — ${ba?.account_name || ''} ${ba?.iban ? '('+ba.iban+')' : ''}`)}
+    ${row('📅 Dönem', `${r.period_start || '—'} → ${r.period_end || '—'}`)}
+    ${row('📄 Dosya', r.file_name)}
+
+    <h4>Satır Dağılımı</h4>
+    ${row('📊 Toplam işlem', b.total)}
+    ${row('✓ Yeni banka hareketleri', b.new_tx)}
+    ${b.duplicate ? row('⏭ Duplicate (atlanacak)', b.duplicate) : ''}
+    ${b.skipped   ? row('⏭ Manuel atlanan',       b.skipped)   : ''}
+    ${b.unmatched ? row('⚠️ Eşleşmeyen (atlanır)', b.unmatched) : ''}
+
+    <h4>Eşleştirme</h4>
+    ${row('👥 Cariye bağlanacak',    b.contact + (b.suggestion ? ` (${b.suggestion} öneri onaylı)` : ''))}
+    ${b.new_contact  ? row('🆕 Yeni cari oluşturuldu', b.new_contact)  : ''}
+    ${b.updated_bin  ? row('🏷 Carinin BIN güncellenecek', b.updated_bin) : ''}
+    ${b.expense      ? row('💳 Gider hesabına',   b.expense)      : ''}
+    ${b.employee     ? row('👤 Çalışan ödemesi',  b.employee)     : ''}
+    ${b.own_transfer ? row('🔄 Kendi hesap transferi', b.own_transfer) : ''}
+
+    <h4>Etki Hesaplaması</h4>
+    ${row('Başlangıç bakiyesi', fmtNum(opening))}
+    ${row('Toplam giriş',       '+ ' + fmtNum(credit))}
+    ${row('Toplam çıkış',       '− ' + fmtNum(debit))}
+    ${row('Beklenen kapanış',   fmtNum(projected))}
+    ${r.closing_balance != null ? row('Ekstrede yazılı kapanış', fmtNum(r.closing_balance)) : ''}
+  `;
+
+  const btn = document.getElementById('btn-execute-import');
+  btn.disabled = b.new_tx === 0;
+  btn.textContent = b.new_tx === 0 ? 'Aktarılacak satır yok' : `📥 İçeri Aktar (${b.new_tx} satır)`;
+}
+
+async function executeImportNow() {
+  if (submitting()) return;
+  await withLoading(async () => {
+    const btn = document.getElementById('btn-execute-import');
+    btn.disabled = true;
+    document.getElementById('step4-progress').style.display = '';
+    document.getElementById('step4-progress-label').textContent = 'Atomic transaction başlatıldı…';
+
+    try {
+      const { data, error } = await sb.rpc('execute_import', { p_import_id: step3.importId });
+      if (error) throw error;
+      document.getElementById('step4-progress').style.display = 'none';
+      renderStep5(data);
+      showStep(5);
+    } catch (e) {
+      document.getElementById('step4-progress').style.display = 'none';
+      btn.disabled = false;
+      console.error('Import error:', e);
+      showToast('İçeri aktarma başarısız: ' + (e.message || 'bilinmeyen hata'), 'error');
+    }
+  });
+}
+
+function renderStep5(result) {
+  const r = step3.importRow;
+  const row = (k, v) => `<div class="row"><span>${k}</span><span><b>${v}</b></span></div>`;
+  const openingDisplay = r.opening_balance != null ? fmtNum(r.opening_balance) : '—';
+  const finalDisplay   = result.final_balance  != null ? fmtNum(result.final_balance)  : '—';
+  document.getElementById('step5-summary').innerHTML = `
+    ${row('✓ Banka hareketleri eklendi',   result.imported_count)}
+    ${result.duplicate_count ? row('⏭ Duplicate atlandı',        result.duplicate_count) : ''}
+    ${result.skipped_count   ? row('⏭ Manuel atlandı',           result.skipped_count)   : ''}
+    ${result.new_contact_ids?.length ? row('🆕 Yeni cari oluştu',     result.new_contact_ids.length)     : ''}
+    ${result.updated_contact_ids?.length ? row('🏷 Carinin BIN güncellendi', result.updated_contact_ids.length) : ''}
+    ${row('🏦 Hesap bakiyesi', `${openingDisplay} → ${finalDisplay}`)}
+  `;
+}
+
+function resetWizard() {
+  selectedFile = null;
+  currentImport = null;
+  step3.importId = null; step3.importRow = null; step3.lines = [];
+  document.getElementById('file-name').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-area').classList.remove('dragover');
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('btn-to-step3').style.display = 'none';
+  document.getElementById('analysis-result').style.display = 'none';
+  loadPastImports();
+  showStep(0);
 }
 
 (async () => { try { await init(); } catch(e) { console.error(e); } })();
