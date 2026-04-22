@@ -238,6 +238,7 @@
   <script src="sidebar.js"></script>
   <script src="quickadd.js"></script>
   <script src="utils.js"></script>
+  <script src="js/contact-quickadd.js"></script>
   <link rel="stylesheet" href="theme.css">
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-KPXCV8FEZB"></script>
@@ -1484,7 +1485,12 @@ async function loadTxSelectors() {
     const eEl = document.getElementById(prefix + '-employee-qa');
     const accItems = filterAccountItemsByType(document.getElementById(prefix + '-type')?.value || 'in');
     if (cEl && !_qaControllers[prefix+'-contact']) {
-      _qaControllers[prefix+'-contact'] = QA.create(cEl, { items: _txContacts, placeholder: 'Cari ara...' });
+      _qaControllers[prefix+'-contact'] = QA.create(cEl, {
+        items: _txContacts,
+        placeholder: 'Cari ara...',
+        addLabel: q => `+ "${q}" yeni cari ekle`,
+        onAdd: q => openContactQuickAdd(prefix, q)
+      });
     } else if (_qaControllers[prefix+'-contact']) {
       _qaControllers[prefix+'-contact'].setItems(_txContacts);
     }
@@ -1497,6 +1503,25 @@ async function loadTxSelectors() {
       _qaControllers[prefix+'-employee'] = QA.create(eEl, { items: empItems, placeholder: 'Personel ara...' });
     } else if (_qaControllers[prefix+'-employee']) {
       _qaControllers[prefix+'-employee'].setItems(empItems);
+    }
+  });
+}
+
+// Bridges the QA onAdd hook in the contact picker to the shared
+// ContactQuickAdd modal: direction picks the default type (in → customer,
+// out → supplier). After the contact is created the local cache is
+// refreshed and the QA picker is switched to the new row immediately.
+function openContactQuickAdd(prefix, initialName) {
+  const dir = document.getElementById(prefix + '-type')?.value || 'in';
+  window.ContactQuickAdd.open({
+    initialName,
+    typeHint: dir === 'in' ? 'customer' : 'supplier',
+    onCreated(c) {
+      _txContacts.push({ id: c.id, name: c.name, is_customer: c.is_customer, is_supplier: c.is_supplier });
+      // Update both prefixes' contact pickers so the new row is visible if
+      // the user switches tabs before reopening the modal.
+      ['ctx','btx'].forEach(p => _qaControllers[p+'-contact']?.setItems(_txContacts));
+      _qaControllers[prefix+'-contact']?.addAndSelect({ id: c.id, name: c.name });
     }
   });
 }
