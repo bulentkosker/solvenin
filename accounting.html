@@ -922,6 +922,24 @@ function openAccountModal(id = null) {
 
 function editAccount(id) { openAccountModal(id); }
 
+// For "632.01" → parent "632". For "6321" → first prefix that exists
+// (6321 → 632 → 63 → 6). Used on insert and edit so the tree wires up
+// automatically; the cashbank picker's "leaf only" filter relies on it.
+function detectAccountParent(code, accountsList) {
+  if (!code) return null;
+  const dot = code.lastIndexOf('.');
+  if (dot > 0) {
+    const pc = code.slice(0, dot);
+    return accountsList.find(a => a.code === pc) || null;
+  }
+  for (let len = code.length - 1; len >= 1; len--) {
+    const prefix = code.slice(0, len);
+    const match = accountsList.find(a => a.code === prefix);
+    if (match) return match;
+  }
+  return null;
+}
+
 async function saveAccount() {
   if (submitting()) return;
   try {
@@ -935,10 +953,24 @@ async function saveAccount() {
   if (!code) { showToast(t('toast_code_required'), 'error'); return; }
   if (!name) { showToast(t('toast_name_required'), 'error'); return; }
 
-  const payload = { company_id: companyId, code, name, name_local: nameLocal, type, subtype, balance };
+  // Auto-detect parent so new codes like "632.01" or "6321" attach under
+  // their parent ("632"). Without this, sub-accounts land at level 1 with
+  // parent_id NULL, which breaks the cashbank dropdown's leaf filter.
+  const parent = detectAccountParent(code, accounts);
+  const effectiveType = parent && type === 'asset' ? parent.type : type;
+  const payload = {
+    company_id: companyId, code, name, name_local: nameLocal,
+    type: effectiveType, subtype, balance,
+    parent_id: parent?.id || null,
+    parent_code: parent?.code || null,
+    level: parent ? (parent.level || 1) + 1 : 1
+  };
 
   if (editingAccountId) {
-    const { error } = await sb.from('chart_of_accounts').update({ code, name, name_local: nameLocal, type, subtype }).eq('id', editingAccountId);
+    const { error } = await sb.from('chart_of_accounts').update({
+      code, name, name_local: nameLocal, type: effectiveType, subtype,
+      parent_id: payload.parent_id, parent_code: payload.parent_code, level: payload.level
+    }).eq('id', editingAccountId);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
   } else {
     const { error } = await sb.from('chart_of_accounts').insert(payload);

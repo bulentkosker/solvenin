@@ -182,6 +182,10 @@ window.QA = (function () {
       setItems(raw) {
         items = normalizeItems(raw);
         input.value = labelOf(value);
+        // If the panel is already open (caller swapped items while the
+        // user is looking at the dropdown), re-render so the new list is
+        // visible without a close/re-open.
+        if (isOpen) renderPanel(input.value);
       },
       addAndSelect(item) {
         const normalized = { id: String(item.id ?? ''), label: String(item.label ?? item.name ?? ''), _raw: item };

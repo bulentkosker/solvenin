@@ -967,7 +967,7 @@ async function init() {
     sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at'),
     sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
-    sb.from('chart_of_accounts').select('id, code, name, name_local, type').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
   ]);
   registers = registersRes.data || [];
   banks     = banksRes.data || [];
@@ -1163,7 +1163,8 @@ function renderCashTxTable(txs) {
 // company's leaf-level accounts (level ≥ 3), grouped revenue-first so
 // incoming pickers stay short.
 function populateCoaFilters() {
-  const leaves = coaAll.filter(a => a.level == null || a.level >= 3);
+  const parentIds = new Set(coaAll.map(a => a.parent_id).filter(Boolean));
+  const leaves = coaAll.filter(a => !parentIds.has(a.id));
   const opts = leaves.map(a => `<option value="${a.id}">${a.code} — ${coaDisplayName(a)}</option>`).join('');
   const html = '<option value="">Tüm Hesaplar</option>' + opts;
   ['cash-coa-filter','bank-coa-filter'].forEach(id => {
@@ -1472,7 +1473,7 @@ async function loadTxSelectors() {
   const [contactsRes, empsRes, accsRes] = await Promise.all([
     sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
     sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name'),
-    sb.from('chart_of_accounts').select('id, code, name, name_local, type, level').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type, level, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
   ]);
   _txContacts  = contactsRes.data || [];
   _txEmployees = empsRes.data || [];
@@ -1526,13 +1527,16 @@ function openContactQuickAdd(prefix, initialName) {
   });
 }
 
-// Direction-aware filter: "in" rows only pick revenue accounts, "out" only
-// expense/cost. Parent rows (level 1–2 section/group headers) are excluded
-// from the pick list — they're not bookable.
+// Direction-aware filter: "in" rows only pick revenue accounts, "out"
+// picks expense or cost. Only leaf accounts (no children) are bookable,
+// so a group like "632" hides once the user adds 632.01 under it. That
+// rule is level-independent — works for user-created codes that land
+// anywhere in the tree.
 function filterAccountItemsByType(txType) {
   const allow = txType === 'in' ? ['revenue'] : ['expense', 'cost'];
+  const parentIds = new Set(_txAccounts.map(a => a.parent_id).filter(Boolean));
   return _txAccounts
-    .filter(a => allow.includes(a.type) && (a.level == null || a.level >= 3))
+    .filter(a => allow.includes(a.type) && !parentIds.has(a.id))
     .map(a => ({ id: a.id, name: `${a.code} — ${coaDisplayName(a)}` }));
 }
 
