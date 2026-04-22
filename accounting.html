@@ -685,11 +685,46 @@ async function loadAccounts() {
   const { data } = await sb.from('chart_of_accounts')
     .select('*').eq('company_id', companyId).eq('is_active', true).order('code');
   accounts = data || [];
+  // Compute live balances from cash + bank transactions tagged to each account.
+  // Direct sum only (no parent rollup yet); leaf accounts reflect reality,
+  // section/group rows stay 0 until user tags to them.
+  await recomputeAccountBalances();
   renderCOA();
   fillAccountSelects();
-  // Show "Load Standard Plan" button if no accounts exist
   const btn = document.getElementById('btn-load-coa');
   if (btn) btn.style.display = accounts.length === 0 ? '' : 'none';
+}
+
+// Fills `accounts[*].balance` using cash/bank transactions linked via
+// chart_of_account_id. Sign convention follows accounting natural side:
+//   revenue / liability / equity → +in, −out
+//   asset / expense / cost       → +out, −in
+// so a healthy P&L reads positive for both revenue and expense buckets.
+async function recomputeAccountBalances() {
+  if (!accounts.length) return;
+  const ids = accounts.map(a => a.id);
+  const [cashRes, bankRes] = await Promise.all([
+    sb.from('cash_transactions')
+      .select('chart_of_account_id, type, amount')
+      .eq('company_id', companyId).is('deleted_at', null)
+      .in('chart_of_account_id', ids),
+    sb.from('bank_transactions')
+      .select('chart_of_account_id, type, amount')
+      .eq('company_id', companyId).is('deleted_at', null)
+      .in('chart_of_account_id', ids)
+  ]);
+  const byId = Object.fromEntries(accounts.map(a => [a.id, a]));
+  const balances = {};
+  for (const tx of [...(cashRes.data || []), ...(bankRes.data || [])]) {
+    const acc = byId[tx.chart_of_account_id];
+    if (!acc) continue;
+    const debitNatural = ['asset', 'expense', 'cost'].includes(acc.type);
+    const sign = debitNatural
+      ? (tx.type === 'out' ? 1 : -1)
+      : (tx.type === 'in'  ? 1 : -1);
+    balances[acc.id] = (balances[acc.id] || 0) + sign * Number(tx.amount || 0);
+  }
+  accounts.forEach(a => { a.balance = balances[a.id] || 0; });
 }
 
 async function showCoaTemplateModal() {

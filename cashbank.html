@@ -350,6 +350,9 @@
                   <option value="in">In</option>
                   <option value="out">Out</option>
                 </select>
+                <select class="filter-select" id="cash-coa-filter" onchange="filterCashTx()">
+                  <option value="">Tüm Hesaplar</option>
+                </select>
                 <input type="date" class="filter-select" id="cash-date-from" onchange="filterCashTx()">
                 <input type="date" class="filter-select" id="cash-date-to" onchange="filterCashTx()">
               </div>
@@ -360,7 +363,7 @@
                   <tr>
                     <th data-i18n="col_date">Date</th>
                     <th data-i18n="col_description">Description</th>
-                    <th data-i18n="col_category">Category</th>
+                    <th data-i18n="col_coa_account">Gelir/Gider Hesabı</th>
                     <th data-i18n="col_ref">Reference</th>
                     <th data-i18n="col_type">Type</th>
                     <th data-i18n="col_amount">Amount</th>
@@ -417,6 +420,9 @@
                   <option value="in">In</option>
                   <option value="out">Out</option>
                 </select>
+                <select class="filter-select" id="bank-coa-filter" onchange="filterBankTx()">
+                  <option value="">Tüm Hesaplar</option>
+                </select>
                 <input type="date" class="filter-select" id="bank-date-from" onchange="filterBankTx()">
                 <input type="date" class="filter-select" id="bank-date-to" onchange="filterBankTx()">
               </div>
@@ -427,7 +433,7 @@
                   <tr>
                     <th data-i18n="col_date">Date</th>
                     <th data-i18n="col_description">Description</th>
-                    <th data-i18n="col_category">Category</th>
+                    <th data-i18n="col_coa_account">Gelir/Gider Hesabı</th>
                     <th data-i18n="counterparty">Counterparty</th>
                     <th data-i18n="col_ref">Reference</th>
                     <th data-i18n="col_type">Type</th>
@@ -561,7 +567,7 @@
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="col_type">Type *</label>
-          <select id="ctx-type">
+          <select id="ctx-type" onchange="onTxTypeChange('ctx')">
             <option value="in">💚 Cash In</option>
             <option value="out">🔴 Cash Out</option>
           </select>
@@ -570,38 +576,24 @@
           <label data-i18n="col_amount">Amount *</label>
           <input type="number" id="ctx-amount" placeholder="0.00" step="0.01" min="0.01">
         </div>
-      </div>
-      <div class="form-group">
-        <label data-i18n="col_description">Description *</label>
-        <input type="text" id="ctx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="col_category">Category</label>
-          <select id="ctx-category" onchange="onTxCategoryChange('ctx')">
-            <option value="sale">💰 Sale</option>
-            <option value="purchase">🛒 Purchase</option>
-            <option value="expense">📋 Expense</option>
-            <option value="transfer">↔ Transfer</option>
-            <option value="salary" data-i18n="cat_salary">👤 Salary/Advance</option>
-            <option value="tax">🏛 Tax</option>
-            <option value="other">📌 Other</option>
-          </select>
-        </div>
         <div class="form-group">
           <label data-i18n="col_date">Date *</label>
           <input type="date" id="ctx-date">
         </div>
       </div>
+      <div class="form-group">
+        <label data-i18n="col_description">Description *</label>
+        <input type="text" id="ctx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
+      </div>
+      <div class="form-group" id="ctx-account-group">
+        <label data-i18n="label_coa_account">Gelir/Gider Hesabı</label>
+        <div id="ctx-account-qa"></div>
+      </div>
       <div class="form-group" id="ctx-contact-group">
         <label data-i18n="label_contact">Cari Hesap</label>
         <div id="ctx-contact-qa"></div>
       </div>
-      <div class="form-group" id="ctx-account-group" style="display:none">
-        <label data-i18n="label_expense_account">Gider/Vergi Hesabı</label>
-        <div id="ctx-account-qa"></div>
-      </div>
-      <div class="form-group" id="ctx-employee-group" style="display:none">
+      <div class="form-group" id="ctx-employee-group">
         <label data-i18n="label_employee">Personel</label>
         <div id="ctx-employee-qa"></div>
       </div>
@@ -698,7 +690,7 @@
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="col_type">Type *</label>
-          <select id="btx-type">
+          <select id="btx-type" onchange="onTxTypeChange('btx')">
             <option value="in">💚 Money In</option>
             <option value="out">🔴 Money Out</option>
           </select>
@@ -707,39 +699,24 @@
           <label data-i18n="col_amount">Amount *</label>
           <input type="number" id="btx-amount" placeholder="0.00" step="0.01" min="0.01">
         </div>
-      </div>
-      <div class="form-group">
-        <label data-i18n="col_description">Description *</label>
-        <input type="text" id="btx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="col_category">Category</label>
-          <select id="btx-category" onchange="onTxCategoryChange('btx')">
-            <option value="sale">💰 Sale Collection</option>
-            <option value="purchase">🛒 Supplier Payment</option>
-            <option value="expense">📋 Expense</option>
-            <option value="transfer">↔ Transfer</option>
-            <option value="salary" data-i18n="cat_salary">👤 Salary/Advance</option>
-            <option value="tax">🏛 Tax</option>
-            <option value="fee">🏦 Bank Fee</option>
-            <option value="other">📌 Other</option>
-          </select>
-        </div>
         <div class="form-group">
           <label data-i18n="col_date">Date *</label>
           <input type="date" id="btx-date">
         </div>
       </div>
+      <div class="form-group">
+        <label data-i18n="col_description">Description *</label>
+        <input type="text" id="btx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
+      </div>
+      <div class="form-group" id="btx-account-group">
+        <label data-i18n="label_coa_account">Gelir/Gider Hesabı</label>
+        <div id="btx-account-qa"></div>
+      </div>
       <div class="form-group" id="btx-contact-group">
         <label data-i18n="label_contact">Cari Hesap</label>
         <div id="btx-contact-qa"></div>
       </div>
-      <div class="form-group" id="btx-account-group" style="display:none">
-        <label data-i18n="label_expense_account">Gider/Vergi Hesabı</label>
-        <div id="btx-account-qa"></div>
-      </div>
-      <div class="form-group" id="btx-employee-group" style="display:none">
+      <div class="form-group" id="btx-employee-group">
         <label data-i18n="label_employee">Personel</label>
         <div id="btx-employee-qa"></div>
       </div>
@@ -950,6 +927,10 @@ let cashTxAll = [];       // cash_transactions
 let banks = [];           // banks
 let accounts = [];        // bank_accounts
 let bankTxAll = [];       // bank_transactions
+// Page-level COA cache — used by tx tables to show the attached account
+// (separate from _txAccounts which lives only while the modal is open).
+let coaById = {};
+let coaAll = [];
 let selectedRegisterId = null;
 let selectedAccountId = null;
 let deleteCallback = null;
@@ -980,15 +961,19 @@ async function init() {
   const planEl = document.getElementById('user-plan-label');
   if (planEl) planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
   // Load companies + data queries in parallel
-  const [, registersRes, banksRes, accountsRes] = await Promise.all([
+  const [, registersRes, banksRes, accountsRes, coaRes] = await Promise.all([
     loadCompanies(),
     sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at'),
     sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
   ]);
   registers = registersRes.data || [];
   banks     = banksRes.data || [];
   accounts  = accountsRes.data || [];
+  coaAll    = coaRes.data || [];
+  coaById   = Object.fromEntries(coaAll.map(a => [a.id, a]));
+  populateCoaFilters();
 
   currencies = WORLD_CURRENCIES;
 
@@ -1133,11 +1118,13 @@ function filterCashTx() {
   if (!selectedRegisterId) return;
   const q = document.getElementById('cash-search').value.toLowerCase();
   const type = document.getElementById('cash-type-filter').value;
+  const coa = document.getElementById('cash-coa-filter').value;
   const from = document.getElementById('cash-date-from').value;
   const to   = document.getElementById('cash-date-to').value;
 
   let txs = cashTxAll.filter(tx => tx.register_id === selectedRegisterId);
   if (type) txs = txs.filter(tx => tx.type === type);
+  if (coa)  txs = txs.filter(tx => tx.chart_of_account_id === coa);
   if (from) txs = txs.filter(tx => tx.transaction_date >= from);
   if (to)   txs = txs.filter(tx => tx.transaction_date <= to);
   if (q) txs = txs.filter(tx => tx.description?.toLowerCase().includes(q) || tx.reference?.toLowerCase().includes(q));
@@ -1152,12 +1139,11 @@ function renderCashTxTable(txs) {
     return;
   }
   tbody.innerHTML = txs.map(tx => {
-    const catIcon = {sale:'💰',purchase:'🛒',expense:'📋',transfer:'↔',salary:'👤',tax:'🏛',other:'📌'}[tx.category] || '📌';
     const src = tx.source_type ? `<span class="badge badge-gray" style="font-size:10px">${tx.source_type.replace('_',' ')}</span>` : '';
     return `<tr>
       <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
       <td><strong>${tx.description}</strong>${src ? '<br>' + src : ''}</td>
-      <td>${catIcon} ${tx.category || '—'}</td>
+      <td>${renderCoaCell(tx)}</td>
       <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
       <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
@@ -1170,6 +1156,34 @@ function renderCashTxTable(txs) {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// Fills the "Gelir/Gider Hesabı" filter selects on each tab with the
+// company's leaf-level accounts (level ≥ 3), grouped revenue-first so
+// incoming pickers stay short.
+function populateCoaFilters() {
+  const leaves = coaAll.filter(a => a.level == null || a.level >= 3);
+  const opts = leaves.map(a => `<option value="${a.id}">${a.code} — ${coaDisplayName(a)}</option>`).join('');
+  const html = '<option value="">Tüm Hesaplar</option>' + opts;
+  ['cash-coa-filter','bank-coa-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
+// Renders the Gelir/Gider Hesabı cell. Prefers chart_of_account_id; falls
+// back to the legacy category with its original icon so old rows still
+// group/filter sensibly until the user re-binds them.
+function renderCoaCell(tx) {
+  if (tx.chart_of_account_id && coaById[tx.chart_of_account_id]) {
+    const a = coaById[tx.chart_of_account_id];
+    return `<span style="font-family:monospace;font-size:11.5px;color:var(--gray500)">${a.code}</span> ${coaDisplayName(a)}`;
+  }
+  if (tx.category) {
+    const icon = {sale:'💰',purchase:'🛒',expense:'📋',transfer:'↔',salary:'👤',tax:'🏛',fee:'🏦',other:'📌'}[tx.category] || '📌';
+    return `<span style="color:var(--gray500);font-size:12px" title="Legacy">${icon} ${tx.category}</span>`;
+  }
+  return '<span style="color:var(--gray400)">—</span>';
 }
 
 // ===== BANK TREE =====
@@ -1254,11 +1268,13 @@ function filterBankTx() {
   if (!selectedAccountId) return;
   const q = document.getElementById('bank-search').value.toLowerCase();
   const type = document.getElementById('bank-type-filter').value;
+  const coa = document.getElementById('bank-coa-filter').value;
   const from = document.getElementById('bank-date-from').value;
   const to   = document.getElementById('bank-date-to').value;
 
   let txs = bankTxAll.filter(tx => tx.account_id === selectedAccountId);
   if (type) txs = txs.filter(tx => tx.type === type);
+  if (coa)  txs = txs.filter(tx => tx.chart_of_account_id === coa);
   if (from) txs = txs.filter(tx => tx.transaction_date >= from);
   if (to)   txs = txs.filter(tx => tx.transaction_date <= to);
   if (q) txs = txs.filter(tx => tx.description?.toLowerCase().includes(q) || tx.counterparty?.toLowerCase().includes(q) || tx.reference?.toLowerCase().includes(q));
@@ -1277,7 +1293,7 @@ function renderBankTxTable(txs) {
     return `<tr>
       <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
       <td><strong>${tx.description}</strong></td>
-      <td style="font-size:12px">${tx.category || '—'}</td>
+      <td>${renderCoaCell(tx)}</td>
       <td style="font-size:12px;color:var(--gray600)">${tx.counterparty || '—'}</td>
       <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
       <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
@@ -1358,7 +1374,7 @@ function filterAllTx() {
       <td style="color:var(--gray500);font-size:12px">${tx.transaction_date}</td>
       <td style="font-size:12px">${accName}</td>
       <td>${tx.description}</td>
-      <td style="font-size:12px">${tx.category || '—'}</td>
+      <td>${renderCoaCell(tx)}</td>
       <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
       <td>${src}</td>
@@ -1450,21 +1466,23 @@ let _txContacts = [], _txEmployees = [], _txAccounts = [];
 const _qaControllers = {};
 
 async function loadTxSelectors() {
+  // Fetch ALL revenue/expense/cost accounts. UI filters per-modal by direction
+  // (in → revenue, out → expense + cost) via filterAccountItemsByType().
   const [contactsRes, empsRes, accsRes] = await Promise.all([
     sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
     sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name'),
-    sb.from('chart_of_accounts').select('id, code, name, name_local, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type, level').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
   ]);
   _txContacts  = contactsRes.data || [];
   _txEmployees = empsRes.data || [];
   _txAccounts  = accsRes.data || [];
   const empItems = _txEmployees.map(e => ({ id: e.id, name: `${e.first_name} ${e.last_name}` }));
-  const accItems = _txAccounts.map(a => ({ id: a.id, name: `${a.code} — ${coaDisplayName(a)}` }));
 
   ['ctx','btx'].forEach(prefix => {
     const cEl = document.getElementById(prefix + '-contact-qa');
     const aEl = document.getElementById(prefix + '-account-qa');
     const eEl = document.getElementById(prefix + '-employee-qa');
+    const accItems = filterAccountItemsByType(document.getElementById(prefix + '-type')?.value || 'in');
     if (cEl && !_qaControllers[prefix+'-contact']) {
       _qaControllers[prefix+'-contact'] = QA.create(cEl, { items: _txContacts, placeholder: 'Cari ara...' });
     } else if (_qaControllers[prefix+'-contact']) {
@@ -1483,6 +1501,16 @@ async function loadTxSelectors() {
   });
 }
 
+// Direction-aware filter: "in" rows only pick revenue accounts, "out" only
+// expense/cost. Parent rows (level 1–2 section/group headers) are excluded
+// from the pick list — they're not bookable.
+function filterAccountItemsByType(txType) {
+  const allow = txType === 'in' ? ['revenue'] : ['expense', 'cost'];
+  return _txAccounts
+    .filter(a => allow.includes(a.type) && (a.level == null || a.level >= 3))
+    .map(a => ({ id: a.id, name: `${a.code} — ${coaDisplayName(a)}` }));
+}
+
 function getTxContactId(prefix) { return _qaControllers[prefix+'-contact']?.getValue() || null; }
 function getTxAccountId(prefix) { return _qaControllers[prefix+'-account']?.getValue() || null; }
 function getTxEmployeeId(prefix) { return _qaControllers[prefix+'-employee']?.getValue() || null; }
@@ -1492,22 +1520,29 @@ function resetTxSelectors(prefix) {
   _qaControllers[prefix+'-employee']?.setValue(null);
 }
 
-function onTxCategoryChange(prefix) {
-  const cat = document.getElementById(prefix + '-category')?.value;
-  const contactGrp = document.getElementById(prefix + '-contact-group');
-  const accountGrp = document.getElementById(prefix + '-account-group');
-  const empGrp = document.getElementById(prefix + '-employee-group');
-  if (contactGrp) contactGrp.style.display = ['sale','purchase'].includes(cat) ? '' : 'none';
-  if (accountGrp) accountGrp.style.display = ['expense','tax','fee'].includes(cat) ? '' : 'none';
-  if (empGrp) empGrp.style.display = cat === 'salary' ? '' : 'none';
-  // Auto-set type based on category
-  const typeEl = document.getElementById(prefix + '-type');
-  if (typeEl) {
-    const inCats = ['sale'];
-    const outCats = ['purchase','expense','salary','tax','fee'];
-    if (inCats.includes(cat)) typeEl.value = 'in';
-    else if (outCats.includes(cat)) typeEl.value = 'out';
+// Direction change → re-filter the account dropdown so "in" shows revenue
+// accounts and "out" shows expense/cost. Clears previously selected account
+// if the current pick no longer matches the new direction.
+function onTxTypeChange(prefix) {
+  const txType = document.getElementById(prefix + '-type')?.value || 'in';
+  const allow = txType === 'in' ? ['revenue'] : ['expense', 'cost'];
+  const ctrl = _qaControllers[prefix + '-account'];
+  if (ctrl) {
+    const current = ctrl.getValue();
+    const stillValid = current && _txAccounts.some(a => a.id === current && allow.includes(a.type));
+    if (!stillValid) ctrl.setValue(null);
+    ctrl.setItems(filterAccountItemsByType(txType));
   }
+}
+
+// Derives a legacy category from the selected chart_of_accounts row so old
+// reports / cashCatMap dashboards keep grouping rows. Revenue → "sale",
+// expense/cost → "expense". Falls back to direction when no account chosen.
+function deriveCategoryFromAccount(accountId, txType) {
+  const acc = _txAccounts.find(a => a.id === accountId);
+  if (acc?.type === 'revenue') return 'sale';
+  if (acc?.type === 'expense' || acc?.type === 'cost') return 'expense';
+  return txType === 'in' ? 'sale' : 'expense';
 }
 
 // ===== SAVE CASH TX =====
@@ -1521,14 +1556,13 @@ async function openCashTxModal(id = null) {
   document.getElementById('ctx-amount').value = tx?.amount || '';
   document.getElementById('ctx-desc').value = tx?.description || '';
   document.getElementById('ctx-ref').value = tx?.reference || '';
-  if (tx?.category) document.getElementById('ctx-category').value = tx.category;
   if (tx?.transaction_date) document.getElementById('ctx-date').value = tx.transaction_date;
   resetTxSelectors('ctx');
-  onTxCategoryChange('ctx');
   await loadTxSelectors();
-  // Pre-fill QA selections after loaders populated (contact/account/employee)
+  onTxTypeChange('ctx');
   if (tx) {
     if (tx.contact_id) _qaControllers['ctx-contact']?.setValue(tx.contact_id);
+    if (tx.chart_of_account_id) _qaControllers['ctx-account']?.setValue(tx.chart_of_account_id);
   }
   openModal('cash-tx-modal');
 }
@@ -1550,7 +1584,6 @@ async function saveCashTx() {
   const type = document.getElementById('ctx-type').value;
   const amount = parseFloat(document.getElementById('ctx-amount').value);
   const desc = document.getElementById('ctx-desc').value.trim();
-  const category = document.getElementById('ctx-category').value;
   const date = document.getElementById('ctx-date').value;
   const ref = document.getElementById('ctx-ref').value.trim();
 
@@ -1559,11 +1592,14 @@ async function saveCashTx() {
 
   const reg = registers.find(r => r.id === selectedRegisterId);
   const contactId = getTxContactId('ctx');
+  const chartOfAccountId = getTxAccountId('ctx');
   const counterparty = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : null;
+  const category = deriveCategoryFromAccount(chartOfAccountId, type);
   // Register and source_type are preserved on edit; on insert they default.
   const payload = {
     type, amount, description: desc, category, reference: ref,
-    transaction_date: date, contact_id: contactId, counterparty
+    transaction_date: date, contact_id: contactId, counterparty,
+    chart_of_account_id: chartOfAccountId
   };
   let error;
   if (editingCashTxId) {
@@ -1736,13 +1772,13 @@ async function openBankTxModal(id = null) {
   document.getElementById('btx-desc').value = tx?.description || '';
   document.getElementById('btx-counterparty').value = tx?.counterparty || '';
   document.getElementById('btx-ref').value = tx?.reference || '';
-  if (tx?.category) document.getElementById('btx-category').value = tx.category;
   if (tx?.transaction_date) document.getElementById('btx-date').value = tx.transaction_date;
   resetTxSelectors('btx');
-  onTxCategoryChange('btx');
   await loadTxSelectors();
+  onTxTypeChange('btx');
   if (tx) {
     if (tx.contact_id) _qaControllers['btx-contact']?.setValue(tx.contact_id);
+    if (tx.chart_of_account_id) _qaControllers['btx-account']?.setValue(tx.chart_of_account_id);
   }
   openModal('bank-tx-modal');
 }
@@ -1764,7 +1800,6 @@ async function saveBankTx() {
   const type = document.getElementById('btx-type').value;
   const amount = parseFloat(document.getElementById('btx-amount').value);
   const desc = document.getElementById('btx-desc').value.trim();
-  const category = document.getElementById('btx-category').value;
   const date = document.getElementById('btx-date').value;
   const counterparty = document.getElementById('btx-counterparty').value.trim();
   const ref = document.getElementById('btx-ref').value.trim();
@@ -1774,11 +1809,14 @@ async function saveBankTx() {
 
   const acc = accounts.find(a => a.id === selectedAccountId);
   const contactId = getTxContactId('btx');
+  const chartOfAccountId = getTxAccountId('btx');
   const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : counterparty;
+  const category = deriveCategoryFromAccount(chartOfAccountId, type);
   const payload = {
     type, amount, description: desc, category,
     counterparty: counterpartyName || counterparty, reference: ref,
-    transaction_date: date, contact_id: contactId
+    transaction_date: date, contact_id: contactId,
+    chart_of_account_id: chartOfAccountId
   };
   let error;
   if (editingBankTxId) {
