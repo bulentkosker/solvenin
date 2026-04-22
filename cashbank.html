@@ -1161,8 +1161,12 @@ function renderCashTxTable(txs) {
       <td style="font-size:12px;color:var(--gray500)">${tx.reference || '—'}</td>
       <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCashTx('${tx.id}')">🗑️</button>
+      <td><div class="dot-menu" style="float:right" onclick="event.stopPropagation()">
+        <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
+        <div class="dot-menu-list">
+          <button class="dot-menu-item" onclick="closeDotMenus();editCashTx('${tx.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
+          <button class="dot-menu-item danger" onclick="closeDotMenus();deleteCashTx('${tx.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
+        </div>
       </div></td>
     </tr>`;
   }).join('');
@@ -1279,8 +1283,12 @@ function renderBankTxTable(txs) {
       <td>${tx.type === 'in' ? `<span class="badge badge-green">${t('tx_badge_in')}</span>` : `<span class="badge badge-red">${t('tx_badge_out')}</span>`}</td>
       <td class="${tx.type === 'in' ? 'amount-in' : 'amount-out'}">${tx.type === 'in' ? '+' : '-'}${fmtNum(tx.amount)}</td>
       <td>${src}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteBankTx('${tx.id}')">🗑️</button>
+      <td><div class="dot-menu" style="float:right" onclick="event.stopPropagation()">
+        <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
+        <div class="dot-menu-list">
+          <button class="dot-menu-item" onclick="closeDotMenus();editBankTx('${tx.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
+          <button class="dot-menu-item danger" onclick="closeDotMenus();deleteBankTx('${tx.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
+        </div>
       </div></td>
     </tr>`;
   }).join('');
@@ -1503,21 +1511,42 @@ function onTxCategoryChange(prefix) {
 }
 
 // ===== SAVE CASH TX =====
-function openCashTxModal() {
-  document.getElementById('ctx-type').value = 'in';
-  document.getElementById('ctx-amount').value = '';
-  document.getElementById('ctx-desc').value = '';
-  document.getElementById('ctx-ref').value = '';
+// When `id` is passed, modal opens in edit mode and save() issues UPDATE.
+let editingCashTxId = null;
+
+async function openCashTxModal(id = null) {
+  editingCashTxId = id;
+  const tx = id ? cashTxAll.find(x => x.id === id) : null;
+  document.getElementById('ctx-type').value = tx?.type || 'in';
+  document.getElementById('ctx-amount').value = tx?.amount || '';
+  document.getElementById('ctx-desc').value = tx?.description || '';
+  document.getElementById('ctx-ref').value = tx?.reference || '';
+  if (tx?.category) document.getElementById('ctx-category').value = tx.category;
+  if (tx?.transaction_date) document.getElementById('ctx-date').value = tx.transaction_date;
   resetTxSelectors('ctx');
   onTxCategoryChange('ctx');
-  loadTxSelectors();
+  await loadTxSelectors();
+  // Pre-fill QA selections after loaders populated (contact/account/employee)
+  if (tx) {
+    if (tx.contact_id) _qaControllers['ctx-contact']?.setValue(tx.contact_id);
+  }
   openModal('cash-tx-modal');
+}
+
+function editCashTx(id) {
+  const tx = cashTxAll.find(x => x.id === id);
+  if (!tx) { showToast(t('toast_tx_not_found') || 'Hareket bulunamadı', 'error'); return; }
+  if (tx.source_type && tx.source_type !== 'manual') {
+    showToast(t('toast_tx_not_editable') || 'Bu hareket otomatik oluşturuldu, kaynak belgeden düzenleyin', 'error');
+    return;
+  }
+  openCashTxModal(id);
 }
 
 async function saveCashTx() {
   if (submitting()) return;
   try {
-  if (!selectedRegisterId) return;
+  if (!selectedRegisterId && !editingCashTxId) return;
   const type = document.getElementById('ctx-type').value;
   const amount = parseFloat(document.getElementById('ctx-amount').value);
   const desc = document.getElementById('ctx-desc').value.trim();
@@ -1531,14 +1560,25 @@ async function saveCashTx() {
   const reg = registers.find(r => r.id === selectedRegisterId);
   const contactId = getTxContactId('ctx');
   const counterparty = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : null;
-  const { error } = await sb.from('cash_transactions').insert({
-    company_id: companyId, register_id: selectedRegisterId, type, amount, currency_code: reg.currency_code,
-    description: desc, category, reference: ref, transaction_date: date, source_type: 'manual',
-    contact_id: contactId, counterparty
-  });
+  // Register and source_type are preserved on edit; on insert they default.
+  const payload = {
+    type, amount, description: desc, category, reference: ref,
+    transaction_date: date, contact_id: contactId, counterparty
+  };
+  let error;
+  if (editingCashTxId) {
+    ({ error } = await sb.from('cash_transactions').update(payload).eq('id', editingCashTxId));
+  } else {
+    payload.company_id = companyId;
+    payload.register_id = selectedRegisterId;
+    payload.currency_code = reg.currency_code;
+    payload.source_type = 'manual';
+    ({ error } = await sb.from('cash_transactions').insert(payload));
+  }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
   closeModal('cash-tx-modal');
+  editingCashTxId = null;
   await loadCashTransactions();
   await loadRegisters(); // refresh balance
   updateStats();
@@ -1686,22 +1726,41 @@ function deleteAccount(id) {
 }
 
 // ===== SAVE BANK TX =====
-function openBankTxModal() {
-  document.getElementById('btx-type').value = 'in';
-  document.getElementById('btx-amount').value = '';
-  document.getElementById('btx-desc').value = '';
-  document.getElementById('btx-counterparty').value = '';
-  document.getElementById('btx-ref').value = '';
+let editingBankTxId = null;
+
+async function openBankTxModal(id = null) {
+  editingBankTxId = id;
+  const tx = id ? bankTxAll.find(x => x.id === id) : null;
+  document.getElementById('btx-type').value = tx?.type || 'in';
+  document.getElementById('btx-amount').value = tx?.amount || '';
+  document.getElementById('btx-desc').value = tx?.description || '';
+  document.getElementById('btx-counterparty').value = tx?.counterparty || '';
+  document.getElementById('btx-ref').value = tx?.reference || '';
+  if (tx?.category) document.getElementById('btx-category').value = tx.category;
+  if (tx?.transaction_date) document.getElementById('btx-date').value = tx.transaction_date;
   resetTxSelectors('btx');
   onTxCategoryChange('btx');
-  loadTxSelectors();
+  await loadTxSelectors();
+  if (tx) {
+    if (tx.contact_id) _qaControllers['btx-contact']?.setValue(tx.contact_id);
+  }
   openModal('bank-tx-modal');
+}
+
+function editBankTx(id) {
+  const tx = bankTxAll.find(x => x.id === id);
+  if (!tx) { showToast(t('toast_tx_not_found') || 'Hareket bulunamadı', 'error'); return; }
+  if (tx.source_type && tx.source_type !== 'manual') {
+    showToast(t('toast_tx_not_editable') || 'Bu hareket otomatik oluşturuldu, kaynak belgeden düzenleyin', 'error');
+    return;
+  }
+  openBankTxModal(id);
 }
 
 async function saveBankTx() {
   if (submitting()) return;
   try {
-  if (!selectedAccountId) return;
+  if (!selectedAccountId && !editingBankTxId) return;
   const type = document.getElementById('btx-type').value;
   const amount = parseFloat(document.getElementById('btx-amount').value);
   const desc = document.getElementById('btx-desc').value.trim();
@@ -1716,14 +1775,25 @@ async function saveBankTx() {
   const acc = accounts.find(a => a.id === selectedAccountId);
   const contactId = getTxContactId('btx');
   const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : counterparty;
-  const { error } = await sb.from('bank_transactions').insert({
-    company_id: companyId, account_id: selectedAccountId, type, amount, currency_code: acc.currency_code,
-    description: desc, category, counterparty: counterpartyName || counterparty, reference: ref,
-    transaction_date: date, source_type: 'manual', contact_id: contactId
-  });
+  const payload = {
+    type, amount, description: desc, category,
+    counterparty: counterpartyName || counterparty, reference: ref,
+    transaction_date: date, contact_id: contactId
+  };
+  let error;
+  if (editingBankTxId) {
+    ({ error } = await sb.from('bank_transactions').update(payload).eq('id', editingBankTxId));
+  } else {
+    payload.company_id = companyId;
+    payload.account_id = selectedAccountId;
+    payload.currency_code = acc.currency_code;
+    payload.source_type = 'manual';
+    ({ error } = await sb.from('bank_transactions').insert(payload));
+  }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_tx_saved'), 'success');
   closeModal('bank-tx-modal');
+  editingBankTxId = null;
   await loadBankTransactions();
   await loadBanks();
   updateStats();
