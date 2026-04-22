@@ -921,6 +921,36 @@ tr:hover .action-btns { opacity:1; }
             </div>
           </div>
         </div>
+
+        <!-- Muhasebe Varsayılanları — kasa/banka modal'ında Maaş/Avans
+             kategorileri otomatik bu hesabı kullanır. -->
+        <div class="settings-card" style="margin-top:16px">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title">Muhasebe Varsayılanları</div>
+              <div class="settings-card-desc">Kasa/banka modal'ında Maaş ve Avans kategorileri için otomatik kullanılacak hesaplar</div>
+            </div>
+            <button class="btn-primary" onclick="savePayrollDefaults()" data-action="save">Kaydet</button>
+          </div>
+          <div class="settings-card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:6px">👤 Varsayılan Maaş Hesabı</label>
+                <select id="default-salary-account" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+                  <option value="">— Seçilmedi —</option>
+                </select>
+                <div style="font-size:11px;color:var(--gray400);margin-top:4px">Önerilen: 770 Genel Yönetim Giderleri / 632 Genel Yönetim Giderleri</div>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--gray600);margin-bottom:6px">💼 Varsayılan Avans Hesabı</label>
+                <select id="default-advance-account" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;background:#fff">
+                  <option value="">— Seçilmedi —</option>
+                </select>
+                <div style="font-size:11px;color:var(--gray400);margin-top:4px">Önerilen: 135 Personelden Alacaklar / 196 Personel Avansları</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== INVOICE SETTINGS ===== -->
@@ -3871,6 +3901,52 @@ async function loadIntegrationSettings() {
     btnEl.className = 'btn-primary';
     btnEl.style.cssText = 'padding:8px 16px;font-size:12px';
   }
+  await loadPayrollDefaults();
+}
+
+// Loads chart_of_accounts leaves into the salary/advance default selects
+// and pre-selects the company's saved choice. Salary uses expense+cost
+// leaves, Advance uses asset leaves; non-leaf groups are filtered out.
+async function loadPayrollDefaults() {
+  if (!companyId) return;
+  const [coaRes, compRes] = await Promise.all([
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type, parent_id')
+      .eq('company_id', companyId).in('type', ['expense','cost','asset'])
+      .eq('is_active', true).is('deleted_at', null).order('code'),
+    sb.from('companies').select('default_salary_account_id, default_advance_account_id').eq('id', companyId).single()
+  ]);
+  const all = coaRes.data || [];
+  const parentIds = new Set(all.map(a => a.parent_id).filter(Boolean));
+  const lang = (localStorage.getItem('solvenin_lang') || 'en').toLowerCase();
+  const labelOf = a => `${a.code} — ${(lang === 'tr' && a.name_local) ? a.name_local : (a.name || a.name_local || '')}`;
+  const optsFor = (types) => '<option value="">— Seçilmedi —</option>' +
+    all.filter(a => types.includes(a.type) && !parentIds.has(a.id))
+       .map(a => `<option value="${a.id}">${labelOf(a)}</option>`).join('');
+
+  const salSel = document.getElementById('default-salary-account');
+  const advSel = document.getElementById('default-advance-account');
+  if (salSel) {
+    salSel.innerHTML = optsFor(['expense','cost']);
+    if (compRes.data?.default_salary_account_id) salSel.value = compRes.data.default_salary_account_id;
+  }
+  if (advSel) {
+    advSel.innerHTML = optsFor(['asset']);
+    if (compRes.data?.default_advance_account_id) advSel.value = compRes.data.default_advance_account_id;
+  }
+}
+
+async function savePayrollDefaults() {
+  if (submitting()) return;
+  try {
+    const sal = document.getElementById('default-salary-account').value || null;
+    const adv = document.getElementById('default-advance-account').value || null;
+    const { error } = await sb.from('companies').update({
+      default_salary_account_id: sal,
+      default_advance_account_id: adv
+    }).eq('id', companyId);
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    showToast('Muhasebe varsayılanları kaydedildi ✓', 'success');
+  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
 function openAccountingModal() {
