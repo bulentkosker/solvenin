@@ -1101,16 +1101,23 @@ async function reportCoaMovements() {
   const [accRes, cashRes, bankRes] = await Promise.all([
     sb.from('chart_of_accounts').select('id, code, name, name_local, type').eq('id', accountId).single(),
     (() => {
+      // Disambiguate embeds — M072 added transfer_target_register_id,
+      // so cash_transactions now has two FKs to cash_registers
+      // (register_id and transfer_target_register_id). PostgREST
+      // refuses to pick one without the explicit !fkey hint.
       let q = sb.from('cash_transactions')
-        .select('id, transaction_date, type, amount, description, reference, register_id, contact_id, employee_id, cash_registers(name), contacts(name), employees(first_name, last_name)')
+        .select('id, transaction_date, type, amount, description, reference, register_id, contact_id, employee_id, cash_registers!cash_transactions_register_id_fkey(name), contacts(name), employees(first_name, last_name)')
         .eq('company_id', companyId).eq('chart_of_account_id', accountId).is('deleted_at', null);
       if (from) q = q.gte('transaction_date', from);
       if (to)   q = q.lte('transaction_date', to);
       return q.order('transaction_date');
     })(),
     (() => {
+      // Same ambiguity risk from M072 for bank_accounts / banks.
+      // account_id is the booking account; transfer_target_bank_id is
+      // the other side of a transfer.
       let q = sb.from('bank_transactions')
-        .select('id, transaction_date, type, amount, description, reference, account_id, contact_id, employee_id, bank_accounts(account_name, banks(name)), contacts(name), employees(first_name, last_name)')
+        .select('id, transaction_date, type, amount, description, reference, account_id, contact_id, employee_id, bank_accounts!bank_transactions_account_id_fkey(account_name, banks(name)), contacts(name), employees(first_name, last_name)')
         .eq('company_id', companyId).eq('chart_of_account_id', accountId).is('deleted_at', null);
       if (from) q = q.gte('transaction_date', from);
       if (to)   q = q.lte('transaction_date', to);
