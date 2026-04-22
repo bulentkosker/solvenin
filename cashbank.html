@@ -1507,12 +1507,14 @@ let _txContacts = [], _txEmployees = [], _txAccounts = [];
 const _qaControllers = {};
 
 async function loadTxSelectors() {
-  // Fetch ALL revenue/expense/cost accounts. UI filters per-modal by direction
-  // (in → revenue, out → expense + cost) via filterAccountItemsByType().
+  // Fetch every type the category config (TX_CATEGORIES) routes to — the
+  // per-category filter in filterAccountItemsByTypes picks the subset.
+  // Previously limited to revenue/expense/cost, which left Kredi Ödemesi /
+  // Yasal Ödeme (liability) and Avans (asset) dropdowns empty.
   const [contactsRes, empsRes, accsRes] = await Promise.all([
     sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
     sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name'),
-    sb.from('chart_of_accounts').select('id, code, name, name_local, type, level, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type, level, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost','liability','asset']).eq('is_active', true).is('deleted_at', null).order('code')
   ]);
   _txContacts  = contactsRes.data || [];
   _txEmployees = empsRes.data || [];
