@@ -45,3 +45,6 @@ Kodu değiştirdikten sonra listedeki davranışları manuel zihinsel test et:
 - "En iyi çözüm X" ama komut Y diyor
 - Destructive iş (DROP, DELETE, force push, rm -rf)
 - Migration geri alınamaz (CREATE TABLE, kolon sil, kolon type değiştir)
+
+## Bağlam
+Proje yapısı, DB tabloları, migration kuralları, roadmap için → docs/PROJECT_CONTEXT.md
