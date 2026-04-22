@@ -293,6 +293,12 @@
           <button class="btn btn-primary" onclick="openAccountModal()">+ <span data-i18n="btn_add_account_coa">Add Account</span></button>
         </div>
       </div>
+      <div class="toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="coa-search" placeholder="Hesap ara... (kod veya isim)" oninput="setCoaSearch(this.value)">
+        </div>
+      </div>
       <div id="coa-container"></div>
     </div>
 
@@ -824,15 +830,39 @@ const TYPE_META = {
   equity:    { icon:'🏛', get label(){ return t('type_equity'); },    color:'var(--purple)', bg:'var(--purple-light)' },
   revenue:   { icon:'💰', get label(){ return t('type_revenue'); },   color:'var(--green)',  bg:'var(--green-light)' },
   expense:   { icon:'📋', get label(){ return t('type_expense'); },   color:'var(--orange)', bg:'var(--orange-light)' },
+  // Maliyet hesapları (7xx). Natural side = debit just like expense
+  // (recomputeAccountBalances already handles this). Orange tone reused
+  // so expense + cost read as one cost-of-doing-business band.
+  cost:      { icon:'🧰', get label(){ return t('type_cost'); },      color:'var(--orange)', bg:'var(--orange-light)' },
 };
+
+// Free-text search over code / name / name_local. Empty = show all.
+let _coaSearch = '';
+
+function setCoaSearch(q) {
+  _coaSearch = String(q || '').toLowerCase().trim();
+  renderCOA();
+}
 
 function renderCOA() {
   const container = document.getElementById('coa-container');
-  const types = ['asset','liability','equity','revenue','expense'];
+  const types = ['asset','liability','equity','revenue','expense','cost'];
+
+  // Case-insensitive contains match across code + name + name_local so
+  // a user can find "kira" (local) or "770" (code) or "Administrative"
+  // (EN) without switching fields.
+  const q = _coaSearch;
+  const matches = acc => !q ||
+    (acc.code || '').toLowerCase().includes(q) ||
+    (acc.name || '').toLowerCase().includes(q) ||
+    (acc.name_local || '').toLowerCase().includes(q);
 
   container.innerHTML = types.map(type => {
     const meta = TYPE_META[type];
-    const typeAccounts = accounts.filter(a => a.type === type);
+    const typeAccountsAll = accounts.filter(a => a.type === type);
+    const typeAccounts = typeAccountsAll.filter(matches);
+    // When a search is active, hide groups that have no matches at all.
+    if (q && typeAccounts.length === 0) return '';
     const total = typeAccounts.reduce((s,a) => s + parseFloat(a.balance||0), 0);
 
     const rows = typeAccounts.map(acc => {
