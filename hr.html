@@ -757,7 +757,7 @@ async function loadAttendance() {
 async function loadPayrolls() {
   const year = document.getElementById('pr-year').value;
   const month = document.getElementById('pr-month').value;
-  const { data: pr } = await sb.from('payroll').select('*').eq('company_id', companyId).eq('year', year).eq('month', month).maybeSingle();
+  const { data: pr } = await sb.from('payroll').select('*').eq('company_id', companyId).eq('period_year', year).eq('period_month', month).maybeSingle();
   if (pr) {
     currentPayrollId = pr.id;
     const { data: items } = await sb.from('payroll_items').select('*').eq('payroll_id', pr.id);
@@ -1070,7 +1070,7 @@ async function generatePayroll() {
   // Create or get payroll header
   let prId = currentPayrollId;
   if (!prId) {
-    const { data, error } = await sb.from('payroll').insert({ company_id: companyId, year, month, status: 'draft' }).select().single();
+    const { data, error } = await sb.from('payroll').insert({ company_id: companyId, period_year: year, period_month: month, status: 'draft' }).select().single();
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     prId = data.id;
     currentPayrollId = prId;
