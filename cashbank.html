@@ -1791,18 +1791,40 @@ function validateTxForm(prefix) {
 
 // Populate Transfer Target select with all OTHER cash registers +
 // bank_accounts of the same company. Encodes type + id in value.
-function populateTransferTargets(prefix) {
+async function populateTransferTargets(prefix) {
   const sel = document.getElementById(prefix + '-transfer-target');
   if (!sel) return;
-  // Exclude the account the user is currently booking against.
-  const cashItems = (registers || []).filter(r => r.id !== selectedRegisterId)
-    .map(r => `<option value="cash:${r.id}">💵 ${escapeHtmlCB(r.name)} (${r.currency_code})</option>`);
-  const bankItems = (accounts || []).filter(a => a.id !== selectedAccountId)
+  sel.innerHTML = '<option value="">Yükleniyor…</option>';
+
+  // Fresh fetch so stale page-level globals (registers / accounts / banks)
+  // can't produce an empty dropdown — the Transfer flow runs rarely and
+  // two small queries are cheap insurance.
+  const [regsRes, accsRes, banksRes] = await Promise.all([
+    sb.from('cash_registers').select('id, name, currency_code')
+      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
+    sb.from('bank_accounts').select('id, account_name, currency_code, bank_id')
+      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('account_name'),
+    sb.from('banks').select('id, name').eq('company_id', companyId)
+  ]);
+  const regs = regsRes.data || [];
+  const accs = accsRes.data || [];
+  const bkById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
+
+  // Exclude the account the user is currently booking against. Booking
+  // from cash modal → selectedRegisterId filters; from bank → selectedAccountId.
+  const cashItems = regs.filter(r => r.id !== selectedRegisterId)
+    .map(r => `<option value="cash:${r.id}">💵 ${escapeHtmlCB(r.name)} (${r.currency_code}) · Kasa</option>`);
+  const bankItems = accs.filter(a => a.id !== selectedAccountId)
     .map(a => {
-      const bank = (banks || []).find(b => b.id === a.bank_id);
-      return `<option value="bank:${a.id}">🏦 ${escapeHtmlCB((bank?.name || '') + ' · ' + a.account_name)} (${a.currency_code})</option>`;
+      const bank = bkById[a.bank_id];
+      const label = (bank?.name ? bank.name + ' · ' : '') + a.account_name;
+      return `<option value="bank:${a.id}">🏦 ${escapeHtmlCB(label)} (${a.currency_code}) · Banka</option>`;
     });
-  sel.innerHTML = '<option value="">Seçin...</option>' + cashItems.join('') + bankItems.join('');
+
+  const opts = cashItems.join('') + bankItems.join('');
+  sel.innerHTML = opts
+    ? '<option value="">Seçin...</option>' + opts
+    : '<option value="">Transfer edilecek başka hesap yok</option>';
 }
 
 function escapeHtmlCB(s) {
@@ -1851,7 +1873,7 @@ async function openCashTxModal(id = null) {
     if (tx.employee_id) _qaControllers['ctx-employee']?.setValue(tx.employee_id);
     // Preselect transfer target + lock transfer edits
     if (tx.transfer_group_id) {
-      populateTransferTargets('ctx');
+      await populateTransferTargets('ctx');
       const targetValue = tx.transfer_target_register_id ? `cash:${tx.transfer_target_register_id}`
         : tx.transfer_target_bank_id ? `bank:${tx.transfer_target_bank_id}` : '';
       if (targetValue) document.getElementById('ctx-transfer-target').value = targetValue;
@@ -2112,7 +2134,7 @@ async function openBankTxModal(id = null) {
     if (tx.chart_of_account_id) _qaControllers['btx-account']?.setValue(tx.chart_of_account_id);
     if (tx.employee_id) _qaControllers['btx-employee']?.setValue(tx.employee_id);
     if (tx.transfer_group_id) {
-      populateTransferTargets('btx');
+      await populateTransferTargets('btx');
       const targetValue = tx.transfer_target_register_id ? `cash:${tx.transfer_target_register_id}`
         : tx.transfer_target_bank_id ? `bank:${tx.transfer_target_bank_id}` : '';
       if (targetValue) document.getElementById('btx-transfer-target').value = targetValue;
