@@ -567,40 +567,57 @@
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group">
-          <label data-i18n="col_type">Type *</label>
-          <select id="ctx-type" onchange="onTxTypeChange('ctx')">
-            <option value="in">💚 Cash In</option>
-            <option value="out">🔴 Cash Out</option>
+          <label data-i18n="col_type">Yön *</label>
+          <select id="ctx-type" onchange="onTxDirectionChange('ctx')">
+            <option value="in">💚 Para Girişi</option>
+            <option value="out">🔴 Para Çıkışı</option>
           </select>
         </div>
         <div class="form-group">
-          <label data-i18n="col_amount">Amount *</label>
+          <label>Kategori *</label>
+          <select id="ctx-category" onchange="onTxCategoryChange('ctx')">
+            <option value="">Önce yön seçin...</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="col_amount">Tutar *</label>
           <input type="number" id="ctx-amount" placeholder="0.00" step="0.01" min="0.01">
         </div>
         <div class="form-group">
-          <label data-i18n="col_date">Date *</label>
+          <label data-i18n="col_date">Tarih *</label>
           <input type="date" id="ctx-date">
         </div>
       </div>
       <div class="form-group">
-        <label data-i18n="col_description">Description *</label>
-        <input type="text" id="ctx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
+        <label data-i18n="col_description">Açıklama *</label>
+        <input type="text" id="ctx-desc" placeholder="İşlem açıklaması" data-i18n-placeholder="placeholder_tx_desc">
       </div>
-      <div class="form-group" id="ctx-account-group">
-        <label data-i18n="label_coa_account">Gelir/Gider Hesabı</label>
+      <div id="ctx-transfer-banner" style="display:none;padding:10px 12px;margin-bottom:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+        Bu transfer hareketidir — yön/tutar/hedef düzenlenemez. Açıklama ve referans güncellenebilir.
+      </div>
+      <div class="form-group" id="ctx-account-group" style="display:none">
+        <label>Gelir/Gider Hesabı <span id="ctx-account-req" style="color:var(--red)">*</span></label>
         <div id="ctx-account-qa"></div>
       </div>
-      <div class="form-group" id="ctx-contact-group">
-        <label data-i18n="label_contact">Cari Hesap</label>
+      <div class="form-group" id="ctx-contact-group" style="display:none">
+        <label>Cari Hesap <span id="ctx-contact-req" style="color:var(--red)">*</span></label>
         <div id="ctx-contact-qa"></div>
       </div>
-      <div class="form-group" id="ctx-employee-group">
-        <label data-i18n="label_employee">Personel</label>
+      <div class="form-group" id="ctx-employee-group" style="display:none">
+        <label>Personel <span id="ctx-employee-req" style="color:var(--red)">*</span></label>
         <div id="ctx-employee-qa"></div>
       </div>
+      <div class="form-group" id="ctx-transfer-group" style="display:none">
+        <label>Hedef Hesap <span style="color:var(--red)">*</span></label>
+        <select id="ctx-transfer-target" onchange="validateTxForm('ctx')">
+          <option value="">Seçin...</option>
+        </select>
+      </div>
       <div class="form-group">
-        <label data-i18n="col_ref">Reference</label>
-        <input type="text" id="ctx-ref" placeholder="Invoice no, receipt no..." data-i18n-placeholder="placeholder_tx_ref">
+        <label data-i18n="col_ref">Referans</label>
+        <input type="text" id="ctx-ref" placeholder="Fiş no, makbuz no..." data-i18n-placeholder="placeholder_tx_ref">
       </div>
     </div>
     <div class="modal-footer">
@@ -690,44 +707,61 @@
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group">
-          <label data-i18n="col_type">Type *</label>
-          <select id="btx-type" onchange="onTxTypeChange('btx')">
-            <option value="in">💚 Money In</option>
-            <option value="out">🔴 Money Out</option>
+          <label>Yön *</label>
+          <select id="btx-type" onchange="onTxDirectionChange('btx')">
+            <option value="in">💚 Para Girişi</option>
+            <option value="out">🔴 Para Çıkışı</option>
           </select>
         </div>
         <div class="form-group">
-          <label data-i18n="col_amount">Amount *</label>
+          <label>Kategori *</label>
+          <select id="btx-category" onchange="onTxCategoryChange('btx')">
+            <option value="">Önce yön seçin...</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tutar *</label>
           <input type="number" id="btx-amount" placeholder="0.00" step="0.01" min="0.01">
         </div>
         <div class="form-group">
-          <label data-i18n="col_date">Date *</label>
+          <label>Tarih *</label>
           <input type="date" id="btx-date">
         </div>
       </div>
       <div class="form-group">
-        <label data-i18n="col_description">Description *</label>
-        <input type="text" id="btx-desc" placeholder="Transaction description" data-i18n-placeholder="placeholder_tx_desc">
+        <label>Açıklama *</label>
+        <input type="text" id="btx-desc" placeholder="İşlem açıklaması" data-i18n-placeholder="placeholder_tx_desc">
       </div>
-      <div class="form-group" id="btx-account-group">
-        <label data-i18n="label_coa_account">Gelir/Gider Hesabı</label>
+      <div id="btx-transfer-banner" style="display:none;padding:10px 12px;margin-bottom:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+        Bu transfer hareketidir — yön/tutar/hedef düzenlenemez. Açıklama ve referans güncellenebilir.
+      </div>
+      <div class="form-group" id="btx-account-group" style="display:none">
+        <label>Gelir/Gider Hesabı <span id="btx-account-req" style="color:var(--red)">*</span></label>
         <div id="btx-account-qa"></div>
       </div>
-      <div class="form-group" id="btx-contact-group">
-        <label data-i18n="label_contact">Cari Hesap</label>
+      <div class="form-group" id="btx-contact-group" style="display:none">
+        <label>Cari Hesap <span id="btx-contact-req" style="color:var(--red)">*</span></label>
         <div id="btx-contact-qa"></div>
       </div>
-      <div class="form-group" id="btx-employee-group">
-        <label data-i18n="label_employee">Personel</label>
+      <div class="form-group" id="btx-employee-group" style="display:none">
+        <label>Personel <span id="btx-employee-req" style="color:var(--red)">*</span></label>
         <div id="btx-employee-qa"></div>
       </div>
-      <div class="form-group">
-        <label data-i18n="counterparty">Counterparty</label>
-        <input type="text" id="btx-counterparty" placeholder="Sender / Recipient name" data-i18n-placeholder="placeholder_counterparty">
+      <div class="form-group" id="btx-transfer-group" style="display:none">
+        <label>Hedef Hesap <span style="color:var(--red)">*</span></label>
+        <select id="btx-transfer-target" onchange="validateTxForm('btx')">
+          <option value="">Seçin...</option>
+        </select>
       </div>
       <div class="form-group">
-        <label data-i18n="col_ref">Reference</label>
-        <input type="text" id="btx-ref" placeholder="Dekont no, IBAN, description..." data-i18n-placeholder="placeholder_bank_ref">
+        <label>Karşı Taraf</label>
+        <input type="text" id="btx-counterparty" placeholder="Gönderen / Alan" data-i18n-placeholder="placeholder_counterparty">
+      </div>
+      <div class="form-group">
+        <label>Referans</label>
+        <input type="text" id="btx-ref" placeholder="Dekont no, IBAN..." data-i18n-placeholder="placeholder_bank_ref">
       </div>
     </div>
     <div class="modal-footer">
@@ -1182,8 +1216,13 @@ function renderCoaCell(tx) {
     return `<span style="font-family:monospace;font-size:11.5px;color:var(--gray500)">${a.code}</span> ${coaDisplayName(a)}`;
   }
   if (tx.category) {
-    const icon = {sale:'💰',purchase:'🛒',expense:'📋',transfer:'↔',salary:'👤',tax:'🏛',fee:'🏦',other:'📌'}[tx.category] || '📌';
-    return `<span style="color:var(--gray500);font-size:12px" title="Legacy">${icon} ${tx.category}</span>`;
+    // New 14-enum categories get their Turkish label; pre-migration values
+    // (sale / purchase / expense / fee / …) fall back to their raw string.
+    const cfg = TX_CATEGORIES[tx.category];
+    const legacyIcon = {sale:'💰',purchase:'🛒',expense:'📋',transfer:'↔',salary:'👤',tax:'🏛',fee:'🏦',other:'📌'}[tx.category];
+    const label = cfg ? cfg.label : (legacyIcon ? `${legacyIcon} ${tx.category}` : tx.category);
+    const title = cfg ? '' : 'Legacy';
+    return `<span style="color:var(--gray500);font-size:12px" title="${title}">${label}</span>`;
   }
   return '<span style="color:var(--gray400)">—</span>';
 }
@@ -1485,23 +1524,27 @@ async function loadTxSelectors() {
     const aEl = document.getElementById(prefix + '-account-qa');
     const eEl = document.getElementById(prefix + '-employee-qa');
     const accItems = filterAccountItemsByType(document.getElementById(prefix + '-type')?.value || 'in');
+    // onSelect bridges to validateTxForm so the Save button enables the
+    // moment the last required picker gets filled.
+    const onSel = () => validateTxForm(prefix);
     if (cEl && !_qaControllers[prefix+'-contact']) {
       _qaControllers[prefix+'-contact'] = QA.create(cEl, {
         items: _txContacts,
         placeholder: 'Cari ara...',
         addLabel: q => `+ "${q}" yeni cari ekle`,
-        onAdd: q => openContactQuickAdd(prefix, q)
+        onAdd: q => openContactQuickAdd(prefix, q),
+        onSelect: onSel
       });
     } else if (_qaControllers[prefix+'-contact']) {
       _qaControllers[prefix+'-contact'].setItems(_txContacts);
     }
     if (aEl && !_qaControllers[prefix+'-account']) {
-      _qaControllers[prefix+'-account'] = QA.create(aEl, { items: accItems, placeholder: 'Hesap ara...' });
+      _qaControllers[prefix+'-account'] = QA.create(aEl, { items: accItems, placeholder: 'Hesap ara...', onSelect: onSel });
     } else if (_qaControllers[prefix+'-account']) {
       _qaControllers[prefix+'-account'].setItems(accItems);
     }
     if (eEl && !_qaControllers[prefix+'-employee']) {
-      _qaControllers[prefix+'-employee'] = QA.create(eEl, { items: empItems, placeholder: 'Personel ara...' });
+      _qaControllers[prefix+'-employee'] = QA.create(eEl, { items: empItems, placeholder: 'Personel ara...', onSelect: onSel });
     } else if (_qaControllers[prefix+'-employee']) {
       _qaControllers[prefix+'-employee'].setItems(empItems);
     }
@@ -1552,26 +1595,181 @@ function resetTxSelectors(prefix) {
 // Direction change → re-filter the account dropdown so "in" shows revenue
 // accounts and "out" shows expense/cost. Clears previously selected account
 // if the current pick no longer matches the new direction.
-function onTxTypeChange(prefix) {
-  const txType = document.getElementById(prefix + '-type')?.value || 'in';
-  const allow = txType === 'in' ? ['revenue'] : ['expense', 'cost'];
-  const ctrl = _qaControllers[prefix + '-account'];
-  if (ctrl) {
-    const current = ctrl.getValue();
-    const stillValid = current && _txAccounts.some(a => a.id === current && allow.includes(a.type));
-    if (!stillValid) ctrl.setValue(null);
-    ctrl.setItems(filterAccountItemsByType(txType));
-  }
+// ═══════════════════════════════════════════════════════════════
+// Category config — single source of truth for modal behavior.
+// Each key is the canonical value written to cash/bank_transactions.category.
+// `needs` alanları doldurulmak zorunda (Kaydet disable değilse geçilmez).
+// `opt` alanları görünür ama boş bırakılabilir.
+// `acctTypes` chart_of_accounts.type filtresi (leaf-only + bu type'lar).
+// ═══════════════════════════════════════════════════════════════
+const TX_CATEGORIES = {
+  // PARA GİRİŞİ (in)
+  sale_receipt:       { dir:'in',  label:'Satış Tahsilatı',       needs:['contact'], opt:['account'], acctTypes:['revenue'] },
+  other_income:       { dir:'in',  label:'Diğer Gelir',           needs:['account'], acctTypes:['revenue'] },
+  loan_received:      { dir:'in',  label:'Kredi Kullanımı',       needs:['account'], acctTypes:['liability'] },
+  owner_contribution: { dir:'in',  label:'Ortaklardan Alınan',    needs:['contact','account'], acctTypes:['liability'] },
+  transfer_in:        { dir:'in',  label:'Kasa/Banka Transferi',  needs:['transfer'] },
+  refund_received:    { dir:'in',  label:'İade Alınan',           needs:['contact','account'], acctTypes:['expense','cost'] },
+  // PARA ÇIKIŞI (out)
+  expense:            { dir:'out', label:'Gider',                 needs:['account'], acctTypes:['expense','cost'] },
+  supplier_payment:   { dir:'out', label:'Tedarikçi Ödemesi',     needs:['contact'], opt:['account'], acctTypes:['expense','cost'] },
+  salary:             { dir:'out', label:'Maaş',                  needs:['employee','account'], acctTypes:['expense','cost'] },
+  advance:            { dir:'out', label:'Avans',                 needs:['employee','account'], acctTypes:['asset'] },
+  tax_payment:        { dir:'out', label:'Yasal Ödeme',           needs:['account'], acctTypes:['liability'] },
+  loan_payment:       { dir:'out', label:'Kredi Ödemesi',         needs:['account'], acctTypes:['liability'] },
+  owner_withdrawal:   { dir:'out', label:'Ortaklara Ödenen',      needs:['contact','account'], acctTypes:['liability'] },
+  refund_paid:        { dir:'out', label:'İade Ödenen',           needs:['contact','account'], acctTypes:['revenue'] },
+  transfer_out:       { dir:'out', label:'Kasa/Banka Transferi',  needs:['transfer'] },
+};
+
+// Legacy category → new canonical key (edit-time pre-select for rows saved
+// before this commit). Values that don't match stay as-is with a "legacy"
+// marker — the user must pick a new category before saving.
+const LEGACY_CATEGORY_MAP = {
+  sale:     (tx) => 'sale_receipt',
+  purchase: (tx) => 'supplier_payment',
+  expense:  (tx) => 'expense',
+  salary:   (tx) => 'salary',
+  tax:      (tx) => 'tax_payment',
+  fee:      (tx) => 'expense',
+  transfer: (tx) => tx.type === 'in' ? 'transfer_in' : 'transfer_out',
+  other:    (tx) => null,
+};
+
+function categoriesForDirection(dir) {
+  return Object.entries(TX_CATEGORIES).filter(([k, v]) => v.dir === dir);
 }
 
-// Derives a legacy category from the selected chart_of_accounts row so old
-// reports / cashCatMap dashboards keep grouping rows. Revenue → "sale",
-// expense/cost → "expense". Falls back to direction when no account chosen.
-function deriveCategoryFromAccount(accountId, txType) {
-  const acc = _txAccounts.find(a => a.id === accountId);
-  if (acc?.type === 'revenue') return 'sale';
-  if (acc?.type === 'expense' || acc?.type === 'cost') return 'expense';
-  return txType === 'in' ? 'sale' : 'expense';
+// Rebuild category <select> when direction changes.
+function populateCategoryDropdown(prefix, dir) {
+  const sel = document.getElementById(prefix + '-category');
+  if (!sel) return;
+  const opts = categoriesForDirection(dir).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  sel.innerHTML = '<option value="">Seçin...</option>' + opts;
+}
+
+// Direction change — refill category dropdown, reset fields.
+function onTxDirectionChange(prefix) {
+  // Transfer rows are locked; caller clears the lock flag on reset.
+  if (_txLocked[prefix]) return;
+  const dir = document.getElementById(prefix + '-type').value;
+  populateCategoryDropdown(prefix, dir);
+  document.getElementById(prefix + '-category').value = '';
+  applyCategoryVisibility(prefix, null);
+}
+
+// Category change — show conditional fields, filter account QA, validate.
+function onTxCategoryChange(prefix) {
+  const cat = document.getElementById(prefix + '-category').value;
+  applyCategoryVisibility(prefix, cat);
+  const cfg = TX_CATEGORIES[cat];
+  if (cfg?.acctTypes) {
+    const ctrl = _qaControllers[prefix + '-account'];
+    if (ctrl) {
+      const current = ctrl.getValue();
+      const items = filterAccountItemsByTypes(cfg.acctTypes);
+      const stillValid = current && items.some(i => i.id === current);
+      if (!stillValid) ctrl.setValue(null);
+      ctrl.setItems(items);
+    }
+  }
+  if (cfg?.needs?.includes('transfer')) populateTransferTargets(prefix);
+  validateTxForm(prefix);
+}
+
+// Legacy helper kept for backward compat — resolves display category of old
+// rows whose category field still holds legacy values (sale/purchase/fee/…).
+function canonicalCategory(tx) {
+  if (!tx?.category) return null;
+  if (TX_CATEGORIES[tx.category]) return tx.category;
+  const mapper = LEGACY_CATEGORY_MAP[tx.category];
+  return typeof mapper === 'function' ? mapper(tx) : null;
+}
+
+// Toggle the four conditional sections for the current category.
+function applyCategoryVisibility(prefix, cat) {
+  const cfg = cat ? TX_CATEGORIES[cat] : null;
+  const needs = new Set(cfg?.needs || []);
+  const opts  = new Set(cfg?.opt   || []);
+  const shown = field => needs.has(field) || opts.has(field);
+  const markRequired = (field, id) => {
+    const req = document.getElementById(id);
+    if (req) req.style.display = needs.has(field) ? '' : 'none';
+  };
+  document.getElementById(prefix + '-account-group').style.display  = shown('account')  ? '' : 'none';
+  document.getElementById(prefix + '-contact-group').style.display  = shown('contact')  ? '' : 'none';
+  document.getElementById(prefix + '-employee-group').style.display = shown('employee') ? '' : 'none';
+  document.getElementById(prefix + '-transfer-group').style.display = shown('transfer') ? '' : 'none';
+  markRequired('account',  prefix + '-account-req');
+  markRequired('contact',  prefix + '-contact-req');
+  markRequired('employee', prefix + '-employee-req');
+}
+
+// Return account items matching the given type list (revenue/expense/cost/
+// liability/asset/equity). Leaf-only rule preserved (no parents).
+function filterAccountItemsByTypes(types) {
+  const parentIds = new Set(_txAccounts.map(a => a.parent_id).filter(Boolean));
+  return _txAccounts
+    .filter(a => types.includes(a.type) && !parentIds.has(a.id))
+    .map(a => ({ id: a.id, name: `${a.code} — ${coaDisplayName(a)}` }));
+}
+
+// Legacy — kept for any stray caller. Use filterAccountItemsByTypes now.
+function filterAccountItemsByType(txType) {
+  return filterAccountItemsByTypes(txType === 'in' ? ['revenue'] : ['expense', 'cost']);
+}
+
+// Enable/disable the modal's Save button based on needed fields.
+function validateTxForm(prefix) {
+  const cat = document.getElementById(prefix + '-category').value;
+  const btn = document.querySelector('#' + (prefix === 'ctx' ? 'cash-tx-modal' : 'bank-tx-modal') + ' [data-action="save"]');
+  if (!btn) return;
+  if (!cat) { btn.disabled = true; return; }
+  const cfg = TX_CATEGORIES[cat] || {};
+  const needs = cfg.needs || [];
+  const ok = needs.every(f => {
+    if (f === 'account')  return getTxAccountId(prefix);
+    if (f === 'contact')  return getTxContactId(prefix);
+    if (f === 'employee') return getTxEmployeeId(prefix);
+    if (f === 'transfer') return document.getElementById(prefix + '-transfer-target').value;
+    return true;
+  });
+  btn.disabled = !ok;
+}
+
+// Populate Transfer Target select with all OTHER cash registers +
+// bank_accounts of the same company. Encodes type + id in value.
+function populateTransferTargets(prefix) {
+  const sel = document.getElementById(prefix + '-transfer-target');
+  if (!sel) return;
+  // Exclude the account the user is currently booking against.
+  const cashItems = (registers || []).filter(r => r.id !== selectedRegisterId)
+    .map(r => `<option value="cash:${r.id}">💵 ${escapeHtmlCB(r.name)} (${r.currency_code})</option>`);
+  const bankItems = (accounts || []).filter(a => a.id !== selectedAccountId)
+    .map(a => {
+      const bank = (banks || []).find(b => b.id === a.bank_id);
+      return `<option value="bank:${a.id}">🏦 ${escapeHtmlCB((bank?.name || '') + ' · ' + a.account_name)} (${a.currency_code})</option>`;
+    });
+  sel.innerHTML = '<option value="">Seçin...</option>' + cashItems.join('') + bankItems.join('');
+}
+
+function escapeHtmlCB(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// When a transfer row is opened for edit, everything except description /
+// reference / date is locked. Category dropdown stays frozen because the
+// counterpart row relies on the pair staying consistent.
+const _txLocked = { ctx: false, btx: false };
+
+function lockTransferEdit(prefix, lock) {
+  _txLocked[prefix] = lock;
+  const banner = document.getElementById(prefix + '-transfer-banner');
+  if (banner) banner.style.display = lock ? '' : 'none';
+  ['type','category','amount','transfer-target'].forEach(f => {
+    const el = document.getElementById(prefix + '-' + f);
+    if (el) el.disabled = lock;
+  });
 }
 
 // ===== SAVE CASH TX =====
@@ -1581,18 +1779,34 @@ let editingCashTxId = null;
 async function openCashTxModal(id = null) {
   editingCashTxId = id;
   const tx = id ? cashTxAll.find(x => x.id === id) : null;
+  lockTransferEdit('ctx', false);
   document.getElementById('ctx-type').value = tx?.type || 'in';
   document.getElementById('ctx-amount').value = tx?.amount || '';
   document.getElementById('ctx-desc').value = tx?.description || '';
   document.getElementById('ctx-ref').value = tx?.reference || '';
-  if (tx?.transaction_date) document.getElementById('ctx-date').value = tx.transaction_date;
+  document.getElementById('ctx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
   resetTxSelectors('ctx');
   await loadTxSelectors();
-  onTxTypeChange('ctx');
+  // Populate category dropdown for current direction + resolve a legacy row's
+  // category to the new enum key before selecting it.
+  populateCategoryDropdown('ctx', document.getElementById('ctx-type').value);
+  const catKey = tx ? canonicalCategory(tx) : '';
+  if (catKey) document.getElementById('ctx-category').value = catKey;
+  onTxCategoryChange('ctx');
   if (tx) {
     if (tx.contact_id) _qaControllers['ctx-contact']?.setValue(tx.contact_id);
     if (tx.chart_of_account_id) _qaControllers['ctx-account']?.setValue(tx.chart_of_account_id);
+    if (tx.employee_id) _qaControllers['ctx-employee']?.setValue(tx.employee_id);
+    // Preselect transfer target + lock transfer edits
+    if (tx.transfer_group_id) {
+      populateTransferTargets('ctx');
+      const targetValue = tx.transfer_target_register_id ? `cash:${tx.transfer_target_register_id}`
+        : tx.transfer_target_bank_id ? `bank:${tx.transfer_target_bank_id}` : '';
+      if (targetValue) document.getElementById('ctx-transfer-target').value = targetValue;
+      lockTransferEdit('ctx', true);
+    }
   }
+  validateTxForm('ctx');
   openModal('cash-tx-modal');
 }
 
@@ -1610,6 +1824,9 @@ async function saveCashTx() {
   if (submitting()) return;
   try {
   if (!selectedRegisterId && !editingCashTxId) return;
+  const category = document.getElementById('ctx-category').value;
+  if (!category) { showToast('Kategori seçin', 'error'); return; }
+  const cfg = TX_CATEGORIES[category];
   const type = document.getElementById('ctx-type').value;
   const amount = parseFloat(document.getElementById('ctx-amount').value);
   const desc = document.getElementById('ctx-desc').value.trim();
@@ -1619,16 +1836,46 @@ async function saveCashTx() {
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
   if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
 
+  // Transfer — delegates to the atomic RPC (two inserts, one transaction).
+  // Edit of an existing transfer row only updates description / reference.
+  if (cfg?.needs?.includes('transfer')) {
+    if (editingCashTxId) {
+      const { error } = await sb.from('cash_transactions').update({
+        description: desc, reference: ref, transaction_date: date
+      }).eq('id', editingCashTxId);
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    } else {
+      const raw = document.getElementById('ctx-transfer-target').value;
+      if (!raw) { showToast('Hedef hesap seçin', 'error'); return; }
+      const [targetType, targetId] = raw.split(':');
+      const { error } = await sb.rpc('execute_cash_bank_transfer', {
+        p_group_id: crypto.randomUUID(), p_company_id: companyId,
+        p_source_type: 'cash', p_source_id: selectedRegisterId,
+        p_target_type: targetType, p_target_id: targetId,
+        p_amount: amount, p_date: date, p_description: desc, p_reference: ref || null
+      });
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    }
+    showToast(t('toast_tx_saved') || 'Transfer kaydedildi ✓', 'success');
+    closeModal('cash-tx-modal');
+    editingCashTxId = null;
+    await loadCashTransactions(); await loadRegisters(); await loadBanks();
+    updateStats(); filterCashTx();
+    return;
+  }
+
   const reg = registers.find(r => r.id === selectedRegisterId);
-  const contactId = getTxContactId('ctx');
-  const chartOfAccountId = getTxAccountId('ctx');
+  const contactId = cfg?.needs?.includes('contact') || cfg?.opt?.includes('contact')
+    ? getTxContactId('ctx') : null;
+  const employeeId = cfg?.needs?.includes('employee') ? getTxEmployeeId('ctx') : null;
+  const chartOfAccountId = cfg?.needs?.includes('account') || cfg?.opt?.includes('account')
+    ? getTxAccountId('ctx') : null;
   const counterparty = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : null;
-  const category = deriveCategoryFromAccount(chartOfAccountId, type);
-  // Register and source_type are preserved on edit; on insert they default.
+
   const payload = {
     type, amount, description: desc, category, reference: ref,
     transaction_date: date, contact_id: contactId, counterparty,
-    chart_of_account_id: chartOfAccountId
+    chart_of_account_id: chartOfAccountId, employee_id: employeeId
   };
   let error;
   if (editingCashTxId) {
@@ -1796,19 +2043,32 @@ let editingBankTxId = null;
 async function openBankTxModal(id = null) {
   editingBankTxId = id;
   const tx = id ? bankTxAll.find(x => x.id === id) : null;
+  lockTransferEdit('btx', false);
   document.getElementById('btx-type').value = tx?.type || 'in';
   document.getElementById('btx-amount').value = tx?.amount || '';
   document.getElementById('btx-desc').value = tx?.description || '';
   document.getElementById('btx-counterparty').value = tx?.counterparty || '';
   document.getElementById('btx-ref').value = tx?.reference || '';
-  if (tx?.transaction_date) document.getElementById('btx-date').value = tx.transaction_date;
+  document.getElementById('btx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
   resetTxSelectors('btx');
   await loadTxSelectors();
-  onTxTypeChange('btx');
+  populateCategoryDropdown('btx', document.getElementById('btx-type').value);
+  const catKey = tx ? canonicalCategory(tx) : '';
+  if (catKey) document.getElementById('btx-category').value = catKey;
+  onTxCategoryChange('btx');
   if (tx) {
     if (tx.contact_id) _qaControllers['btx-contact']?.setValue(tx.contact_id);
     if (tx.chart_of_account_id) _qaControllers['btx-account']?.setValue(tx.chart_of_account_id);
+    if (tx.employee_id) _qaControllers['btx-employee']?.setValue(tx.employee_id);
+    if (tx.transfer_group_id) {
+      populateTransferTargets('btx');
+      const targetValue = tx.transfer_target_register_id ? `cash:${tx.transfer_target_register_id}`
+        : tx.transfer_target_bank_id ? `bank:${tx.transfer_target_bank_id}` : '';
+      if (targetValue) document.getElementById('btx-transfer-target').value = targetValue;
+      lockTransferEdit('btx', true);
+    }
   }
+  validateTxForm('btx');
   openModal('bank-tx-modal');
 }
 
@@ -1826,6 +2086,9 @@ async function saveBankTx() {
   if (submitting()) return;
   try {
   if (!selectedAccountId && !editingBankTxId) return;
+  const category = document.getElementById('btx-category').value;
+  if (!category) { showToast('Kategori seçin', 'error'); return; }
+  const cfg = TX_CATEGORIES[category];
   const type = document.getElementById('btx-type').value;
   const amount = parseFloat(document.getElementById('btx-amount').value);
   const desc = document.getElementById('btx-desc').value.trim();
@@ -1836,16 +2099,46 @@ async function saveBankTx() {
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
   if (!desc) { showToast(t('toast_desc_required'), 'error'); return; }
 
+  if (cfg?.needs?.includes('transfer')) {
+    if (editingBankTxId) {
+      const { error } = await sb.from('bank_transactions').update({
+        description: desc, reference: ref, transaction_date: date
+      }).eq('id', editingBankTxId);
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    } else {
+      const raw = document.getElementById('btx-transfer-target').value;
+      if (!raw) { showToast('Hedef hesap seçin', 'error'); return; }
+      const [targetType, targetId] = raw.split(':');
+      const { error } = await sb.rpc('execute_cash_bank_transfer', {
+        p_group_id: crypto.randomUUID(), p_company_id: companyId,
+        p_source_type: 'bank', p_source_id: selectedAccountId,
+        p_target_type: targetType, p_target_id: targetId,
+        p_amount: amount, p_date: date, p_description: desc, p_reference: ref || null
+      });
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    }
+    showToast(t('toast_tx_saved') || 'Transfer kaydedildi ✓', 'success');
+    closeModal('bank-tx-modal');
+    editingBankTxId = null;
+    await loadBankTransactions(); await loadCashTransactions();
+    await loadBanks(); await loadRegisters();
+    updateStats(); filterBankTx();
+    return;
+  }
+
   const acc = accounts.find(a => a.id === selectedAccountId);
-  const contactId = getTxContactId('btx');
-  const chartOfAccountId = getTxAccountId('btx');
+  const contactId = cfg?.needs?.includes('contact') || cfg?.opt?.includes('contact')
+    ? getTxContactId('btx') : null;
+  const employeeId = cfg?.needs?.includes('employee') ? getTxEmployeeId('btx') : null;
+  const chartOfAccountId = cfg?.needs?.includes('account') || cfg?.opt?.includes('account')
+    ? getTxAccountId('btx') : null;
   const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : counterparty;
-  const category = deriveCategoryFromAccount(chartOfAccountId, type);
+
   const payload = {
     type, amount, description: desc, category,
     counterparty: counterpartyName || counterparty, reference: ref,
     transaction_date: date, contact_id: contactId,
-    chart_of_account_id: chartOfAccountId
+    chart_of_account_id: chartOfAccountId, employee_id: employeeId
   };
   let error;
   if (editingBankTxId) {
