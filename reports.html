@@ -597,9 +597,9 @@ function switchReport(key, el) {
 }
 
 async function loadAccountsCoa() {
-  const { data } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
+  const { data } = await sb.from('chart_of_accounts').select('id,code,name,name_local').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
   const sel = document.getElementById('f-account');
-  if (sel) sel.innerHTML = '<option value="">Hesap Seç...</option>' + (data||[]).map(a => `<option value="${a.id}">${a.code} — ${a.name}</option>`).join('');
+  if (sel) sel.innerHTML = '<option value="">Hesap Seç...</option>' + (data||[]).map(a => `<option value="${a.id}">${a.code} — ${coaDisplayName(a)}</option>`).join('');
 }
 
 async function loadWarehouses() {
@@ -1132,7 +1132,7 @@ async function reportJournal() {
 async function reportTrial() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
-  const { data: accounts } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
+  const { data: accounts } = await sb.from('chart_of_accounts').select('id,code,name,name_local').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
   let q = sb.from('journal_lines').select('account_id,debit,credit,journal_entries!inner(company_id,entry_date)')
     .eq('journal_entries.company_id', companyId);
   if (from) q = q.gte('journal_entries.entry_date', from);
@@ -1140,7 +1140,7 @@ async function reportTrial() {
   const { data: lines } = await q;
 
   const accMap = {};
-  (accounts||[]).forEach(a => { accMap[a.id] = { code: a.code, name: a.name, debit: 0, credit: 0 }; });
+  (accounts||[]).forEach(a => { accMap[a.id] = { code: a.code, name: coaDisplayName(a), debit: 0, credit: 0 }; });
   (lines||[]).forEach(l => {
     if (accMap[l.account_id]) {
       accMap[l.account_id].debit += parseFloat(l.debit||0);
@@ -1516,7 +1516,7 @@ async function reportLedger() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
   // Opening
-  const { data: acc } = await sb.from('chart_of_accounts').select('code,name').eq('id', accountId).single();
+  const { data: acc } = await sb.from('chart_of_accounts').select('code,name,name_local').eq('id', accountId).single();
   let openQ = sb.from('journal_lines').select('debit,credit,journal_entries!inner(entry_date,company_id)').eq('account_id', accountId).eq('journal_entries.company_id', companyId);
   if (from) openQ = openQ.lt('journal_entries.entry_date', from);
   const { data: openData } = await openQ;
@@ -1538,7 +1538,7 @@ async function reportLedger() {
     totalD += d; totalC += c;
     rows.push({ date: l.journal_entries.entry_date, doc: l.journal_entries.entry_number, desc: l.description || l.journal_entries.description || '—', debit: d ? fmt(d) : '', credit: c ? fmt(c) : '', bal: fmt(bal) });
   });
-  document.getElementById('report-title').textContent = '📒 ' + (acc?.code || '') + ' — ' + (acc?.name || '');
+  document.getElementById('report-title').textContent = '📒 ' + (acc?.code || '') + ' — ' + (acc ? coaDisplayName(acc) : '');
   renderTable(headers, rows, { date:'', doc:'', desc:'TOPLAM', debit: fmt(totalD), credit: fmt(totalC), bal: fmt(bal) });
 }
 

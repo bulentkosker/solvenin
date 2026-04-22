@@ -661,7 +661,7 @@ async function loadStep3Context() {
       .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
     sb.from('bank_accounts').select('id, account_name, iban, currency_code, banks(name)')
       .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
-    sb.from('chart_of_accounts').select('id, code, name, type')
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type')
       .eq('company_id', companyId).is('deleted_at', null),
     sb.from('companies').select('tax_number').eq('id', companyId).single(),
     // Existing bank_transactions on this account for duplicate detection
@@ -743,7 +743,7 @@ function hydrateLineEntities() {
     switch (line.match_type) {
       case 'contact':        entity = findContact(line.matched_contact_id); label = entity?.name; break;
       case 'suggestion':     entity = findContact(line.suggested_contact_id); label = entity?.name; break;
-      case 'expense_account':entity = findAcc(line.matched_account_id); label = entity && `${entity.code} ${entity.name}`; break;
+      case 'expense_account':entity = findAcc(line.matched_account_id); label = entity && `${entity.code} ${coaDisplayName(entity)}`; break;
       case 'employee':       entity = findEmp(line.matched_employee_id); label = entity && `${entity.first_name} ${entity.last_name}`.trim(); break;
       case 'own_transfer':   entity = findBank(line.target_bank_account_id); label = entity?.account_name || 'Kendi Hesap'; break;
       case 'duplicate':      label = 'Zaten kayıtlı'; break;
@@ -1112,7 +1112,7 @@ function renderStep3ModalBody() {
   } else if (tab === 'expense') {
     const items = step3.context.expenseAccounts;
     body.innerHTML = `<div class="modal-field"><label>Gider hesabı</label><input id="modal-search" placeholder="Kod veya isim..." oninput="filterModalList()"></div>
-      <div class="modal-list" id="modal-list">${renderList(items, a => `<span style="font-family:monospace">${a.code}</span> ${escapeHtml(a.name)}`)}</div>`;
+      <div class="modal-list" id="modal-list">${renderList(items, a => `<span style="font-family:monospace">${a.code}</span> ${escapeHtml(coaDisplayName(a))}`)}</div>`;
   } else if (tab === 'employee') {
     const items = step3.context.employees;
     body.innerHTML = `<div class="modal-list" id="modal-list">${renderList(items, e => `${escapeHtml([e.first_name, e.last_name].filter(Boolean).join(' '))}${e.tax_number ? ` <span style="color:var(--gray500)">${e.tax_number}</span>` : ''}`)}</div>`;

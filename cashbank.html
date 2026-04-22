@@ -1445,13 +1445,13 @@ async function loadTxSelectors() {
   const [contactsRes, empsRes, accsRes] = await Promise.all([
     sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
     sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name'),
-    sb.from('chart_of_accounts').select('id, code, name, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
+    sb.from('chart_of_accounts').select('id, code, name, name_local, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
   ]);
   _txContacts  = contactsRes.data || [];
   _txEmployees = empsRes.data || [];
   _txAccounts  = accsRes.data || [];
   const empItems = _txEmployees.map(e => ({ id: e.id, name: `${e.first_name} ${e.last_name}` }));
-  const accItems = _txAccounts.map(a => ({ id: a.id, name: `${a.code} — ${a.name}` }));
+  const accItems = _txAccounts.map(a => ({ id: a.id, name: `${a.code} — ${coaDisplayName(a)}` }));
 
   ['ctx','btx'].forEach(prefix => {
     const cEl = document.getElementById(prefix + '-contact-qa');

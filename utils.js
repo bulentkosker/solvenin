@@ -147,6 +147,15 @@ function fmtShort(amount) {
   return sym + n.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// ===== CHART OF ACCOUNTS DISPLAY =====
+// Dropdowns and reports should show the local-language name when the template
+// provides one (e.g. Turkish chart), falling back to the English canonical
+// `name` otherwise. Callers must select both columns.
+window.coaDisplayName = function(acc) {
+  if (!acc) return '';
+  return acc.name_local || acc.name || '';
+};
+
 // ===== DATE FORMATTING =====
 function fmtDate(dateStr) {
   if (!dateStr) return '—';
