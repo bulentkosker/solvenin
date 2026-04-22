@@ -2535,7 +2535,41 @@ function renderCompanyMenu() {
     : `<button onclick="window.location.href='subscription.html'" style="border-style:solid;border-color:rgba(59,130,246,0.4);color:rgba(100,160,255,0.8)">⬆ Upgrade for multi-company</button>`;
 }
 // ===== START =====
-(async () => { try { await init(); } catch(e) { console.error("Init error:", e); document.getElementById("loading-screen").innerHTML = '<div style="color:red;padding:20px">Error: '+e.message+'</div>'; } })();
+(async () => { try { await init(); await handleDeepLink(); } catch(e) { console.error("Init error:", e); document.getElementById("loading-screen").innerHTML = '<div style="color:red;padding:20px">Error: '+e.message+'</div>'; } })();
+
+// ?tx=bank&id=xxx → open bank edit modal after navigating into the right
+// tab + detail. Contact statement (contacts.html editStmtLine) routes here
+// so clicking "Düzenle" on a trigger-generated contact_transactions row
+// lands the user directly in the source tx modal.
+async function handleDeepLink() {
+  const params = new URLSearchParams(location.search);
+  const tx = params.get('tx');
+  const id = params.get('id');
+  if (!tx || !id) return;
+  // setTab expects (btn, tab); pass a dummy then manually highlight later
+  // isn't worth it — the tab buttons are in the DOM, we can just click them.
+  const clickTabBtn = (tabKey) => {
+    const btn = document.querySelector(`.tab-btn[onclick*="'${tabKey}'"]`);
+    if (btn) btn.click();
+  };
+  if (tx === 'bank') {
+    const { data } = await sb.from('bank_transactions').select('account_id').eq('id', id).maybeSingle();
+    if (!data) { showToast('Banka hareketi bulunamadı', 'error'); return; }
+    clickTabBtn('bank');
+    // selectAccount loads its tx list; await-less since it triggers fetch.
+    // editBankTx reads from `bankTxAll` which loadBankTransactions populates.
+    await selectAccount(data.account_id);
+    await loadBankTransactions();
+    editBankTx(id);
+  } else if (tx === 'cash') {
+    const { data } = await sb.from('cash_transactions').select('register_id').eq('id', id).maybeSingle();
+    if (!data) { showToast('Kasa hareketi bulunamadı', 'error'); return; }
+    clickTabBtn('cash');
+    await selectRegister(data.register_id);
+    await loadCashTransactions();
+    editCashTx(id);
+  }
+}
 </script>
 <script>
 window.addEventListener('load', function() {

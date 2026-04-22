@@ -763,7 +763,8 @@ async function selectStmtRow(idx) {
   if (l.type === 'sale_invoice' || l.type === 'purchase_invoice') {
     const table = l.type === 'sale_invoice' ? 'sales_order_items' : 'purchase_order_items';
     const { data: items } = await sb.from(table).select('description,quantity,unit_price,discount,total,products(name,unit)').eq('order_id', d.id);
-    const statusBadge = `<span class="badge badge-${d.status==='paid'?'green':d.status==='overdue'?'red':'blue'}">${d.status}</span>`;
+    const statusBadge = `<span class="badge badge-${d.status==='paid'?'green':d.status==='overdue'?'red':'blue'}" style="margin-right:8px">${d.status}</span>
+      <button class="btn btn-outline btn-sm" onclick="editStmtLine(${idx})" style="font-size:10px;padding:3px 8px">✏️ Düzenle</button>`;
     html = hdr(l.type==='sale_invoice' ? '📄 Satış Faturası' : '📦 Alış Faturası', statusBadge);
     html += '<div style="padding:14px 16px">';
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">`;
@@ -801,7 +802,8 @@ async function selectStmtRow(idx) {
   } else if (l.type === 'payment_in' || l.type === 'payment_out') {
     const methodLabels = {cash:'💵 Nakit',bank:'🏦 Banka Transferi',card:'💳 Kredi Kartı',check:'📋 Çek'};
     const orderNo = d._orderNo || d.sales_orders?.order_number || d.purchase_orders?.order_number || '';
-    html = hdr(l.type==='payment_in' ? '💰 Tahsilat' : '💸 Ödeme', '');
+    html = hdr(l.type==='payment_in' ? '💰 Tahsilat' : '💸 Ödeme',
+      `<button class="btn btn-outline btn-sm" onclick="editStmtLine(${idx})" style="font-size:10px;padding:3px 8px">✏️ Düzenle</button>`);
     html += '<div style="padding:14px 16px">';
     html += `<div style="font-size:28px;font-weight:800;color:${l.type==='payment_in'?'var(--green)':'var(--red)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
@@ -815,7 +817,13 @@ async function selectStmtRow(idx) {
 
   } else if (l.type === 'manual') {
     const typeLabel = d.type === 'debit' ? '🔴 Borç Hareketi' : '🟢 Alacak Hareketi';
-    html = hdr('📝 Manuel Hareket', `<button class="btn btn-danger btn-sm" onclick="deleteManualTx('${d.id}')" style="font-size:10px;padding:3px 8px">Sil</button>`);
+    // Bank/cash-originated rows go to the canonical source modal; pure
+    // contact_transactions rows open inline. Delete stays on the row —
+    // for trigger-originated rows it only unlinks the ledger entry (source
+    // row survives). User can fully delete from the source tab.
+    const editBtn = `<button class="btn btn-outline btn-sm" onclick="editStmtLine(${idx})" style="font-size:10px;padding:3px 8px;margin-right:6px">✏️ Düzenle</button>`;
+    const delBtn  = `<button class="btn btn-danger btn-sm" onclick="deleteManualTx('${d.id}')" style="font-size:10px;padding:3px 8px">Sil</button>`;
+    html = hdr('📝 Manuel Hareket', editBtn + delBtn);
     html += '<div style="padding:14px 16px">';
     html += `<div style="font-size:28px;font-weight:800;color:${d.type==='debit'?'var(--red)':'var(--green)'};margin-bottom:14px">${fmtMoney(d.amount)}</div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
@@ -832,14 +840,55 @@ async function selectStmtRow(idx) {
 }
 
 // ===== MANUEL HAReket =====
-function openManualTxModal() {
-  document.getElementById('mtx-type').value = 'debit';
-  document.getElementById('mtx-amount').value = '';
-  document.getElementById('mtx-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('mtx-ref').value = '';
-  document.getElementById('mtx-desc').value = '';
-  document.getElementById('mtx-notes').value = '';
+// Null = add, uuid = edit. Editing a contact_transactions row prefills the
+// modal; saveManualTx then issues UPDATE instead of INSERT.
+let editingManualTxId = null;
+
+function openManualTxModal(id = null) {
+  editingManualTxId = id;
+  const tx = id ? (stmtLines.find(l => l.type === 'manual' && l._data?.id === id)?._data || null) : null;
+  document.getElementById('mtx-type').value = tx?.type || 'debit';
+  document.getElementById('mtx-amount').value = tx?.amount || '';
+  document.getElementById('mtx-date').value = tx?.date || new Date().toISOString().split('T')[0];
+  document.getElementById('mtx-ref').value = tx?.reference || '';
+  document.getElementById('mtx-desc').value = tx?.description || '';
+  document.getElementById('mtx-notes').value = tx?.notes || '';
   openModal('manual-tx-modal');
+}
+
+// Opens edit for any statement line by index. Routes to the right source —
+// bank/cash modal for trigger-generated rows, sales/purchasing for invoice
+// rows, or the manual modal for pure contact_transactions entries.
+function editStmtLine(idx) {
+  const l = stmtLines[idx];
+  if (!l) return;
+  const d = l._data || {};
+  if (l.type === 'sale_invoice') {
+    window.location.href = `sales.html?action=edit&id=${d.id}`;
+  } else if (l.type === 'purchase_invoice') {
+    window.location.href = `purchasing.html?action=edit&id=${d.id}`;
+  } else if (l.type === 'payment_in' || l.type === 'payment_out') {
+    // Payment edit UI isn't standalone — route to the invoice the payment
+    // belongs to; user edits/deletes the payment from there.
+    const orderId = d.order_id || d.purchase_order_id;
+    if (orderId) {
+      window.location.href = (l.type === 'payment_in' ? 'sales.html' : 'purchasing.html') + '?action=edit&id=' + orderId;
+    } else {
+      showToast('Bağlı fatura bulunamadı', 'error');
+    }
+  } else if (l.type === 'manual') {
+    // Trigger-generated rows (from cashbank modal save) link back to the
+    // source row via bank_transaction_id / cash_transaction_id. Editing
+    // the source row is the canonical edit — M071 trigger keeps the
+    // contact_transactions entry in sync automatically.
+    if (d.bank_transaction_id) {
+      window.location.href = `cashbank.html?tx=bank&id=${d.bank_transaction_id}`;
+    } else if (d.cash_transaction_id) {
+      window.location.href = `cashbank.html?tx=cash&id=${d.cash_transaction_id}`;
+    } else {
+      openManualTxModal(d.id);
+    }
+  }
 }
 
 async function saveManualTx() {
@@ -852,15 +901,25 @@ async function saveManualTx() {
   if (!amount || amount <= 0) { showToast('Tutar giriniz', 'error'); return; }
   if (!date) { showToast('Tarih giriniz', 'error'); return; }
   if (!desc) { showToast('Açıklama giriniz', 'error'); return; }
-  const { data: { user } } = await sb.auth.getUser();
-  const { error } = await sb.from('contact_transactions').insert({
-    company_id: companyId, contact_id: stmtContactId, type, amount, date,
-    description: desc, reference: document.getElementById('mtx-ref').value.trim() || null,
-    notes: document.getElementById('mtx-notes').value.trim() || null, created_by: user?.id
-  });
+  const payload = {
+    type, amount, date, description: desc,
+    reference: document.getElementById('mtx-ref').value.trim() || null,
+    notes: document.getElementById('mtx-notes').value.trim() || null
+  };
+  let error;
+  if (editingManualTxId) {
+    ({ error } = await sb.from('contact_transactions').update(payload).eq('id', editingManualTxId));
+  } else {
+    const { data: { user } } = await sb.auth.getUser();
+    payload.company_id = companyId;
+    payload.contact_id = stmtContactId;
+    payload.created_by = user?.id;
+    ({ error } = await sb.from('contact_transactions').insert(payload));
+  }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Hareket kaydedildi ✓', 'success');
+  showToast(editingManualTxId ? 'Hareket güncellendi ✓' : 'Hareket kaydedildi ✓', 'success');
   closeModal('manual-tx-modal');
+  editingManualTxId = null;
   await loadStatement();
   await loadBalances();
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
