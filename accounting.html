@@ -733,7 +733,9 @@ async function loadCoaFromTemplate() {
         company_id: companyId, code: t.account_code,
         name: t.account_name_en, name_local: t.account_name_local,
         type: t.account_type, parent_code: t.parent_code,
-        level: t.level, country_code: cc, is_system: false, is_active: true
+        level: t.level, country_code: cc, is_system: false, is_active: true,
+        // Re-loading the template resurrects previously-deleted rows cleanly.
+        deleted_at: null, deleted_by: null
       })),
       { onConflict: 'company_id,code' }
     );

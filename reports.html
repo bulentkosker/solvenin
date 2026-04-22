@@ -597,7 +597,7 @@ function switchReport(key, el) {
 }
 
 async function loadAccountsCoa() {
-  const { data } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).order('code');
+  const { data } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
   const sel = document.getElementById('f-account');
   if (sel) sel.innerHTML = '<option value="">Hesap Seç...</option>' + (data||[]).map(a => `<option value="${a.id}">${a.code} — ${a.name}</option>`).join('');
 }
@@ -1132,7 +1132,7 @@ async function reportJournal() {
 async function reportTrial() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
-  const { data: accounts } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).order('code');
+  const { data: accounts } = await sb.from('chart_of_accounts').select('id,code,name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('code');
   let q = sb.from('journal_lines').select('account_id,debit,credit,journal_entries!inner(company_id,entry_date)')
     .eq('journal_entries.company_id', companyId);
   if (from) q = q.gte('journal_entries.entry_date', from);

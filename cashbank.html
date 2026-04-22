@@ -1436,22 +1436,20 @@ function deleteRegister(id) {
 }
 
 // ===== TX MODAL HELPERS — Contact/Employee selectors =====
-let _txContacts = null, _txEmployees = null, _txAccounts = null;
+// Re-fetched every modal open: if a contact/employee/account was deleted
+// in another tab or since the last open, the dropdown must not show it.
+let _txContacts = [], _txEmployees = [], _txAccounts = [];
 const _qaControllers = {};
 
 async function loadTxSelectors() {
-  if (!_txContacts) {
-    const { data } = await sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name');
-    _txContacts = data || [];
-  }
-  if (!_txEmployees) {
-    const { data } = await sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name');
-    _txEmployees = data || [];
-  }
-  if (!_txAccounts) {
-    const { data } = await sb.from('chart_of_accounts').select('id, code, name, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code');
-    _txAccounts = data || [];
-  }
+  const [contactsRes, empsRes, accsRes] = await Promise.all([
+    sb.from('contacts').select('id, name, is_customer, is_supplier').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
+    sb.from('employees').select('id, first_name, last_name').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('first_name'),
+    sb.from('chart_of_accounts').select('id, code, name, type').eq('company_id', companyId).in('type', ['expense','cost']).eq('is_active', true).is('deleted_at', null).order('code')
+  ]);
+  _txContacts  = contactsRes.data || [];
+  _txEmployees = empsRes.data || [];
+  _txAccounts  = accsRes.data || [];
   const empItems = _txEmployees.map(e => ({ id: e.id, name: `${e.first_name} ${e.last_name}` }));
   const accItems = _txAccounts.map(a => ({ id: a.id, name: `${a.code} — ${a.name}` }));
 
