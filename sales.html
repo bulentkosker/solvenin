@@ -926,7 +926,7 @@ function renderOrders(list) {
         <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
         ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Düzenle">✏️</button>` : ''}
         ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
-        ${!accountingEnabled && o.status !== 'paid' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
+        ${!accountingEnabled && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -957,8 +957,8 @@ function renderInvoices(list) {
         <button class="btn btn-sm btn-outline btn-icon" onclick="viewInvoice('${o.id}')" title="PDF">📄</button>
         ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="Düzenle">✏️</button>` : ''}
         ${o.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="openPaymentModal('${o.id}','${parseFloat(o.total||0)}')" title="Ödeme">💳</button>` : ''}
-        ${!accountingEnabled && o.status !== 'paid' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
-        ${!accountingEnabled && o.status !== 'paid' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
+        ${!accountingEnabled && o.status !== 'paid' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
+        ${!accountingEnabled && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
