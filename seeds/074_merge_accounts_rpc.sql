@@ -81,11 +81,11 @@ BEGIN
     RAISE EXCEPTION 'Not authorized for this company' USING ERRCODE = 'insufficient_privilege';
   END IF;
 
-  -- Strict type match — different types imply different semantics
-  -- (revenue → expense merge would break P&L).
-  IF v_source.type <> v_target.type THEN
-    RAISE EXCEPTION 'Type mismatch: source is %, target is %', v_source.type, v_target.type;
-  END IF;
+  -- Type mismatch is allowed — the whole point of merge is fixing
+  -- rows that landed in the wrong account, including wrong-type
+  -- mistakes. UI warns on cross-type selection so the user doesn't do
+  -- it by accident. source/target types are captured in merge_history
+  -- via the labels for audit.
 
   -- Can't delete a source that still has live children. (Moving the
   -- children's parent would be a separate, less common operation —

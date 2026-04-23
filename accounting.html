@@ -621,6 +621,7 @@
           <option value="">Hesap seçin…</option>
         </select>
       </div>
+      <div id="merge-type-warning" style="display:none;padding:10px 12px;margin-bottom:14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e"></div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
           <input type="checkbox" id="merge-delete-source">
@@ -1070,19 +1071,22 @@ async function openMergeAccountModal(id) {
   const srcLabel = `${src.code} — ${coaDisplayName(src)}`;
   document.getElementById('merge-source-label').textContent = srcLabel;
 
-  // Target dropdown: same type, different account, not soft-deleted.
-  // Leaf preference is a soft hint — parent accounts can be targets if
-  // they legitimately hold bookings in the user's setup; we don't forbid.
+  // Target dropdown: any non-deleted account in the same company.
+  // Type mismatch is allowed (merge's whole purpose is fixing mis-entered
+  // rows, including wrong type). Options are labeled with their type so
+  // cross-type picks are visible, and selecting one raises a warning row.
   const parentIds = new Set(accounts.map(a => a.parent_id).filter(Boolean));
-  const candidates = accounts.filter(a =>
-    a.id !== id && a.type === src.type && !a.deleted_at
-  );
+  const candidates = accounts.filter(a => a.id !== id && !a.deleted_at);
   const sel = document.getElementById('merge-target');
   sel.innerHTML = '<option value="">Hesap seçin…</option>' + candidates.map(a => {
-    const isParent = parentIds.has(a.id) ? ' (parent)' : '';
-    return `<option value="${a.id}">${a.code} — ${coaDisplayName(a)}${isParent}</option>`;
+    const typeLabel = (window.TYPE_META && TYPE_META[a.type]?.label) || a.type;
+    const isParent = parentIds.has(a.id) ? ' · parent' : '';
+    return `<option value="${a.id}" data-type="${a.type}">${a.code} — ${coaDisplayName(a)} · ${typeLabel}${isParent}</option>`;
   }).join('');
   sel.value = '';
+  // Warning row resets every open; onchange toggles based on selected type.
+  sel.onchange = () => updateMergeTypeWarning(src.type);
+  updateMergeTypeWarning(src.type);
 
   // Movement count — quick live fetch so the user sees what's about to move.
   document.getElementById('merge-counts').textContent = 'Sayılıyor…';
@@ -1106,6 +1110,26 @@ async function openMergeAccountModal(id) {
     hasChildren ? '(alt hesapları var, önce onları merge/sil)' : '';
 
   openModal('merge-account-modal');
+}
+
+// Toggle the cross-type warning banner under the target picker. Non-blocking
+// — purely informative so an accidental wrong-type pick is visible, but an
+// intentional fix-up (user put an expense row under the wrong asset code)
+// still goes through.
+function updateMergeTypeWarning(srcType) {
+  const sel = document.getElementById('merge-target');
+  const warn = document.getElementById('merge-type-warning');
+  if (!sel || !warn) return;
+  const opt = sel.options[sel.selectedIndex];
+  const tgtType = opt?.dataset?.type;
+  if (!tgtType || tgtType === srcType) {
+    warn.style.display = 'none';
+    warn.textContent = '';
+    return;
+  }
+  const label = t => (window.TYPE_META && TYPE_META[t]?.label) || t;
+  warn.textContent = `⚠️ Kaynak: ${label(srcType)}, Hedef: ${label(tgtType)}. Farklı tip — emin misin?`;
+  warn.style.display = '';
 }
 
 async function confirmMergeAccount() {
