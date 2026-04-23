@@ -451,13 +451,16 @@ tr:hover td{background:var(--gray50)}
       </div>
       <div>
         <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="col_status">Durum</div>
+        <!-- paid / partial_paid intentionally omitted — those are set only
+             by the payment flow (savePayment) once the sum of payments
+             covers the order total. Elle seçme → toast reject. -->
         <select id="o-status" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
           <option value="draft" data-i18n="status_draft">Taslak</option>
           <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
           <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
-          <option value="paid" data-i18n="status_paid">Ödendi</option>
           <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
+        <div id="o-status-lock-hint" style="display:none;font-size:10px;color:#888;margin-top:3px" data-i18n="status_lock_hint">Durum ödemelere göre otomatik yönetilir</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">
@@ -739,6 +742,36 @@ let orders = [], customers = [], products = [], payments = [];
 let cashRegisters = [], bankAccounts = [];
 let currentView = 'orders'; // 'orders' or 'invoices'
 let editingOrderId = null, editingCustomerId = null;
+// Remembered so saveOrder() can keep paid/partial_paid status locked on
+// existing rows — the form dropdown no longer offers those options.
+let _editingOrderOrigStatus = null;
+
+// Show/hide the o-status lock hint and disable the select when the DB row
+// is in a payment-managed state. A sibling <option> is injected so the
+// current status still shows as the selected label.
+function applyOrderStatusLock(originalStatus) {
+  _editingOrderOrigStatus = originalStatus || null;
+  const sel = document.getElementById('o-status');
+  const hint = document.getElementById('o-status-lock-hint');
+  if (!sel) return;
+  // Strip any previously-injected locked option so re-opens don't stack.
+  [...sel.options].filter(o => o.dataset.injected === '1').forEach(o => o.remove());
+  const locked = originalStatus === 'paid' || originalStatus === 'partial_paid';
+  if (locked) {
+    const labels = { paid: t('status_paid')||'Ödendi', partial_paid: t('status_partial_paid')||'Kısmi Ödendi' };
+    const opt = document.createElement('option');
+    opt.value = originalStatus;
+    opt.textContent = labels[originalStatus] || originalStatus;
+    opt.dataset.injected = '1';
+    sel.appendChild(opt);
+    sel.value = originalStatus;
+    sel.disabled = true;
+    if (hint) hint.style.display = '';
+  } else {
+    sel.disabled = false;
+    if (hint) hint.style.display = 'none';
+  }
+}
 let customerQA = null;
 let _qaProductCb = null, _qaCustomerCb = null;
 let orderItems = [];
@@ -1279,6 +1312,7 @@ async function loadCompanyUsers() {
 function openOrderModal() {
   console.log('[sales] openOrderModal called');
   editingOrderId = null;
+  applyOrderStatusLock(null);
   document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
   if (customerQA) customerQA.setValue('');
@@ -1498,11 +1532,25 @@ async function saveOrder() {
   const localTax = isForeign ? taxAmt * fxRate : taxAmt;
   const localTotal = isForeign ? total * fxRate : total;
 
+  // Status guard — payment-managed statuses can't be chosen manually.
+  // New orders: reject 'paid'/'partial_paid' from the form.
+  // Edits on payment-managed rows: keep the DB status untouched regardless
+  // of what the (disabled) select reports. Edits on unlocked rows reject
+  // a manually-poked paid/partial_paid value.
+  const PAYMENT_LOCKED_STATUSES = ['paid','partial_paid'];
+  let submittedStatus = document.getElementById('o-status').value;
+  if (editingOrderId && PAYMENT_LOCKED_STATUSES.includes(_editingOrderOrigStatus)) {
+    submittedStatus = _editingOrderOrigStatus;
+  } else if (PAYMENT_LOCKED_STATUSES.includes(submittedStatus)) {
+    showToast(t('err_status_payment_managed') || 'Ödendi durumu elle seçilemez — ödeme kaydından yönetilir', 'error');
+    return;
+  }
+
   const payload = {
     company_id: companyId,
     customer_id: customerId,
     order_number: document.getElementById('o-number').value || 'INV-' + Date.now(),
-    status: document.getElementById('o-status').value,
+    status: submittedStatus,
     issue_date: document.getElementById('o-date').value,
     due_date: document.getElementById('o-duedate').value || null,
     subtotal: isForeign ? localSubtotal : subtotal,
@@ -1680,6 +1728,7 @@ async function editOrder(id) {
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-duedate').value = order.due_date || '';
+  applyOrderStatusLock(order.status);
   document.getElementById('o-status').value = order.status;
   const taxSel = document.getElementById('o-tax');
   const matchOpt = [...taxSel.options].find(o => parseFloat(o.dataset.rate) === order.tax_rate);

@@ -422,13 +422,16 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       </div>
       <div>
         <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="col_status">Durum</div>
+        <!-- paid / partial_paid intentionally omitted — those are set only
+             by the payment flow (savePoPayment) once the sum of payments
+             covers the order total. Elle seçme → toast reject. -->
         <select id="o-status" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
           <option value="draft" data-i18n="status_draft">Taslak</option>
           <option value="confirmed" data-i18n="status_confirmed">Onaylandı</option>
           <option value="invoiced" data-i18n="status_invoiced">Faturalandı</option>
-          <option value="paid" data-i18n="status_paid">Ödendi</option>
           <option value="cancelled" data-i18n="status_cancelled">İptal</option>
         </select>
+        <div id="o-status-lock-hint" style="display:none;font-size:10px;color:#888;margin-top:3px" data-i18n="status_lock_hint">Durum ödemelere göre otomatik yönetilir</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">
@@ -745,6 +748,33 @@ let _invoiceSettings = {}, _originalFormData = null;
 let currentView = 'orders';
 let taxRates = [];
 let editingOrderId = null, editingSupplierId = null;
+let _editingOrderOrigStatus = null;
+
+// Mirror of sales.html applyOrderStatusLock — keeps paid/partial_paid
+// readonly on existing POs so the form can't downgrade a payment-managed
+// row, while still showing the current status label to the user.
+function applyOrderStatusLock(originalStatus) {
+  _editingOrderOrigStatus = originalStatus || null;
+  const sel = document.getElementById('o-status');
+  const hint = document.getElementById('o-status-lock-hint');
+  if (!sel) return;
+  [...sel.options].filter(o => o.dataset.injected === '1').forEach(o => o.remove());
+  const locked = originalStatus === 'paid' || originalStatus === 'partial_paid';
+  if (locked) {
+    const labels = { paid: t('status_paid')||'Ödendi', partial_paid: t('status_partial_paid')||'Kısmi Ödendi' };
+    const opt = document.createElement('option');
+    opt.value = originalStatus;
+    opt.textContent = labels[originalStatus] || originalStatus;
+    opt.dataset.injected = '1';
+    sel.appendChild(opt);
+    sel.value = originalStatus;
+    sel.disabled = true;
+    if (hint) hint.style.display = '';
+  } else {
+    sel.disabled = false;
+    if (hint) hint.style.display = 'none';
+  }
+}
 let supplierQA = null;
 let _qaProductCb = null;
 let orderItems = [];
@@ -1435,6 +1465,7 @@ function fmtFx(amount, cur) { if (!cur) cur=orderCurrency||baseCurrency; return 
 
 function openOrderModal() {
   editingOrderId = null;
+  applyOrderStatusLock(null);
   document.getElementById('order-modal-title').textContent = t('title_new_po');
   document.getElementById('o-supplier').value = '';
   if (supplierQA) supplierQA.setValue('');
@@ -1639,7 +1670,17 @@ async function saveOrder() {
   const discount = parseNum(document.getElementById('o-discount').value)||0;
   const total = Math.max(0, subtotal + taxAmt - discount);
   const { data: { user } } = await sb.auth.getUser();
-  const status = document.getElementById('o-status').value;
+
+  // Status guard — mirrors sales.html. Paid/partial_paid are payment-
+  // managed, never user-selectable.
+  const PAYMENT_LOCKED_STATUSES = ['paid','partial_paid'];
+  let status = document.getElementById('o-status').value;
+  if (editingOrderId && PAYMENT_LOCKED_STATUSES.includes(_editingOrderOrigStatus)) {
+    status = _editingOrderOrigStatus;
+  } else if (PAYMENT_LOCKED_STATUSES.includes(status)) {
+    showToast(t('err_status_payment_managed') || 'Ödendi durumu elle seçilemez — ödeme kaydından yönetilir', 'error');
+    return;
+  }
 
   const fxCur = document.getElementById('o-currency')?.value || baseCurrency;
   const fxRate = getExchangeRate();
@@ -1836,6 +1877,7 @@ async function editOrder(id) {
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-expected').value = order.expected_date||'';
+  applyOrderStatusLock(order.status);
   document.getElementById('o-status').value = order.status;
   // Match tax dropdown by rate value (tax_rate_id not in purchase_orders table)
   const taxSel = document.getElementById('o-tax');
