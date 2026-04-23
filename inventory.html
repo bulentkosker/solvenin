@@ -117,6 +117,17 @@ tr:hover .action-btns { opacity:1; }
 .page-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
 .page-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
+/* Row kebab menu (accounting.html pattern) */
+.dot-menu { position:relative; display:inline-block; }
+.dot-menu-btn { background:none; border:none; font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; color:var(--gray400); line-height:1; transition:background .15s; }
+.dot-menu-btn:hover { background:var(--gray100); color:var(--gray700); }
+.dot-menu-list { display:none; position:absolute; right:0; top:100%; min-width:160px; background:#fff; border:1px solid var(--gray200); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.12); z-index:200; padding:4px 0; }
+.dot-menu.open .dot-menu-list { display:block; }
+.dot-menu-item { display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:13px; cursor:pointer; transition:background .1s; white-space:nowrap; border:none; background:none; width:100%; text-align:left; color:var(--gray700); }
+.dot-menu-item:hover { background:var(--gray50); }
+.dot-menu-item.danger { color:#dc2626; }
+.dot-menu-item.danger:hover { background:#fef2f2; }
+
 /* MODAL */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; backdrop-filter:blur(4px); }
 .modal-overlay.open { opacity:1; pointer-events:all; }
@@ -1050,12 +1061,17 @@ function renderTable() {
       <td data-col="durum">${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
       <td data-col="barkod">${p.barcode || p.sku || '—'}</td>
       <td data-col="tip">${typeBadge}</td>
-      <td><div class="action-btns">
-        <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
-        <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
-        <button class="action-btn" onclick="openMergeProductModal('${p.id}')" title="${t('btn_merge')||'Birleştir'}">🔀</button>
-        <button class="action-btn danger" onclick="openDeleteModal('${p.id}')" title="${t('btn_delete')}">🗑️</button>
-      </div></td>
+      <td style="text-align:right">
+        <div class="dot-menu">
+          <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
+          <div class="dot-menu-list">
+            <button class="dot-menu-item" onclick="closeDotMenus();openEditModal('${p.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();openAdjustForProduct('${p.id}')">${t('inv_adjust_stock')||'📊 Stok Ayarla'}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();openMergeProductModal('${p.id}')">🔀 ${t('btn_merge')||'Birleştir'}</button>
+            <button class="dot-menu-item danger" onclick="closeDotMenus();openDeleteModal('${p.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
+          </div>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 
@@ -1252,6 +1268,19 @@ function switchTab(tab, btn) {
 // ===== MODAL HELPERS =====
 function openModal(id) { const m = document.getElementById(id); m.classList.add('open'); const b = m.querySelector('.modal-body'); if (b) b.scrollTop = 0; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleDotMenu(btn) {
+  const menu = btn.closest('.dot-menu');
+  const wasOpen = menu.classList.contains('open');
+  closeDotMenus();
+  if (!wasOpen) menu.classList.add('open');
+}
+function closeDotMenus() {
+  document.querySelectorAll('.dot-menu.open').forEach(m => m.classList.remove('open'));
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dot-menu')) closeDotMenus();
+});
 
 function openAddModal() {
   editingId = null;
