@@ -1675,16 +1675,41 @@ async function cancelOrder(id) {
 
 async function deleteOrder(id) {
   const [payments, movements, journals] = await Promise.all([
-    sb.from('payments').select('id',{count:'exact',head:true}).eq('order_id',id),
+    sb.from('payments').select('id',{count:'exact',head:true}).eq('order_id',id).is('deleted_at', null),
     sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('sales_order_id',id).eq('is_active',true),
-    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('sales_order_id',id),
+    sb.from('journal_entries').select('id',{count:'exact',head:true}).eq('sales_order_id',id).is('deleted_at', null),
   ]);
-  const total = (payments.count||0)+(movements.count||0)+(journals.count||0);
+  const pc = payments.count||0, mc = movements.count||0, jc = journals.count||0;
+
+  // Accounting OFF → cascade delete path (M079 RPC). Journal rows should
+  // not exist in this mode; if any slipped in they'll be soft-deleted too.
+  if (!accountingEnabled) {
+    const parts = [];
+    if (pc) parts.push(pc + ' ödeme (+ bağlı kasa/banka hareketleri)');
+    if (mc) parts.push(mc + ' stok hareketi');
+    if (jc) parts.push(jc + ' muhasebe kaydı');
+    const prompt = parts.length
+      ? (t('cascade_delete_msg')||'Bu sipariş ve bağlı kayıtlar silinecek: {0}. Devam edilsin mi?').replace('{0}', parts.join(', '))
+      : (t('confirm_delete_order')||'Bu kayıt kalıcı olarak silinecek. Devam edilsin mi?');
+    if (!await showConfirm(prompt, t('cascade_delete_title')||'Fatura + Bağlı Kayıtlar Silinsin mi?', t('btn_delete')||'Sil')) return;
+    const { data, error } = await sb.rpc('delete_order_with_cascade', { p_order_id: id, p_order_type: 'sale' });
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    const c = data?.counts || {};
+    const moved = (c.payments||0) + (c.payment_bank_tx||0) + (c.payment_cash_tx||0)
+                + (c.direct_bank_tx||0) + (c.direct_cash_tx||0)
+                + (c.stock_movements||0);
+    showToast(`${t('order_deleted')||'Sipariş silindi'} — ${moved} ${t('cascade_related_cleared')||'bağlı kayıt temizlendi'}`, 'success');
+    await loadOrders();
+    return;
+  }
+
+  // Accounting ON → pre-check must pass (protects ledger integrity).
+  const total = pc + mc + jc;
   if (total > 0) {
     const parts = [];
-    if (payments.count) parts.push(payments.count + ' ödeme');
-    if (movements.count) parts.push(movements.count + ' stok hareketi');
-    if (journals.count) parts.push(journals.count + ' muhasebe kaydı');
+    if (pc) parts.push(pc + ' ödeme');
+    if (mc) parts.push(mc + ' stok hareketi');
+    if (jc) parts.push(jc + ' muhasebe kaydı');
     showToast((t('err_has_related')||'Önce hareketleri silin: ') + parts.join(', ') + ' var', 'error'); return;
   }
   if (!await showConfirm(t('confirm_delete_order'), t('lbl_delete')||'Delete')) return;
