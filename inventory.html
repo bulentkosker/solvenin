@@ -757,7 +757,7 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--gray600);font-size:13px;line-height:1.6">Are you sure you want to delete <strong id="delete-product-name"></strong>? This action cannot be undone and all stock history will be lost.</p>
+      <p id="delete-product-msg" style="color:var(--gray600);font-size:13px;line-height:1.6"></p>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">Cancel</button>
@@ -2331,7 +2331,10 @@ async function saveAdjustment() {
 function openDeleteModal(id) {
   deletingId = id;
   const p = products.find(x => x.id === id);
-  document.getElementById('delete-product-name').textContent = p?.name || '';
+  const name = p?.name || '';
+  const safeName = name.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tmpl = t('delete_product_msg') || '{0} ürünü çöp kutusuna taşınacak. Çöp Kutusu sekmesinden geri alabilirsin.';
+  document.getElementById('delete-product-msg').innerHTML = tmpl.replace('{0}', `<strong>${safeName}</strong>`);
   openModal('delete-modal');
 }
 
