@@ -112,8 +112,18 @@ tr:hover td{background:var(--gray50)}
 .badge-gray{background:var(--gray100);color:var(--gray600)}
 .badge-teal{background:var(--teal-light);color:var(--teal)}
 .badge-purple{background:var(--purple-light);color:#5b21b6}
-.row-actions{display:flex;gap:6px;opacity:0;transition:opacity .2s}
-tr:hover .row-actions{opacity:1}
+.row-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+/* Kebab row menu — same pattern as inventory/contacts/accounting */
+.dot-menu{position:relative;display:inline-block}
+.dot-menu-btn{background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;color:var(--gray400);line-height:1;transition:background .15s}
+.dot-menu-btn:hover{background:var(--gray100);color:var(--gray600)}
+.dot-menu-list{display:none;position:absolute;right:0;top:100%;margin-top:4px;min-width:170px;background:#fff;border:1px solid var(--gray200);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.12);z-index:200;padding:4px 0}
+.dot-menu.open .dot-menu-list{display:block}
+.dot-menu.up .dot-menu-list{top:auto;bottom:100%;margin-top:0;margin-bottom:4px}
+.dot-menu-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;cursor:pointer;transition:background .1s;white-space:nowrap;border:none;background:none;width:100%;text-align:left;color:var(--gray700);font-family:inherit}
+.dot-menu-item:hover{background:var(--gray50)}
+.dot-menu-item.danger{color:#dc2626}
+.dot-menu-item.danger:hover{background:#fef2f2}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,0.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
@@ -884,6 +894,30 @@ async function loadWarehouses() {
 }
 function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
 
+// ===== KEBAB ROW MENU (same pattern as inventory/contacts/accounting) =====
+function toggleDotMenu(btn) {
+  const menu = btn.closest('.dot-menu');
+  const wasOpen = menu.classList.contains('open');
+  closeDotMenus();
+  if (wasOpen) return;
+  menu.classList.add('open');
+  const list = menu.querySelector('.dot-menu-list');
+  const btnRect = btn.getBoundingClientRect();
+  const listH = list.offsetHeight;
+  const spaceBelow = window.innerHeight - btnRect.bottom;
+  const spaceAbove = btnRect.top;
+  if (spaceBelow < listH + 8 && spaceAbove > listH + 8) menu.classList.add('up');
+}
+function closeDotMenus() {
+  document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
+    m.classList.remove('open');
+    m.classList.remove('up');
+  });
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dot-menu')) closeDotMenus();
+});
+
 // ===== RENDER =====
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
@@ -903,13 +937,18 @@ function renderOrders(list) {
     <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
     <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
     <td>${flowBtn}</td>
-    <td><div class="row-actions">
-      ${o.status === 'confirmed' ? `<button class="btn btn-sm btn-teal btn-icon" onclick="openReceiveModal('${o.id}')" title="${t('btn_receive_stock')}">📥</button>` : ''}
-      <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
-      ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>` : ''}
-      ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
-      ${!accountingEnabled && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
-    </div></td>
+    <td style="text-align:right">
+      <div class="dot-menu">
+        <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
+        <div class="dot-menu-list">
+          ${o.status === 'confirmed' ? `<button class="dot-menu-item" onclick="closeDotMenus();openReceiveModal('${o.id}')">📥 ${t('btn_receive_stock')||'Mal Al'}</button>` : ''}
+          <button class="dot-menu-item" onclick="closeDotMenus();viewOrder('${o.id}')">👁 ${t('btn_view')||'Görüntüle'}</button>
+          ${canEditOrder(o.status) ? `<button class="dot-menu-item" onclick="closeDotMenus();editOrder('${o.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
+          ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_order')||'İptal'}</button>` : ''}
+          ${!accountingEnabled && o.status !== 'cancelled' ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
+        </div>
+      </div>
+    </td>
   </tr>`;
   }).join('');
 }
@@ -923,21 +962,26 @@ function renderInvoices(list) {
   tbody.innerHTML = list.map(o => {
     let flowBtn = '';
     if (o.status === 'invoiced') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
-    const actions = [];
-    if (flowBtn) actions.push(flowBtn);
-    if (!accountingEnabled && o.status !== 'paid' && o.status !== 'cancelled') {
-      actions.push(`<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>`);
-    }
-    if (!accountingEnabled && o.status !== 'cancelled') {
-      actions.push(`<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>`);
-    }
+    // Kebab only rendered when at least one action applies — accounting-on
+    // invoices otherwise have just the flowBtn and no dropdown button.
+    const hasCancel = !accountingEnabled && o.status !== 'paid' && o.status !== 'cancelled';
+    const hasDelete = !accountingEnabled && o.status !== 'cancelled';
+    const kebab = (hasCancel || hasDelete)
+      ? `<div class="dot-menu">
+          <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
+          <div class="dot-menu-list">
+            ${hasCancel ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_order')||'İptal'}</button>` : ''}
+            ${hasDelete ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
+          </div>
+        </div>`
+      : '';
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
       <td><strong>${o.contacts?.name||'—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
-      <td><div class="row-actions">${actions.join('')}</div></td>
+      <td><div class="row-actions">${flowBtn}${kebab}</div></td>
     </tr>`;
   }).join('');
 }
