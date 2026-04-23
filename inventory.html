@@ -333,6 +333,7 @@ tr:hover .action-btns { opacity:1; }
       <button class="tab-btn" onclick="switchTab('low', this)" data-i18n="inv_low_stock">Low Stock</button>
       <button class="tab-btn" onclick="switchTab('out', this)" data-i18n="inv_out_of_stock">Out of Stock</button>
       <button class="tab-btn" onclick="switchTab('movements', this)" data-i18n="inv_movements">Movements</button>
+      <button class="tab-btn" onclick="switchTab('trash', this)" style="margin-left:auto">🗑️ <span data-i18n="inv_trash">Çöp Kutusu</span><span id="trash-badge" style="display:none;margin-left:6px;padding:1px 7px;border-radius:10px;background:var(--gray100);color:var(--gray600);font-size:11px;font-weight:600">0</span></button>
     </div>
 
     <!-- TOOLBAR -->
@@ -425,6 +426,26 @@ tr:hover .action-btns { opacity:1; }
     </div>
 
   </div>
+</div>
+
+<!-- TRASH (deleted products) (hidden by default) -->
+<div class="table-card fade-up fade-up-2" id="trash-card" style="display:none">
+  <div class="table-header">
+    <span class="table-title">🗑️ <span data-i18n="inv_trash">Çöp Kutusu</span></span>
+    <span id="trash-empty-hint" style="font-size:12px;color:var(--gray400);display:none" data-i18n="inv_trash_empty">Silinmiş ürün yok</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th><span data-i18n="col_product">Product</span></th>
+        <th data-col="trash-cat"><span data-i18n="col_category">Category</span></th>
+        <th><span data-i18n="col_deleted_at">Silinme Tarihi</span></th>
+        <th><span data-i18n="col_deleted_by">Silen</span></th>
+        <th style="width:120px;text-align:right"><span data-i18n="col_actions">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody id="trash-tbody"></tbody>
+  </table>
 </div>
 
 <!-- ADD/EDIT PRODUCT MODAL -->
@@ -745,6 +766,26 @@ tr:hover .action-btns { opacity:1; }
   </div>
 </div>
 
+<!-- RESTORE PRODUCT MODAL -->
+<div class="modal-overlay" id="restore-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-head">
+      <div class="modal-title" data-i18n="modal_restore_title">Ürünü Geri Al?</div>
+      <button class="modal-close" onclick="closeModal('restore-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray600);font-size:13px;line-height:1.6">
+        <span data-i18n="restore_confirm_msg">Bu ürünü çöp kutusundan geri almak istediğinden emin misin?</span><br>
+        <strong id="restore-product-name" style="display:block;margin-top:8px"></strong>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('restore-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary" id="restore-save" style="background:var(--green,#16a34a)" onclick="confirmRestore()" data-i18n="btn_restore">Geri Al</button>
+    </div>
+  </div>
+</div>
+
 <!-- MERGE PRODUCT MODAL -->
 <div class="modal-overlay" id="merge-product-modal">
   <div class="modal" style="max-width:520px">
@@ -896,7 +937,7 @@ async function init() {
   const { data: _coSettings } = await sb.from('companies').select('low_stock_threshold').eq('id', companyId).single();
   window._lowStockThreshold = _coSettings?.low_stock_threshold ?? 10;
 
-  await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses()]);
+  await Promise.all([loadCategories(), loadProducts(), loadMovements(), loadWarehouses(), loadTrashedProducts()]);
   renderAll();
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
@@ -1260,9 +1301,16 @@ function switchTab(tab, btn) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('inventory-table-card').style.display = tab === 'movements' ? 'none' : 'block';
-  document.getElementById('movements-card').style.display = tab === 'movements' ? 'block' : 'none';
-  if (tab !== 'movements') applyFilters();
+  const isMovements = tab === 'movements';
+  const isTrash = tab === 'trash';
+  document.getElementById('inventory-table-card').style.display = (isMovements || isTrash) ? 'none' : 'block';
+  document.getElementById('movements-card').style.display = isMovements ? 'block' : 'none';
+  document.getElementById('trash-card').style.display = isTrash ? 'block' : 'none';
+  if (isTrash) {
+    loadTrashedProducts().then(renderTrashTable);
+  } else if (!isMovements) {
+    applyFilters();
+  }
 }
 
 // ===== MODAL HELPERS =====
@@ -2307,7 +2355,7 @@ async function confirmDelete() {
   }).eq('id', deletingId);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('delete-modal');
-  await loadProducts();
+  await Promise.all([loadProducts(), loadTrashedProducts()]);
   renderAll();
   showToast(t('product_deleted'), 'success');
 }
@@ -2420,8 +2468,108 @@ async function confirmMergeProduct() {
     closeModal('merge-product-modal');
     _mergeProductSourceId = null;
     _mergeProductTargetQA = null;
-    await loadProducts();
+    await Promise.all([loadProducts(), loadTrashedProducts()]);
     renderAll();
+  });
+}
+
+// ===== TRASH (soft-deleted products) =====
+// Trash is a separate fetch from loadProducts() (which filters is_active=true).
+// Canonical "trashed" filter is deleted_at IS NOT NULL — independent of
+// is_active so a future "discontinued but not deleted" state stays sane.
+let trashedProducts = [];
+let _restoreId = null;
+let _userNameCache = null;
+
+async function ensureUserNameCache() {
+  if (_userNameCache) return _userNameCache;
+  _userNameCache = new Map();
+  if (!companyId) return _userNameCache;
+  const { data: cu } = await sb.from('company_users').select('user_id').eq('company_id', companyId);
+  const uids = (cu || []).map(x => x.user_id).filter(Boolean);
+  if (!uids.length) return _userNameCache;
+  const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', uids);
+  (profs || []).forEach(p => {
+    _userNameCache.set(p.id, p.full_name || p.id.slice(0, 8));
+  });
+  return _userNameCache;
+}
+
+async function loadTrashedProducts() {
+  if (!companyId) return;
+  const { data, error } = await sb.from('products')
+    .select('id, name, sku, category_id, deleted_at, deleted_by, unit')
+    .eq('company_id', companyId)
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+  if (error) { console.error('loadTrashedProducts:', error); return; }
+  const names = await ensureUserNameCache();
+  trashedProducts = (data || []).map(p => ({
+    id: p.id,
+    name: p.name,
+    sku: p.sku || '',
+    category: categories.find(c => c.id === p.category_id)?.name || '—',
+    deleted_at: p.deleted_at,
+    deleted_by_name: p.deleted_by ? (names.get(p.deleted_by) || p.deleted_by.slice(0, 8)) : '—',
+    unit: p.unit || 'pcs',
+  }));
+  updateTrashBadge();
+  if (currentTab === 'trash') renderTrashTable();
+}
+
+function updateTrashBadge() {
+  const badge = document.getElementById('trash-badge');
+  if (!badge) return;
+  const n = trashedProducts.length;
+  if (n > 0) { badge.textContent = n; badge.style.display = ''; }
+  else { badge.style.display = 'none'; }
+}
+
+function renderTrashTable() {
+  const tbody = document.getElementById('trash-tbody');
+  if (!tbody) return;
+  const hint = document.getElementById('trash-empty-hint');
+  if (!trashedProducts.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--gray400);font-size:13px">${t('inv_trash_empty')||'Silinmiş ürün yok'}</td></tr>`;
+    if (hint) hint.style.display = '';
+    return;
+  }
+  if (hint) hint.style.display = 'none';
+  tbody.innerHTML = trashedProducts.map(p => {
+    const dt = new Date(p.deleted_at);
+    const dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    return `<tr>
+      <td><div class="td-name"><div class="item-icon">📦</div><span>${p.name}${p.sku ? ' <span style="color:var(--gray400);font-size:11px">('+p.sku+')</span>' : ''}</span></div></td>
+      <td data-col="trash-cat">${p.category}</td>
+      <td style="font-size:12px;color:var(--gray600)">${dateStr}</td>
+      <td style="font-size:12px;color:var(--gray600)">${p.deleted_by_name}</td>
+      <td style="text-align:right">
+        <button class="btn-primary" style="background:var(--green,#16a34a);padding:6px 14px;font-size:12px" onclick="openRestoreModal('${p.id}')">↩️ ${t('btn_restore')||'Geri Al'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openRestoreModal(id) {
+  _restoreId = id;
+  const p = trashedProducts.find(x => x.id === id);
+  document.getElementById('restore-product-name').textContent = p?.name || '';
+  openModal('restore-modal');
+}
+
+async function confirmRestore() {
+  if (submitting()) return;
+  await withLoading(document.getElementById('restore-save'), async () => {
+    if (!_restoreId) return;
+    const { error } = await sb.from('products').update({
+      deleted_at: null, is_active: true, deleted_by: null
+    }).eq('id', _restoreId);
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    closeModal('restore-modal');
+    _restoreId = null;
+    await Promise.all([loadProducts(), loadTrashedProducts()]);
+    renderAll();
+    showToast(t('toast_restored')||'Ürün geri alındı ✓', 'success');
   });
 }
 
