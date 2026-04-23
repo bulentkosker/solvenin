@@ -276,6 +276,10 @@ const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishab
 window._supabase = sb;
 
 let companyId = null, currentUser = null, currSym = '$';
+// System contact auto-bound to walk-in POS sales so cash/bank movements
+// and the sales order all land under one cari. Populated at init
+// (M078 trigger guarantees it exists for every company).
+let retailContactId = null;
 let products = [], categories = [], cart = [];
 let cashRegisters = [], bankAccounts = [];
 let selectedRegister = null, sessionId = null;
@@ -294,6 +298,14 @@ async function init() {
   const saved = localStorage.getItem('currentCompanyId');
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
+
+  // Cache the company's retail system contact. M078 migration + INSERT
+  // trigger guarantee exactly one row per company; if absent (unexpected),
+  // walk-in sales fall back to customer_id=NULL silently.
+  const { data: retail } = await sb.from('contacts')
+    .select('id').eq('company_id', companyId).eq('is_system', true).eq('name', 'Perakende Satışlar')
+    .maybeSingle();
+  retailContactId = retail?.id || null;
 
   // Load company info (currency + receipt data)
   const { data: comp } = await sb.from('companies')
@@ -844,12 +856,16 @@ async function completeSale() {
     const orderNum = 'POS-' + Date.now().toString(36).toUpperCase();
     const today = new Date().toISOString().split('T')[0];
 
+    // Walk-in fallback — when the cashier hasn't picked a contact, use the
+    // company's system retail contact so POS rows aren't orphaned.
+    const effectiveCustomerId = selectedCustomerId || retailContactId || null;
+
     // OFFLINE PATH — queue the sale in IndexedDB and finish the receipt locally
     if (window.PosConnectivity && !window.PosConnectivity.isOnline && window.completeSaleOfflineFirst) {
       const orderPayload = {
         company_id: companyId, order_number: orderNum, order_type: 'pos', status: 'paid',
         issue_date: today, subtotal: total, tax_rate: 0, tax_amount: 0, discount: 0, total,
-        customer_id: selectedCustomerId || null, created_by: currentUser.id,
+        customer_id: effectiveCustomerId, created_by: currentUser.id,
         _items: cart.map(c => ({
           product_id: c.pid, description: c.name,
           quantity: c.qty, unit_price: c.price, discount: 0, total: c.qty * c.price,
@@ -881,7 +897,7 @@ async function completeSale() {
     const { data: order, error } = await sb.from('sales_orders').insert({
       company_id: companyId, order_number: orderNum, order_type: 'pos', status: 'paid',
       issue_date: today, subtotal: total, tax_rate: 0, tax_amount: 0, discount: 0, total,
-      customer_id: selectedCustomerId || null, created_by: currentUser.id,
+      customer_id: effectiveCustomerId, created_by: currentUser.id,
     }).select('id').single();
     if (error) throw error;
 
@@ -898,7 +914,7 @@ async function completeSale() {
         currency_code: selectedRegister.currency_code || 'USD',
         description: `POS – ${orderNum}`, category: 'sale',
         source_type: 'sales_order', sales_order_id: order.id, payment_method: 'cash',
-        transaction_date: today,
+        transaction_date: today, contact_id: effectiveCustomerId,
       });
     } else if (selectedPayMethod === 'card' || selectedPayMethod === 'bank') {
       const accId = document.getElementById('pay-account').value;
@@ -909,7 +925,7 @@ async function completeSale() {
         description: `POS – ${orderNum}`, category: 'sale',
         source_type: 'sales_order', sales_order_id: order.id,
         payment_method: selectedPayMethod === 'card' ? 'credit_card' : 'bank_transfer',
-        transaction_date: today,
+        transaction_date: today, contact_id: effectiveCustomerId,
       });
     }
 

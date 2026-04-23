@@ -500,11 +500,16 @@ function renderContacts(list) {
       : c.is_customer
         ? `<span class="badge badge-green">${t('lbl_customer') || 'Müşteri'}</span>`
         : `<span class="badge badge-blue">${t('lbl_supplier') || 'Tedarikçi'}</span>`;
+    // System contacts (Perakende Satışlar, future: Kasa Avans etc.) are
+    // visually distinguished and their destructive menu items are hidden.
+    const systemBadge = c.is_system
+      ? ` <span class="badge badge-gray" title="${t('lbl_system_contact_tooltip')||'Sistem carisi — silinemez, birleştirilemez'}" style="margin-left:4px">🔒 ${t('lbl_system')||'Sistem'}</span>`
+      : '';
     const b = balances[c.id] || { debit:0, credit:0 };
     const bal = b.debit - b.credit;
     const balColor = bal > 0 ? 'var(--red)' : bal < 0 ? 'var(--green)' : 'var(--gray400)';
     return `<tr style="cursor:pointer" onclick="openStatement('${c.id}')">
-      <td><strong>${c.name}</strong></td>
+      <td><strong>${c.name}</strong>${systemBadge}</td>
       <td>${typeBadge}</td>
       <td style="text-align:right;color:var(--red);font-weight:600">${b.debit ? fmtMoney(b.debit) : '—'}</td>
       <td style="text-align:right;color:var(--green);font-weight:600">${b.credit ? fmtMoney(b.credit) : '—'}</td>
@@ -517,8 +522,8 @@ function renderContacts(list) {
           <div class="dot-menu-list">
             <button class="dot-menu-item" onclick="closeDotMenus();openStatement('${c.id}')">📋 ${t('lbl_statement')||'Hesap Ekstresi'}</button>
             <button class="dot-menu-item" onclick="closeDotMenus();editContact('${c.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
-            <button class="dot-menu-item" onclick="closeDotMenus();openMergeContactModal('${c.id}')">🔀 ${t('btn_merge')||'Birleştir'}</button>
-            <button class="dot-menu-item danger" onclick="closeDotMenus();deleteContact('${c.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
+            ${c.is_system ? '' : `<button class="dot-menu-item" onclick="closeDotMenus();openMergeContactModal('${c.id}')">🔀 ${t('btn_merge')||'Birleştir'}</button>`}
+            ${c.is_system ? '' : `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteContact('${c.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>`}
           </div>
         </div>
       </td>
@@ -629,6 +634,11 @@ async function saveContact() {
 }
 
 async function deleteContact(id) {
+  const target = contacts.find(c => c.id === id);
+  if (target?.is_system) {
+    showToast(t('err_system_contact_action')||'Sistem carisi silinemez', 'error');
+    return;
+  }
   const [so, po] = await Promise.all([
     sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).eq('is_active', true),
     sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).eq('is_active', true),
@@ -688,14 +698,15 @@ function contactTypeLabel(c) {
 async function openMergeContactModal(id) {
   const src = contacts.find(c => c.id === id);
   if (!src) { showToast(t('err_contact_not_found')||'Cari bulunamadı', 'error'); return; }
+  if (src.is_system) { showToast(t('err_system_contact_action')||'Sistem carisi birleştirilemez', 'error'); return; }
   _mergeContactSourceId = id;
 
   document.getElementById('merge-contact-source-label').innerHTML =
     `<strong>${src.name}</strong> <span style="color:var(--gray400);font-size:11px">· ${contactTypeLabel(src)}</span>`;
 
-  // Target QA — any non-deleted contact in the company except the source.
+  // Target QA — any non-deleted, non-system contact in the company except the source.
   const items = contacts
-    .filter(c => c.id !== id && !c.deleted_at)
+    .filter(c => c.id !== id && !c.deleted_at && !c.is_system)
     .map(c => ({ id: c.id, name: `${c.name} · ${contactTypeLabel(c)}`, _raw: c }));
   const container = document.getElementById('merge-contact-target-qa');
   container.innerHTML = '';
