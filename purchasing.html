@@ -908,6 +908,7 @@ function renderOrders(list) {
       <button class="btn btn-sm btn-outline btn-icon" onclick="viewOrder('${o.id}')" title="Görüntüle">👁</button>
       ${canEditOrder(o.status) ? `<button class="btn btn-sm btn-outline btn-icon" onclick="editOrder('${o.id}')" title="${t('btn_edit')}">✏️</button>` : ''}
       ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>` : ''}
+      ${!accountingEnabled && o.status !== 'paid' ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
     </div></td>
   </tr>`;
   }).join('');
@@ -922,13 +923,19 @@ function renderInvoices(list) {
   tbody.innerHTML = list.map(o => {
     let flowBtn = '';
     if (o.status === 'invoiced') flowBtn = `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','paid')">${t('btn_mark_paid')||'Ödendi'}</button>`;
+    const actions = [];
+    if (flowBtn) actions.push(flowBtn);
+    if (!accountingEnabled && o.status !== 'paid') {
+      actions.push(`<button class="btn btn-sm btn-danger btn-icon" onclick="cancelOrder('${o.id}')" title="İptal">✕</button>`);
+      actions.push(`<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOrder('${o.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>`);
+    }
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
       <td><strong>${o.contacts?.name||'—'}</strong></td>
       <td style="color:var(--gray500)">${o.issue_date||'—'}</td>
       <td><strong>${fmt(parseFloat(o.total||0))}</strong></td>
       <td><span class="badge ${statusBadge[o.status]||'badge-gray'}">${getStatusLabels()[o.status]||o.status}</span></td>
-      <td>${flowBtn}</td>
+      <td><div class="row-actions">${actions.join('')}</div></td>
     </tr>`;
   }).join('');
 }
