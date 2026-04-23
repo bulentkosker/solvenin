@@ -597,6 +597,45 @@
   </div>
 </div>
 
+<!-- MERGE ACCOUNT MODAL -->
+<div class="modal-overlay" id="merge-account-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">🔀 Hesap Birleştir</div>
+      <button class="modal-close" onclick="closeModal('merge-account-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="padding:10px 12px;margin-bottom:14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+        Kaynak hesabın tüm hareketleri hedef hesaba taşınacak. <b>Geri alınamaz.</b>
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)">KAYNAK HESAP</label>
+        <div id="merge-source-label" style="padding:10px 12px;background:var(--gray50);border:1px solid var(--gray200);border-radius:10px;font-family:monospace;font-size:13px">—</div>
+      </div>
+      <div id="merge-counts" style="font-size:12.5px;color:var(--gray600);margin:-4px 0 14px;padding:8px 12px;background:#eff6ff;border-radius:8px">
+        Bu hesapta … hareket var
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)">HEDEF HESAP *</label>
+        <select id="merge-target" style="width:100%;padding:10px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;background:#fff">
+          <option value="">Hesap seçin…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="merge-delete-source">
+          Birleşince kaynak hesabı sil
+          <span id="merge-delete-hint" style="margin-left:auto;font-size:11px;color:var(--gray400)"></span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('merge-account-modal')">İptal</button>
+      <button class="btn btn-primary" id="merge-account-save" onclick="confirmMergeAccount()">Birleştir</button>
+    </div>
+  </div>
+</div>
+
 <!-- COA TEMPLATE MODAL -->
 <div class="modal-overlay" id="coa-template-modal">
   <div class="modal" style="max-width:420px">
@@ -878,6 +917,7 @@ function renderCOA() {
             <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||''}">⋮</button>
             <div class="dot-menu-list">
               <button class="dot-menu-item" onclick="closeDotMenus();editAccount('${acc.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
+              <button class="dot-menu-item" onclick="closeDotMenus();openMergeAccountModal('${acc.id}')">🔀 Birleştir</button>
               <button class="dot-menu-item danger" onclick="closeDotMenus();deleteAccount('${acc.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
             </div>
           </div>
@@ -1015,6 +1055,77 @@ async function saveAccount() {
   await loadAccounts();
   updateStats();
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
+}
+
+// ===== MERGE ACCOUNT =====
+// Keeps page-local state for the open merge modal. Source is captured on
+// open; target comes from the <select>. The RPC does all DB work atomically.
+let _mergeSourceId = null;
+
+async function openMergeAccountModal(id) {
+  const src = accounts.find(a => a.id === id);
+  if (!src) { showToast('Hesap bulunamadı', 'error'); return; }
+  _mergeSourceId = id;
+
+  const srcLabel = `${src.code} — ${coaDisplayName(src)}`;
+  document.getElementById('merge-source-label').textContent = srcLabel;
+
+  // Target dropdown: same type, different account, not soft-deleted.
+  // Leaf preference is a soft hint — parent accounts can be targets if
+  // they legitimately hold bookings in the user's setup; we don't forbid.
+  const parentIds = new Set(accounts.map(a => a.parent_id).filter(Boolean));
+  const candidates = accounts.filter(a =>
+    a.id !== id && a.type === src.type && !a.deleted_at
+  );
+  const sel = document.getElementById('merge-target');
+  sel.innerHTML = '<option value="">Hesap seçin…</option>' + candidates.map(a => {
+    const isParent = parentIds.has(a.id) ? ' (parent)' : '';
+    return `<option value="${a.id}">${a.code} — ${coaDisplayName(a)}${isParent}</option>`;
+  }).join('');
+  sel.value = '';
+
+  // Movement count — quick live fetch so the user sees what's about to move.
+  document.getElementById('merge-counts').textContent = 'Sayılıyor…';
+  const [cashRes, bankRes] = await Promise.all([
+    sb.from('cash_transactions').select('id', { count:'exact', head:true }).eq('chart_of_account_id', id).is('deleted_at', null),
+    sb.from('bank_transactions').select('id', { count:'exact', head:true }).eq('chart_of_account_id', id).is('deleted_at', null)
+  ]);
+  const c = cashRes.count || 0, b = bankRes.count || 0;
+  document.getElementById('merge-counts').textContent =
+    `Bu hesapta ${c} kasa + ${b} banka = ${c + b} hareket var`;
+
+  // Child-aware "Sil" checkbox: if the source has active children, the
+  // RPC will reject delete_source=true anyway — disable the checkbox
+  // upfront so the user doesn't click "Birleştir" and hit a confusing
+  // error.
+  const hasChildren = parentIds.has(id);
+  const cb = document.getElementById('merge-delete-source');
+  cb.checked = false;
+  cb.disabled = hasChildren;
+  document.getElementById('merge-delete-hint').textContent =
+    hasChildren ? '(alt hesapları var, önce onları merge/sil)' : '';
+
+  openModal('merge-account-modal');
+}
+
+async function confirmMergeAccount() {
+  if (submitting()) return;
+  await withLoading(document.getElementById('merge-account-save'), async () => {
+    const targetId = document.getElementById('merge-target').value;
+    if (!targetId) { showToast('Hedef hesap seçin', 'error'); return; }
+    const deleteSource = document.getElementById('merge-delete-source').checked;
+    const { data, error } = await sb.rpc('merge_accounts', {
+      p_source_id: _mergeSourceId, p_target_id: targetId, p_delete_source: deleteSource
+    });
+    if (error) { showToast(error.message, 'error'); return; }
+    const msg = `${data.total_moved} hareket taşındı (${data.cash_moved} kasa, ${data.bank_moved} banka)`
+              + (data.source_deleted ? ' — kaynak silindi' : '');
+    showToast(msg, 'success');
+    closeModal('merge-account-modal');
+    _mergeSourceId = null;
+    await loadAccounts();
+    updateStats();
+  });
 }
 
 function deleteAccount(id) {
