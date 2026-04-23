@@ -1207,39 +1207,116 @@ async function savePoPayment() {
 
   const order = orders.find(o => o.id === orderId);
 
-  // 0. Save payment record
-  await sb.from('payments').insert({ company_id: companyId, purchase_order_id: orderId, payment_type: 'purchase', amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
+  // 0. Save payment record.  Supabase JS returns { error } instead of
+  // throwing, so we explicitly throw on failure — otherwise a silent
+  // INSERT failure would leak through and the status-paid UPDATE at the
+  // end would still run, producing the "status=paid but no payment" bug
+  // (Park PO0001, Anka PO-0008…0011 in April 2026).
+  const { error: payErr } = await sb.from('payments').insert({
+    company_id: companyId, purchase_order_id: orderId, payment_type: 'purchase',
+    amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z'
+  });
+  if (payErr) throw payErr;
 
-  // 1. Create cash/bank transaction
+  // 1. Create cash/bank transaction (dup-check first — mirrors sales)
   if (method === 'cash' && registerId) {
-    const reg = cashRegisters.find(r => r.id === registerId);
-    await sb.from('cash_transactions').insert({
-      company_id: companyId, register_id: registerId, type: 'out', amount,
-      currency_code: reg?.currency_code || 'USD',
-      description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
-      category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
-      payment_method: 'cash',
-      reference: ref, transaction_date: payDate
-    });
+    const { data: dup } = await sb.from('cash_transactions').select('id')
+      .eq('source_type','purchase_order').eq('purchase_order_id', orderId)
+      .eq('register_id', registerId).is('deleted_at', null);
+    if (dup?.length) {
+      showToast(t('toast_duplicate_tx') || 'Benzer hareket zaten mevcut — atlandı', 'warn');
+    } else {
+      const reg = cashRegisters.find(r => r.id === registerId);
+      const { error: ctErr } = await sb.from('cash_transactions').insert({
+        company_id: companyId, register_id: registerId, type: 'out', amount,
+        currency_code: reg?.currency_code || 'USD',
+        description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
+        category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
+        payment_method: 'cash',
+        reference: ref, transaction_date: payDate
+      });
+      if (ctErr) throw ctErr;
+    }
   } else if ((method === 'bank' || method === 'card') && accountId) {
-    const acc = bankAccounts.find(a => a.id === accountId);
-    await sb.from('bank_transactions').insert({
-      company_id: companyId, account_id: accountId, type: 'out', amount,
-      currency_code: acc?.currency_code || 'USD',
-      description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
-      category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
-      payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
-      reference: ref, transaction_date: payDate
-    });
+    const { data: dup } = await sb.from('bank_transactions').select('id')
+      .eq('source_type','purchase_order').eq('purchase_order_id', orderId)
+      .eq('account_id', accountId).is('deleted_at', null);
+    if (dup?.length) {
+      showToast(t('toast_duplicate_tx') || 'Benzer hareket zaten mevcut — atlandı', 'warn');
+    } else {
+      const acc = bankAccounts.find(a => a.id === accountId);
+      const { error: btErr } = await sb.from('bank_transactions').insert({
+        company_id: companyId, account_id: accountId, type: 'out', amount,
+        currency_code: acc?.currency_code || 'USD',
+        description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order?.order_number || ''}`,
+        category: 'purchase', source_type: 'purchase_order', purchase_order_id: orderId,
+        payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
+        reference: ref, transaction_date: payDate
+      });
+      if (btErr) throw btErr;
+    }
   }
 
-  // 2. Mark as paid
-  await sb.from('purchase_orders').update({ status: 'paid' }).eq('id', orderId);
+  // 2. Journal entry for payment (no-op when accounting disabled).
+  if (order) await createPurchasePaymentJournalEntry(order, amount, method, payDate);
+
+  // 3. Auto-mark as paid ONLY if fully covered (mirrors sales). Fresh
+  // DB query — purchasing.html doesn't cache a payments array.
+  const { data: allPays } = await sb.from('payments').select('amount')
+    .eq('purchase_order_id', orderId).is('deleted_at', null);
+  const totalPaid = (allPays || []).reduce((s,p) => s + parseFloat(p.amount||0), 0);
+  if (order && totalPaid >= parseFloat(order.total || 0)) {
+    const { error: upErr } = await sb.from('purchase_orders').update({ status: 'paid' }).eq('id', orderId);
+    if (upErr) throw upErr;
+  }
 
   showToast(t('toast_payment_recorded') || 'Ödeme kaydedildi', 'success');
   closeModal('po-payment-modal');
   await loadOrders();
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
+}
+
+// ===== JOURNAL ENTRY for supplier payment =====
+// Mirrors sales.html createPaymentJournalEntry but for the purchase side:
+//   Dr 320 Satıcılar  (supplier payable down)
+//   Cr 100 Kasa / 102 Banka  (cash/bank out)
+// No-op when accounting is disabled so muhasebe-kapalı companies pay
+// without leaving journal rows.
+async function getAccountId(code) {
+  const { data } = await sb.from('chart_of_accounts').select('id')
+    .eq('company_id', companyId).eq('code', code).maybeSingle();
+  return data?.id || null;
+}
+
+async function createPurchasePaymentJournalEntry(order, amount, method, date) {
+  if (!accountingEnabled) return;
+  try {
+    const accCode = method === 'cash' ? '100' : '102';
+    const jeTypeMap = { cash: 'cash', bank: 'bank', card: 'bank', check: 'bank' };
+    const jeType = jeTypeMap[method] || 'bank';
+    const entryNum = 'JE-PP-' + order.order_number + '-' + Date.now();
+
+    const { data: je, error } = await sb.from('journal_entries').insert({
+      company_id: companyId,
+      entry_number: entryNum,
+      entry_date: date,
+      description: `${t('purchase_payment') || 'Alış ödemesi'} – ${order.order_number}`,
+      type: jeType,
+      purchase_order_id: order.id,
+      is_posted: true,
+    }).select('id').single();
+    if (error || !je) { console.error('Purchase payment JE error:', error); return; }
+
+    const [acc320, accCashBank] = await Promise.all([
+      getAccountId('320'), getAccountId(accCode)
+    ]);
+
+    const { error: lErr } = await sb.from('journal_lines').insert([
+      { entry_id: je.id, account_id: acc320, description: order.order_number, debit: amount, credit: 0 },
+      { entry_id: je.id, account_id: accCashBank, description: order.contacts?.name || '', debit: 0, credit: amount },
+    ]);
+    if (lErr) console.error('Purchase payment JE lines error:', lErr);
+  } catch (e) { console.error('Purchase payment JE error:', e); }
 }
 
 // ===== ORDER FORM (FULL PAGE) =====
