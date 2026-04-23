@@ -756,10 +756,6 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Karşı Taraf</label>
-        <input type="text" id="btx-counterparty" placeholder="Gönderen / Alan" data-i18n-placeholder="placeholder_counterparty">
-      </div>
-      <div class="form-group">
         <label>Referans</label>
         <input type="text" id="btx-ref" placeholder="Dekont no, IBAN..." data-i18n-placeholder="placeholder_bank_ref">
       </div>
@@ -1614,7 +1610,10 @@ function resetTxSelectors(prefix) {
 // ═══════════════════════════════════════════════════════════════
 const TX_CATEGORIES = {
   // PARA GİRİŞİ (in)
-  sale_receipt:       { dir:'in',  label:'Satış Tahsilatı',       needs:['contact'], opt:['account'], acctTypes:['revenue'] },
+  // Contact-closing row (Dr 102 Banka / Cr 120 Alıcılar). chart_of_account_id
+  // stays NULL until the accounting module maps the customer subledger
+  // automatically from companies.default_receivable_account_id.
+  sale_receipt:       { dir:'in',  label:'Satış Tahsilatı',       needs:['contact'] },
   other_income:       { dir:'in',  label:'Diğer Gelir',           needs:['account'], acctTypes:['revenue'] },
   loan_received:      { dir:'in',  label:'Kredi Kullanımı',       needs:['account'], acctTypes:['liability'] },
   owner_contribution: { dir:'in',  label:'Ortaklardan Alınan',    needs:['contact','account'], acctTypes:['liability'] },
@@ -1622,7 +1621,9 @@ const TX_CATEGORIES = {
   refund_received:    { dir:'in',  label:'İade Alınan',           needs:['contact','account'], acctTypes:['expense','cost'] },
   // PARA ÇIKIŞI (out)
   expense:            { dir:'out', label:'Gider',                 needs:['account'], acctTypes:['expense','cost'] },
-  supplier_payment:   { dir:'out', label:'Tedarikçi Ödemesi',     needs:['contact'], opt:['account'], acctTypes:['expense','cost'] },
+  // Contact-closing row (Dr 320 Satıcılar / Cr 102 Banka). Same NULL-until-
+  // accounting-module treatment as sale_receipt.
+  supplier_payment:   { dir:'out', label:'Tedarikçi Ödemesi',     needs:['contact'] },
   // Salary / Advance hide the account picker entirely — chart_of_account_id
   // is auto-filled at save time from companies.default_{salary,advance}_account_id
   // (Settings → Muhasebe Varsayılanları). If the user hasn't set one yet,
@@ -2120,7 +2121,6 @@ async function openBankTxModal(id = null) {
   document.getElementById('btx-type').value = tx?.type || 'in';
   document.getElementById('btx-amount').value = tx?.amount || '';
   document.getElementById('btx-desc').value = tx?.description || '';
-  document.getElementById('btx-counterparty').value = tx?.counterparty || '';
   document.getElementById('btx-ref').value = tx?.reference || '';
   document.getElementById('btx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
   resetTxSelectors('btx');
@@ -2166,7 +2166,6 @@ async function saveBankTx() {
   const amount = parseFloat(document.getElementById('btx-amount').value);
   const desc = document.getElementById('btx-desc').value.trim();
   const date = document.getElementById('btx-date').value;
-  const counterparty = document.getElementById('btx-counterparty').value.trim();
   const ref = document.getElementById('btx-ref').value.trim();
 
   if (!amount || amount <= 0) { showToast(t('toast_invalid_amount'), 'error'); return; }
@@ -2204,11 +2203,15 @@ async function saveBankTx() {
     ? getTxContactId('btx') : null;
   const employeeId = cfg?.needs?.includes('employee') ? getTxEmployeeId('btx') : null;
   const chartOfAccountId = resolveAccountForCategory('btx', category, editingBankTxId, bankTxAll);
-  const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : counterparty;
+  // Counterparty auto-derived from selected contact (matches cash_transactions
+  // pattern). The free-text input was removed — users put custom labels in the
+  // description field. Legacy rows' counterparty stays in DB; the listing still
+  // renders it.
+  const counterpartyName = contactId ? _txContacts?.find(c=>c.id===contactId)?.name : null;
 
   const payload = {
     type, amount, description: desc, category,
-    counterparty: counterpartyName || counterparty, reference: ref,
+    counterparty: counterpartyName, reference: ref,
     transaction_date: date, contact_id: contactId,
     chart_of_account_id: chartOfAccountId, employee_id: employeeId
   };
