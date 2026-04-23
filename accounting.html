@@ -455,6 +455,7 @@
         <div class="form-group">
           <label data-i18n="label_subtype">Subtype</label>
           <select id="acc-subtype">
+            <option value="">— Parent'tan miras —</option>
             <option value="current_asset">Current Asset</option>
             <option value="fixed_asset">Fixed Asset</option>
             <option value="current_liability">Current Liability</option>
@@ -1029,9 +1030,13 @@ async function saveAccount() {
   // parent_id NULL, which breaks the cashbank dropdown's leaf filter.
   const parent = detectAccountParent(code, accounts);
   const effectiveType = parent && type === 'asset' ? parent.type : type;
+  // Subtype inheritance — when the user didn't pick a subtype (select left
+  // blank) and the parent has one set, inherit it. A user-selected subtype
+  // is respected as an override. Parent with NULL subtype leaves child NULL.
+  const effectiveSubtype = subtype || (parent?.subtype || null);
   const payload = {
     company_id: companyId, code, name, name_local: nameLocal,
-    type: effectiveType, subtype, balance,
+    type: effectiveType, subtype: effectiveSubtype, balance,
     parent_id: parent?.id || null,
     parent_code: parent?.code || null,
     level: parent ? (parent.level || 1) + 1 : 1
@@ -1039,7 +1044,7 @@ async function saveAccount() {
 
   if (editingAccountId) {
     const { error } = await sb.from('chart_of_accounts').update({
-      code, name, name_local: nameLocal, type: effectiveType, subtype,
+      code, name, name_local: nameLocal, type: effectiveType, subtype: effectiveSubtype,
       parent_id: payload.parent_id, parent_code: payload.parent_code, level: payload.level
     }).eq('id', editingAccountId);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
