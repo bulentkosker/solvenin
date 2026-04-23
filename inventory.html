@@ -734,6 +734,45 @@ tr:hover .action-btns { opacity:1; }
   </div>
 </div>
 
+<!-- MERGE PRODUCT MODAL -->
+<div class="modal-overlay" id="merge-product-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title">🔀 <span data-i18n="merge_product_title">Ürün Birleştir</span></div>
+      <button class="modal-close" onclick="closeModal('merge-product-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="padding:10px 12px;margin-bottom:14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+        <span data-i18n="merge_product_warning">Kaynak ürünün tüm hareket/ilişkileri hedef ürüne taşınacak. Stok seviyeleri aynı depoda toplanır.</span>
+        <b> <span data-i18n="merge_irreversible">Geri alınamaz.</span></b>
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)" data-i18n="merge_source">KAYNAK ÜRÜN</label>
+        <div id="merge-product-source-label" style="padding:10px 12px;background:var(--gray50);border:1px solid var(--gray200);border-radius:10px;font-family:monospace;font-size:13px">—</div>
+      </div>
+      <div id="merge-product-counts" style="font-size:12.5px;color:var(--gray600);margin:-4px 0 14px;padding:8px 12px;background:#eff6ff;border-radius:8px">
+        <span data-i18n="merge_counting">Sayılıyor…</span>
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)" data-i18n="merge_target">HEDEF ÜRÜN *</label>
+        <div id="merge-product-target-qa"></div>
+      </div>
+      <div id="merge-product-unit-warning" style="display:none;padding:10px 12px;margin-bottom:14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e"></div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="merge-product-delete-source">
+          <span data-i18n="merge_delete_source_cb">Birleşince kaynak ürünü sil</span>
+          <span id="merge-product-delete-hint" style="margin-left:auto;font-size:11px;color:var(--gray400)"></span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('merge-product-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" id="merge-product-save" onclick="confirmMergeProduct()" data-i18n="btn_merge">Birleştir</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUICK-ADD PRODUCT MINI MODAL -->
 <div class="modal-overlay" id="qa-product-modal" style="z-index:2000">
   <div class="modal" style="max-width:420px">
@@ -1014,6 +1053,7 @@ function renderTable() {
       <td><div class="action-btns">
         <button class="action-btn" onclick="openEditModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
         <button class="action-btn" onclick="openAdjustForProduct('${p.id}')" title="${t('inv_adjust_stock')}">📊</button>
+        <button class="action-btn" onclick="openMergeProductModal('${p.id}')" title="${t('btn_merge')||'Birleştir'}">🔀</button>
         <button class="action-btn danger" onclick="openDeleteModal('${p.id}')" title="${t('btn_delete')}">🗑️</button>
       </div></td>
     </tr>`;
@@ -2241,6 +2281,119 @@ async function confirmDelete() {
   await loadProducts();
   renderAll();
   showToast(t('product_deleted'), 'success');
+}
+
+// ===== MERGE PRODUCT =====
+// Page-local state for the open merge modal. Source is captured on open;
+// target comes from the QA dropdown. The RPC does all DB work atomically.
+let _mergeProductSourceId = null;
+let _mergeProductTargetQA = null;
+
+async function openMergeProductModal(id) {
+  const src = products.find(p => p.id === id);
+  if (!src) { showToast(t('err_product_not_found')||'Ürün bulunamadı', 'error'); return; }
+  _mergeProductSourceId = id;
+
+  const srcLabel = `${src.sku ? src.sku + ' — ' : ''}${src.name} (${src.unit || '?'})`;
+  document.getElementById('merge-product-source-label').textContent = srcLabel;
+
+  // Target QA — any non-deleted product in the company except the source.
+  const items = products
+    .filter(p => p.id !== id)
+    .map(p => ({ id: p.id, name: `${p.sku ? p.sku + ' — ' : ''}${p.name} (${p.unit || '?'})`, unit: p.unit }));
+  const container = document.getElementById('merge-product-target-qa');
+  container.innerHTML = '';
+  _mergeProductTargetQA = QA.create(container, {
+    items,
+    placeholder: t('placeholder_search_products') || 'Ürün ara...',
+    onSelect: () => updateMergeProductUnitWarning(),
+  });
+
+  document.getElementById('merge-product-unit-warning').style.display = 'none';
+
+  // Live move-count: query every FK table referenced by the RPC so the
+  // user sees exactly what's about to move before confirming.
+  const countsEl = document.getElementById('merge-product-counts');
+  countsEl.textContent = t('merge_counting') || 'Sayılıyor…';
+  const [so, po, sm, sl, sn, lot, var_, bi, bo, qi, ir, isi, pqb, pal, pe, si, wop] = await Promise.all([
+    sb.from('sales_order_items').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('purchase_order_items').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('stock_movements').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('stock_levels').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('serial_numbers').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('product_lots').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('product_variants').select('id',{count:'exact',head:true}).eq('parent_product_id', id),
+    sb.from('bom_inputs').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('bom_outputs').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('crm_quote_items').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('inventory_results').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('inventory_sheet_items').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('pos_quick_buttons').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('product_attribute_lines').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('production_entries').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('shipment_items').select('id',{count:'exact',head:true}).eq('product_id', id),
+    sb.from('work_order_parts').select('id',{count:'exact',head:true}).eq('product_id', id),
+  ]);
+  const total = (so.count||0)+(po.count||0)+(sm.count||0)+(sl.count||0)+(sn.count||0)
+    +(lot.count||0)+(var_.count||0)+(bi.count||0)+(bo.count||0)+(qi.count||0)
+    +(ir.count||0)+(isi.count||0)+(pqb.count||0)+(pal.count||0)+(pe.count||0)
+    +(si.count||0)+(wop.count||0);
+  const variantCount = var_.count || 0;
+  countsEl.innerHTML = `<b>${total}</b> kayıt taşınacak · `
+    + `${sm.count||0} stok hrk, ${sl.count||0} stok sev, `
+    + `${so.count||0} satış, ${po.count||0} alış, `
+    + `${variantCount} varyant, ${sn.count||0} seri, ${lot.count||0} lot`;
+
+  // Child-aware "Sil" checkbox: if the source has active variants, RPC
+  // rejects delete_source=true. Disable upfront so the user doesn't hit
+  // a confusing error after clicking "Birleştir".
+  const cb = document.getElementById('merge-product-delete-source');
+  cb.checked = false;
+  cb.disabled = variantCount > 0;
+  document.getElementById('merge-product-delete-hint').textContent =
+    variantCount > 0 ? `(${variantCount} varyant var, önce onları taşı/sil)` : '';
+
+  openModal('merge-product-modal');
+}
+
+function updateMergeProductUnitWarning() {
+  if (!_mergeProductTargetQA) return;
+  const targetId = _mergeProductTargetQA.getValue();
+  const warn = document.getElementById('merge-product-unit-warning');
+  if (!targetId) { warn.style.display = 'none'; return; }
+  const src = products.find(p => p.id === _mergeProductSourceId);
+  const tgt = products.find(p => p.id === targetId);
+  if (!src || !tgt) { warn.style.display = 'none'; return; }
+  if ((src.unit || '') === (tgt.unit || '')) {
+    warn.style.display = 'none';
+    return;
+  }
+  warn.textContent = `⚠️ Birim farklı — Kaynak: ${src.unit || '?'}, Hedef: ${tgt.unit || '?'}. Stok miktarları aynı ölçüde toplanacak. Emin misin?`;
+  warn.style.display = '';
+}
+
+async function confirmMergeProduct() {
+  if (submitting()) return;
+  await withLoading(document.getElementById('merge-product-save'), async () => {
+    const targetId = _mergeProductTargetQA ? _mergeProductTargetQA.getValue() : '';
+    if (!targetId) { showToast(t('merge_pick_target')||'Hedef ürün seçin', 'error'); return; }
+    const deleteSource = document.getElementById('merge-product-delete-source').checked;
+    const { data, error } = await sb.rpc('merge_products', {
+      p_source_id: _mergeProductSourceId, p_target_id: targetId, p_delete_source: deleteSource
+    });
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    const summed = data.counts?.stock_levels_summed || 0;
+    const reassigned = data.counts?.stock_levels_reassigned || 0;
+    let msg = `${data.total_moved} kayıt taşındı`;
+    if (summed > 0) msg += ` (${summed} stok satırı aynı depoda toplandı)`;
+    if (data.source_deleted) msg += ' — kaynak silindi';
+    showToast(msg, 'success');
+    closeModal('merge-product-modal');
+    _mergeProductSourceId = null;
+    _mergeProductTargetQA = null;
+    await loadProducts();
+    renderAll();
+  });
 }
 
 function openMovementModal() {
