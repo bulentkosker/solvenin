@@ -401,6 +401,7 @@ tr:hover .action-btns { opacity:1; }
               <th data-col="birim_maliyet" onclick="sortTable('unit_cost')"><span data-i18n="col_unit_cost">Unit Cost</span> ↕</th>
               <th data-col="toplam_deger" onclick="sortTable('total_value')"><span data-i18n="col_total_value">Total Value</span> ↕</th>
               <th data-col="durum"><span data-i18n="col_status">Status</span></th>
+              <th data-col="urun_kodu" style="display:none"><span data-i18n="col_sku">SKU</span></th>
               <th data-col="barkod" style="display:none"><span data-i18n="col_barcode">Barcode</span></th>
               <th data-col="tip" style="display:none"><span data-i18n="col_type">Type</span></th>
               <th style="width:80px"><span data-i18n="col_actions">Actions</span></th>
@@ -1034,7 +1035,7 @@ function applyFilters() {
   const itemTypeFilter = document.getElementById('filter-item-type')?.value || '';
 
   filteredProducts = products.filter(p => {
-    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.barcode||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
     const matchCat = !cat || p.category_id === cat;
     const status = getStockStatus(p);
     // Services have no stock status — only honor status/low-stock filters for products
@@ -1111,7 +1112,8 @@ function renderTable() {
       <td data-col="birim_maliyet">${p.unit_cost ? fmt(p.unit_cost) : '—'}</td>
       <td data-col="toplam_deger" style="font-weight:600;color:var(--gray800)">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : totalVal}</td>
       <td data-col="durum">${p.is_service ? '<span class="badge" style="background:#ede9fe;color:#7c3aed">🔧 '+(t('label_service')||'Service')+'</span>' : badge}</td>
-      <td data-col="barkod">${p.barcode || p.sku || '—'}</td>
+      <td data-col="urun_kodu">${p.sku || '—'}</td>
+      <td data-col="barkod">${p.barcode || '—'}</td>
       <td data-col="tip">${typeBadge}</td>
       <td style="text-align:right">
         <div class="dot-menu">
@@ -1147,7 +1149,8 @@ const INVENTORY_COLUMNS = [
   { key:'birim_maliyet', i18n:'col_unit_cost',    label:'Birim Maliyet', defaultOn:true,  responsiveHide:true },
   { key:'toplam_deger',  i18n:'col_total_value',  label:'Toplam Değer',  defaultOn:true,  responsiveHide:true },
   { key:'durum',         i18n:'col_status',       label:'Durum',         defaultOn:true },
-  { key:'barkod',        i18n:'col_barcode',      label:'Barkod',        defaultOn:false },
+  { key:'urun_kodu',     i18n:'col_sku',          label:'Ürün Kodu',     defaultOn:true,  responsiveHide:true },
+  { key:'barkod',        i18n:'col_barcode',      label:'Barkod',        defaultOn:true,  responsiveHide:true },
   { key:'tip',           i18n:'col_type',         label:'Tip',           defaultOn:false },
 ];
 
@@ -2676,6 +2679,7 @@ function toggleView(view) {
           <th data-col="birim_maliyet" onclick="sortTable('unit_cost')">${t('col_unit_cost')} ↕</th>
           <th data-col="toplam_deger" onclick="sortTable('total_value')">${t('col_total_value')} ↕</th>
           <th data-col="durum">${t('col_status')}</th>
+          <th data-col="urun_kodu">${t('col_sku')||'SKU'}</th>
           <th data-col="barkod">${t('col_barcode')||'Barcode'}</th>
           <th data-col="tip">${t('col_type')||'Type'}</th>
           <th style="width:80px">${t('col_actions')}</th>
