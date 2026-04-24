@@ -1499,13 +1499,13 @@ async function loadDashboardStats(){
     const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     const [ordersRes, registersRes, accountsRes, paymentsRes, customersRes, purchasesRes, productsRes] = await Promise.all([
-      sb.from('sales_orders').select('id,total,status,created_at').eq('company_id', companyId),
+      sb.from('sales_orders').select('id,total,status,created_at').eq('company_id', companyId).is('deleted_at', null),
       sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
-      sb.from('payments').select('id,amount,order_id').eq('company_id', companyId),
-      sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true),
-      sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId),
-      sb.from('products').select('id,quantity,min_stock,reorder_point').eq('company_id', companyId),
+      sb.from('payments').select('id,amount,order_id').eq('company_id', companyId).is('deleted_at', null),
+      sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true).is('deleted_at', null),
+      sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId).is('deleted_at', null),
+      sb.from('products').select('id,quantity,min_stock,reorder_point').eq('company_id', companyId).is('deleted_at', null),
     ]);
 
     const orders    = ordersRes.data || [];
@@ -1606,6 +1606,7 @@ async function loadDashboardStats(){
       .select('id, total, status, created_at, customers(name)')
       .eq('company_id', companyId)
       .eq('is_active', true)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(5);
 
@@ -1639,6 +1640,7 @@ async function loadDashboardStats(){
       .select('name, quantity, min_stock')
       .eq('company_id', companyId)
       .eq('is_active', true)
+      .is('deleted_at', null)
       .lt('quantity', sb.raw ? undefined : 0)
       .limit(5);
 
@@ -1646,7 +1648,8 @@ async function loadDashboardStats(){
     const { data: allProducts } = await sb.from('products')
       .select('name, quantity, min_stock, reorder_point')
       .eq('company_id', companyId)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .is('deleted_at', null);
 
     const notifContainer = document.getElementById('notif-list-container');
     if (notifContainer && allProducts) {
@@ -1807,8 +1810,8 @@ async function loadCashBankStatus(){
     const [regs, banks, ct, bt] = await Promise.all([
       sb.from('cash_registers').select('id, name, current_balance, currency_code').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('id, account_name, current_balance, currency_code, banks(name)').eq('company_id', companyId).eq('is_active', true),
-      sb.from('cash_transactions').select('cash_register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()),
-      sb.from('bank_transactions').select('bank_account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()),
+      sb.from('cash_transactions').select('cash_register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
+      sb.from('bank_transactions').select('bank_account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
     ]);
     const cashTx = ct.data || []; const bankTx = bt.data || [];
     const cards = [];
@@ -1857,9 +1860,9 @@ async function loadActivityTimeline(){
   if (!wrap) return;
   try {
     const [sales, purch, pays] = await Promise.all([
-      sb.from('sales_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
-      sb.from('purchase_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
-      sb.from('payments').select('id, amount, created_at, order_id').eq('company_id', companyId).order('created_at',{ascending:false}).limit(8),
+      sb.from('sales_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
+      sb.from('purchase_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
+      sb.from('payments').select('id, amount, created_at, order_id').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
     ]);
     const acts = [];
     (sales.data||[]).forEach(o => acts.push({ kind:'sale', ico:'💰', title:`${t('dash_sale')||'Satış'}: ${o.contacts?.name||'—'}`, sub:'#'+o.id.slice(0,8), amount:'+'+fmtMoney(o.total), at:o.created_at }));
@@ -1895,9 +1898,9 @@ async function loadAlerts(){
     const in7 = new Date(today.getTime()+7*86400000).toISOString().slice(0,10);
     const todayStr = today.toISOString().slice(0,10);
     const [prods, overdueOrders, upcoming] = await Promise.all([
-      sb.from('products').select('name, quantity, min_stock, reorder_point').eq('company_id', companyId).eq('is_active', true),
-      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','overdue']).lt('due_date', todayStr).order('due_date',{ascending:true}).limit(10),
-      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).in('status', ['invoiced','confirmed']).gte('due_date', todayStr).lte('due_date', in7).order('due_date',{ascending:true}).limit(10),
+      sb.from('products').select('name, quantity, min_stock, reorder_point').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null),
+      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','overdue']).lt('due_date', todayStr).order('due_date',{ascending:true}).limit(10),
+      sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','confirmed']).gte('due_date', todayStr).lte('due_date', in7).order('due_date',{ascending:true}).limit(10),
     ]);
     const lows = (prods.data||[]).filter(p => {
       const qty = parseFloat(p.quantity||0);
