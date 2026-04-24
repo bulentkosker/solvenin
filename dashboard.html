@@ -1810,13 +1810,13 @@ async function loadCashBankStatus(){
     const [regs, banks, ct, bt] = await Promise.all([
       sb.from('cash_registers').select('id, name, current_balance, currency_code').eq('company_id', companyId).eq('is_active', true),
       sb.from('bank_accounts').select('id, account_name, current_balance, currency_code, banks(name)').eq('company_id', companyId).eq('is_active', true),
-      sb.from('cash_transactions').select('cash_register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
-      sb.from('bank_transactions').select('bank_account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
+      sb.from('cash_transactions').select('register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
+      sb.from('bank_transactions').select('account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
     ]);
     const cashTx = ct.data || []; const bankTx = bt.data || [];
     const cards = [];
-    (regs.data||[]).forEach(r => cards.push({ id:'c-'+r.id, kind:'💵', name:r.name, bal:r.current_balance, cur:r.currency_code, spark: spark7(cashTx.filter(t=>t.cash_register_id===r.id)) }));
-    (banks.data||[]).forEach(b => cards.push({ id:'b-'+b.id, kind:'🏦', name:b.account_name+(b.banks?.name?` · ${b.banks.name}`:''), bal:b.current_balance, cur:b.currency_code, spark: spark7(bankTx.filter(t=>t.bank_account_id===b.id)) }));
+    (regs.data||[]).forEach(r => cards.push({ id:'c-'+r.id, kind:'💵', name:r.name, bal:r.current_balance, cur:r.currency_code, spark: spark7(cashTx.filter(t=>t.register_id===r.id)) }));
+    (banks.data||[]).forEach(b => cards.push({ id:'b-'+b.id, kind:'🏦', name:b.account_name+(b.banks?.name?` · ${b.banks.name}`:''), bal:b.current_balance, cur:b.currency_code, spark: spark7(bankTx.filter(t=>t.account_id===b.id)) }));
     if (!cards.length){ wrap.innerHTML = `<div style="color:var(--gray400);padding:12px">${t('no_data')||'Aktif kasa veya banka yok'}</div>`; return; }
     wrap.innerHTML = cards.map(c => `
       <div class="cb-card">
@@ -1862,12 +1862,12 @@ async function loadActivityTimeline(){
     const [sales, purch, pays] = await Promise.all([
       sb.from('sales_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
       sb.from('purchase_orders').select('id, total, created_at, contacts(name)').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
-      sb.from('payments').select('id, amount, created_at, order_id').eq('company_id', companyId).is('deleted_at', null).order('created_at',{ascending:false}).limit(8),
+      sb.from('payments').select('id, amount, paid_at, order_id').eq('company_id', companyId).is('deleted_at', null).order('paid_at',{ascending:false}).limit(8),
     ]);
     const acts = [];
     (sales.data||[]).forEach(o => acts.push({ kind:'sale', ico:'💰', title:`${t('dash_sale')||'Satış'}: ${o.contacts?.name||'—'}`, sub:'#'+o.id.slice(0,8), amount:'+'+fmtMoney(o.total), at:o.created_at }));
     (purch.data||[]).forEach(o => acts.push({ kind:'purchase', ico:'🛒', title:`${t('dash_purchase')||'Alış'}: ${o.contacts?.name||'—'}`, sub:'#'+o.id.slice(0,8), amount:'-'+fmtMoney(o.total), at:o.created_at }));
-    (pays.data||[]).forEach(p => acts.push({ kind:'payment', ico:'💳', title:`${t('dash_payment')||'Ödeme'}`, sub:p.order_id?'#'+p.order_id.slice(0,8):'', amount:fmtMoney(p.amount), at:p.created_at }));
+    (pays.data||[]).forEach(p => acts.push({ kind:'payment', ico:'💳', title:`${t('dash_payment')||'Ödeme'}`, sub:p.order_id?'#'+p.order_id.slice(0,8):'', amount:fmtMoney(p.amount), at:p.paid_at }));
     acts.sort((a,b)=> new Date(b.at)-new Date(a.at));
     const top = acts.slice(0,10);
     if (!top.length){ wrap.innerHTML = `<div style="text-align:center;color:var(--gray400);padding:20px">${t('no_data')||'Henüz işlem yok'}</div>`; return; }
