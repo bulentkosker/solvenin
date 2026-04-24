@@ -77,7 +77,7 @@ table.map-table td{padding:8px 10px;border-bottom:1px solid var(--gray100);verti
 table.map-table td select{padding:6px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:12px;background:#fff;font-family:inherit;cursor:pointer;min-width:140px}
 
 .summary-bar{background:var(--blue-light);border:1px solid var(--blue);color:var(--gray800);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.err-banner{background:var(--red-light);border:1px solid var(--red);color:var(--red);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.err-banner{background:var(--gray50);border:1px solid var(--gray200);color:var(--gray600);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px}
 
 .status-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .chip-existing{background:var(--green-light);color:var(--green)}
@@ -846,9 +846,9 @@ function renderStep3() {
   document.getElementById('summary-bar').innerHTML = `<span>${summary}</span><span style="font-size:11px;color:var(--gray500)">${taxIncluded ? 'KDV dahil' : 'KDV hariç'} · %${taxRate}</span>`;
 
   if (invalid.length) {
-    const msg = (t('import_errors_found') || '{count} invalid row(s) will be skipped').replace('{count}', invalid.length);
+    const msg = (t('import_errors_found') || 'ℹ️ {count} row(s) skipped (may be empty or header/total rows)').replace('{count}', invalid.length);
     const errs = invalid.slice(0,5).map(i => `• Satır ${i.excel_row}: ${i.errors.join(', ')}`).join('<br>');
-    document.getElementById('err-banner').innerHTML = `<b>${msg}</b><br><span style="font-size:11px">${errs}${invalid.length > 5 ? '<br>...' : ''}</span>`;
+    document.getElementById('err-banner').innerHTML = `<b>${msg}</b><br><span style="font-size:11px;color:var(--gray500)">${errs}${invalid.length > 5 ? '<br>...' : ''}</span>`;
     document.getElementById('err-banner').classList.remove('hidden');
   } else {
     document.getElementById('err-banner').classList.add('hidden');
