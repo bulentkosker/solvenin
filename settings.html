@@ -1911,6 +1911,14 @@ async function init() {
 
   console.timeEnd('[settings] total init');
   hideLoading();
+
+  // Deep-link: ?section=X switches to that settings section and focuses its nav item
+  const _qs = new URLSearchParams(window.location.search);
+  const _sec = _qs.get('section');
+  if (_sec) {
+    const navBtn = document.querySelector(`.settings-nav-item[onclick*="'${_sec}'"]`);
+    switchSection(_sec, navBtn || null);
+  }
 }
 
 // ===== COUNTRIES FOR NEW COMPANY =====

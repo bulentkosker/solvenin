@@ -252,6 +252,18 @@
 
   <div class="content">
 
+    <!-- ACCOUNTING DISABLED BANNER (hidden by default; shown if companies.accounting_enabled=false) -->
+    <div id="accounting-disabled-banner" style="display:none;background:#fffbeb;border:1px solid #f59e0b;border-left:4px solid #f59e0b;border-radius:10px;padding:14px 18px;margin-bottom:16px;color:var(--gray800)">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:22px;line-height:1">⚠️</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px" data-i18n="accounting_disabled_title">Muhasebe Entegrasyonu Kapalı</div>
+          <div style="font-size:13px;color:var(--gray600);line-height:1.5" data-i18n="accounting_disabled_msg">Muhasebe modülü şu an aktif değil. Fatura ve ödeme hareketleri otomatik yevmiyeye yansımaz, büyük defter/yevmiye/mizan raporları boş görünür.</div>
+          <a href="settings.html?section=integrations" style="display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:#b45309;text-decoration:none" data-i18n="accounting_disabled_action">Ayarlar'dan aktifleştir →</a>
+        </div>
+      </div>
+    </div>
+
     <!-- STATS -->
     <div class="stats-row fade-up">
       <div class="stat-card green">
@@ -698,6 +710,16 @@ async function init() {
   const active = savedId ? myCompanies.find(c => c.company_id === savedId) || myCompanies.find(c => c.is_active) || myCompanies[0] : myCompanies.find(c => c.is_active) || myCompanies[0];
   companyId = active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
+
+  // Show disabled-banner if companies.accounting_enabled is false.
+  // Users landing here without the module active see raw CoA but empty
+  // reports — banner explains why and links to the integration toggle.
+  try {
+    const { data: compRow } = await sb.from('companies').select('accounting_enabled').eq('id', companyId).single();
+    const banner = document.getElementById('accounting-disabled-banner');
+    if (banner) banner.style.display = compRow && compRow.accounting_enabled ? 'none' : 'block';
+  } catch(_) {}
+
   const plan = active.plan || 'free';
   const _planEl = document.getElementById('user-plan-label') || document.getElementById('sb-user-plan');
   if (_planEl) _planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
