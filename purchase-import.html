@@ -524,94 +524,174 @@ function resetFile() {
 }
 
 // ─── Heuristic column detection ────────────────────────
+// Staged heuristic: unit first (anchor), then row_number (sequential int column),
+// then qty via scoring (unit-proximity + magnitude + non-sequential), then
+// remaining numerics → unit_price/total (smaller/larger), then sku + name from
+// text columns. Each stage leaves 'skip' if confidence is low so the user can
+// override manually.
 function detectColumns(rows) {
-  if (!rows.length) return [];
+  const EMPTY = () => new Array(colCount).fill('skip');
+  if (!rows.length) return EMPTY();
+
   const hasHeader = document.getElementById('f-has-header').checked;
-  const dataRows = rows.slice(hasHeader ? 1 : 0, (hasHeader ? 1 : 0) + 12);
+  const dataRows = rows.slice(hasHeader ? 1 : 0, (hasHeader ? 1 : 0) + 15);
   const header = hasHeader ? rows[0].map(c => String(c || '').toLowerCase()) : [];
-  const map = new Array(colCount).fill('skip');
+  const map = EMPTY();
 
-  // Scores per role per column
-  const roles = ['sku','barcode','name','description','qty','unit','unit_price','total','row_number'];
-  const scores = {};
-  roles.forEach(r => scores[r] = new Array(colCount).fill(0));
-
+  // ─── Per-column stats ────────────────────────────────
+  const stats = [];
   for (let c = 0; c < colCount; c++) {
-    const hdr = header[c] || '';
-    // Header-based clues
-    if (/code|sku|kod|артикул|код/.test(hdr)) scores.sku[c] += 80;
-    if (/barcode|barkod|штрих|ean/.test(hdr)) scores.barcode[c] += 80;
-    if (/name|ad|наименование|название|product|ürün/.test(hdr)) scores.name[c] += 70;
-    if (/descr|açıklama|описан/.test(hdr)) scores.description[c] += 60;
-    if (/qty|quantity|miktar|кол|количество|adet/.test(hdr)) scores.qty[c] += 80;
-    if (/unit|birim|ед\.? изм|ед/.test(hdr)) scores.unit[c] += 80;
-    if (/price|fiyat|цена|unit.*price/.test(hdr)) scores.unit_price[c] += 70;
-    if (/total|tutar|сумма|итого/.test(hdr)) scores.total[c] += 70;
-    if (/^#$|no|№|sıra/.test(hdr)) scores.row_number[c] += 70;
+    let numCount = 0, textCount = 0;
+    const numValues = [];
+    const textValues = [];
+    let unitMatches = 0, codeLikeCount = 0, integerCount = 0;
 
-    // Content-based clues
-    let numCount = 0, textCount = 0, emptyCount = 0;
-    let sumVal = 0, numValues = [];
-    let textLens = [];
-    let unitMatches = 0;
-    let codeLikeCount = 0;
-    let smallIntSeq = 0;
-    let rowIdx = 0;
     for (const row of dataRows) {
-      rowIdx++;
       const v = row[c];
-      if (v === '' || v == null) { emptyCount++; continue; }
-      if (typeof v === 'number') {
-        numCount++; sumVal += v; numValues.push(v);
-        if (Number.isInteger(v) && v === rowIdx) smallIntSeq++;
-      } else {
+      if (v === '' || v == null) continue;
+      let num = null;
+      if (typeof v === 'number') num = v;
+      else {
         const s = String(v).trim();
-        if (s === '') { emptyCount++; continue; }
-        // Numeric-like string
-        const num = parseFloat(s.replace(/\s/g,'').replace(',', '.'));
-        if (!isNaN(num) && /^[\d\s.,]+$/.test(s)) {
-          numCount++; sumVal += num; numValues.push(num);
-          if (Number.isInteger(num) && num === rowIdx) smallIntSeq++;
-        } else {
-          textCount++; textLens.push(s.length);
-          const low = s.toLowerCase();
-          if (UNIT_MAP[low] || /^[a-zа-я]{1,5}\.?$/i.test(s)) unitMatches++;
-          if (/[a-z0-9][\-\/]/i.test(s) && s.length <= 30) codeLikeCount++;
+        if (!s) continue;
+        if (/^[\d\s.,\-]+$/.test(s)) {
+          // Numeric-like — reuse numify for locale-aware parsing
+          const n = numify(s);
+          if (!isNaN(n) && /\d/.test(s)) num = n;
         }
       }
+      if (num !== null && !isNaN(num)) {
+        numCount++;
+        numValues.push(num);
+        if (Number.isInteger(num)) integerCount++;
+      } else {
+        textCount++;
+        const s = String(v).trim();
+        textValues.push(s);
+        const low = s.toLowerCase();
+        if (UNIT_MAP[low] || /^[a-zа-яё]{1,5}\.?$/i.test(s)) unitMatches++;
+        if (/[\-\/_]/.test(s) && s.length <= 30) codeLikeCount++;
+      }
     }
-    const n = dataRows.length || 1;
-    const avgLen = textLens.length ? textLens.reduce((a,b)=>a+b,0)/textLens.length : 0;
-    const avgVal = numValues.length ? sumVal/numValues.length : 0;
 
-    // Text columns
-    if (textCount > numCount && textCount > 0) {
-      if (avgLen >= 15) scores.name[c] += 50;
-      else if (codeLikeCount >= textCount * 0.5 && avgLen < 20) scores.sku[c] += 40;
-      if (unitMatches >= n * 0.5) scores.unit[c] += 60;
-      if (avgLen > 5 && avgLen < 15) scores.description[c] += 10;
+    const nonEmpty = numCount + textCount;
+    const isNumeric = numCount > textCount && numCount > 0;
+    const isText = textCount > numCount && textCount > 0;
+    const avgNum = numValues.length ? numValues.reduce((a,b)=>a+b,0)/numValues.length : 0;
+    const maxNum = numValues.length ? Math.max(...numValues) : 0;
+    const minNum = numValues.length ? Math.min(...numValues) : 0;
+    // Sequential: ≥3 integers, starts low, diffs mostly +1 (tolerate small gaps)
+    let isSequential = false;
+    if (numValues.length >= 3 && integerCount === numValues.length && minNum <= 3) {
+      const diffs = [];
+      for (let i = 1; i < numValues.length; i++) diffs.push(numValues[i] - numValues[i-1]);
+      const allPositive = diffs.every(d => d >= 0 && d <= 3);
+      const avgDiff = diffs.reduce((a,b)=>a+b,0) / diffs.length;
+      isSequential = allPositive && avgDiff >= 0.7 && avgDiff <= 1.6;
     }
-    // Number columns
-    if (numCount > textCount && numCount > 0) {
-      if (smallIntSeq >= numCount * 0.6) scores.row_number[c] += 70;
-      else if (avgVal < 1000 && numValues.every(v => v < 10000)) scores.qty[c] += 40;
-      if (avgVal > 100) scores.unit_price[c] += 40;
-      if (avgVal > 10000) scores.total[c] += 30;
+    const avgLen = textValues.length ? textValues.reduce((s,v)=>s+v.length,0)/textValues.length : 0;
+
+    stats.push({
+      c, hdr: header[c] || '',
+      numCount, textCount, isNumeric, isText,
+      numValues, avgNum, maxNum, minNum, integerCount, isSequential,
+      textValues, avgLen, codeLikeCount,
+      unitRatio: nonEmpty ? unitMatches / nonEmpty : 0,
+    });
+  }
+
+  const used = new Set();
+  const assign = (role, c) => { if (c >= 0) { map[c] = role; used.add(c); } };
+
+  // ─── Header-based hints (strong; content may still override unassigned) ──
+  for (const s of stats) {
+    const h = s.hdr;
+    let hint = null;
+    if (/code|sku|kod|артикул|код/i.test(h)) hint = 'sku';
+    else if (/barcode|barkod|штрих|ean/i.test(h)) hint = 'barcode';
+    else if (/unit.?price|birim.?fiyat|цена.*ед|fiyat/i.test(h)) hint = 'unit_price';
+    else if (/total|tutar|сумма|итого/i.test(h)) hint = 'total';
+    else if (/qty|quantity|miktar|кол|количество|adet/i.test(h)) hint = 'qty';
+    else if (/unit\b|birim|ед\.? изм|^ед$/i.test(h)) hint = 'unit';
+    else if (/descr|açıklama|описан/i.test(h)) hint = 'description';
+    else if (/name|наименование|название|product|ürün.?ad|^ürün$/i.test(h)) hint = 'name';
+    else if (/^#$|^no\.?$|^№$|sıra/i.test(h)) hint = 'row_number';
+    if (hint && !used.has(s.c)) assign(hint, s.c);
+  }
+
+  // ─── Step 1: Unit column (anchor for qty adjacency) ──────
+  let unitCol = stats.find(s => map[s.c] === 'unit')?.c;
+  if (unitCol === undefined) {
+    let best = -1, bestC = -1;
+    for (const s of stats) {
+      if (used.has(s.c)) continue;
+      if (s.isText && s.unitRatio >= 0.6 && s.unitRatio > best) {
+        best = s.unitRatio; bestC = s.c;
+      }
+    }
+    if (bestC >= 0) { assign('unit', bestC); unitCol = bestC; }
+  }
+
+  // ─── Step 2: Row number (sequential integer column) ──────
+  let rowNumCol = stats.find(s => map[s.c] === 'row_number')?.c;
+  if (rowNumCol === undefined) {
+    for (const s of stats) {
+      if (used.has(s.c)) continue;
+      if (s.isNumeric && s.isSequential) {
+        assign('row_number', s.c); rowNumCol = s.c; break;
+      }
     }
   }
 
-  // Assign roles greedily: each role can claim one column (highest score), unit can be repeated? No — one column per role
-  const used = new Set();
-  const order = ['row_number','sku','barcode','name','description','qty','unit','unit_price','total'];
-  for (const role of order) {
-    let best = -1, bestC = -1;
-    for (let c = 0; c < colCount; c++) {
-      if (used.has(c)) continue;
-      if (scores[role][c] > best && scores[role][c] >= 40) {
-        best = scores[role][c]; bestC = c;
-      }
+  // ─── Step 3: Qty column via scoring ───────────────────────
+  if (!stats.some(s => map[s.c] === 'qty')) {
+    let bestScore = -Infinity, bestC = -1;
+    for (const s of stats) {
+      if (used.has(s.c)) continue;
+      if (!s.isNumeric) continue;
+      let score = 0;
+      // Adjacent to unit → very strong signal
+      if (unitCol !== undefined && (s.c === unitCol - 1 || s.c === unitCol + 1)) score += 3;
+      // Small values (typical qty)
+      if (s.avgNum < 1000 && s.maxNum < 10000) score += 2;
+      // Not row_number
+      if (s.c !== rowNumCol) score += 1;
+      // Non-sequential values (random → looks like qty, not counter)
+      if (!s.isSequential) score += 1;
+      // Large values penalty (looks like price/total, not qty)
+      if (s.avgNum > 10000) score -= 5;
+      if (score > bestScore) { bestScore = score; bestC = s.c; }
     }
-    if (bestC >= 0) { map[bestC] = role; used.add(bestC); }
+    if (bestC >= 0 && bestScore >= 2) assign('qty', bestC);
+  }
+
+  // ─── Step 4: Remaining numerics → unit_price + total ─────
+  const remainingNum = stats
+    .filter(s => s.isNumeric && !used.has(s.c) && s.c !== rowNumCol)
+    .sort((a, b) => a.avgNum - b.avgNum); // ascending
+  if (!stats.some(s => map[s.c] === 'unit_price') && remainingNum.length >= 1) {
+    assign('unit_price', remainingNum[0].c); // smaller = unit_price
+  }
+  if (!stats.some(s => map[s.c] === 'total') && remainingNum.length >= 2) {
+    assign('total', remainingNum[remainingNum.length - 1].c); // larger = total
+  }
+
+  // ─── Step 5: SKU + name from remaining text columns ──────
+  const remainingText = stats.filter(s => s.isText && !used.has(s.c));
+  if (!stats.some(s => map[s.c] === 'sku')) {
+    // Short (<25) + alphanumeric with separators → sku
+    const sku = remainingText.find(s =>
+      s.avgLen < 25 && s.codeLikeCount >= s.textCount * 0.5
+    );
+    if (sku) assign('sku', sku.c);
+  }
+  if (!stats.some(s => map[s.c] === 'name')) {
+    // Longest remaining text column
+    const candidates = remainingText.filter(s => !used.has(s.c));
+    if (candidates.length) {
+      candidates.sort((a,b) => b.avgLen - a.avgLen);
+      if (candidates[0].avgLen > 5) assign('name', candidates[0].c);
+    }
   }
 
   return map;
@@ -872,7 +952,7 @@ function renderStep3() {
                : `<span class="status-chip chip-invalid" title="${esc(it.errors.join(', '))}">${t('status_invalid')||'⚠ Invalid'}</span>`;
     const lineTotalSrc = it.qty * it.price;
     html += `<tr style="${it.status==='invalid'?'opacity:.5':''}">` +
-      `<td>${it.excel_row}</td>` +
+      `<td title="Excel ${t('col_excel_column')||'row'} ${it.excel_row}">${i+1}</td>` +
       `<td>${esc(it.sku || '—')}</td>` +
       `<td>${esc(it.name || '—')}${it.matched_name && it.matched_name !== it.name ? ` <span style="color:var(--gray400);font-size:10px">→ ${esc(it.matched_name)}</span>` : ''}</td>` +
       `<td>${formatMoney(it.qty)}</td>` +
