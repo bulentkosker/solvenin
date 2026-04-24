@@ -1603,7 +1603,7 @@ async function loadDashboardStats(){
   // Load recent transactions
   try {
     const { data: recentOrders } = await sb.from('sales_orders')
-      .select('id, total, status, created_at, customers(name)')
+      .select('id, total, status, created_at, contacts(name)')
       .eq('company_id', companyId)
       .eq('is_active', true)
       .is('deleted_at', null)
@@ -1622,7 +1622,7 @@ async function loadDashboardStats(){
             'cancelled':'red','delivered':'green','draft':'gray'
           }[o.status] || 'gray';
           const date = new Date(o.created_at).toLocaleDateString();
-          const customer = o.customers?.name || '—';
+          const customer = o.contacts?.name || '—';
           return `<tr>
             <td><div class="td-name">${customer}</div></td>
             <td><strong>${sym}${parseFloat(o.total||0).toLocaleString()}</strong></td>
