@@ -1743,10 +1743,18 @@ async function editOrder(id) {
   }
   // Paid/partial_paid: warn about payment-record mismatch before opening edit
   if (!_viewMode && order && ['paid','partial_paid'].includes(order.status)) {
-    const msg = t('edit_paid_warning_msg') || 'Bu fatura ödenmiş durumda. Fatura tutarını değiştirirsen ödeme kaydı ile uyumsuzluk olur — cari hesapta borç/alacak farkı kalır, bir sonraki işlemde hesaplaşılır.';
+    const msg = t('edit_paid_warning_msg') || 'Bu fatura ödenmiş. Fatura tutarını değiştirirsen ödeme kaydıyla uyumsuzluk oluşur. Devam etmek istiyor musun?';
     const title = t('edit_paid_warning_title') || 'Ödenmiş Faturayı Düzenle';
     const btn = t('btn_continue') || 'Devam Et';
-    if (!await showConfirm(msg, title, btn)) return;
+    const ok = await showConfirm(msg, title, btn);
+    if (!ok) return;
+  }
+  // viewOrder overwrites #order-form-view.innerHTML with a readonly summary —
+  // if the user viewed something earlier in this session the form DOM is gone.
+  // Reload via URL to restore it (init() re-runs editOrder on ?action=edit).
+  if (!document.getElementById('o-customer')) {
+    window.location.href = 'sales.html?action=edit&id=' + id;
+    return;
   }
   editingOrderId = id;
   if (!order) return;
