@@ -994,7 +994,7 @@ function renderOrders(list) {
           <button class="dot-menu-item" onclick="closeDotMenus();viewOrder('${o.id}')">👁 ${t('btn_view')||'Görüntüle'}</button>
           ${canEditOrder(o.status) ? `<button class="dot-menu-item" onclick="closeDotMenus();editOrder('${o.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
           ${o.status !== 'cancelled' && o.status !== 'paid' && (o.status === 'draft' || o.status === 'confirmed' || !accountingEnabled) ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_order')||'İptal'}</button>` : ''}
-          ${!accountingEnabled && o.status !== 'cancelled' ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
+          ${!accountingEnabled ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
         </div>
       </div>
     </td>
@@ -1014,7 +1014,7 @@ function renderInvoices(list) {
     // Kebab only rendered when at least one action applies — accounting-on
     // invoices otherwise have just the flowBtn and no dropdown button.
     const hasCancel = !accountingEnabled && o.status !== 'paid' && o.status !== 'cancelled';
-    const hasDelete = !accountingEnabled && o.status !== 'cancelled';
+    const hasDelete = !accountingEnabled;
     const kebab = (hasCancel || hasDelete)
       ? `<div class="dot-menu">
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
