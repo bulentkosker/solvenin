@@ -1741,6 +1741,13 @@ async function editOrder(id) {
     showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
     return;
   }
+  // Paid/partial_paid: warn about payment-record mismatch before opening edit
+  if (!_viewMode && order && ['paid','partial_paid'].includes(order.status)) {
+    const msg = t('edit_paid_warning_msg') || 'Bu fatura ödenmiş durumda. Fatura tutarını değiştirirsen ödeme kaydı ile uyumsuzluk olur — cari hesapta borç/alacak farkı kalır, bir sonraki işlemde hesaplaşılır.';
+    const title = t('edit_paid_warning_title') || 'Ödenmiş Faturayı Düzenle';
+    const btn = t('btn_continue') || 'Devam Et';
+    if (!await showConfirm(msg, title, btn)) return;
+  }
   editingOrderId = id;
   if (!order) return;
   const { data: items } = await sb.from('sales_order_items').select('*').eq('order_id', id);

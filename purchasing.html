@@ -1015,15 +1015,19 @@ function renderInvoices(list) {
     // invoices otherwise have just the flowBtn and no dropdown button.
     const hasCancel = !accountingEnabled && o.status !== 'paid' && o.status !== 'cancelled';
     const hasDelete = !accountingEnabled;
-    const kebab = (hasCancel || hasDelete)
-      ? `<div class="dot-menu">
+    const hasEdit = canEditOrder(o.status);
+    const hasPayment = o.status !== 'paid' && o.status !== 'cancelled';
+    // Kebab is always rendered for invoices — "Görüntüle" is unconditional.
+    const kebab = `<div class="dot-menu">
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
           <div class="dot-menu-list">
-            ${hasCancel ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_invoice')||'Faturayı İptal'}</button>` : ''}
+            <button class="dot-menu-item" onclick="closeDotMenus();viewOrder('${o.id}')">👁 ${t('btn_view')||'Görüntüle'}</button>
+            ${hasEdit ? `<button class="dot-menu-item" onclick="closeDotMenus();editOrder('${o.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>` : ''}
+            ${hasPayment ? `<button class="dot-menu-item" onclick="closeDotMenus();openRecvPaymentModal('${o.id}','${parseFloat(o.total||0)}')">💳 ${t('btn_payment')||'Ödeme'}</button>` : ''}
+            ${hasCancel ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_invoice')||'Faturayı İptal Et'}</button>` : ''}
             ${hasDelete ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
           </div>
-        </div>`
-      : '';
+        </div>`;
     return `<tr>
       <td><strong style="color:var(--blue)">${o.order_number}</strong></td>
       <td><strong>${o.contacts?.name||'—'}</strong></td>
@@ -1908,6 +1912,13 @@ async function editOrder(id) {
   if (!_viewMode && order && !canEditOrder(order.status)) {
     showToast(t('toast_invoice_locked') || 'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', 'error');
     return;
+  }
+  // Paid/partial_paid: warn about payment-record mismatch before opening edit
+  if (!_viewMode && order && ['paid','partial_paid'].includes(order.status)) {
+    const msg = t('edit_paid_warning_msg') || 'Bu fatura ödenmiş durumda. Fatura tutarını değiştirirsen ödeme kaydı ile uyumsuzluk olur — cari hesapta borç/alacak farkı kalır, bir sonraki işlemde hesaplaşılır.';
+    const title = t('edit_paid_warning_title') || 'Ödenmiş Faturayı Düzenle';
+    const btn = t('btn_continue') || 'Devam Et';
+    if (!await showConfirm(msg, title, btn)) return;
   }
   editingOrderId = id;
   if (!order) return;
