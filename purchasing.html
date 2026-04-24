@@ -925,7 +925,10 @@ async function loadWarehouses() {
 }
 function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
 
-// ===== KEBAB ROW MENU (same pattern as inventory/contacts/accounting) =====
+// ===== KEBAB ROW MENU =====
+// Uses position:fixed + coords so the dropdown escapes overflow:auto/hidden
+// ancestors (.table-wrap has overflow-x:auto which per CSS spec also clips
+// overflow-y). Flips upward when there's no room below.
 function toggleDotMenu(btn) {
   const menu = btn.closest('.dot-menu');
   const wasOpen = menu.classList.contains('open');
@@ -935,16 +938,31 @@ function toggleDotMenu(btn) {
   const list = menu.querySelector('.dot-menu-list');
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
+  const listW = list.offsetWidth;
   const spaceBelow = window.innerHeight - btnRect.bottom;
   const spaceAbove = btnRect.top;
-  if (spaceBelow < listH + 8 && spaceAbove > listH + 8) menu.classList.add('up');
+  const up = (spaceBelow < listH + 8 && spaceAbove > listH + 8);
+  let left = btnRect.right - listW;
+  if (left < 8) left = 8;
+  const top = up ? (btnRect.top - listH - 4) : (btnRect.bottom + 4);
+  list.style.position = 'fixed';
+  list.style.top = top + 'px';
+  list.style.left = left + 'px';
+  list.style.right = 'auto';
+  list.style.bottom = 'auto';
+  list.style.margin = '0';
+  if (up) menu.classList.add('up');
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
     m.classList.remove('open');
     m.classList.remove('up');
+    const list = m.querySelector('.dot-menu-list');
+    if (list) { list.style.cssText = ''; }
   });
 }
+window.addEventListener('scroll', closeDotMenus, true);
+window.addEventListener('resize', closeDotMenus);
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dot-menu')) closeDotMenus();
 });
@@ -1001,7 +1019,7 @@ function renderInvoices(list) {
       ? `<div class="dot-menu">
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)" title="${t('btn_actions')||'İşlemler'}">⋮</button>
           <div class="dot-menu-list">
-            ${hasCancel ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_order')||'İptal'}</button>` : ''}
+            ${hasCancel ? `<button class="dot-menu-item danger" onclick="closeDotMenus();cancelOrder('${o.id}')">✕ ${t('btn_cancel_invoice')||'Faturayı İptal'}</button>` : ''}
             ${hasDelete ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteOrder('${o.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>` : ''}
           </div>
         </div>`
@@ -1102,7 +1120,9 @@ function filterOrders() {
   const status = document.getElementById('filter-status').value;
   const suppId = document.getElementById('filter-supplier').value;
   renderOrders(orders.filter(o => {
-    if (!['draft','confirmed','cancelled'].includes(o.status)) return false;
+    // Orders tab: drafts/confirmed + cancelled rows that never became invoices
+    const inTab = ['draft','confirmed'].includes(o.status) || (o.status === 'cancelled' && !o.was_invoiced);
+    if (!inTab) return false;
     if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status && o.status !== status) return false;
     if (suppId && o.supplier_id !== suppId) return false;
@@ -1114,7 +1134,9 @@ function filterInvoices() {
   const q = (document.getElementById('invoice-search')?.value || '').toLowerCase();
   const status = document.getElementById('filter-inv-status')?.value || '';
   renderInvoices(orders.filter(o => {
-    if (!['invoiced','paid'].includes(o.status)) return false;
+    // Invoices tab: invoiced/paid + cancelled rows that were once invoices
+    const inTab = ['invoiced','paid'].includes(o.status) || (o.status === 'cancelled' && o.was_invoiced);
+    if (!inTab) return false;
     if (q && !o.order_number.toLowerCase().includes(q) && !(o.contacts?.name||'').toLowerCase().includes(q)) return false;
     if (status && o.status !== status) return false;
     return true;
@@ -1153,7 +1175,8 @@ async function confirmInvoice() {
   const invoiceDate = document.getElementById('inv-date').value;
   const dueDate = document.getElementById('inv-due-date').value;
   const { error } = await sb.from('purchase_orders').update({
-    status: 'invoiced', issue_date: invoiceDate, expected_date: dueDate
+    status: 'invoiced', issue_date: invoiceDate, expected_date: dueDate,
+    was_invoiced: true
   }).eq('id', id);
   closeModal('invoice-confirm-modal');
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
@@ -1297,7 +1320,7 @@ async function savePoPayment() {
     .eq('purchase_order_id', orderId).is('deleted_at', null);
   const totalPaid = (allPays || []).reduce((s,p) => s + parseFloat(p.amount||0), 0);
   if (order && totalPaid >= parseFloat(order.total || 0)) {
-    const { error: upErr } = await sb.from('purchase_orders').update({ status: 'paid' }).eq('id', orderId);
+    const { error: upErr } = await sb.from('purchase_orders').update({ status: 'paid', was_invoiced: true }).eq('id', orderId);
     if (upErr) throw upErr;
   }
 
@@ -1706,6 +1729,8 @@ async function saveOrder() {
     notes: document.getElementById('o-notes').value.trim()||null,
     created_by: user.id
   };
+  // Mark as invoice once status reaches invoiced/paid (flag never resets)
+  if (['invoiced','paid'].includes(status)) payload.was_invoiced = true;
 
   let orderId = editingOrderId;
   const prevStatus = editingOrderId ? (orders.find(o => o.id === editingOrderId)?.status) : null;
@@ -1782,10 +1807,22 @@ function canEditOrder(status) {
 let _viewMode = false;
 
 async function cancelOrder(id) {
-  if (!await showConfirm(t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?', t('lbl_confirm') || 'Onay', t('btn_cancel_order') || 'İptal Et')) return;
+  const row = orders.find(o => o.id === id);
+  const isInvoice = !!(row && (row.was_invoiced || ['invoiced','paid'].includes(row.status)));
+  const confirmMsg = isInvoice
+    ? (t('confirm_cancel_invoice') || 'Bu faturayı iptal etmek istediğinizden emin misiniz?')
+    : (t('confirm_cancel_order') || 'Bu siparişi iptal etmek istediğinizden emin misiniz?');
+  const btnLabel = isInvoice
+    ? (t('btn_cancel_invoice') || 'Faturayı İptal')
+    : (t('btn_cancel_order') || 'Sipariş İptal');
+  if (!await showConfirm(confirmMsg, t('lbl_confirm') || 'Onay', btnLabel)) return;
   const { error } = await sb.from('purchase_orders').update({ status: 'cancelled' }).eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast(t('toast_order_cancelled') || 'Sipariş iptal edildi', 'success');
+  showToast(
+    isInvoice ? (t('toast_invoice_cancelled') || 'Fatura iptal edildi')
+              : (t('toast_order_cancelled') || 'Sipariş iptal edildi'),
+    'success'
+  );
   await loadOrders();
 }
 

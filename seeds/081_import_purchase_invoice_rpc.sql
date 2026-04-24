@@ -138,7 +138,7 @@ BEGIN
     company_id, supplier_id, order_number, status,
     issue_date, subtotal, tax_rate, tax_amount, discount, total,
     currency_code, exchange_rate, total_foreign,
-    notes, created_by, is_active
+    notes, created_by, is_active, was_invoiced
   ) VALUES (
     p_company_id, p_supplier_id, v_order_number, 'invoiced',
     p_issue_date, 0, COALESCE(p_tax_rate, 0), 0, 0, 0,
@@ -146,7 +146,7 @@ BEGIN
     v_fx,
     NULL,
     NULLIF(TRIM(COALESCE(p_notes, '')), ''),
-    v_auth_uid, true
+    v_auth_uid, true, true
   ) RETURNING id INTO v_order_id;
 
   -- ─── Her item için process ──────────────────────────────
