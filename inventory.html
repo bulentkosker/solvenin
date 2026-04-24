@@ -380,6 +380,16 @@ tr:hover .action-btns { opacity:1; }
           </div>
         </div>
       </div>
+      <div id="bulk-toolbar" style="display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--blue-light);border-top:1px solid var(--gray200);border-bottom:1px solid var(--gray200);gap:12px">
+        <div style="font-size:13px;color:var(--gray800);font-weight:500">
+          <span id="bulk-count">0</span> <span data-i18n="bulk_selected">ürün seçildi</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-secondary" style="padding:6px 12px;font-size:12px" onclick="clearBulkSelection()" data-i18n="bulk_clear">Seçimi Temizle</button>
+          <button class="btn-secondary" id="bulk-merge-btn" style="padding:6px 12px;font-size:12px" onclick="openBulkMergeModal()" disabled data-i18n="bulk_merge">🔀 Birleştir...</button>
+          <button class="btn-primary" style="padding:6px 12px;font-size:12px;background:var(--red);border-color:var(--red)" onclick="bulkDeleteSelected()" data-i18n="bulk_delete">🗑️ Tümünü Sil</button>
+        </div>
+      </div>
       <div id="table-container">
         <table id="inventory-table">
           <thead>
@@ -1088,7 +1098,7 @@ function renderTable() {
       ? `<span class="badge" style="background:#ede9fe;color:#7c3aed;font-size:10px">🔧 ${t('label_service')||'Service'}</span>`
       : `<span class="badge badge-gray" style="font-size:10px">📦 ${t('label_product')||'Product'}</span>`;
     return `<tr>
-      <td><input type="checkbox" class="row-check" data-id="${p.id}"></td>
+      <td><input type="checkbox" class="row-check" data-id="${p.id}"${_bulkSelected.has(p.id)?' checked':''} onchange="onRowCheckChange(this)"></td>
       <td><div class="td-name">
         <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
         <span>${p.name}</span>
@@ -1119,6 +1129,15 @@ function renderTable() {
 
   renderPagination();
   applyColumnVisibility();
+  // Reconcile bulk toolbar + header select-all after rerender
+  updateBulkToolbar();
+  const sa = document.getElementById('select-all');
+  if (sa) {
+    const all = document.querySelectorAll('.row-check');
+    const checked = Array.from(all).filter(c => c.checked).length;
+    sa.checked = checked === all.length && all.length > 0;
+    sa.indeterminate = checked > 0 && checked < all.length;
+  }
 }
 
 // ===== COLUMN SELECTOR =====
@@ -2352,18 +2371,9 @@ function openDeleteModal(id) {
 }
 
 async function confirmDelete() {
-  const [soItems, poItems, movements, posItems] = await Promise.all([
-    sb.from('sales_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
-    sb.from('purchase_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
-    sb.from('stock_movements').select('id', {count:'exact',head:true}).eq('product_id', deletingId).eq('is_active', true),
-    sb.from('sales_order_items').select('id', {count:'exact',head:true}).eq('product_id', deletingId),
-  ]);
-  const parts = [];
-  const orderCount = (soItems.count||0) + (poItems.count||0);
-  if (orderCount > 0) parts.push(orderCount + ' sipariş kalemi');
-  if (movements.count > 0) parts.push(movements.count + ' stok hareketi');
-  if (parts.length > 0) {
-    showToast('Silinemez: Bu ürünün ' + parts.join(' / ') + ' var', 'error'); return;
+  const blocker = await productDeleteBlocker(deletingId);
+  if (blocker) {
+    showToast('Silinemez: Bu ürünün ' + blocker + ' var', 'error'); return;
   }
   const { data: { user: _u } } = await sb.auth.getUser();
   const { error } = await sb.from('products').update({
@@ -2374,6 +2384,25 @@ async function confirmDelete() {
   await Promise.all([loadProducts(), loadTrashedProducts()]);
   renderAll();
   showToast(t('product_deleted'), 'success');
+}
+
+// Pre-check: returns null if deletable, else a human-readable reason.
+// Only counts items whose own deleted_at IS NULL (084 soft-deletes items
+// when their parent order is cascade-deleted, so orphans don't block).
+async function productDeleteBlocker(pid) {
+  const [so, po, mv] = await Promise.all([
+    sb.from('sales_order_items').select('id', {count:'exact',head:true})
+      .eq('product_id', pid).is('deleted_at', null),
+    sb.from('purchase_order_items').select('id', {count:'exact',head:true})
+      .eq('product_id', pid).is('deleted_at', null),
+    sb.from('stock_movements').select('id', {count:'exact',head:true})
+      .eq('product_id', pid).eq('is_active', true).is('deleted_at', null),
+  ]);
+  const orderCount = (so.count||0) + (po.count||0);
+  const parts = [];
+  if (orderCount > 0) parts.push(orderCount + ' sipariş kalemi');
+  if ((mv.count||0) > 0) parts.push(mv.count + ' stok hareketi');
+  return parts.length ? parts.join(' / ') : null;
 }
 
 // ===== MERGE PRODUCT =====
@@ -2659,9 +2688,97 @@ function toggleView(view) {
   }
 }
 
-// ===== SELECT ALL =====
+// ===== BULK SELECTION =====
+// _bulkSelected holds product ids across pages so pagination doesn't lose state.
+// renderTable re-renders checkboxes from this set; row onchange feeds back into it.
+let _bulkSelected = new Set();
+
 function toggleSelectAll(cb) {
-  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+  // Affects only current page's visible rows
+  document.querySelectorAll('.row-check').forEach(c => {
+    c.checked = cb.checked;
+    const id = c.dataset.id;
+    if (cb.checked) _bulkSelected.add(id);
+    else _bulkSelected.delete(id);
+  });
+  updateBulkToolbar();
+}
+
+function onRowCheckChange(cb) {
+  const id = cb.dataset.id;
+  if (cb.checked) _bulkSelected.add(id);
+  else _bulkSelected.delete(id);
+  // Keep header select-all consistent with visible rows
+  const all = document.querySelectorAll('.row-check');
+  const checkedCount = Array.from(all).filter(c => c.checked).length;
+  const sa = document.getElementById('select-all');
+  if (sa) {
+    sa.checked = checkedCount === all.length && all.length > 0;
+    sa.indeterminate = checkedCount > 0 && checkedCount < all.length;
+  }
+  updateBulkToolbar();
+}
+
+function updateBulkToolbar() {
+  const bar = document.getElementById('bulk-toolbar');
+  if (!bar) return;
+  const n = _bulkSelected.size;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  const cnt = document.getElementById('bulk-count');
+  if (cnt) cnt.textContent = n;
+  const mergeBtn = document.getElementById('bulk-merge-btn');
+  if (mergeBtn) mergeBtn.disabled = n < 2;
+}
+
+function clearBulkSelection() {
+  _bulkSelected.clear();
+  document.querySelectorAll('.row-check').forEach(c => { c.checked = false; });
+  const sa = document.getElementById('select-all');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  updateBulkToolbar();
+}
+
+function openBulkMergeModal() {
+  // Bulk merge isn't implemented yet — existing merge is 2-product pairwise.
+  // Button stays disabled unless N>=2 and becomes a forward placeholder.
+  showToast(t('bulk_merge_todo') || 'Toplu birleştirme henüz desteklenmiyor — tek tek birleştir', 'error');
+}
+
+async function bulkDeleteSelected() {
+  const ids = Array.from(_bulkSelected);
+  if (!ids.length) return;
+  const msg = (t('bulk_delete_confirm') || 'Seçili {0} ürün silinecek. Bağlı kaydı olanlar atlanır. Devam edilsin mi?').replace('{0}', ids.length);
+  const title = t('bulk_delete_title') || 'Toplu Sil';
+  const btn = t('bulk_delete_btn') || 'Sil';
+  if (!await showConfirm(msg, title, btn)) return;
+
+  const { data: { user: _u } } = await sb.auth.getUser();
+  let deleted = 0, skipped = 0;
+  const skippedNames = [];
+  for (const pid of ids) {
+    const blocker = await productDeleteBlocker(pid);
+    if (blocker) {
+      skipped++;
+      const p = products.find(x => x.id === pid);
+      if (p && skippedNames.length < 5) skippedNames.push(p.name);
+      continue;
+    }
+    const { error } = await sb.from('products').update({
+      is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id
+    }).eq('id', pid);
+    if (error) { skipped++; continue; }
+    deleted++;
+  }
+
+  _bulkSelected.clear();
+  await Promise.all([loadProducts(), loadTrashedProducts()]);
+  renderAll();
+  updateBulkToolbar();
+
+  const resultTmpl = t('bulk_delete_result') || '{0} üründen {1}\'i silindi, {2} tanesi bağlı kayıtları olduğu için atlandı';
+  const resultMsg = resultTmpl.replace('{0}', ids.length).replace('{1}', deleted).replace('{2}', skipped);
+  showToast(resultMsg + (skippedNames.length ? ' — ' + skippedNames.join(', ') + (skipped > skippedNames.length ? '…' : '') : ''),
+            skipped === 0 ? 'success' : '');
 }
 
 // ===== EXPORT =====
