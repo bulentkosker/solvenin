@@ -755,11 +755,14 @@
           <option value="">Seçin...</option>
         </select>
       </div>
-      <!-- Currency conversion fields — visible when category=conversion_out -->
+      <!-- Currency conversion fields — visible for conversion_out OR conversion_in.
+           Direction-agnostic labels: "Verilen" = amount leaving the conversion seller,
+           "Alınan" = amount the conversion buyer receives. RPC source/target swapped
+           based on direction (out: this=source, in: this=target). -->
       <div id="btx-conversion-group" style="display:none">
         <div class="form-row">
           <div class="form-group">
-            <label data-i18n="lbl_conv_target">Hedef Banka Hesabı <span style="color:var(--red)">*</span></label>
+            <label data-i18n="lbl_conv_counter_account">Karşı Banka Hesabı <span style="color:var(--red)">*</span></label>
             <select id="btx-conv-target" onchange="onConvFieldChange()">
               <option value="">Seçin...</option>
             </select>
@@ -771,11 +774,11 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label id="btx-conv-source-label" data-i18n="lbl_conv_source_amount">Kaynak Tutar (Gönderilen) <span style="color:var(--red)">*</span></label>
+            <label id="btx-conv-source-label" data-i18n="lbl_conv_given_amount">Verilen Tutar <span style="color:var(--red)">*</span></label>
             <input type="number" id="btx-conv-source-amount" step="0.01" min="0" placeholder="0.00" oninput="onConvFieldChange()">
           </div>
           <div class="form-group">
-            <label id="btx-conv-target-label" data-i18n="lbl_conv_target_amount">Hedef Tutar (Alınan, otomatik)</label>
+            <label id="btx-conv-target-label" data-i18n="lbl_conv_received_amount">Alınan Tutar (otomatik)</label>
             <input type="number" id="btx-conv-target-amount" step="0.01" readonly style="background:var(--gray50);color:var(--gray700)">
           </div>
         </div>
@@ -1662,13 +1665,15 @@ const TX_CATEGORIES = {
   refund_paid:        { dir:'out', label:'İade Ödenen',           needs:['contact','account'], acctTypes:['revenue'] },
   transfer_out:       { dir:'out', label:'Kasa/Banka Transferi',  needs:['transfer'] },
   // Currency conversion between two bank accounts in different currencies.
-  // bank_only: hidden in cash modal. conversion_in is system_only — paired
-  // row gets created by execute_currency_conversion RPC, so we don't expose
-  // it in the picker (mirrors the asymmetric "user picks _out, RPC creates
-  // _in" intent). Both keys exist so the listing/edit views render correct
-  // labels for either side of the pair.
+  // bank_only: hidden in cash modal. Both keys are user-pickable — direction
+  // selector decides which side is "this account":
+  //   conversion_out → this account = source (sells the conversion)
+  //   conversion_in  → this account = target (buys the conversion)
+  // The same execute_currency_conversion RPC handles both — saveBankTx swaps
+  // source/target params based on category. The RPC always inserts a paired
+  // row with the OPPOSITE category, so the partner shows the matching label.
   conversion_out:     { dir:'out', label:'Döviz Konvertasyonu',   needs:['conversion'], bank_only:true },
-  conversion_in:      { dir:'in',  label:'Döviz Konvertasyonu',   needs:['conversion'], bank_only:true, system_only:true },
+  conversion_in:      { dir:'in',  label:'Döviz Konvertasyonu',   needs:['conversion'], bank_only:true },
 };
 
 // Legacy category → new canonical key (edit-time pre-select for rows saved
@@ -1922,36 +1927,47 @@ async function populateConversionTargets() {
   onConvFieldChange();
 }
 
-// Recompute target amount whenever rate, source amount, or target account changes.
+// Recompute received-amount whenever rate, given-amount, or counter account
+// changes. Direction (in/out) decides which currency is "given" vs "received":
+//   out → given = this account's currency, received = other account's currency
+//   in  → given = other account's currency,  received = this account's currency
+// RPC always wants source_amount = "given", target_amount = "received".
 function onConvFieldChange() {
   const sel = document.getElementById('btx-conv-target');
   const rateEl = document.getElementById('btx-conv-rate');
-  const srcEl  = document.getElementById('btx-conv-source-amount');
-  const tgtEl  = document.getElementById('btx-conv-target-amount');
+  const givenEl = document.getElementById('btx-conv-source-amount');
+  const recvEl  = document.getElementById('btx-conv-target-amount');
   const hint   = document.getElementById('btx-conv-hint');
   const rateLabel = document.getElementById('btx-conv-rate-label');
-  const srcLabel  = document.getElementById('btx-conv-source-label');
-  const tgtLabel  = document.getElementById('btx-conv-target-label');
-  if (!sel || !rateEl || !srcEl || !tgtEl) return;
+  const givenLabel = document.getElementById('btx-conv-source-label');
+  const recvLabel  = document.getElementById('btx-conv-target-label');
+  if (!sel || !rateEl || !givenEl || !recvEl) return;
 
-  const srcAcc = accounts.find(a => a.id === selectedAccountId);
-  const srcCur = srcAcc?.currency_code || '';
-  const tgtCur = sel.options[sel.selectedIndex]?.dataset?.currency || '';
+  const dir = document.getElementById('btx-type').value;          // 'in' | 'out'
+  const thisAcc = accounts.find(a => a.id === selectedAccountId);
+  const thisCur = thisAcc?.currency_code || '';
+  const otherCur = sel.options[sel.selectedIndex]?.dataset?.currency || '';
+  const givenCur = dir === 'out' ? thisCur : otherCur;
+  const recvCur  = dir === 'out' ? otherCur : thisCur;
 
-  // Live currency labels on the inputs
-  if (srcCur && srcLabel) srcLabel.innerHTML = `Kaynak Tutar (${srcCur}) <span style="color:var(--red)">*</span>`;
-  if (tgtCur && tgtLabel) tgtLabel.innerHTML = `Hedef Tutar (${tgtCur}, otomatik)`;
-  if (srcCur && tgtCur && rateLabel) rateLabel.innerHTML = `Kur (1 ${srcCur} = ? ${tgtCur}) <span style="color:var(--red)">*</span>`;
+  // Live currency hints
+  if (givenLabel) givenLabel.innerHTML = `Verilen Tutar${givenCur?' ('+givenCur+')':''} <span style="color:var(--red)">*</span>`;
+  if (recvLabel)  recvLabel.innerHTML  = `Alınan Tutar${recvCur?' ('+recvCur+')':''} (otomatik)`;
+  if (rateLabel)  rateLabel.innerHTML  = givenCur && recvCur
+    ? `Kur (1 ${givenCur} = ? ${recvCur}) <span style="color:var(--red)">*</span>`
+    : `Kur <span style="color:var(--red)">*</span>`;
 
   const rate = parseFloat(rateEl.value || '0');
-  const src  = parseFloat(srcEl.value || '0');
-  if (rate > 0 && src > 0) {
-    const tgtAmt = src * rate;
-    tgtEl.value = tgtAmt.toFixed(2);
-    if (hint) hint.textContent = `${src} ${srcCur} × ${rate} = ${tgtAmt.toFixed(2)} ${tgtCur}`;
+  const given = parseFloat(givenEl.value || '0');
+  if (rate > 0 && given > 0) {
+    const recv = given * rate;
+    recvEl.value = recv.toFixed(2);
+    if (hint) hint.textContent = `${given} ${givenCur} × ${rate} = ${recv.toFixed(2)} ${recvCur}`;
   } else {
-    tgtEl.value = '';
-    if (hint) hint.textContent = srcCur && tgtCur ? `Kur ve kaynak tutarı girin → hedef tutar otomatik hesaplanır` : '';
+    recvEl.value = '';
+    if (hint) hint.textContent = givenCur && recvCur
+      ? 'Kur ve verilen tutarı girin → alınan tutar otomatik hesaplanır'
+      : '';
   }
   validateTxForm('btx');
 }
@@ -2333,19 +2349,24 @@ async function saveBankTx() {
       }).eq('id', editingBankTxId);
       if (error) { showToast(getErrorMessage(error), 'error'); return; }
     } else {
-      const targetId = document.getElementById('btx-conv-target').value;
+      const counterId = document.getElementById('btx-conv-target').value;
       const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
-      const srcAmt = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
-      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
-      if (!targetId) { showToast(t('toast_select_target_bank') || 'Hedef banka seçin', 'error'); return; }
-      if (rate <= 0 || srcAmt <= 0 || tgtAmt <= 0) {
+      const givenAmt = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
+      const recvAmt  = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
+      if (!counterId) { showToast(t('toast_select_target_bank') || 'Hedef banka seçin', 'error'); return; }
+      if (rate <= 0 || givenAmt <= 0 || recvAmt <= 0) {
         showToast(t('toast_invalid_conv_values') || 'Kur, kaynak ve hedef tutar > 0 olmalı', 'error'); return;
       }
+      // Direction decides RPC param mapping:
+      //   out → this=source (gives), counter=target (receives)
+      //   in  → counter=source (gives), this=target (receives)
+      const sourceBankId = (type === 'out') ? selectedAccountId : counterId;
+      const targetBankId = (type === 'out') ? counterId : selectedAccountId;
       const { error } = await sb.rpc('execute_currency_conversion', {
         p_company_id: companyId,
-        p_source_bank_id: selectedAccountId,
-        p_target_bank_id: targetId,
-        p_source_amount: srcAmt, p_target_amount: tgtAmt,
+        p_source_bank_id: sourceBankId,
+        p_target_bank_id: targetBankId,
+        p_source_amount: givenAmt, p_target_amount: recvAmt,
         p_exchange_rate: rate, p_transaction_date: date,
         p_description: desc
       });
