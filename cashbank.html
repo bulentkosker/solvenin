@@ -994,6 +994,7 @@ let coaAll = [];
 // Per-company defaults read from companies.default_{salary,advance}_account_id —
 // salary/advance categories auto-fill chart_of_account_id from these.
 let companyDefaults = { salary_account_id: null, advance_account_id: null };
+let companyBaseCurrency = 'KZT';
 let selectedRegisterId = null;
 let selectedAccountId = null;
 let deleteCallback = null;
@@ -1030,7 +1031,7 @@ async function init() {
     sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
     sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
     sb.from('chart_of_accounts').select('id, code, name, name_local, type, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
-    sb.from('companies').select('default_salary_account_id, default_advance_account_id').eq('id', companyId).single(),
+    sb.from('companies').select('default_salary_account_id, default_advance_account_id, base_currency').eq('id', companyId).single(),
   ]);
   registers = registersRes.data || [];
   banks     = banksRes.data || [];
@@ -1041,6 +1042,7 @@ async function init() {
     salary_account_id:  defaultsRes.data?.default_salary_account_id  || null,
     advance_account_id: defaultsRes.data?.default_advance_account_id || null
   };
+  companyBaseCurrency = defaultsRes.data?.base_currency || 'KZT';
   populateCoaFilters();
 
   currencies = WORLD_CURRENCIES;
@@ -1927,11 +1929,17 @@ async function populateConversionTargets() {
   onConvFieldChange();
 }
 
-// Recompute received-amount whenever rate, given-amount, or counter account
-// changes. Direction (in/out) decides which currency is "given" vs "received":
-//   out → given = this account's currency, received = other account's currency
-//   in  → given = other account's currency,  received = this account's currency
-// RPC always wants source_amount = "given", target_amount = "received".
+// Industry-standard FX convention: rate is canonical "1 foreign = X local"
+// where local = company's base_currency (e.g. KZT). Math direction depends on
+// which side is being given:
+//   foreign → local: received = given × rate  (e.g. 1000 USD × 480 = 480 000 KZT)
+//   local → foreign: received = given ÷ rate  (e.g. 480 000 KZT ÷ 480 = 1000 USD)
+//   foreign → foreign (no local in pair): treat rate as 1 given = X received,
+//   simple multiply (rare; user enters the cross rate manually).
+//
+// Direction (in/out) only swaps which account is "given" (= leaving) vs
+// "received" (= entering). Source/target swapping for the RPC happens in
+// saveBankTx — this function just shows the right math + currency hints.
 function onConvFieldChange() {
   const sel = document.getElementById('btx-conv-target');
   const rateEl = document.getElementById('btx-conv-rate');
@@ -1950,19 +1958,43 @@ function onConvFieldChange() {
   const givenCur = dir === 'out' ? thisCur : otherCur;
   const recvCur  = dir === 'out' ? otherCur : thisCur;
 
-  // Live currency hints
+  // Identify foreign vs local for the canonical rate display.
+  const localCur = companyBaseCurrency;
+  const localInPair = (givenCur === localCur || recvCur === localCur);
+  const foreignCur = localInPair
+    ? (givenCur === localCur ? recvCur : givenCur)
+    : givenCur;  // both-foreign edge case: anchor to "given"
+  const rateDisplayCur1 = foreignCur || givenCur;
+  const rateDisplayCur2 = localInPair ? localCur : recvCur;
+
+  // Live currency hints (amount inputs)
   if (givenLabel) givenLabel.innerHTML = `Verilen Tutar${givenCur?' ('+givenCur+')':''} <span style="color:var(--red)">*</span>`;
   if (recvLabel)  recvLabel.innerHTML  = `Alınan Tutar${recvCur?' ('+recvCur+')':''} (otomatik)`;
-  if (rateLabel)  rateLabel.innerHTML  = givenCur && recvCur
-    ? `Kur (1 ${givenCur} = ? ${recvCur}) <span style="color:var(--red)">*</span>`
+  if (rateLabel)  rateLabel.innerHTML  = rateDisplayCur1 && rateDisplayCur2
+    ? `Kur (1 ${rateDisplayCur1} = ? ${rateDisplayCur2}) <span style="color:var(--red)">*</span>`
     : `Kur <span style="color:var(--red)">*</span>`;
 
   const rate = parseFloat(rateEl.value || '0');
   const given = parseFloat(givenEl.value || '0');
   if (rate > 0 && given > 0) {
-    const recv = given * rate;
+    let recv, op;
+    if (localInPair) {
+      if (givenCur === foreignCur) {
+        // foreign → local: multiply
+        recv = given * rate;
+        op = '×';
+      } else {
+        // local → foreign: divide
+        recv = given / rate;
+        op = '÷';
+      }
+    } else {
+      // both-foreign cross rate: simple multiply
+      recv = given * rate;
+      op = '×';
+    }
     recvEl.value = recv.toFixed(2);
-    if (hint) hint.textContent = `${given} ${givenCur} × ${rate} = ${recv.toFixed(2)} ${recvCur}`;
+    if (hint) hint.textContent = `${given} ${givenCur} ${op} ${rate} = ${recv.toFixed(2)} ${recvCur}`;
   } else {
     recvEl.value = '';
     if (hint) hint.textContent = givenCur && recvCur
