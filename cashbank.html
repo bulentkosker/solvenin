@@ -1993,8 +1993,14 @@ function onConvFieldChange() {
       recv = given * rate;
       op = '×';
     }
-    recvEl.value = recv.toFixed(2);
-    if (hint) hint.textContent = `${given} ${givenCur} ${op} ${rate} = ${recv.toFixed(2)} ${recvCur}`;
+    // Avoid trailing ".00" — Chromium <input type=number> in tr-TR locale
+    // can misread the dot before exactly 2 zeros as a thousand separator,
+    // turning "14400000.00" into 1 440 000 000 in display. Round to 2dp but
+    // emit as plain Number-string so whole numbers ship as "14400000".
+    const recvRounded = Math.round(recv * 100) / 100;
+    recvEl.value = String(recvRounded);
+    const fmt = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+    if (hint) hint.textContent = `${fmt(given)} ${givenCur} ${op} ${fmt(rate)} = ${fmt(recvRounded)} ${recvCur}`;
   } else {
     recvEl.value = '';
     if (hint) hint.textContent = givenCur && recvCur
