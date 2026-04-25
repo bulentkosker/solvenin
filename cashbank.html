@@ -721,7 +721,7 @@
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" id="btx-amount-group">
           <label>Tutar *</label>
           <input type="number" id="btx-amount" placeholder="0.00" step="0.01" min="0.01">
         </div>
@@ -754,6 +754,32 @@
         <select id="btx-transfer-target" onchange="validateTxForm('btx')">
           <option value="">Seçin...</option>
         </select>
+      </div>
+      <!-- Currency conversion fields — visible when category=conversion_out -->
+      <div id="btx-conversion-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="lbl_conv_target">Hedef Banka Hesabı <span style="color:var(--red)">*</span></label>
+            <select id="btx-conv-target" onchange="onConvFieldChange()">
+              <option value="">Seçin...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label id="btx-conv-rate-label">Kur <span style="color:var(--red)">*</span></label>
+            <input type="number" id="btx-conv-rate" step="0.000001" min="0" placeholder="0.000000" oninput="onConvFieldChange()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label id="btx-conv-source-label" data-i18n="lbl_conv_source_amount">Kaynak Tutar (Gönderilen) <span style="color:var(--red)">*</span></label>
+            <input type="number" id="btx-conv-source-amount" step="0.01" min="0" placeholder="0.00" oninput="onConvFieldChange()">
+          </div>
+          <div class="form-group">
+            <label id="btx-conv-target-label" data-i18n="lbl_conv_target_amount">Hedef Tutar (Alınan, otomatik)</label>
+            <input type="number" id="btx-conv-target-amount" step="0.01" readonly style="background:var(--gray50);color:var(--gray700)">
+          </div>
+        </div>
+        <div id="btx-conv-hint" style="font-size:11.5px;color:var(--gray500);margin-top:-4px;margin-bottom:8px"></div>
       </div>
       <div class="form-group">
         <label>Referans</label>
@@ -1635,6 +1661,14 @@ const TX_CATEGORIES = {
   owner_withdrawal:   { dir:'out', label:'Ortaklara Ödenen',      needs:['contact','account'], acctTypes:['liability'] },
   refund_paid:        { dir:'out', label:'İade Ödenen',           needs:['contact','account'], acctTypes:['revenue'] },
   transfer_out:       { dir:'out', label:'Kasa/Banka Transferi',  needs:['transfer'] },
+  // Currency conversion between two bank accounts in different currencies.
+  // bank_only: hidden in cash modal. conversion_in is system_only — paired
+  // row gets created by execute_currency_conversion RPC, so we don't expose
+  // it in the picker (mirrors the asymmetric "user picks _out, RPC creates
+  // _in" intent). Both keys exist so the listing/edit views render correct
+  // labels for either side of the pair.
+  conversion_out:     { dir:'out', label:'Döviz Konvertasyonu',   needs:['conversion'], bank_only:true },
+  conversion_in:      { dir:'in',  label:'Döviz Konvertasyonu',   needs:['conversion'], bank_only:true, system_only:true },
 };
 
 // Legacy category → new canonical key (edit-time pre-select for rows saved
@@ -1651,8 +1685,13 @@ const LEGACY_CATEGORY_MAP = {
   other:    (tx) => null,
 };
 
-function categoriesForDirection(dir) {
-  return Object.entries(TX_CATEGORIES).filter(([k, v]) => v.dir === dir);
+function categoriesForDirection(dir, prefix) {
+  return Object.entries(TX_CATEGORIES).filter(([k, v]) => {
+    if (v.dir !== dir) return false;
+    if (v.system_only) return false;          // hidden from picker
+    if (v.bank_only && prefix === 'ctx') return false;  // hidden in cash modal
+    return true;
+  });
 }
 
 // Resolve chart_of_account_id for save:
@@ -1697,7 +1736,7 @@ function resolveAccountForCategory(prefix, category, editingId, listSource) {
 function populateCategoryDropdown(prefix, dir) {
   const sel = document.getElementById(prefix + '-category');
   if (!sel) return;
-  const opts = categoriesForDirection(dir).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  const opts = categoriesForDirection(dir, prefix).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
   sel.innerHTML = '<option value="">Seçin...</option>' + opts;
 }
 
@@ -1727,6 +1766,7 @@ function onTxCategoryChange(prefix) {
     }
   }
   if (cfg?.needs?.includes('transfer')) populateTransferTargets(prefix);
+  if (cfg?.needs?.includes('conversion')) populateConversionTargets();
   validateTxForm(prefix);
 }
 
@@ -1753,6 +1793,17 @@ function applyCategoryVisibility(prefix, cat) {
   document.getElementById(prefix + '-contact-group').style.display  = shown('contact')  ? '' : 'none';
   document.getElementById(prefix + '-employee-group').style.display = shown('employee') ? '' : 'none';
   document.getElementById(prefix + '-transfer-group').style.display = shown('transfer') ? '' : 'none';
+  // Currency conversion — only on bank modal (other prefixes don't have these inputs)
+  if (prefix === 'btx') {
+    const convGrp = document.getElementById('btx-conversion-group');
+    if (convGrp) {
+      convGrp.style.display = shown('conversion') ? '' : 'none';
+      // Hide standalone Tutar (amount) input when conversion is active —
+      // amount is split across source/target fields in the conversion block.
+      const amtGrp = document.getElementById('btx-amount-group');
+      if (amtGrp) amtGrp.style.display = shown('conversion') ? 'none' : '';
+    }
+  }
   markRequired('account',  prefix + '-account-req');
   markRequired('contact',  prefix + '-contact-req');
   markRequired('employee', prefix + '-employee-req');
@@ -1785,6 +1836,14 @@ function validateTxForm(prefix) {
     if (f === 'contact')  return getTxContactId(prefix);
     if (f === 'employee') return getTxEmployeeId(prefix);
     if (f === 'transfer') return document.getElementById(prefix + '-transfer-target').value;
+    if (f === 'conversion') {
+      if (prefix !== 'btx') return false;
+      const tgt = document.getElementById('btx-conv-target').value;
+      const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
+      const src = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
+      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
+      return tgt && rate > 0 && src > 0 && tgtAmt > 0;
+    }
     return true;
   });
   btn.disabled = !ok;
@@ -1830,6 +1889,71 @@ async function populateTransferTargets(prefix) {
 
 function escapeHtmlCB(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── Currency conversion (bank-to-bank, different currency) ─────
+async function populateConversionTargets() {
+  const sel = document.getElementById('btx-conv-target');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Yükleniyor…</option>';
+
+  const { data: accs } = await sb.from('bank_accounts')
+    .select('id, account_name, currency_code, bank_id')
+    .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null)
+    .order('account_name');
+  const { data: bnks } = await sb.from('banks').select('id, name').eq('company_id', companyId);
+  const bkById = Object.fromEntries((bnks || []).map(b => [b.id, b]));
+  const srcAcc = (accs || []).find(a => a.id === selectedAccountId);
+  const srcCur = srcAcc?.currency_code || '';
+
+  // Different-currency accounts only — same-currency moves should use Kasa/Banka Transferi.
+  const items = (accs || [])
+    .filter(a => a.id !== selectedAccountId && a.currency_code && a.currency_code !== srcCur)
+    .map(a => {
+      const bk = bkById[a.bank_id];
+      const label = (bk?.name ? bk.name + ' · ' : '') + a.account_name;
+      return `<option value="${a.id}" data-currency="${a.currency_code}">🏦 ${escapeHtmlCB(label)} (${a.currency_code})</option>`;
+    });
+
+  sel.innerHTML = items.length
+    ? '<option value="">Seçin...</option>' + items.join('')
+    : '<option value="">' + (typeof t === 'function' && t('toast_no_other_currency') || 'Farklı para biriminde başka banka hesabı yok') + '</option>';
+
+  onConvFieldChange();
+}
+
+// Recompute target amount whenever rate, source amount, or target account changes.
+function onConvFieldChange() {
+  const sel = document.getElementById('btx-conv-target');
+  const rateEl = document.getElementById('btx-conv-rate');
+  const srcEl  = document.getElementById('btx-conv-source-amount');
+  const tgtEl  = document.getElementById('btx-conv-target-amount');
+  const hint   = document.getElementById('btx-conv-hint');
+  const rateLabel = document.getElementById('btx-conv-rate-label');
+  const srcLabel  = document.getElementById('btx-conv-source-label');
+  const tgtLabel  = document.getElementById('btx-conv-target-label');
+  if (!sel || !rateEl || !srcEl || !tgtEl) return;
+
+  const srcAcc = accounts.find(a => a.id === selectedAccountId);
+  const srcCur = srcAcc?.currency_code || '';
+  const tgtCur = sel.options[sel.selectedIndex]?.dataset?.currency || '';
+
+  // Live currency labels on the inputs
+  if (srcCur && srcLabel) srcLabel.innerHTML = `Kaynak Tutar (${srcCur}) <span style="color:var(--red)">*</span>`;
+  if (tgtCur && tgtLabel) tgtLabel.innerHTML = `Hedef Tutar (${tgtCur}, otomatik)`;
+  if (srcCur && tgtCur && rateLabel) rateLabel.innerHTML = `Kur (1 ${srcCur} = ? ${tgtCur}) <span style="color:var(--red)">*</span>`;
+
+  const rate = parseFloat(rateEl.value || '0');
+  const src  = parseFloat(srcEl.value || '0');
+  if (rate > 0 && src > 0) {
+    const tgtAmt = src * rate;
+    tgtEl.value = tgtAmt.toFixed(2);
+    if (hint) hint.textContent = `${src} ${srcCur} × ${rate} = ${tgtAmt.toFixed(2)} ${tgtCur}`;
+  } else {
+    tgtEl.value = '';
+    if (hint) hint.textContent = srcCur && tgtCur ? `Kur ve kaynak tutarı girin → hedef tutar otomatik hesaplanır` : '';
+  }
+  validateTxForm('btx');
 }
 
 // When a transfer row is opened for edit, everything except description /
@@ -2123,6 +2247,9 @@ async function openBankTxModal(id = null) {
   document.getElementById('btx-desc').value = tx?.description || '';
   document.getElementById('btx-ref').value = tx?.reference || '';
   document.getElementById('btx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
+  // Reset currency-conversion fields (only present on bank modal)
+  const convReset = ['btx-conv-target','btx-conv-rate','btx-conv-source-amount','btx-conv-target-amount'];
+  convReset.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   resetTxSelectors('btx');
   await loadTxSelectors();
   populateCategoryDropdown('btx', document.getElementById('btx-type').value);
@@ -2194,6 +2321,41 @@ async function saveBankTx() {
     editingBankTxId = null;
     await loadBankTransactions(); await loadCashTransactions();
     await loadBanks(); await loadRegisters();
+    updateStats(); filterBankTx();
+    return;
+  }
+
+  // ── Currency conversion path ─────────────────────────────────
+  if (cfg?.needs?.includes('conversion')) {
+    if (editingBankTxId) {
+      const { error } = await sb.from('bank_transactions').update({
+        description: desc, reference: ref, transaction_date: date
+      }).eq('id', editingBankTxId);
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    } else {
+      const targetId = document.getElementById('btx-conv-target').value;
+      const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
+      const srcAmt = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
+      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
+      if (!targetId) { showToast(t('toast_select_target_bank') || 'Hedef banka seçin', 'error'); return; }
+      if (rate <= 0 || srcAmt <= 0 || tgtAmt <= 0) {
+        showToast(t('toast_invalid_conv_values') || 'Kur, kaynak ve hedef tutar > 0 olmalı', 'error'); return;
+      }
+      const { error } = await sb.rpc('execute_currency_conversion', {
+        p_company_id: companyId,
+        p_source_bank_id: selectedAccountId,
+        p_target_bank_id: targetId,
+        p_source_amount: srcAmt, p_target_amount: tgtAmt,
+        p_exchange_rate: rate, p_transaction_date: date,
+        p_description: desc
+      });
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    }
+    showToast(t('toast_conv_saved') || 'Döviz konvertasyonu kaydedildi ✓', 'success');
+    closeModal('bank-tx-modal');
+    editingBankTxId = null;
+    await loadBankTransactions();
+    await loadBanks();
     updateStats(); filterBankTx();
     return;
   }
