@@ -769,17 +769,17 @@
           </div>
           <div class="form-group">
             <label id="btx-conv-rate-label">Kur <span style="color:var(--red)">*</span></label>
-            <input type="number" id="btx-conv-rate" step="0.000001" min="0" placeholder="0.000000" oninput="onConvFieldChange()">
+            <input type="number" id="btx-conv-rate" step="0.000001" min="0" placeholder="0.000000" oninput="onConvRateInput()">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label id="btx-conv-source-label" data-i18n="lbl_conv_given_amount">Verilen Tutar <span style="color:var(--red)">*</span></label>
-            <input type="number" id="btx-conv-source-amount" step="0.01" min="0" placeholder="0.00" oninput="onConvFieldChange()">
+            <input type="text" id="btx-conv-source-amount" inputmode="decimal" placeholder="0,00" oninput="onConvAmountInput('src')">
           </div>
           <div class="form-group">
-            <label id="btx-conv-target-label" data-i18n="lbl_conv_received_amount">Alınan Tutar (otomatik)</label>
-            <input type="text" id="btx-conv-target-amount" readonly inputmode="decimal" style="background:var(--gray50);color:var(--gray700)">
+            <label id="btx-conv-target-label" data-i18n="lbl_conv_received_amount">Alınan Tutar</label>
+            <input type="text" id="btx-conv-target-amount" inputmode="decimal" placeholder="0,00" oninput="onConvAmountInput('tgt')">
           </div>
         </div>
         <div id="btx-conv-hint" style="font-size:11.5px;color:var(--gray500);margin-top:-4px;margin-bottom:8px"></div>
@@ -1847,9 +1847,9 @@ function validateTxForm(prefix) {
       if (prefix !== 'btx') return false;
       const tgt = document.getElementById('btx-conv-target').value;
       const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
-      const src = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
-      // Received amount lives on dataset.rawValue (input is type=text, locale-formatted)
-      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').dataset.rawValue || '0');
+      // Both amounts use type=text + dataset.rawValue (locale-formatted display).
+      const src    = _convReadSide('btx-conv-source-amount');
+      const tgtAmt = _convReadSide('btx-conv-target-amount');
       return tgt && rate > 0 && src > 0 && tgtAmt > 0;
     }
     return true;
@@ -1941,76 +1941,185 @@ async function populateConversionTargets() {
 // Direction (in/out) only swaps which account is "given" (= leaving) vs
 // "received" (= entering). Source/target swapping for the RPC happens in
 // saveBankTx — this function just shows the right math + currency hints.
-function onConvFieldChange() {
-  const sel = document.getElementById('btx-conv-target');
-  const rateEl = document.getElementById('btx-conv-rate');
-  const givenEl = document.getElementById('btx-conv-source-amount');
-  const recvEl  = document.getElementById('btx-conv-target-amount');
-  const hint   = document.getElementById('btx-conv-hint');
-  const rateLabel = document.getElementById('btx-conv-rate-label');
-  const givenLabel = document.getElementById('btx-conv-source-label');
-  const recvLabel  = document.getElementById('btx-conv-target-label');
-  if (!sel || !rateEl || !givenEl || !recvEl) return;
+//
+// BIDIRECTIONAL: user may type into either Verilen or Alınan; the other side
+// recomputes from the rate. lastConvEdit tracks which one was edited most
+// recently so a later rate change recomputes the *other* side.
+let lastConvEdit = 'src'; // 'src' | 'tgt'
 
-  const dir = document.getElementById('btx-type').value;          // 'in' | 'out'
+// Locale-aware parser: accepts TR ("2.500.000,50") and EN ("2,500,000.50") and
+// raw dot ("2500000.5"). Whole-number dotted forms like "1.000" are read as
+// 1000 (TR thousand), but "1.5" is read as 1.5 (decimal). Heuristic mirrors
+// purchase-import.html's numify with stricter dot-only handling.
+function parseConvNumber(s) {
+  if (s == null || s === '') return 0;
+  if (typeof s === 'number') return s;
+  let str = String(s).trim().replace(/\s/g, '');
+  if (!str) return 0;
+  if (str.includes(',') && str.includes('.')) {
+    if (str.lastIndexOf(',') > str.lastIndexOf('.')) str = str.replace(/\./g, '').replace(',', '.');
+    else                                              str = str.replace(/,/g, '');
+  } else if (str.includes(',')) {
+    // Single comma → treat as decimal (TR style)
+    str = str.replace(/,/g, '.');
+  } else if (str.includes('.')) {
+    // Dot-only: thousand groups iff strictly \d{1,3}(\.\d{3})+ with no trailing decimal
+    if (/^\d{1,3}(\.\d{3})+$/.test(str)) str = str.replace(/\./g, '');
+    // else leave as decimal: parseFloat handles "5208.33", "1.5"
+  }
+  const n = parseFloat(str);
+  return isNaN(n) ? 0 : n;
+}
+
+const _convFmt2  = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const _convFmt6  = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+
+// Returns { givenCur, recvCur, localInPair, foreignCur, rateDisplayCur1, rateDisplayCur2 }
+function _convCurrencyInfo() {
+  const dir = document.getElementById('btx-type').value;
+  const sel = document.getElementById('btx-conv-target');
   const thisAcc = accounts.find(a => a.id === selectedAccountId);
   const thisCur = thisAcc?.currency_code || '';
-  const otherCur = sel.options[sel.selectedIndex]?.dataset?.currency || '';
+  const otherCur = sel?.options[sel.selectedIndex]?.dataset?.currency || '';
   const givenCur = dir === 'out' ? thisCur : otherCur;
   const recvCur  = dir === 'out' ? otherCur : thisCur;
-
-  // Identify foreign vs local for the canonical rate display.
   const localCur = companyBaseCurrency;
   const localInPair = (givenCur === localCur || recvCur === localCur);
   const foreignCur = localInPair
     ? (givenCur === localCur ? recvCur : givenCur)
-    : givenCur;  // both-foreign edge case: anchor to "given"
-  const rateDisplayCur1 = foreignCur || givenCur;
-  const rateDisplayCur2 = localInPair ? localCur : recvCur;
+    : givenCur;
+  return {
+    givenCur, recvCur, localCur, localInPair, foreignCur,
+    rateDisplayCur1: foreignCur || givenCur,
+    rateDisplayCur2: localInPair ? localCur : recvCur,
+  };
+}
 
-  // Live currency hints (amount inputs)
-  if (givenLabel) givenLabel.innerHTML = `Verilen Tutar${givenCur?' ('+givenCur+')':''} <span style="color:var(--red)">*</span>`;
-  if (recvLabel)  recvLabel.innerHTML  = `Alınan Tutar${recvCur?' ('+recvCur+')':''} (otomatik)`;
-  if (rateLabel)  rateLabel.innerHTML  = rateDisplayCur1 && rateDisplayCur2
-    ? `Kur (1 ${rateDisplayCur1} = ? ${rateDisplayCur2}) <span style="color:var(--red)">*</span>`
+// Compute received from given, using canonical rate semantics.
+function _convRecvFromGiven(given, rate, info) {
+  if (info.localInPair) {
+    if (info.givenCur === info.foreignCur) return { value: given * rate, op: '×' };
+    return { value: given / rate, op: '÷' };
+  }
+  return { value: given * rate, op: '×' }; // both-foreign cross rate
+}
+
+// Inverse: compute given from received.
+function _convGivenFromRecv(recv, rate, info) {
+  if (info.localInPair) {
+    if (info.givenCur === info.foreignCur) return { value: recv / rate, op: '÷' };
+    return { value: recv * rate, op: '×' };
+  }
+  return { value: recv / rate, op: '÷' };
+}
+
+// Refresh labels (always, regardless of which field triggered).
+function _convRefreshLabels(info) {
+  const givenLabel = document.getElementById('btx-conv-source-label');
+  const recvLabel  = document.getElementById('btx-conv-target-label');
+  const rateLabel  = document.getElementById('btx-conv-rate-label');
+  if (givenLabel) givenLabel.innerHTML = `Verilen Tutar${info.givenCur?' ('+info.givenCur+')':''} <span style="color:var(--red)">*</span>`;
+  if (recvLabel)  recvLabel.innerHTML  = `Alınan Tutar${info.recvCur?' ('+info.recvCur+')':''}`;
+  if (rateLabel)  rateLabel.innerHTML  = info.rateDisplayCur1 && info.rateDisplayCur2
+    ? `Kur (1 ${info.rateDisplayCur1} = ? ${info.rateDisplayCur2}) <span style="color:var(--red)">*</span>`
     : `Kur <span style="color:var(--red)">*</span>`;
+}
 
-  const rate = parseFloat(rateEl.value || '0');
-  const given = parseFloat(givenEl.value || '0');
-  if (rate > 0 && given > 0) {
-    let recv, op;
-    if (localInPair) {
-      if (givenCur === foreignCur) {
-        // foreign → local: multiply
-        recv = given * rate;
-        op = '×';
-      } else {
-        // local → foreign: divide
-        recv = given / rate;
-        op = '÷';
-      }
-    } else {
-      // both-foreign cross rate: simple multiply
-      recv = given * rate;
-      op = '×';
-    }
-    // The input is type="text" — display TR-formatted, save reads dataset.rawValue.
-    // type="number" + Chromium tr-TR locale display heuristic misreads dotted
-    // decimals (e.g. "5208.33") as 520 833 (×100). Storing the raw number on
-    // dataset and showing locale-formatted text in .value sidesteps it entirely.
+// Set one side's input value + rawValue dataset cleanly.
+function _convSetSide(elId, num) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (num == null || isNaN(num) || num <= 0) {
+    el.value = '';
+    delete el.dataset.rawValue;
+    return;
+  }
+  const rounded = Math.round(num * 100) / 100;
+  el.dataset.rawValue = String(rounded);
+  el.value = _convFmt2(rounded);
+}
+
+function _convReadSide(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return 0;
+  // Prefer dataset.rawValue when present (programmatically set), else parse user-typed value.
+  if (el.dataset.rawValue) return parseFloat(el.dataset.rawValue) || 0;
+  return parseConvNumber(el.value);
+}
+
+function _convUpdateHint(given, recv, rate, op, info) {
+  const hint = document.getElementById('btx-conv-hint');
+  if (!hint) return;
+  if (rate > 0 && given > 0 && recv > 0 && info.givenCur && info.recvCur) {
+    // Hint always written from the user's perspective: given ⇄ recv with the
+    // operator that converts given → recv via rate.
     const recvRounded = Math.round(recv * 100) / 100;
-    const fmt = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-    recvEl.dataset.rawValue = String(recvRounded);
-    recvEl.value = fmt(recvRounded);
-    const fmt6 = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
-    if (hint) hint.textContent = `${fmt6(given)} ${givenCur} ${op} ${fmt6(rate)} = ${fmt(recvRounded)} ${recvCur}`;
+    hint.textContent = `${_convFmt6(given)} ${info.givenCur} ${op} ${_convFmt6(rate)} = ${_convFmt2(recvRounded)} ${info.recvCur}`;
   } else {
-    recvEl.value = '';
-    if (hint) hint.textContent = givenCur && recvCur
-      ? 'Kur ve verilen tutarı girin → alınan tutar otomatik hesaplanır'
+    hint.textContent = info.givenCur && info.recvCur
+      ? 'Kur ve verilen veya alınan tutarı girin — diğer alan otomatik hesaplanır'
       : '';
   }
+}
+
+// Triggered when the user types a fresh value into Verilen or Alınan.
+function onConvAmountInput(side) {
+  lastConvEdit = side === 'tgt' ? 'tgt' : 'src';
+  // The user-edited side's dataset.rawValue may be stale (it was set by previous
+  // programmatic computation). Re-derive it from what's now in .value.
+  const editedId = side === 'src' ? 'btx-conv-source-amount' : 'btx-conv-target-amount';
+  const editedEl = document.getElementById(editedId);
+  if (editedEl) {
+    const parsed = parseConvNumber(editedEl.value);
+    if (parsed > 0) editedEl.dataset.rawValue = String(Math.round(parsed * 100) / 100);
+    else            delete editedEl.dataset.rawValue;
+  }
+  _convRecompute();
+}
+
+// Triggered when the rate changes — recompute whichever side wasn't last edited.
+function onConvRateInput() {
+  _convRecompute();
+}
+
+function _convRecompute() {
+  const info = _convCurrencyInfo();
+  _convRefreshLabels(info);
+
+  const rateEl = document.getElementById('btx-conv-rate');
+  const rate = parseFloat(rateEl?.value || '0');
+
+  if (lastConvEdit === 'src') {
+    const given = _convReadSide('btx-conv-source-amount');
+    if (rate > 0 && given > 0) {
+      const r = _convRecvFromGiven(given, rate, info);
+      _convSetSide('btx-conv-target-amount', r.value);
+      _convUpdateHint(given, r.value, rate, r.op, info);
+    } else {
+      _convSetSide('btx-conv-target-amount', null);
+      _convUpdateHint(given, 0, rate, '×', info);
+    }
+  } else {
+    const recv = _convReadSide('btx-conv-target-amount');
+    if (rate > 0 && recv > 0) {
+      const r = _convGivenFromRecv(recv, rate, info);
+      _convSetSide('btx-conv-source-amount', r.value);
+      // For the hint we want "given OP rate = recv" — so derive op from given→recv
+      const fwd = _convRecvFromGiven(r.value, rate, info);
+      _convUpdateHint(r.value, recv, rate, fwd.op, info);
+    } else {
+      _convSetSide('btx-conv-source-amount', null);
+      _convUpdateHint(0, recv, rate, '×', info);
+    }
+  }
   validateTxForm('btx');
+}
+
+// Backward-compat: preserve the old name used by populateConversionTargets()
+// and any stray callers. Trigger a recompute as if the rate (or counter
+// account) changed, respecting whichever side the user last edited.
+function onConvFieldChange() {
+  _convRecompute();
 }
 
 // When a transfer row is opened for edit, everything except description /
@@ -2307,9 +2416,12 @@ async function openBankTxModal(id = null) {
   // Reset currency-conversion fields (only present on bank modal)
   const convReset = ['btx-conv-target','btx-conv-rate','btx-conv-source-amount','btx-conv-target-amount'];
   convReset.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  // Clear the raw-value backing field on the readonly received-amount input.
-  const _rcvEl = document.getElementById('btx-conv-target-amount');
-  if (_rcvEl) delete _rcvEl.dataset.rawValue;
+  // Clear raw-value backing fields on both amount inputs (now bidirectional).
+  ['btx-conv-source-amount','btx-conv-target-amount'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) delete el.dataset.rawValue;
+  });
+  lastConvEdit = 'src';
   resetTxSelectors('btx');
   await loadTxSelectors();
   populateCategoryDropdown('btx', document.getElementById('btx-type').value);
@@ -2395,9 +2507,10 @@ async function saveBankTx() {
     } else {
       const counterId = document.getElementById('btx-conv-target').value;
       const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
-      const givenAmt = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
-      // Recv input shows TR-formatted text; raw EN-locale number lives on dataset.
-      const recvAmt = parseFloat(document.getElementById('btx-conv-target-amount').dataset.rawValue || '0');
+      // Both amount inputs are type=text with locale-formatted display; raw
+      // EN-locale numbers live on dataset.rawValue. _convReadSide handles both.
+      const givenAmt = _convReadSide('btx-conv-source-amount');
+      const recvAmt  = _convReadSide('btx-conv-target-amount');
       if (!counterId) { showToast(t('toast_select_target_bank') || 'Hedef banka seçin', 'error'); return; }
       if (rate <= 0 || givenAmt <= 0 || recvAmt <= 0) {
         showToast(t('toast_invalid_conv_values') || 'Kur, kaynak ve hedef tutar > 0 olmalı', 'error'); return;
