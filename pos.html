@@ -844,6 +844,8 @@ async function completeSale() {
   if (selectedPayMethod === 'cash') {
     const recv = parseFloat(document.getElementById('pay-received').value) || 0;
     if (recv < total) { showToast(t('pos_toast_insufficient'), 'error'); return; }
+    // Without a register the sale would land status=paid with no payment evidence
+    if (!selectedRegister) { showToast(t('pos_toast_select_register') || 'Kasa seçilmedi', 'error'); return; }
   }
   if ((selectedPayMethod === 'card' || selectedPayMethod === 'bank') && !document.getElementById('pay-account').value) {
     showToast(t('pos_toast_select_account'), 'error'); return;
@@ -893,7 +895,9 @@ async function completeSale() {
       return;
     }
 
-    // 1. Sales order
+    // 1. Sales order — status=paid only commits if all subsequent inserts
+    // succeed. On failure we roll back manually since this path isn't a
+    // single DB transaction (RPC refactor is a future sprint).
     const { data: order, error } = await sb.from('sales_orders').insert({
       company_id: companyId, order_number: orderNum, order_type: 'pos', status: 'paid',
       issue_date: today, subtotal: total, tax_rate: 0, tax_amount: 0, discount: 0, total,
@@ -901,25 +905,40 @@ async function completeSale() {
     }).select('id').single();
     if (error) throw error;
 
+    const rollback = async (reason) => {
+      try {
+        await sb.from('sales_order_items').delete().eq('order_id', order.id);
+        await sb.from('sales_orders').update({
+          is_active: false,
+          deleted_at: new Date().toISOString(),
+          deleted_by: currentUser.id
+        }).eq('id', order.id);
+      } catch (rbErr) { console.error('[pos] rollback failed:', rbErr.message); }
+      throw reason;
+    };
+
     // 2. Items
-    await sb.from('sales_order_items').insert(cart.map(c => ({
+    const { error: itemsErr } = await sb.from('sales_order_items').insert(cart.map(c => ({
       order_id: order.id, product_id: c.pid, description: c.name,
       quantity: c.qty, unit_price: c.price, discount: 0, total: c.qty * c.price,
     })));
+    if (itemsErr) await rollback(itemsErr);
 
-    // 3. Payment transaction
+    // 3. Payment transaction (cash or bank). Without payment evidence the
+    // status=paid invariant breaks — must succeed or rollback.
     if (selectedPayMethod === 'cash' && selectedRegister) {
-      await sb.from('cash_transactions').insert({
+      const { error: ctErr } = await sb.from('cash_transactions').insert({
         company_id: companyId, register_id: selectedRegister.id, type: 'in', amount: total,
         currency_code: selectedRegister.currency_code || 'USD',
         description: `POS – ${orderNum}`, category: 'sale',
         source_type: 'sales_order', sales_order_id: order.id, payment_method: 'cash',
         transaction_date: today, contact_id: effectiveCustomerId,
       });
+      if (ctErr) await rollback(ctErr);
     } else if (selectedPayMethod === 'card' || selectedPayMethod === 'bank') {
       const accId = document.getElementById('pay-account').value;
       const acc = bankAccounts.find(a => a.id === accId);
-      await sb.from('bank_transactions').insert({
+      const { error: btErr } = await sb.from('bank_transactions').insert({
         company_id: companyId, account_id: accId, type: 'in', amount: total,
         currency_code: acc?.currency_code || 'USD',
         description: `POS – ${orderNum}`, category: 'sale',
@@ -927,6 +946,11 @@ async function completeSale() {
         payment_method: selectedPayMethod === 'card' ? 'credit_card' : 'bank_transfer',
         transaction_date: today, contact_id: effectiveCustomerId,
       });
+      if (btErr) await rollback(btErr);
+    } else {
+      // No method/register/account — should have been caught by form guards above,
+      // but as a defensive last line we don't leave a paid order without evidence.
+      await rollback(new Error(t('pos_toast_select_register') || 'Ödeme yöntemi/hesap seçilmedi'));
     }
 
     // 4. Stock movements + update product quantities

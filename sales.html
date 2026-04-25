@@ -1940,8 +1940,16 @@ async function savePayment() {
 
   const order = orders.find(o => o.id === orderId);
 
-  // 1. Save payment record
-  await sb.from('payments').insert({ company_id: companyId, order_id: orderId, amount, method, reference: ref, notes, paid_at: payDate + 'T00:00:00Z' });
+  // 1. Save payment record. Supabase JS returns { error } instead of
+  // throwing, so we explicitly throw on failure — otherwise a silent
+  // INSERT failure (RLS, constraint) leaks through and the status-paid
+  // UPDATE at the end still runs, producing the "status=paid but no
+  // payment" bug. Mirrors purchasing.html:1273 fix.
+  const { error: payErr } = await sb.from('payments').insert({
+    company_id: companyId, order_id: orderId, amount, method,
+    reference: ref, notes, paid_at: payDate + 'T00:00:00Z'
+  });
+  if (payErr) throw payErr;
 
   // 2. Auto-create cash or bank transaction
   if (method === 'cash' && registerId) {
@@ -1949,7 +1957,7 @@ async function savePayment() {
     if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
     else {
       const reg = cashRegisters.find(r => r.id === registerId);
-      await sb.from('cash_transactions').insert({
+      const { error: ctErr } = await sb.from('cash_transactions').insert({
         company_id: companyId, register_id: registerId, type: 'in', amount,
         currency_code: reg?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
@@ -1957,13 +1965,14 @@ async function savePayment() {
         payment_method: 'cash',
         reference: ref, transaction_date: payDate
       });
+      if (ctErr) throw ctErr;
     }
   } else if ((method === 'bank' || method === 'card') && accountId) {
     const { data: dup } = await sb.from('bank_transactions').select('id').eq('source_type','sales_order').eq('sales_order_id', orderId).eq('account_id', accountId);
     if (dup?.length) { showToast(t('toast_duplicate_tx'), 'warn'); }
     else {
       const acc = bankAccounts.find(a => a.id === accountId);
-      await sb.from('bank_transactions').insert({
+      const { error: btErr } = await sb.from('bank_transactions').insert({
         company_id: companyId, account_id: accountId, type: 'in', amount,
         currency_code: acc?.currency_code || 'USD',
         description: `${t('sale_payment')} – ${order?.order_number || ''}`,
@@ -1971,6 +1980,7 @@ async function savePayment() {
         payment_method: method === 'card' ? 'credit_card' : 'bank_transfer',
         reference: ref, transaction_date: payDate
       });
+      if (btErr) throw btErr;
     }
   }
 
@@ -1980,7 +1990,8 @@ async function savePayment() {
   // 4. Auto-mark as paid if fully covered
   const totalPaid = payments.filter(p => p.order_id === orderId).reduce((s,p) => s + parseFloat(p.amount), 0) + amount;
   if (order && totalPaid >= parseFloat(order.total || 0)) {
-    await sb.from('sales_orders').update({ status: 'paid', was_invoiced: true }).eq('id', orderId);
+    const { error: upErr } = await sb.from('sales_orders').update({ status: 'paid', was_invoiced: true }).eq('id', orderId);
+    if (upErr) throw upErr;
   }
 
   showToast(t('toast_payment_recorded'), 'success');
