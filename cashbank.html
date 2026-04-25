@@ -779,7 +779,7 @@
           </div>
           <div class="form-group">
             <label id="btx-conv-target-label" data-i18n="lbl_conv_received_amount">Alınan Tutar (otomatik)</label>
-            <input type="number" id="btx-conv-target-amount" step="0.01" readonly style="background:var(--gray50);color:var(--gray700)">
+            <input type="text" id="btx-conv-target-amount" readonly inputmode="decimal" style="background:var(--gray50);color:var(--gray700)">
           </div>
         </div>
         <div id="btx-conv-hint" style="font-size:11.5px;color:var(--gray500);margin-top:-4px;margin-bottom:8px"></div>
@@ -1848,7 +1848,8 @@ function validateTxForm(prefix) {
       const tgt = document.getElementById('btx-conv-target').value;
       const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
       const src = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
-      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
+      // Received amount lives on dataset.rawValue (input is type=text, locale-formatted)
+      const tgtAmt = parseFloat(document.getElementById('btx-conv-target-amount').dataset.rawValue || '0');
       return tgt && rate > 0 && src > 0 && tgtAmt > 0;
     }
     return true;
@@ -1993,14 +1994,16 @@ function onConvFieldChange() {
       recv = given * rate;
       op = '×';
     }
-    // Avoid trailing ".00" — Chromium <input type=number> in tr-TR locale
-    // can misread the dot before exactly 2 zeros as a thousand separator,
-    // turning "14400000.00" into 1 440 000 000 in display. Round to 2dp but
-    // emit as plain Number-string so whole numbers ship as "14400000".
+    // The input is type="text" — display TR-formatted, save reads dataset.rawValue.
+    // type="number" + Chromium tr-TR locale display heuristic misreads dotted
+    // decimals (e.g. "5208.33") as 520 833 (×100). Storing the raw number on
+    // dataset and showing locale-formatted text in .value sidesteps it entirely.
     const recvRounded = Math.round(recv * 100) / 100;
-    recvEl.value = String(recvRounded);
-    const fmt = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
-    if (hint) hint.textContent = `${fmt(given)} ${givenCur} ${op} ${fmt(rate)} = ${fmt(recvRounded)} ${recvCur}`;
+    const fmt = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    recvEl.dataset.rawValue = String(recvRounded);
+    recvEl.value = fmt(recvRounded);
+    const fmt6 = (n) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+    if (hint) hint.textContent = `${fmt6(given)} ${givenCur} ${op} ${fmt6(rate)} = ${fmt(recvRounded)} ${recvCur}`;
   } else {
     recvEl.value = '';
     if (hint) hint.textContent = givenCur && recvCur
@@ -2304,6 +2307,9 @@ async function openBankTxModal(id = null) {
   // Reset currency-conversion fields (only present on bank modal)
   const convReset = ['btx-conv-target','btx-conv-rate','btx-conv-source-amount','btx-conv-target-amount'];
   convReset.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // Clear the raw-value backing field on the readonly received-amount input.
+  const _rcvEl = document.getElementById('btx-conv-target-amount');
+  if (_rcvEl) delete _rcvEl.dataset.rawValue;
   resetTxSelectors('btx');
   await loadTxSelectors();
   populateCategoryDropdown('btx', document.getElementById('btx-type').value);
@@ -2390,7 +2396,8 @@ async function saveBankTx() {
       const counterId = document.getElementById('btx-conv-target').value;
       const rate = parseFloat(document.getElementById('btx-conv-rate').value || '0');
       const givenAmt = parseFloat(document.getElementById('btx-conv-source-amount').value || '0');
-      const recvAmt  = parseFloat(document.getElementById('btx-conv-target-amount').value || '0');
+      // Recv input shows TR-formatted text; raw EN-locale number lives on dataset.
+      const recvAmt = parseFloat(document.getElementById('btx-conv-target-amount').dataset.rawValue || '0');
       if (!counterId) { showToast(t('toast_select_target_bank') || 'Hedef banka seçin', 'error'); return; }
       if (rate <= 0 || givenAmt <= 0 || recvAmt <= 0) {
         showToast(t('toast_invalid_conv_values') || 'Kur, kaynak ve hedef tutar > 0 olmalı', 'error'); return;
