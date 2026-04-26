@@ -860,15 +860,15 @@ function openEmpModal(id = null) {
   document.getElementById('e-email').value = e?.email || '';
   document.getElementById('e-phone').value = e?.phone || '';
   document.getElementById('e-salary').value = e?.base_salary || '';
-  // Use ?? (not ||) so a real DB value of 0 is preserved instead of falling
-  // through to the 15/14 defaults. e.tax_rate=0 is a legit "no tax" config.
-  // Explicit clear first guards against any persistent value attribute on
-  // the input element across modal opens.
-  const _taxEl = document.getElementById('e-tax');
-  const _insEl = document.getElementById('e-ins');
-  _taxEl.value = ''; _insEl.value = '';
-  _taxEl.value = e?.tax_rate ?? 15;
-  _insEl.value = e?.insurance_rate ?? 14;
+  // Explicit validation + String() conversion to bypass Chromium <input type=number>
+  // edge cases where setting .value = 0 (Number) on a step="0.1" input may end up
+  // empty/placeholder. ?? alone wasn't enough — observed empty input even with
+  // e.tax_rate === 0 confirmed in DB. Belt-and-suspenders: validate type, then
+  // convert to string explicitly.
+  const _taxVal = (typeof e?.tax_rate === 'number' && Number.isFinite(e.tax_rate)) ? e.tax_rate : 15;
+  const _insVal = (typeof e?.insurance_rate === 'number' && Number.isFinite(e.insurance_rate)) ? e.insurance_rate : 14;
+  document.getElementById('e-tax').value = String(_taxVal);
+  document.getElementById('e-ins').value = String(_insVal);
   document.getElementById('e-status').value = e?.status || 'active';
   document.getElementById('e-notes').value = e?.notes || '';
   document.getElementById('e-hiredate').value = e?.hire_date || new Date().toISOString().slice(0,10);
