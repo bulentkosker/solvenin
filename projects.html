@@ -275,6 +275,10 @@ tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <div class="form-grid">
         <div class="field full">
+          <label data-i18n="lbl_project_number">Project No</label>
+          <input type="text" id="p-number" readonly placeholder="Otomatik üretilecek" data-i18n-placeholder="placeholder_auto_generated" style="background:var(--gray50,#f8fafc);color:var(--gray500,#64748b)">
+        </div>
+        <div class="field full">
           <label data-i18n="lbl_project_name">Project Name</label>
           <input type="text" id="p-name">
         </div>
@@ -928,6 +932,7 @@ function openProjectModal(id = null) {
   document.getElementById('project-modal-title').textContent = t(id ? 'title_edit_project' : 'title_add_project');
   if (!id) {
     ['p-name','p-desc','p-start','p-end'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('p-number').value = '';  // empty → "Otomatik üretilecek" placeholder
     document.getElementById('p-budget').value = '';
     document.getElementById('p-progress').value = '0';
     document.getElementById('p-status').value = 'planning';
@@ -935,6 +940,7 @@ function openProjectModal(id = null) {
   } else {
     const p = projects.find(x => x.id === id);
     if (!p) return;
+    document.getElementById('p-number').value = p.project_number || '';
     document.getElementById('p-name').value = p.name||'';
     document.getElementById('p-desc').value = p.description||'';
     document.getElementById('p-status').value = p.status||'planning';
@@ -946,6 +952,29 @@ function openProjectModal(id = null) {
   }
   applyTranslations();
   openModal('project-modal');
+}
+
+// projects.project_number is NOT NULL with no default — auto-generate per
+// company per year as PRJ-YYYY-NNNN, padded to 4 digits. Race-on-collision
+// would be extremely rare in single-tenant use; if it happens, DB unique
+// constraint (if any) or the next save attempt resolves it. project_number
+// stays immutable on edit (we only set it on insert).
+async function nextProjectNumber(companyId) {
+  const year = new Date().getFullYear();
+  const prefix = `PRJ-${year}-`;
+  const { data } = await sb.from('projects')
+    .select('project_number')
+    .eq('company_id', companyId)
+    .like('project_number', prefix + '%')
+    .order('project_number', { ascending: false })
+    .limit(1);
+  let next = 1;
+  if (data && data.length && data[0].project_number) {
+    const tail = data[0].project_number.slice(prefix.length);
+    const n = parseInt(tail, 10);
+    if (!isNaN(n)) next = n + 1;
+  }
+  return prefix + String(next).padStart(4, '0');
 }
 
 async function saveProject() {
@@ -964,12 +993,14 @@ async function saveProject() {
     created_by: user.id
   };
   if (editingProjectId) {
+    // project_number is immutable — never sent on update
     await sb.from('projects').update(payload).eq('id', editingProjectId);
     if (currentProject?.id === editingProjectId) {
       Object.assign(currentProject, payload);
       renderDetailHeader();
     }
   } else {
+    payload.project_number = await nextProjectNumber(companyId);
     const { error } = await sb.from('projects').insert(payload);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
   }
