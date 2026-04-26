@@ -3811,6 +3811,18 @@ async function loadRecycleBin() {
 
   // Sort by deleted_at desc
   allDeletedRecords.sort((a, b) => new Date(b.deleted_at) - new Date(a.deleted_at));
+
+  // Resolve deleted_by UUIDs to profile full_name in one round-trip.
+  // Falls back to truncated UUID when the profile row is missing (e.g.
+  // user removed from system, system role deletes via SECURITY DEFINER).
+  const deleterIds = [...new Set(allDeletedRecords.map(r => r.deleted_by).filter(Boolean))];
+  if (deleterIds.length) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', deleterIds);
+    const nameById = Object.fromEntries((profs || []).map(p => [p.id, p.full_name || '']));
+    allDeletedRecords.forEach(r => {
+      if (r.deleted_by) r.deleted_by_name = nameById[r.deleted_by] || null;
+    });
+  }
   filterRecycleBin();
 }
 
@@ -3841,7 +3853,7 @@ function renderRecycleBin(records) {
       <td style="padding:10px 16px"><span class="badge badge-gray">${typeLabels[r.type] || r.type}</span></td>
       <td style="padding:10px 16px;font-weight:500">${r.label}${r.extra}</td>
       <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_at ? new Date(r.deleted_at).toLocaleString() : '—'}</td>
-      <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_by ? r.deleted_by.substring(0,8)+'...' : '—'}</td>
+      <td style="padding:10px 16px;color:var(--gray500);font-size:12px" title="${r.deleted_by || ''}">${r.deleted_by_name || (r.deleted_by ? r.deleted_by.substring(0,8)+'…' : '—')}</td>
       <td style="padding:10px 16px;text-align:right">
         <button class="btn btn-sm btn-success" onclick="restoreRecord('${r.type}','${r.id}')" style="margin-right:6px">↩ ${t('btn_restore')||'Restore'}</button>
         <button class="btn btn-sm btn-danger" onclick="hardDeleteRecord('${r.type}','${r.id}','${r.label}')">✕ ${t('btn_hard_delete')||'Delete Forever'}</button>
