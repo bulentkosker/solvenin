@@ -299,11 +299,14 @@ async function init() {
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
 
-  // Cache the company's retail system contact. M078 migration + INSERT
-  // trigger guarantee exactly one row per company; if absent (unexpected),
-  // walk-in sales fall back to customer_id=NULL silently.
+  // Cache the company's retail system contact, if it exists. M090 made
+  // creation lazy — companies that never use POS no longer have an
+  // unused "Perakende Satışlar" contact cluttering their list. The first
+  // POS sale calls ensureRetailContact() which creates one on demand.
+  // Only ACTIVE rows count (M090 soft-deleted unused ones).
   const { data: retail } = await sb.from('contacts')
     .select('id').eq('company_id', companyId).eq('is_system', true).eq('name', 'Perakende Satışlar')
+    .is('deleted_at', null)
     .maybeSingle();
   retailContactId = retail?.id || null;
 
@@ -437,6 +440,34 @@ async function loadAccounts() {
   cashRegisters = regs || [];
   const { data: accs } = await sb.from('bank_accounts').select('id,account_name,currency_code').eq('company_id', companyId).eq('is_active', true);
   bankAccounts = accs || [];
+}
+
+// Lazy-create the per-company retail system contact ("Perakende Satışlar").
+// Returns the id, or null on failure (caller falls through to customer_id=NULL).
+// Resilience: there's a race window where two near-simultaneous first POS
+// sales could both insert; the second insert would create a duplicate. In
+// that case we re-fetch and use whichever active row exists.
+async function ensureRetailContact() {
+  // Re-check (cache may be stale across long-running tab)
+  const { data: existing } = await sb.from('contacts')
+    .select('id').eq('company_id', companyId).eq('is_system', true).eq('name', 'Perakende Satışlar')
+    .is('deleted_at', null).maybeSingle();
+  if (existing?.id) return existing.id;
+  const ins = await sb.from('contacts').insert({
+    company_id: companyId,
+    name: 'Perakende Satışlar',
+    type: 'customer',
+    is_customer: true, is_supplier: false, is_active: true, is_system: true,
+    notes: 'POS ve anonim perakende satışlar için sistem carisi. Silinemez, birleştirilemez.'
+  }).select('id').single();
+  if (!ins.error) return ins.data.id;
+  // Race lost? Re-fetch.
+  const { data: again } = await sb.from('contacts')
+    .select('id').eq('company_id', companyId).eq('is_system', true).eq('name', 'Perakende Satışlar')
+    .is('deleted_at', null).maybeSingle();
+  if (again?.id) return again.id;
+  console.error('[pos] ensureRetailContact failed:', ins.error);
+  return null;
 }
 
 function F(n) { return currSym + parseFloat(n||0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
@@ -859,7 +890,11 @@ async function completeSale() {
     const today = new Date().toISOString().split('T')[0];
 
     // Walk-in fallback — when the cashier hasn't picked a contact, use the
-    // company's system retail contact so POS rows aren't orphaned.
+    // company's system retail contact. Lazy-create it on first POS sale
+    // (M090 dropped the per-company auto-creation trigger). Cached after.
+    if (!selectedCustomerId && !retailContactId) {
+      retailContactId = await ensureRetailContact();
+    }
     const effectiveCustomerId = selectedCustomerId || retailContactId || null;
 
     // OFFLINE PATH — queue the sale in IndexedDB and finish the receipt locally
