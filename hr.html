@@ -499,6 +499,55 @@ tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
+<!-- ══ PAYROLL PAY MODAL — banka/kasa seçimi ile maaş ödeme ══ -->
+<div class="modal-overlay" id="paypay-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="paypay-title" data-i18n="title_pay_payroll">Maaş Öde</div>
+      <button class="modal-close" onclick="closeModal('paypay-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label data-i18n="lbl_employee">Çalışan</label>
+        <input type="text" id="paypay-emp" readonly style="background:var(--gray50);color:var(--gray500)">
+      </div>
+      <div class="field">
+        <label data-i18n="lbl_amount">Net Tutar</label>
+        <input type="text" id="paypay-amount" readonly style="background:var(--gray50);color:var(--gray500)">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label data-i18n="lbl_payment_method">Ödeme Yolu *</label>
+          <select id="paypay-method" onchange="onPayPayMethodChange()">
+            <option value="bank" data-i18n="lbl_bank_transfer">Banka Havale</option>
+            <option value="cash" data-i18n="lbl_cash">Nakit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_payment_date">Tarih *</label>
+          <input type="date" id="paypay-date">
+        </div>
+      </div>
+      <div class="field" id="paypay-bank-row">
+        <label data-i18n="lbl_bank_account">Banka Hesabı *</label>
+        <select id="paypay-bank-account"></select>
+      </div>
+      <div class="field" id="paypay-cash-row" style="display:none">
+        <label data-i18n="lbl_cash_register">Kasa *</label>
+        <select id="paypay-cash-register"></select>
+      </div>
+      <div class="field">
+        <label data-i18n="lbl_reference">Referans</label>
+        <input type="text" id="paypay-ref" placeholder="Dekont no, açıklama...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('paypay-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" id="paypay-save-btn" onclick="confirmPayPayment()" data-action="save" data-i18n="btn_save">Öde</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ LEAVE REQUEST MODAL ══ -->
 <div class="modal-overlay" id="leave-modal">
   <div class="modal" style="max-width:480px">
@@ -858,6 +907,7 @@ function renderEmployees() {
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openQRModal('${e.id}')" title="QR Kod">📱</button>
         <button class="btn btn-sm btn-outline btn-icon" onclick="openEmpModal('${e.id}')" title="Düzenle">✏️</button>
+        ${e.contact_id ? `<a class="btn btn-sm btn-outline btn-icon" href="contacts.html?id=${e.contact_id}" title="${t('btn_view_statement')||'Cari Ekstre'}" style="text-decoration:none">📒</a>` : ''}
         <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('emp','${e.id}','${e.first_name} ${e.last_name}')" title="Sil">🗑️</button>
       </div></td>
     </tr>`;
@@ -1096,6 +1146,7 @@ function renderPayrollItems() {
       <td style="font-weight:700;color:var(--green)">${fmt(item.net_salary)}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openPayItemModal('${item.id}')" title="${t('btn_edit')||'Düzenle'}">✏️</button>
+        ${item.status === 'approved' ? `<button class="btn btn-sm btn-primary btn-icon" onclick="openPayPayModal('${item.id}')" title="${t('btn_pay_payroll')||'Öde'}">💸</button>` : ''}
         ${item.status === 'approved' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="revertPayrollRow('${item.id}')" title="${t('btn_revert_to_draft')||'Taslağa Çevir'}">↩️</button>` : ''}
         ${item.status === 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" style="color:var(--orange)" onclick="cancelPayrollRow('${item.id}')" title="${t('btn_cancel_payroll')||'İptal Et'}">✕</button>` : ''}
         ${item.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" style="color:var(--red)" onclick="deletePayrollRow('${item.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
@@ -1237,6 +1288,116 @@ async function cancelPayrollRow(id) {
   }
   showToast(t('toast_payroll_cancelled') || 'Bordro iptal edildi ✓', 'success');
   await loadPayrolls();
+}
+
+// ===== PAYROLL PAY (single row, with bank/cash tx and contact_id link) =====
+let _payingPayrollId = null;
+let _hrCashRegisters = [], _hrBankAccounts = [];
+
+async function openPayPayModal(id) {
+  const item = payrollItems.find(i => i.id === id);
+  if (!item) return;
+  const emp = employees.find(e => e.id === item.employee_id);
+  if (!emp) { showToast(t('toast_employee_not_found') || 'Çalışan bulunamadı', 'error'); return; }
+  if (!emp.contact_id) {
+    showToast(t('toast_employee_no_contact') || 'Çalışanın cari kaydı yok — sayfayı yenileyin', 'error');
+    return;
+  }
+  _payingPayrollId = id;
+
+  document.getElementById('paypay-emp').value = `${emp.first_name} ${emp.last_name||''}`.trim();
+  document.getElementById('paypay-amount').value = (item.net_salary || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('paypay-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('paypay-method').value = 'bank';
+  document.getElementById('paypay-ref').value = '';
+
+  // Load bank/cash on first open or when stale
+  if (!_hrBankAccounts.length) {
+    const [b, c] = await Promise.all([
+      sb.from('bank_accounts').select('id,account_name,currency_code').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('account_name'),
+      sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
+    ]);
+    _hrBankAccounts = b.data || [];
+    _hrCashRegisters = c.data || [];
+  }
+  document.getElementById('paypay-bank-account').innerHTML = _hrBankAccounts.length
+    ? '<option value="">' + (t('lbl_select_account')||'Hesap seçin...') + '</option>' + _hrBankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('')
+    : '<option value="">' + (t('toast_no_bank_account')||'Banka hesabı yok') + '</option>';
+  document.getElementById('paypay-cash-register').innerHTML = _hrCashRegisters.length
+    ? '<option value="">' + (t('lbl_select_register')||'Kasa seçin...') + '</option>' + _hrCashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('')
+    : '<option value="">' + (t('toast_no_cash_register')||'Kasa yok') + '</option>';
+
+  onPayPayMethodChange();
+  openModal('paypay-modal');
+}
+
+function onPayPayMethodChange() {
+  const m = document.getElementById('paypay-method').value;
+  document.getElementById('paypay-bank-row').style.display = m === 'bank' ? '' : 'none';
+  document.getElementById('paypay-cash-row').style.display = m === 'cash' ? '' : 'none';
+}
+
+async function confirmPayPayment() {
+  if (!_payingPayrollId) return;
+  const item = payrollItems.find(i => i.id === _payingPayrollId);
+  const emp = employees.find(e => e.id === item.employee_id);
+  if (!item || !emp) return;
+  const amount = parseFloat(item.net_salary) || 0;
+  if (amount <= 0) { showToast(t('toast_invalid_amount') || 'Geçersiz tutar', 'error'); return; }
+
+  const method = document.getElementById('paypay-method').value;
+  const date   = document.getElementById('paypay-date').value || new Date().toISOString().split('T')[0];
+  const ref    = document.getElementById('paypay-ref').value.trim() || null;
+  const bankId = document.getElementById('paypay-bank-account').value;
+  const cashId = document.getElementById('paypay-cash-register').value;
+  if (method === 'bank' && !bankId) { showToast(t('lbl_select_account')||'Hesap seçin', 'error'); return; }
+  if (method === 'cash' && !cashId) { showToast(t('lbl_select_register')||'Kasa seçin', 'error'); return; }
+
+  const empName = `${emp.first_name} ${emp.last_name||''}`.trim();
+  const desc = `${t('lbl_salary_payment_desc')||'Maaş ödemesi'}: ${empName} ${item.period_year}/${String(item.period_month).padStart(2,'0')}`;
+
+  const btn = document.getElementById('paypay-save-btn');
+  btn.disabled = true;
+  try {
+    if (method === 'bank') {
+      const acc = _hrBankAccounts.find(a => a.id === bankId);
+      const { error } = await sb.from('bank_transactions').insert({
+        company_id: companyId, account_id: bankId, type: 'out', amount,
+        currency_code: acc?.currency_code || 'KZT',
+        description: desc, category: 'salary',
+        source_type: 'manual', transaction_date: date,
+        contact_id: emp.contact_id, employee_id: emp.id,
+        reference: ref,
+      });
+      if (error) throw error;
+    } else {
+      const reg = _hrCashRegisters.find(r => r.id === cashId);
+      const { error } = await sb.from('cash_transactions').insert({
+        company_id: companyId, register_id: cashId, type: 'out', amount,
+        currency_code: reg?.currency_code || 'KZT',
+        description: desc, category: 'salary',
+        source_type: 'manual', transaction_date: date,
+        contact_id: emp.contact_id, employee_id: emp.id,
+        reference: ref,
+      });
+      if (error) throw error;
+    }
+    // Mark payroll paid only after the tx insert succeeded.
+    const { error: upErr } = await sb.from('payroll').update({
+      status: 'paid', paid_at: new Date(date).toISOString()
+    }).eq('id', _payingPayrollId);
+    if (upErr) throw upErr;
+
+    showToast(t('toast_salary_paid')||'Maaş ödendi ✓', 'success');
+    closeModal('paypay-modal');
+    _payingPayrollId = null;
+    await loadPayrolls();
+  } catch (err) {
+    console.error('[hr] confirmPayPayment error:', err);
+    showToast(getErrorMessage(err) || err.message || (t('toast_payment_failed')||'Ödeme başarısız'), 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ===== BULK ACTIONS (period-scope) =====
