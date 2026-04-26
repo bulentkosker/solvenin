@@ -260,10 +260,12 @@ tr:hover .row-actions{opacity:1}
           <option value="paid">Ödendi</option>
         </select>
       </div>
-      <div id="payroll-header" style="display:none;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+      <div id="payroll-header" style="display:none;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <span id="payroll-status-badge"></span>
         <button class="btn btn-success btn-sm" id="btn-approve-payroll" onclick="approvePayroll()" style="display:none">✓ Onayla</button>
         <button class="btn btn-primary btn-sm" id="btn-mark-paid" onclick="markPayrollPaid()" style="display:none">💸 Ödendi İşaretle</button>
+        <button class="btn btn-outline btn-sm" id="btn-bulk-revert-payroll" onclick="bulkRevertPayroll()" style="display:none" data-i18n="btn_bulk_revert">↩️ Tümünü Taslağa Çevir</button>
+        <button class="btn btn-outline btn-sm" id="btn-bulk-delete-payroll" onclick="bulkDeletePayroll()" style="display:none;color:var(--red);border-color:var(--red)" data-i18n="btn_bulk_delete">🗑️ Tümünü Sil</button>
       </div>
       <div class="table-card">
         <div class="table-wrap">
@@ -767,7 +769,8 @@ async function loadPayrolls() {
     .select('*')
     .eq('company_id', companyId)
     .eq('period_year', year)
-    .eq('period_month', month);
+    .eq('period_month', month)
+    .is('deleted_at', null);
   if (error) { console.error('[hr] loadPayrolls:', error); }
   payrollItems = data || [];
   renderPayrollHeader(deriveHeaderStatus(payrollItems));
@@ -1034,20 +1037,27 @@ function renderPayrollHeader(agg) {
   const hdr = document.getElementById('payroll-header');
   const btnApprove = document.getElementById('btn-approve-payroll');
   const btnPaid = document.getElementById('btn-mark-paid');
+  const btnBulkRevert = document.getElementById('btn-bulk-revert-payroll');
+  const btnBulkDelete = document.getElementById('btn-bulk-delete-payroll');
   const badge = document.getElementById('payroll-status-badge');
   if (!agg) { hdr.style.display = 'none'; return; }
   hdr.style.display = 'flex';
   const statusMap = {
-    draft:    ['badge-gray',   'Taslak'],
-    approved: ['badge-blue',   'Onaylandı'],
-    paid:     ['badge-green',  'Ödendi'],
-    mixed:    ['badge-orange', 'Karışık'],
+    draft:     ['badge-gray',   'Taslak'],
+    approved:  ['badge-blue',   'Onaylandı'],
+    paid:      ['badge-green',  'Ödendi'],
+    cancelled: ['badge-red',    'İptal'],
+    mixed:     ['badge-orange', 'Karışık'],
   };
   const [cls, lbl] = statusMap[agg.status] || ['badge-gray','—'];
   badge.innerHTML = `<span class="badge ${cls}">${lbl}</span>`;
-  // Approve = there's still anything in 'draft' (or all-draft / mixed)
   btnApprove.style.display = (agg.status === 'draft' || agg.status === 'mixed') ? '' : 'none';
   btnPaid.style.display    = (agg.status === 'approved') ? '' : 'none';
+  // Bulk revert: shown if any approved row exists
+  if (btnBulkRevert) btnBulkRevert.style.display = (agg.status === 'approved' || agg.status === 'mixed') ? '' : 'none';
+  // Bulk delete: shown if any non-paid row exists (paid must be cancelled first)
+  const hasDeletable = (payrollItems || []).some(p => p.status !== 'paid');
+  if (btnBulkDelete) btnBulkDelete.style.display = hasDeletable ? '' : 'none';
 }
 function renderPayrollItems() {
   const tbody = document.getElementById('payroll-tbody');
@@ -1085,7 +1095,10 @@ function renderPayrollItems() {
       <td style="color:var(--orange)">${fmt(item.insurance_deduction)}</td>
       <td style="font-weight:700;color:var(--green)">${fmt(item.net_salary)}</td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="openPayItemModal('${item.id}')" title="Düzenle">✏️</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="openPayItemModal('${item.id}')" title="${t('btn_edit')||'Düzenle'}">✏️</button>
+        ${item.status === 'approved' ? `<button class="btn btn-sm btn-outline btn-icon" onclick="revertPayrollRow('${item.id}')" title="${t('btn_revert_to_draft')||'Taslağa Çevir'}">↩️</button>` : ''}
+        ${item.status === 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" style="color:var(--orange)" onclick="cancelPayrollRow('${item.id}')" title="${t('btn_cancel_payroll')||'İptal Et'}">✕</button>` : ''}
+        ${item.status !== 'paid' ? `<button class="btn btn-sm btn-outline btn-icon" style="color:var(--red)" onclick="deletePayrollRow('${item.id}')" title="${t('btn_delete')||'Sil'}">🗑️</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1176,6 +1189,102 @@ async function markPayrollPaid() {
   showToast(`${count ?? '—'} bordro ödendi ✓`, 'success');
   await loadPayrolls();
 }
+
+// ===== PAYROLL CANCEL / DELETE / REVERT =====
+// Single-row actions, bound to icons in renderPayrollItems.
+async function deletePayrollRow(id) {
+  const item = payrollItems.find(i => i.id === id);
+  if (!item) return;
+  const msg = t('confirm_delete_payroll_msg') || 'Bu bordroyu silmek istediğinizden emin misiniz? Çöp kutusuna taşınır, geri alınabilir.';
+  if (!await showConfirm(msg, t('confirm_delete')||'Onay', t('btn_delete')||'Sil')) return;
+  const { data: { user } } = await sb.auth.getUser();
+  const { error } = await sb.from('payroll').update({
+    deleted_at: new Date().toISOString(),
+    deleted_by: user?.id || null,
+    cleanup_at: new Date().toISOString(),
+    cleanup_by: user?.id || null,
+  }).eq('id', id);
+  if (error) {
+    console.error('[hr] deletePayrollRow error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error'); return;
+  }
+  showToast(t('toast_payroll_deleted') || 'Bordro silindi ✓', 'success');
+  await loadPayrolls();
+}
+
+async function revertPayrollRow(id) {
+  const msg = t('confirm_revert_payroll_msg') || 'Bu bordroyu taslağa çevirir, ödenmemiş hale gelir. Devam edilsin mi?';
+  if (!await showConfirm(msg, t('confirm')||'Onay', t('btn_revert_to_draft')||'Taslağa Çevir')) return;
+  const { error } = await sb.from('payroll').update({ status: 'draft' }).eq('id', id);
+  if (error) {
+    console.error('[hr] revertPayrollRow error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error'); return;
+  }
+  showToast(t('toast_payroll_reverted') || 'Bordro taslağa çevrildi ✓', 'success');
+  await loadPayrolls();
+}
+
+async function cancelPayrollRow(id) {
+  // Paid rows: warn user that any linked bank/cash transaction must be
+  // cleared manually — payroll module does not currently produce such tx.
+  const msg = t('confirm_cancel_paid_payroll_msg')
+    || 'DİKKAT: Bu bordro ödenmiş. İptal status\'a çevrilir, kayıt durur ama varsa bağlı banka hareketleri otomatik silinmez. Devam edilsin mi?';
+  if (!await showConfirm(msg, t('confirm')||'Onay', t('btn_cancel_payroll')||'İptal Et')) return;
+  const { error } = await sb.from('payroll').update({ status: 'cancelled' }).eq('id', id);
+  if (error) {
+    console.error('[hr] cancelPayrollRow error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error'); return;
+  }
+  showToast(t('toast_payroll_cancelled') || 'Bordro iptal edildi ✓', 'success');
+  await loadPayrolls();
+}
+
+// ===== BULK ACTIONS (period-scope) =====
+async function bulkRevertPayroll() {
+  const approved = payrollItems.filter(p => p.status === 'approved');
+  if (!approved.length) { showToast(t('toast_no_approved_rows') || 'Onaylı bordro yok', 'info'); return; }
+  const msg = (t('confirm_bulk_revert_msg') || '{0} onaylı bordro taslağa çevrilecek. Devam edilsin mi?').replace('{0}', approved.length);
+  if (!await showConfirm(msg, t('confirm')||'Onay', t('btn_revert_to_draft')||'Taslağa Çevir')) return;
+  const year  = parseInt(document.getElementById('pr-year').value);
+  const month = parseInt(document.getElementById('pr-month').value);
+  const { error, count } = await sb.from('payroll')
+    .update({ status: 'draft' }, { count: 'exact' })
+    .eq('company_id', companyId).eq('period_year', year).eq('period_month', month)
+    .eq('status', 'approved').is('deleted_at', null);
+  if (error) {
+    console.error('[hr] bulkRevertPayroll error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error'); return;
+  }
+  showToast(`${count ?? '—'} bordro taslağa çevrildi ✓`, 'success');
+  await loadPayrolls();
+}
+
+async function bulkDeletePayroll() {
+  // Only delete rows that aren't paid — paid must be cancelled first.
+  const deletable = payrollItems.filter(p => p.status !== 'paid');
+  if (!deletable.length) { showToast(t('toast_no_deletable_rows') || 'Silinebilir bordro yok (ödenmişler önce iptal edilmeli)', 'info'); return; }
+  const msg = (t('confirm_bulk_delete_msg') || '{0} bordro silinecek (ödenmişler hariç). Çöp kutusuna taşınır. Devam edilsin mi?').replace('{0}', deletable.length);
+  if (!await showConfirm(msg, t('confirm_delete')||'Onay', t('btn_delete')||'Sil')) return;
+  const { data: { user } } = await sb.auth.getUser();
+  const year  = parseInt(document.getElementById('pr-year').value);
+  const month = parseInt(document.getElementById('pr-month').value);
+  const { error, count } = await sb.from('payroll')
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: user?.id || null,
+      cleanup_at: new Date().toISOString(),
+      cleanup_by: user?.id || null,
+    }, { count: 'exact' })
+    .eq('company_id', companyId).eq('period_year', year).eq('period_month', month)
+    .neq('status', 'paid').is('deleted_at', null);
+  if (error) {
+    console.error('[hr] bulkDeletePayroll error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error'); return;
+  }
+  showToast(`${count ?? '—'} bordro silindi ✓`, 'success');
+  await loadPayrolls();
+}
+
 function openPayItemModal(id) {
   editingPayItemId = id;
   const item = payrollItems.find(i => i.id === id);
