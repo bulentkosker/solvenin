@@ -665,7 +665,7 @@ let employees = [], departments = [], positions = [];
 let payrolls = [], payrollItems = [];
 let leaveTypes = [], leaveRequests = [];
 let attendanceRecords = [];
-let currentPayrollId = null;
+// currentPayrollId removed: payroll is per-employee-per-period (no header table)
 let currentTab = 'employees';
 let editingEmpId = null, editingPayItemId = null;
 let editingLeaveId = null, editingLeaveTypeId = null;
@@ -754,21 +754,31 @@ async function loadAttendance() {
   const { data } = await sb.from('attendance').select('*').eq('company_id', companyId).eq('date', dateVal).order('created_at');
   attendanceRecords = data || [];
 }
+// SCHEMA REALITY: payroll is a single per-employee per-period table —
+// columns: company_id, employee_id, period_year, period_month, base_salary,
+// overtime_pay, bonuses, gross_salary, tax_deduction, insurance_deduction,
+// other_deductions, net_salary, status, paid_at, notes. There is no separate
+// header table; "header status" is derived from row aggregate (mixed/draft/
+// approved/paid). currentPayrollId removed — period (year+month) is the key.
 async function loadPayrolls() {
   const year = document.getElementById('pr-year').value;
   const month = document.getElementById('pr-month').value;
-  const { data: pr } = await sb.from('payroll').select('*').eq('company_id', companyId).eq('period_year', year).eq('period_month', month).maybeSingle();
-  if (pr) {
-    currentPayrollId = pr.id;
-    const { data: items } = await sb.from('payroll_items').select('*').eq('payroll_id', pr.id);
-    payrollItems = items || [];
-    renderPayrollHeader(pr);
-  } else {
-    currentPayrollId = null;
-    payrollItems = [];
-    renderPayrollHeader(null);
-  }
+  const { data, error } = await sb.from('payroll')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('period_year', year)
+    .eq('period_month', month);
+  if (error) { console.error('[hr] loadPayrolls:', error); }
+  payrollItems = data || [];
+  renderPayrollHeader(deriveHeaderStatus(payrollItems));
   renderPayrollItems();
+}
+
+function deriveHeaderStatus(rows) {
+  if (!rows || !rows.length) return null;
+  const set = new Set(rows.map(r => r.status));
+  if (set.size === 1) return { status: [...set][0] };
+  return { status: 'mixed' };
 }
 
 // ===== POPULATE SELECTS =====
@@ -1020,18 +1030,24 @@ function calcHoursBetween(t1, t2) {
 }
 
 // ===== PAYROLL =====
-function renderPayrollHeader(pr) {
+function renderPayrollHeader(agg) {
   const hdr = document.getElementById('payroll-header');
   const btnApprove = document.getElementById('btn-approve-payroll');
   const btnPaid = document.getElementById('btn-mark-paid');
   const badge = document.getElementById('payroll-status-badge');
-  if (!pr) { hdr.style.display = 'none'; return; }
+  if (!agg) { hdr.style.display = 'none'; return; }
   hdr.style.display = 'flex';
-  const statusMap = { draft: ['badge-gray','Taslak'], approved: ['badge-blue','Onaylandı'], paid: ['badge-green','Ödendi'] };
-  const [cls, lbl] = statusMap[pr.status] || ['badge-gray','—'];
+  const statusMap = {
+    draft:    ['badge-gray',   'Taslak'],
+    approved: ['badge-blue',   'Onaylandı'],
+    paid:     ['badge-green',  'Ödendi'],
+    mixed:    ['badge-orange', 'Karışık'],
+  };
+  const [cls, lbl] = statusMap[agg.status] || ['badge-gray','—'];
   badge.innerHTML = `<span class="badge ${cls}">${lbl}</span>`;
-  btnApprove.style.display = pr.status === 'draft' ? '' : 'none';
-  btnPaid.style.display = pr.status === 'approved' ? '' : 'none';
+  // Approve = there's still anything in 'draft' (or all-draft / mixed)
+  btnApprove.style.display = (agg.status === 'draft' || agg.status === 'mixed') ? '' : 'none';
+  btnPaid.style.display    = (agg.status === 'approved') ? '' : 'none';
 }
 function renderPayrollItems() {
   const tbody = document.getElementById('payroll-tbody');
@@ -1048,18 +1064,26 @@ function renderPayrollItems() {
   tbody.innerHTML = list.map(item => {
     const emp = employees.find(e => e.id === item.employee_id);
     if (!emp) return '';
-    totBase+=item.base_salary||0; totOT+=item.overtime||0; totBonus+=item.bonus||0; totDed+=item.deductions||0;
-    totGross+=item.gross||0; totTax+=item.tax_amount||0; totIns+=item.insurance_amount||0; totNet+=item.net||0;
+    // Real schema columns: overtime_pay, bonuses, other_deductions, gross_salary,
+    // tax_deduction, insurance_deduction, net_salary
+    totBase += item.base_salary||0;
+    totOT   += item.overtime_pay||0;
+    totBonus+= item.bonuses||0;
+    totDed  += item.other_deductions||0;
+    totGross+= item.gross_salary||0;
+    totTax  += item.tax_deduction||0;
+    totIns  += item.insurance_deduction||0;
+    totNet  += item.net_salary||0;
     return `<tr>
       <td><div style="font-weight:600">${emp.first_name} ${emp.last_name}</div><div style="font-size:11px;color:var(--gray400)">${departments.find(d=>d.id===emp.department_id)?.name||''}</div></td>
       <td>${fmt(item.base_salary)}</td>
-      <td style="color:var(--orange)">${fmt(item.overtime)}</td>
-      <td style="color:var(--green)">${fmt(item.bonus)}</td>
-      <td style="color:var(--red)">${fmt(item.deductions)}</td>
-      <td style="font-weight:600">${fmt(item.gross)}</td>
-      <td style="color:var(--red)">${fmt(item.tax_amount)}</td>
-      <td style="color:var(--orange)">${fmt(item.insurance_amount)}</td>
-      <td style="font-weight:700;color:var(--green)">${fmt(item.net)}</td>
+      <td style="color:var(--orange)">${fmt(item.overtime_pay)}</td>
+      <td style="color:var(--green)">${fmt(item.bonuses)}</td>
+      <td style="color:var(--red)">${fmt(item.other_deductions)}</td>
+      <td style="font-weight:600">${fmt(item.gross_salary)}</td>
+      <td style="color:var(--red)">${fmt(item.tax_deduction)}</td>
+      <td style="color:var(--orange)">${fmt(item.insurance_deduction)}</td>
+      <td style="font-weight:700;color:var(--green)">${fmt(item.net_salary)}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openPayItemModal('${item.id}')" title="Düzenle">✏️</button>
       </div></td>
@@ -1074,41 +1098,82 @@ async function generatePayroll() {
   const year = parseInt(document.getElementById('pr-year').value);
   const month = parseInt(document.getElementById('pr-month').value);
   if (!employees.length) { showToast('Önce çalışan ekleyin', 'error'); return; }
-  // Create or get payroll header
-  let prId = currentPayrollId;
-  if (!prId) {
-    const { data, error } = await sb.from('payroll').insert({ company_id: companyId, period_year: year, period_month: month, status: 'draft' }).select().single();
-    if (error) { showToast(getErrorMessage(error), 'error'); return; }
-    prId = data.id;
-    currentPayrollId = prId;
+  // Skip employees that already have a payroll row for this period.
+  const existing = new Set(payrollItems.map(p => p.employee_id));
+  const toInsert = employees
+    .filter(e => !existing.has(e.id) && e.status === 'active')
+    .map(e => {
+      const base = parseFloat(e.base_salary) || 0;
+      const tax  = base * (parseFloat(e.tax_rate)||0) / 100;
+      const ins  = base * (parseFloat(e.insurance_rate)||0) / 100;
+      return {
+        company_id: companyId,
+        employee_id: e.id,
+        period_year: year,
+        period_month: month,
+        base_salary: base,
+        overtime_pay: 0,
+        bonuses: 0,
+        other_deductions: 0,
+        gross_salary: base,
+        tax_deduction: tax,
+        insurance_deduction: ins,
+        net_salary: base - tax - ins,
+        status: 'draft',
+      };
+    });
+  const skipped = employees.filter(e => existing.has(e.id) && e.status === 'active').length;
+  if (!toInsert.length) {
+    showToast(skipped
+      ? `Bu dönem için zaten ${skipped} çalışana bordro var`
+      : 'Aktif çalışan yok', 'info');
+    return;
   }
-  // Generate items for all active employees (skip existing)
-  const existing = new Set(payrollItems.map(i => i.employee_id));
-  const toInsert = employees.filter(e => !existing.has(e.id) && e.status === 'active').map(e => {
-    const gross = e.base_salary || 0;
-    const tax = gross * (e.tax_rate||0) / 100;
-    const ins = gross * (e.insurance_rate||0) / 100;
-    return { payroll_id: prId, employee_id: e.id, base_salary: gross, overtime: 0, bonus: 0, deductions: 0, gross, tax_amount: tax, insurance_amount: ins, net: gross - tax - ins };
-  });
-  if (toInsert.length) {
-    const { error } = await sb.from('payroll_items').insert(toInsert);
-    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  const { error } = await sb.from('payroll').insert(toInsert);
+  if (error) {
+    console.error('[hr] generatePayroll error:', error);
+    showToast(getErrorMessage(error) || ('Bordro oluşturulamadı: ' + error.message), 'error');
+    return;
   }
-  showToast('Bordro oluşturuldu ✓', 'success');
+  const msg = skipped
+    ? `${toInsert.length} bordro oluşturuldu, ${skipped} mevcut atlandı ✓`
+    : `Bordro oluşturuldu — ${toInsert.length} çalışan ✓`;
+  showToast(msg, 'success');
   await loadPayrolls();
 }
 async function approvePayroll() {
-  if (!currentPayrollId) return;
-  const { error } = await sb.from('payroll').update({ status: 'approved' }).eq('id', currentPayrollId);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Bordro onaylandı ✓', 'success');
+  const year = parseInt(document.getElementById('pr-year').value);
+  const month = parseInt(document.getElementById('pr-month').value);
+  // Bulk approve: only flip rows still in 'draft' for this period.
+  const { error, count } = await sb.from('payroll')
+    .update({ status: 'approved' }, { count: 'exact' })
+    .eq('company_id', companyId)
+    .eq('period_year', year)
+    .eq('period_month', month)
+    .eq('status', 'draft');
+  if (error) {
+    console.error('[hr] approvePayroll error:', error);
+    showToast(getErrorMessage(error) || ('Onay hatası: ' + error.message), 'error');
+    return;
+  }
+  showToast(`${count ?? '—'} bordro onaylandı ✓`, 'success');
   await loadPayrolls();
 }
 async function markPayrollPaid() {
-  if (!currentPayrollId) return;
-  const { error } = await sb.from('payroll').update({ status: 'paid' }).eq('id', currentPayrollId);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Bordro ödendi olarak işaretlendi ✓', 'success');
+  const year = parseInt(document.getElementById('pr-year').value);
+  const month = parseInt(document.getElementById('pr-month').value);
+  const { error, count } = await sb.from('payroll')
+    .update({ status: 'paid', paid_at: new Date().toISOString() }, { count: 'exact' })
+    .eq('company_id', companyId)
+    .eq('period_year', year)
+    .eq('period_month', month)
+    .eq('status', 'approved');
+  if (error) {
+    console.error('[hr] markPayrollPaid error:', error);
+    showToast(getErrorMessage(error) || ('Ödeme işaretleme hatası: ' + error.message), 'error');
+    return;
+  }
+  showToast(`${count ?? '—'} bordro ödendi ✓`, 'success');
   await loadPayrolls();
 }
 function openPayItemModal(id) {
@@ -1117,14 +1182,21 @@ function openPayItemModal(id) {
   if (!item) return;
   const emp = employees.find(e => e.id === item.employee_id);
   document.getElementById('payitem-title').textContent = emp ? `${emp.first_name} ${emp.last_name} — Bordro` : 'Bordro Düzenle';
-  document.getElementById('pi-base').value = item.base_salary || 0;
-  document.getElementById('pi-overtime').value = item.overtime || 0;
-  document.getElementById('pi-bonus').value = item.bonus || 0;
-  document.getElementById('pi-deductions').value = item.deductions || 0;
-  // ?? preserves emp.tax_rate=0 (|| 0 happens to give the same result here, but
-  // ?? is intent-correct: only fall back when the field is null/undefined).
-  document.getElementById('pi-tax-rate').value = emp ? (emp.tax_rate ?? 0) : 0;
-  document.getElementById('pi-ins-rate').value = emp ? (emp.insurance_rate ?? 0) : 0;
+  // Real schema columns: overtime_pay, bonuses, other_deductions
+  document.getElementById('pi-base').value       = item.base_salary || 0;
+  document.getElementById('pi-overtime').value   = item.overtime_pay || 0;
+  document.getElementById('pi-bonus').value      = item.bonuses || 0;
+  document.getElementById('pi-deductions').value = item.other_deductions || 0;
+  // For the rate inputs we prefer the row's effective rate if persisted,
+  // otherwise fall back to the employee defaults. The row stores absolute
+  // amounts (tax_deduction / insurance_deduction), not rates — so derive:
+  const base = parseFloat(item.base_salary) || 0;
+  const derivedTax = (base > 0 && item.tax_deduction != null) ? (item.tax_deduction / base * 100) : null;
+  const derivedIns = (base > 0 && item.insurance_deduction != null) ? (item.insurance_deduction / base * 100) : null;
+  const taxFallback = emp ? (emp.tax_rate ?? 0) : 0;
+  const insFallback = emp ? (emp.insurance_rate ?? 0) : 0;
+  document.getElementById('pi-tax-rate').value = derivedTax != null ? Number(derivedTax.toFixed(2)) : taxFallback;
+  document.getElementById('pi-ins-rate').value = derivedIns != null ? Number(derivedIns.toFixed(2)) : insFallback;
   document.getElementById('pi-notes').value = item.notes || '';
   calcPayPreview();
   openModal('payitem-modal');
@@ -1156,12 +1228,25 @@ async function savePayItem() {
   const tax = gross * taxRate / 100;
   const ins = gross * insRate / 100;
   const net = gross - tax - ins;
-  const { error } = await sb.from('payroll_items').update({
-    base_salary: base, overtime: ot, bonus, deductions: ded,
-    gross, tax_amount: tax, insurance_amount: ins, net,
+  // Real schema (column rename map):
+  //   overtime → overtime_pay, bonus → bonuses, deductions → other_deductions
+  //   gross → gross_salary, tax_amount → tax_deduction, insurance_amount → insurance_deduction, net → net_salary
+  const { error } = await sb.from('payroll').update({
+    base_salary: base,
+    overtime_pay: ot,
+    bonuses: bonus,
+    other_deductions: ded,
+    gross_salary: gross,
+    tax_deduction: tax,
+    insurance_deduction: ins,
+    net_salary: net,
     notes: document.getElementById('pi-notes').value.trim() || null,
   }).eq('id', editingPayItemId);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  if (error) {
+    console.error('[hr] savePayItem error:', error);
+    showToast(getErrorMessage(error) || error.message, 'error');
+    return;
+  }
   showToast('Bordro kalemi güncellendi ✓', 'success');
   closeModal('payitem-modal');
   await loadPayrolls();
