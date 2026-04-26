@@ -403,8 +403,8 @@ tr:hover .row-actions{opacity:1}
         <div class="field"><label>Pozisyon</label><select id="e-pos"></select></div>
         <div class="field"><label>İşe Giriş Tarihi *</label><input type="date" id="e-hiredate"></div>
         <div class="field"><label>Baz Maaş *</label><input type="number" id="e-salary" placeholder="0.00" min="0" step="0.01" oninput="calcNetPreview()"></div>
-        <div class="field"><label>Vergi Oranı (%)</label><input type="number" id="e-tax" placeholder="15" min="0" max="100" step="0.1" value="15" oninput="calcNetPreview()"></div>
-        <div class="field"><label>Sigorta Oranı (%)</label><input type="number" id="e-ins" placeholder="14" min="0" max="100" step="0.1" value="14" oninput="calcNetPreview()"></div>
+        <div class="field"><label>Vergi Oranı (%)</label><input type="number" id="e-tax" placeholder="15" min="0" max="100" step="0.1" oninput="calcNetPreview()"></div>
+        <div class="field"><label>Sigorta Oranı (%)</label><input type="number" id="e-ins" placeholder="14" min="0" max="100" step="0.1" oninput="calcNetPreview()"></div>
         <div class="field"><label>Durum</label>
           <select id="e-status">
             <option value="active">Aktif</option>
@@ -860,8 +860,15 @@ function openEmpModal(id = null) {
   document.getElementById('e-email').value = e?.email || '';
   document.getElementById('e-phone').value = e?.phone || '';
   document.getElementById('e-salary').value = e?.base_salary || '';
-  document.getElementById('e-tax').value = e?.tax_rate ?? 15;
-  document.getElementById('e-ins').value = e?.insurance_rate ?? 14;
+  // Use ?? (not ||) so a real DB value of 0 is preserved instead of falling
+  // through to the 15/14 defaults. e.tax_rate=0 is a legit "no tax" config.
+  // Explicit clear first guards against any persistent value attribute on
+  // the input element across modal opens.
+  const _taxEl = document.getElementById('e-tax');
+  const _insEl = document.getElementById('e-ins');
+  _taxEl.value = ''; _insEl.value = '';
+  _taxEl.value = e?.tax_rate ?? 15;
+  _insEl.value = e?.insurance_rate ?? 14;
   document.getElementById('e-status').value = e?.status || 'active';
   document.getElementById('e-notes').value = e?.notes || '';
   document.getElementById('e-hiredate').value = e?.hire_date || new Date().toISOString().slice(0,10);
@@ -1114,8 +1121,10 @@ function openPayItemModal(id) {
   document.getElementById('pi-overtime').value = item.overtime || 0;
   document.getElementById('pi-bonus').value = item.bonus || 0;
   document.getElementById('pi-deductions').value = item.deductions || 0;
-  document.getElementById('pi-tax-rate').value = emp ? (emp.tax_rate || 0) : 0;
-  document.getElementById('pi-ins-rate').value = emp ? (emp.insurance_rate || 0) : 0;
+  // ?? preserves emp.tax_rate=0 (|| 0 happens to give the same result here, but
+  // ?? is intent-correct: only fall back when the field is null/undefined).
+  document.getElementById('pi-tax-rate').value = emp ? (emp.tax_rate ?? 0) : 0;
+  document.getElementById('pi-ins-rate').value = emp ? (emp.insurance_rate ?? 0) : 0;
   document.getElementById('pi-notes').value = item.notes || '';
   calcPayPreview();
   openModal('payitem-modal');
