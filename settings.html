@@ -3376,8 +3376,14 @@ async function saveTax() {
   if (submitting()) return;
   try {
   const name = document.getElementById('tax-name').value.trim();
-  const rate = parseFloat(document.getElementById('tax-rate').value);
-  if (!name || isNaN(rate)) { showToast(t('toast_name_rate_required'), 'error'); return; }
+  // Empty input → 0 (kullanıcı sıfır oran istiyorsa alanı boşaltabilir).
+  // DB CHECK rate >= 0 AND rate <= 100; negatif veya 100 üstü reddedilir.
+  const rateRaw = document.getElementById('tax-rate').value.trim();
+  const rate = rateRaw === '' ? 0 : parseFloat(rateRaw);
+  if (!name) { showToast(t('toast_name_required') || 'Ad zorunlu', 'error'); return; }
+  if (isNaN(rate) || rate < 0 || rate > 100) {
+    showToast(t('toast_tax_rate_range') || 'Vergi oranı 0-100 arasında olmalı', 'error'); return;
+  }
   const payload = {
     name, rate,
     company_id: companyId,
@@ -4849,14 +4855,22 @@ async function saveRegime() {
   const name = document.getElementById('rg-name').value.trim();
   if (!name) { showToast(t('toast_name_required')||'Name is required', 'error'); return; }
 
+  // Empty rate inputs → 0 (kullanıcı sıfır oran istediğinde alanı boşaltabilir).
+  // `parseFloat('') || 0` zaten 0 dönüyor; explicit yapmak okunur kılar.
+  const _rate = (id) => {
+    const v = (document.getElementById(id).value || '').trim();
+    if (v === '') return 0;
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  };
   const payload = {
     company_id: companyId,
     name,
     description: document.getElementById('rg-desc').value.trim() || null,
     vat_applicable: document.getElementById('rg-vat-applicable').value === 'true',
-    vat_rate: parseFloat(document.getElementById('rg-vat-rate').value) || 0,
+    vat_rate: _rate('rg-vat-rate'),
     income_tax_type: document.getElementById('rg-income-type').value,
-    income_tax_rate: parseFloat(document.getElementById('rg-income-rate').value) || 0,
+    income_tax_rate: _rate('rg-income-rate'),
     is_active: true,
   };
 
