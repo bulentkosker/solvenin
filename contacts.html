@@ -324,6 +324,7 @@ textarea{min-height:60px;resize:vertical}
           <div class="checkbox-row">
             <label><input type="checkbox" id="c-is-customer" checked> <span data-i18n="lbl_customer">Müşteri</span></label>
             <label><input type="checkbox" id="c-is-supplier"> <span data-i18n="lbl_supplier">Tedarikçi</span></label>
+            <label id="c-is-employee-wrap" style="display:none"><input type="checkbox" id="c-is-employee" disabled> <span data-i18n="lbl_employee">Personel</span></label>
           </div>
         </div>
         <div class="field"><label data-i18n="col_email">E-posta</label><input type="email" id="c-email"></div>
@@ -554,6 +555,9 @@ function openContactModal() {
   document.getElementById('c-name').value = '';
   document.getElementById('c-is-customer').checked = true;
   document.getElementById('c-is-supplier').checked = false;
+  // Personel checkbox sadece edit'te + is_employee=true ise görünür
+  document.getElementById('c-is-employee-wrap').style.display = 'none';
+  document.getElementById('c-is-employee').checked = false;
   document.getElementById('c-email').value = '';
   document.getElementById('c-phone').value = '';
   document.getElementById('c-city').value = '';
@@ -576,6 +580,10 @@ function editContact(id) {
   document.getElementById('c-name').value = c.name;
   document.getElementById('c-is-customer').checked = c.is_customer;
   document.getElementById('c-is-supplier').checked = c.is_supplier;
+  // Personel flag readonly: HR modülünden yönetilir, contacts.html'de toggle edilemez
+  const empWrap = document.getElementById('c-is-employee-wrap');
+  document.getElementById('c-is-employee').checked = !!c.is_employee;
+  if (empWrap) empWrap.style.display = c.is_employee ? '' : 'none';
   document.getElementById('c-email').value = c.email || '';
   document.getElementById('c-phone').value = c.phone || '';
   document.getElementById('c-city').value = c.city || '';
@@ -596,14 +604,27 @@ async function saveContact() {
   if (!name) { showToast(t('err_fill_name') || 'Ad giriniz', 'error'); submitting.reset(); return; }
   const isCust = document.getElementById('c-is-customer').checked;
   const isSupp = document.getElementById('c-is-supplier').checked;
-  if (!isCust && !isSupp) { showToast(t('err_select_type') || 'En az bir tür seçin', 'error'); submitting.reset(); return; }
+  // is_employee read-only on this form (HR module owns it). Read current
+  // value from the contact row so update() doesn't toggle it back to false.
+  const editingRow = editingId ? contacts.find(c => c.id === editingId) : null;
+  const isEmp = !!editingRow?.is_employee;
+  // Employee contacts satisfy "at least one role" automatically — they're
+  // always categorized as personnel even when neither customer nor supplier.
+  if (!isCust && !isSupp && !isEmp) { showToast(t('err_select_type') || 'En az bir tür seçin', 'error'); submitting.reset(); return; }
 
+  // type derivation: employee category wins (matches contacts.type='employee'
+  // pattern from M089). Customer/supplier flags coexist with employee but
+  // type column shows the primary role.
+  const computedType = isEmp ? 'employee'
+    : (isCust && isSupp) ? 'both'
+    : isCust ? 'customer'
+    : 'supplier';
   const payload = {
     company_id: companyId,
     name,
     is_customer: isCust,
     is_supplier: isSupp,
-    type: (isCust && isSupp) ? 'both' : isCust ? 'customer' : 'supplier',
+    type: computedType,
     email: document.getElementById('c-email').value.trim() || null,
     phone: document.getElementById('c-phone').value.trim() || null,
     city: document.getElementById('c-city').value.trim() || null,
