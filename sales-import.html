@@ -179,6 +179,12 @@ table.map-table td select{padding:6px 8px;border:1px solid var(--gray200);border
           <label data-i18n="import_warehouse">Warehouse</label>
           <select id="f-warehouse"></select>
         </div>
+        <div class="field field-full">
+          <label data-i18n="lbl_project">Proje</label>
+          <select id="f-project">
+            <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
+          </select>
+        </div>
       </div>
       <div class="actions-bar">
         <a class="btn btn-outline" href="sales.html"><span data-i18n="btn_cancel">Cancel</span></a>
@@ -327,7 +333,7 @@ async function init() {
   baseCurrency = comp?.base_currency || 'KZT';
   allowNegativeStock = !!comp?.allow_negative_stock;
 
-  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses()]);
+  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadProjects()]);
 
   // Default today
   document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
@@ -392,12 +398,43 @@ async function loadWarehouses() {
   warehouses = data || [];
 }
 
+let projects = [];
+async function loadProjects() {
+  const { data } = await sb.from('projects')
+    .select('id,name,project_number,client_id,status')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .in('status', ['planning','active','in_progress','on_hold'])
+    .order('project_number', { ascending: false });
+  projects = data || [];
+  renderProjectSelect();
+}
+
+function renderProjectSelect() {
+  const sel = document.getElementById('f-project');
+  if (!sel) return;
+  const customerId = document.getElementById('f-customer')?.value || null;
+  const placeholder = `<option value="">${(typeof t === 'function' ? t('ph_select_project') : null) || 'Proje seç (opsiyonel)'}</option>`;
+  if (!projects.length) { sel.innerHTML = placeholder; return; }
+  const fmt = (p) => `<option value="${p.id}">${p.project_number ? p.project_number+' · ' : ''}${p.name}</option>`;
+  if (customerId) {
+    const own = projects.filter(p => p.client_id === customerId);
+    const other = projects.filter(p => p.client_id !== customerId);
+    let html = placeholder;
+    if (own.length) html += `<optgroup label="${(typeof t === 'function' ? t('lbl_customer_projects') : null) || 'Bu müşterinin projeleri'}">${own.map(fmt).join('')}</optgroup>`;
+    if (other.length) html += `<optgroup label="${(typeof t === 'function' ? t('lbl_other_projects') : null) || 'Diğer projeler'}">${other.map(fmt).join('')}</optgroup>`;
+    sel.innerHTML = html;
+  } else {
+    sel.innerHTML = placeholder + projects.map(fmt).join('');
+  }
+}
+
 function setupCustomerQA() {
   const container = document.getElementById('qa-customer');
   QA.create(container, {
     items: customers.map(c => ({ id: c.id, name: c.name })),
     placeholder: (typeof t === 'function' ? t('placeholder_search_customers') : null) || 'Search customer...',
-    onSelect(id) { document.getElementById('f-customer').value = id; },
+    onSelect(id) { document.getElementById('f-customer').value = id; renderProjectSelect(); },
     onAdd(query) { quickAddCustomer(query); },
     addLabel(q) { return `+ "${q}" ` + ((typeof t === 'function' ? t('lbl_customer_add_new') : null) || 'add new customer'); },
   });
@@ -1117,6 +1154,7 @@ async function doImport() {
     btn.disabled = true;
     btn.textContent = '...';
 
+    const projectId = document.getElementById('f-project')?.value || null;
     const { data, error } = await sb.rpc('import_sales_invoice', {
       p_company_id: companyId,
       p_customer_id: customerId,
@@ -1128,7 +1166,8 @@ async function doImport() {
       p_tax_included: taxIncluded,
       p_warehouse_id: warehouseId,
       p_items: items,
-      p_notes: null
+      p_notes: null,
+      p_project_id: projectId
     });
 
     if (error) {

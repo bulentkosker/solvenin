@@ -489,6 +489,12 @@ tr:hover td{background:var(--gray50)}
           <option value="">Seç...</option>
         </select>
       </div>
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_project">Proje</div>
+        <select id="o-project" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
+          <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -811,7 +817,7 @@ async function init() {
   if (profRes.data?.plan) userPlan = profRes.data.plan;
   console.log('[sales] companyName:', companyName, 'plan:', userPlan);
 
-  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts()]);
+  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts(), loadProjects()]);
   await loadVatRefs();
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -857,6 +863,40 @@ async function loadWarehouses() {
   warehouses = data || [];
 }
 function defaultWarehouseId() { return warehouses.find(w => w.is_default)?.id || ''; }
+
+let projects = [];
+async function loadProjects() {
+  const { data } = await sb.from('projects')
+    .select('id,name,project_number,client_id,status')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .in('status', ['planning','active','in_progress','on_hold'])
+    .order('project_number', { ascending: false });
+  projects = data || [];
+  renderProjectSelect();
+}
+
+// Render project dropdown — when a customer is selected, that customer's
+// projects are listed first, others below. opt-groups make the boundary
+// visible to the user.
+function renderProjectSelect() {
+  const sel = document.getElementById('o-project');
+  if (!sel) return;
+  const customerId = document.getElementById('o-customer')?.value || null;
+  const placeholder = `<option value="">${t('ph_select_project')||'Proje seç (opsiyonel)'}</option>`;
+  if (!projects.length) { sel.innerHTML = placeholder; return; }
+  const fmt = (p) => `<option value="${p.id}">${p.project_number ? p.project_number+' · ' : ''}${p.name}</option>`;
+  if (customerId) {
+    const own = projects.filter(p => p.client_id === customerId);
+    const other = projects.filter(p => p.client_id !== customerId);
+    let html = placeholder;
+    if (own.length) html += `<optgroup label="${t('lbl_customer_projects')||'Bu müşterinin projeleri'}">${own.map(fmt).join('')}</optgroup>`;
+    if (other.length) html += `<optgroup label="${t('lbl_other_projects')||'Diğer projeler'}">${other.map(fmt).join('')}</optgroup>`;
+    sel.innerHTML = html;
+  } else {
+    sel.innerHTML = placeholder + projects.map(fmt).join('');
+  }
+}
 
 async function loadProducts() {
   const { data } = await sb.from('products')
@@ -1177,7 +1217,7 @@ function updateCustomerSelects() {
     customerQA = QA.create(container, {
       items,
       placeholder: t('placeholder_search_customers') || 'Müşteri ara...',
-      onSelect(id) { document.getElementById('o-customer').value = id; setContactCurrency(id); },
+      onSelect(id) { document.getElementById('o-customer').value = id; setContactCurrency(id); renderProjectSelect(); },
       onAdd(query) { openQACustomerModal(query); },
       addLabel(q) { return `+ "${q}" ${t('lbl_customer_add_new') || 'müşteri ekle'}`; },
     });
@@ -1337,6 +1377,8 @@ function openOrderModal() {
   document.getElementById('order-modal-title').textContent = t('title_new_order');
   document.getElementById('o-customer').value = '';
   if (customerQA) customerQA.setValue('');
+  const projSel = document.getElementById('o-project'); if (projSel) projSel.value = '';
+  renderProjectSelect();
   document.getElementById('o-number').value = generateNextNumber(invoiceSettings.sales_number_format || 'INV0001', orders);
   loadCompanyUsers().then(() => {
     const sel = document.getElementById('o-assigned');
@@ -1583,6 +1625,7 @@ async function saveOrder() {
     exchange_rate: fxRate,
     notes: document.getElementById('o-notes').value.trim() || null,
     assigned_to: document.getElementById('o-assigned')?.value || null,
+    project_id: document.getElementById('o-project')?.value || null,
     created_by: user.id
   };
   // Mark as invoice once status reaches invoiced/paid (flag never resets)
@@ -1763,6 +1806,8 @@ async function editOrder(id) {
   document.getElementById('order-modal-title').textContent = t('title_edit_order');
   document.getElementById('o-customer').value = order.customer_id;
   if (customerQA) customerQA.setValue(order.customer_id);
+  renderProjectSelect();
+  const projSel = document.getElementById('o-project'); if (projSel) projSel.value = order.project_id || '';
   document.getElementById('o-number').value = order.order_number;
   document.getElementById('o-date').value = order.issue_date;
   document.getElementById('o-duedate').value = order.due_date || '';

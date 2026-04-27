@@ -179,6 +179,12 @@ table.map-table td select{padding:6px 8px;border:1px solid var(--gray200);border
           <label data-i18n="import_warehouse">Warehouse</label>
           <select id="f-warehouse"></select>
         </div>
+        <div class="field field-full">
+          <label data-i18n="lbl_project">Proje</label>
+          <select id="f-project">
+            <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
+          </select>
+        </div>
       </div>
       <div class="actions-bar">
         <a class="btn btn-outline" href="purchasing.html"><span data-i18n="btn_cancel">Cancel</span></a>
@@ -325,7 +331,7 @@ async function init() {
   const { data: comp } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
   baseCurrency = comp?.base_currency || 'KZT';
 
-  await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses()]);
+  await Promise.all([loadSuppliers(), loadProducts(), loadWarehouses(), loadProjects()]);
 
   // Default today
   document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
@@ -388,6 +394,22 @@ async function loadWarehouses() {
     .eq('company_id', companyId).eq('is_active', true)
     .order('name');
   warehouses = data || [];
+}
+
+let projects = [];
+async function loadProjects() {
+  const { data } = await sb.from('projects')
+    .select('id,name,project_number,status')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .in('status', ['planning','active','in_progress','on_hold'])
+    .order('project_number', { ascending: false });
+  projects = data || [];
+  const sel = document.getElementById('f-project');
+  if (sel) {
+    const placeholder = `<option value="">${(typeof t === 'function' ? t('ph_select_project') : null) || 'Proje seç (opsiyonel)'}</option>`;
+    sel.innerHTML = placeholder + projects.map(p => `<option value="${p.id}">${p.project_number ? p.project_number+' · ' : ''}${p.name}</option>`).join('');
+  }
 }
 
 function setupSupplierQA() {
@@ -1047,6 +1069,7 @@ async function doImport() {
     btn.disabled = true;
     btn.textContent = '...';
 
+    const projectId = document.getElementById('f-project')?.value || null;
     const { data, error } = await sb.rpc('import_purchase_invoice', {
       p_company_id: companyId,
       p_supplier_id: supplierId,
@@ -1058,7 +1081,8 @@ async function doImport() {
       p_tax_included: taxIncluded,
       p_warehouse_id: warehouseId,
       p_items: items,
-      p_notes: null
+      p_notes: null,
+      p_project_id: projectId
     });
 
     if (error) {

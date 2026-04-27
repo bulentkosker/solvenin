@@ -619,6 +619,12 @@
         <label data-i18n="col_ref">Referans</label>
         <input type="text" id="ctx-ref" placeholder="Fiş no, makbuz no..." data-i18n-placeholder="placeholder_tx_ref">
       </div>
+      <div class="form-group">
+        <label data-i18n="lbl_project">Proje</label>
+        <select id="ctx-project">
+          <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
+        </select>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('cash-tx-modal')" data-i18n="btn_cancel">Cancel</button>
@@ -787,6 +793,12 @@
       <div class="form-group">
         <label>Referans</label>
         <input type="text" id="btx-ref" placeholder="Dekont no, IBAN..." data-i18n-placeholder="placeholder_bank_ref">
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_project">Proje</label>
+        <select id="btx-project">
+          <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
+        </select>
       </div>
     </div>
     <div class="modal-footer">
@@ -1058,6 +1070,8 @@ async function init() {
   document.getElementById('ctx-date').value = today;
   document.getElementById('btx-date').value = today;
 
+  loadProjects();
+
   // Hide loading immediately
   const ls = document.getElementById('loading-screen');
   ls.style.opacity = '0';
@@ -1077,6 +1091,27 @@ async function init() {
 }
 
 // ===== DATA LOADING =====
+let projects = [];
+async function loadProjects() {
+  const { data } = await sb.from('projects')
+    .select('id,name,project_number,status')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .in('status', ['planning','active','in_progress','on_hold'])
+    .order('project_number', { ascending: false });
+  projects = data || [];
+  renderProjectSelects();
+}
+
+function renderProjectSelects() {
+  const placeholder = `<option value="">${t('ph_select_project')||'Proje seç (opsiyonel)'}</option>`;
+  const opts = placeholder + projects.map(p => `<option value="${p.id}">${p.project_number ? p.project_number+' · ' : ''}${p.name}</option>`).join('');
+  ['ctx-project','btx-project'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.innerHTML = opts;
+  });
+}
+
 async function loadRegisters() {
   const { data } = await sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at');
   registers = data || [];
@@ -2150,6 +2185,7 @@ async function openCashTxModal(id = null) {
   document.getElementById('ctx-desc').value = tx?.description || '';
   document.getElementById('ctx-ref').value = tx?.reference || '';
   document.getElementById('ctx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
+  const ctxProj = document.getElementById('ctx-project'); if (ctxProj) ctxProj.value = tx?.project_id || '';
   resetTxSelectors('ctx');
   await loadTxSelectors();
   // Populate category dropdown for current direction + resolve a legacy row's
@@ -2239,7 +2275,8 @@ async function saveCashTx() {
   const payload = {
     type, amount, description: desc, category, reference: ref,
     transaction_date: date, contact_id: contactId, counterparty,
-    chart_of_account_id: chartOfAccountId, employee_id: employeeId
+    chart_of_account_id: chartOfAccountId, employee_id: employeeId,
+    project_id: document.getElementById('ctx-project')?.value || null
   };
   let error;
   if (editingCashTxId) {
@@ -2413,6 +2450,7 @@ async function openBankTxModal(id = null) {
   document.getElementById('btx-desc').value = tx?.description || '';
   document.getElementById('btx-ref').value = tx?.reference || '';
   document.getElementById('btx-date').value = tx?.transaction_date || new Date().toISOString().split('T')[0];
+  const btxProj = document.getElementById('btx-project'); if (btxProj) btxProj.value = tx?.project_id || '';
   // Reset currency-conversion fields (only present on bank modal)
   const convReset = ['btx-conv-target','btx-conv-rate','btx-conv-source-amount','btx-conv-target-amount'];
   convReset.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -2554,7 +2592,8 @@ async function saveBankTx() {
     type, amount, description: desc, category,
     counterparty: counterpartyName, reference: ref,
     transaction_date: date, contact_id: contactId,
-    chart_of_account_id: chartOfAccountId, employee_id: employeeId
+    chart_of_account_id: chartOfAccountId, employee_id: employeeId,
+    project_id: document.getElementById('btx-project')?.value || null
   };
   let error;
   if (editingBankTxId) {

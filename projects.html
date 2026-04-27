@@ -256,6 +256,8 @@ tr:hover .row-actions{opacity:1}
         <button class="tab-btn" onclick="setDetailTab(this,'time')" data-i18n="tab_time">Time</button>
         <button class="tab-btn" onclick="setDetailTab(this,'expenses')" data-i18n="tab_expenses">Expenses</button>
         <button class="tab-btn" onclick="setDetailTab(this,'milestones')" data-i18n="tab_milestones">Milestones</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'financial')" data-i18n="tab_financial">Finansal</button>
+        <button class="tab-btn" onclick="setDetailTab(this,'movements')" data-i18n="tab_movements">Hareketler</button>
       </div>
 
       <div class="header-actions" id="detail-tab-actions" style="margin-bottom:16px"></div>
@@ -525,6 +527,7 @@ async function init() {
   else if (typeof applyTranslations === 'function') applyTranslations();
 
   await loadProjects();
+  await loadAllProjectsFinancials();
   renderProjects();
 
   const ls = document.getElementById('loading-screen');
@@ -541,6 +544,26 @@ async function loadProjects() {
   const { data } = await sb.from('projects').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
   projects = data || [];
 }
+
+let projectFinancialMap = {};
+async function loadAllProjectsFinancials() {
+  const [sales, purchases, bankTx, cashTx] = await Promise.all([
+    sb.from('sales_orders').select('project_id,total,status').eq('company_id', companyId).eq('is_active', true).not('project_id','is',null),
+    sb.from('purchase_orders').select('project_id,total,status').eq('company_id', companyId).eq('is_active', true).not('project_id','is',null),
+    sb.from('bank_transactions').select('project_id,type,amount,category').eq('company_id', companyId).is('deleted_at', null).not('project_id','is',null),
+    sb.from('cash_transactions').select('project_id,type,amount,category').eq('company_id', companyId).is('deleted_at', null).not('project_id','is',null)
+  ]);
+  const map = {};
+  const ensure = (pid) => { if (!map[pid]) map[pid] = { revenue:0, expense:0 }; return map[pid]; };
+  (sales.data||[]).forEach(s => { if (!['cancelled','draft'].includes(s.status)) ensure(s.project_id).revenue += Number(s.total||0); });
+  (purchases.data||[]).forEach(p => { if (!['cancelled','draft'].includes(p.status)) ensure(p.project_id).expense += Number(p.total||0); });
+  [...(bankTx.data||[]), ...(cashTx.data||[])].forEach(tx => {
+    const e = ensure(tx.project_id);
+    if (tx.type === 'in' && !['sales_invoice_payment','customer_payment'].includes(tx.category)) e.revenue += Number(tx.amount||0);
+    else if (tx.type === 'out' && !['supplier_payment','purchase_invoice_payment'].includes(tx.category)) e.expense += Number(tx.amount||0);
+  });
+  projectFinancialMap = map;
+}
 async function loadTasks(projectId) {
   const { data } = await sb.from('tasks').select('*').eq('project_id', projectId).eq('is_active', true).order('created_at', { ascending: false });
   tasks = data || [];
@@ -556,6 +579,22 @@ async function loadExpenses(projectId) {
 async function loadMilestones(projectId) {
   const { data } = await sb.from('milestones').select('*').eq('project_id', projectId).eq('is_active', true).order('deadline');
   milestones = data || [];
+}
+
+let projectFinancials = { sales:[], purchases:[], bankTx:[], cashTx:[] };
+async function loadProjectFinancials(projectId) {
+  const [sales, purchases, bankTx, cashTx] = await Promise.all([
+    sb.from('sales_orders').select('id,order_number,issue_date,total,status,customer_id,contacts(name)').eq('company_id', companyId).eq('project_id', projectId).eq('is_active', true).order('issue_date', { ascending: false }),
+    sb.from('purchase_orders').select('id,order_number,issue_date,total,status,supplier_id,contacts(name)').eq('company_id', companyId).eq('project_id', projectId).eq('is_active', true).order('issue_date', { ascending: false }),
+    sb.from('bank_transactions').select('id,transaction_date,type,amount,description,category,counterparty').eq('company_id', companyId).eq('project_id', projectId).is('deleted_at', null).order('transaction_date', { ascending: false }),
+    sb.from('cash_transactions').select('id,transaction_date,type,amount,description,category,counterparty').eq('company_id', companyId).eq('project_id', projectId).is('deleted_at', null).order('transaction_date', { ascending: false })
+  ]);
+  projectFinancials = {
+    sales: sales.data || [],
+    purchases: purchases.data || [],
+    bankTx: bankTx.data || [],
+    cashTx: cashTx.data || []
+  };
 }
 
 // ===== STATUS / PRIORITY HELPERS =====
@@ -588,7 +627,10 @@ function renderProjects() {
   grid.innerHTML = list.map(p => {
     const prog = p.progress || 0;
     const progColor = prog >= 100 ? 'green' : prog >= 60 ? '' : prog >= 30 ? '' : 'orange';
-    const overBudget = p.budget && p.spent > p.budget;
+    const fin = projectFinancialMap[p.id] || { revenue:0, expense:0 };
+    const net = fin.revenue - fin.expense;
+    const budgetUsed = p.budget && Number(p.budget) > 0 ? Math.round((fin.expense / Number(p.budget)) * 100) : null;
+    const overBudget = p.budget && fin.expense > Number(p.budget);
     return `
     <div class="project-card" onclick="openDetail('${p.id}')">
       <div class="project-card-top">
@@ -607,10 +649,18 @@ function renderProjects() {
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray400);margin-bottom:4px">
         <span>${t('lbl_progress')||'Progress'}</span><span>${prog}%</span>
       </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;padding-top:6px;border-top:1px dashed var(--gray100)">
+        <span style="color:var(--gray500)">${t('summary_net')||'Net'}</span>
+        <span style="font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${fmtCurr(net)}</span>
+      </div>
+      ${budgetUsed!==null ? `
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:${overBudget?'var(--red)':'var(--gray400)'};margin-bottom:4px">
+        <span>${t('summary_budget_used')||'Bütçe'}</span><span>${budgetUsed}%</span>
+      </div>` : ''}
       <div class="project-card-footer">
         <span>${p.start_date||'—'} → ${p.end_date||'—'}</span>
         <span style="color:${overBudget?'var(--red)':'var(--gray400)'}">
-          ${p.budget ? fmtCurr(p.spent||0)+' / '+fmtCurr(p.budget) : '—'}
+          ${p.budget ? fmtCurr(fin.expense)+' / '+fmtCurr(p.budget) : '—'}
         </span>
       </div>
     </div>`;
@@ -629,6 +679,7 @@ async function openDetail(id) {
   await loadTimeLogs(id);
   await loadExpenses(id);
   await loadMilestones(id);
+  await loadProjectFinancials(id);
   setDetailTab(document.querySelector('#detail-view .tab-btn.active'), activeDetailTab);
   applyTranslations();
 }
@@ -705,8 +756,99 @@ function setDetailTab(btn, tab) {
   } else if (tab === 'milestones') {
     actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openMilestoneModal()" data-i18n="btn_add_milestone">+ Add Milestone</button>`;
     renderMilestones();
+  } else if (tab === 'financial') {
+    actions.innerHTML = '';
+    renderFinancial();
+  } else if (tab === 'movements') {
+    actions.innerHTML = '';
+    renderMovements();
   }
   applyTranslations();
+}
+
+function projectRevenue() {
+  const sales = projectFinancials.sales.filter(s => !['cancelled','draft'].includes(s.status));
+  const salesSum = sales.reduce((s,o) => s + Number(o.total||0), 0);
+  const incomeTx = [...projectFinancials.bankTx, ...projectFinancials.cashTx]
+    .filter(tx => tx.type === 'in' && !['sales_invoice_payment','customer_payment'].includes(tx.category))
+    .reduce((s,tx) => s + Number(tx.amount||0), 0);
+  return salesSum + incomeTx;
+}
+function projectExpense() {
+  const purchases = projectFinancials.purchases.filter(p => !['cancelled','draft'].includes(p.status));
+  const purchasesSum = purchases.reduce((s,o) => s + Number(o.total||0), 0);
+  const expenseTx = [...projectFinancials.bankTx, ...projectFinancials.cashTx]
+    .filter(tx => tx.type === 'out' && !['supplier_payment','purchase_invoice_payment'].includes(tx.category))
+    .reduce((s,tx) => s + Number(tx.amount||0), 0);
+  return purchasesSum + expenseTx;
+}
+
+function renderFinancial() {
+  const el = document.getElementById('detail-tab-content');
+  const p = currentProject;
+  const revenue = projectRevenue();
+  const expense = projectExpense();
+  const net = revenue - expense;
+  const budgetUsed = p.budget && p.budget > 0 ? Math.round((expense / Number(p.budget)) * 100) : null;
+  const overBudget = p.budget && expense > Number(p.budget);
+  el.innerHTML = `
+    <div class="budget-summary" style="margin-bottom:24px">
+      <div class="budget-card">
+        <div class="budget-card-label" data-i18n="summary_revenue">Gelir</div>
+        <div class="budget-card-val" style="color:var(--green)">${fmtCurr(revenue)}</div>
+        <div style="font-size:11px;color:var(--gray400);margin-top:4px">${projectFinancials.sales.length} ${t('lbl_invoices')||'fatura'}</div>
+      </div>
+      <div class="budget-card">
+        <div class="budget-card-label" data-i18n="summary_expenses">Gider</div>
+        <div class="budget-card-val" style="color:var(--red)">${fmtCurr(expense)}</div>
+        <div style="font-size:11px;color:var(--gray400);margin-top:4px">${projectFinancials.purchases.length} ${t('lbl_invoices')||'fatura'}</div>
+      </div>
+      <div class="budget-card">
+        <div class="budget-card-label" data-i18n="summary_net">Net</div>
+        <div class="budget-card-val" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtCurr(net)}</div>
+      </div>
+    </div>
+    ${p.budget ? `
+    <div class="budget-card" style="margin-bottom:20px">
+      <div class="budget-card-label" data-i18n="summary_budget_used">Bütçe Kullanımı</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 8px">
+        <div class="budget-card-val" style="color:${overBudget?'var(--red)':'var(--gray800)'}">${budgetUsed}%</div>
+        <div style="font-size:13px;color:var(--gray500)">${fmtCurr(expense)} / ${fmtCurr(p.budget)}</div>
+      </div>
+      <div class="progress-bar" style="height:8px"><div class="progress-fill ${overBudget?'orange':''}" style="width:${Math.min(100,budgetUsed||0)}%;background:${overBudget?'var(--red)':''}"></div></div>
+    </div>` : ''}
+  `;
+}
+
+function renderMovements() {
+  const el = document.getElementById('detail-tab-content');
+  const rows = [];
+  projectFinancials.sales.forEach(s => rows.push({ date: s.issue_date, type: 'sale', label: t('lbl_sale')||'Satış', number: s.order_number, party: s.contacts?.name || '—', amount: Number(s.total||0), sign:'+', status: s.status, link: `sales.html?action=view&id=${s.id}` }));
+  projectFinancials.purchases.forEach(p => rows.push({ date: p.issue_date, type: 'purchase', label: t('lbl_purchase')||'Alış', number: p.order_number, party: p.contacts?.name || '—', amount: Number(p.total||0), sign:'-', status: p.status, link: `purchasing.html?action=view&id=${p.id}` }));
+  projectFinancials.bankTx.forEach(tx => rows.push({ date: tx.transaction_date, type: 'bank', label: tx.type==='in' ? (t('lbl_bank_in')||'Banka Giriş') : (t('lbl_bank_out')||'Banka Çıkış'), number: '', party: tx.counterparty || tx.description || '—', amount: Number(tx.amount||0), sign: tx.type==='in'?'+':'-', status: '', link: 'cashbank.html' }));
+  projectFinancials.cashTx.forEach(tx => rows.push({ date: tx.transaction_date, type: 'cash', label: tx.type==='in' ? (t('lbl_cash_in')||'Kasa Giriş') : (t('lbl_cash_out')||'Kasa Çıkış'), number: '', party: tx.counterparty || tx.description || '—', amount: Number(tx.amount||0), sign: tx.type==='in'?'+':'-', status: '', link: 'cashbank.html' }));
+  rows.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">💱</div><h3>${t('lbl_no_movements')||'Henüz hareket yok'}</h3></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="table-card"><div class="table-wrap"><table>
+    <thead><tr>
+      <th data-i18n="col_date">Tarih</th>
+      <th data-i18n="col_type">Tür</th>
+      <th data-i18n="col_number">No</th>
+      <th data-i18n="col_party">Cari/Açıklama</th>
+      <th data-i18n="col_amount" style="text-align:right">Tutar</th>
+    </tr></thead>
+    <tbody>${rows.map(r => `
+      <tr ${r.link?`style="cursor:pointer" onclick="window.location='${r.link}'"`:''}>
+        <td>${r.date||'—'}</td>
+        <td>${r.label}</td>
+        <td>${r.number||'—'}</td>
+        <td>${r.party}</td>
+        <td style="text-align:right;font-weight:600;color:${r.sign==='+'?'var(--green)':'var(--red)'}">${r.sign}${fmtCurr(r.amount)}</td>
+      </tr>`).join('')}
+    </tbody></table></div></div>`;
 }
 
 // ===== TASKS TAB =====
@@ -1007,6 +1149,7 @@ async function saveProject() {
   showToast(t('toast_project_saved'),'success');
   closeModal('project-modal');
   await loadProjects();
+  await loadAllProjectsFinancials();
   renderProjects();
 }
 
@@ -1026,6 +1169,7 @@ async function deleteProject(id) {
   showToast(t('toast_project_deleted'),'success');
   if (currentProject?.id === id) closeDetail();
   await loadProjects();
+  await loadAllProjectsFinancials();
   renderProjects();
 }
 
