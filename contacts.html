@@ -639,17 +639,43 @@ async function deleteContact(id) {
     showToast(t('err_system_contact_action')||'Sistem carisi silinemez', 'error');
     return;
   }
-  const [so, po] = await Promise.all([
-    sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).eq('is_active', true),
-    sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).eq('is_active', true),
+  // Pre-check: every reference DB-level guards M091/M092 enforce. Reporting
+  // them here gives a precise message instead of a generic foreign_key_violation
+  // bubbling out of the trigger.
+  const [emp, so, po, bt, ct, ctx] = await Promise.all([
+    sb.from('employees').select('id', {count:'exact',head:true}).eq('contact_id', id).is('deleted_at', null),
+    sb.from('sales_orders').select('id', {count:'exact',head:true}).eq('customer_id', id).is('deleted_at', null),
+    sb.from('purchase_orders').select('id', {count:'exact',head:true}).eq('supplier_id', id).is('deleted_at', null),
+    sb.from('bank_transactions').select('id', {count:'exact',head:true}).eq('contact_id', id).is('deleted_at', null),
+    sb.from('cash_transactions').select('id', {count:'exact',head:true}).eq('contact_id', id).is('deleted_at', null),
+    sb.from('contact_transactions').select('id', {count:'exact',head:true}).eq('contact_id', id),
   ]);
-  const total = (so.count||0) + (po.count||0);
-  if (total > 0) { showToast((t('err_has_orders') || 'Önce siparişleri silin: {0} aktif sipariş var').replace('{0}', total), 'error'); return; }
+  if ((emp.count||0) > 0) {
+    showToast(t('err_active_employee_linked') || 'Bu cari aktif bir personele bağlı — önce İK modülünden personeli silin', 'error');
+    return;
+  }
+  const orderTotal = (so.count||0) + (po.count||0);
+  if (orderTotal > 0) {
+    showToast((t('err_has_orders') || 'Önce siparişleri silin: {0} aktif sipariş var').replace('{0}', orderTotal), 'error');
+    return;
+  }
+  const txTotal = (bt.count||0) + (ct.count||0) + (ctx.count||0);
+  if (txTotal > 0) {
+    showToast((t('err_has_tx') || 'Bu cariye bağlı {0} aktif hareket var — önce hareketleri silin').replace('{0}', txTotal), 'error');
+    return;
+  }
   if (!await showConfirm(t('confirm_delete_contact') || 'Bu cariyi silmek istiyor musunuz?', t('lbl_confirm') || 'Onay', t('btn_delete') || 'Sil')) return;
   const { data: { user } } = await sb.auth.getUser();
-  await sb.from('contacts').update({
+  // DB triggers (M091/M092) provide a hard guarantee — surface their error
+  // instead of swallowing it with a misleading "silindi" toast.
+  const { error } = await sb.from('contacts').update({
     is_active: false, deleted_at: new Date().toISOString(), deleted_by: user?.id
   }).eq('id', id);
+  if (error) {
+    console.error('[contacts] deleteContact:', error);
+    showToast(getErrorMessage(error) || error.message || (t('err_delete_failed') || 'Silme başarısız'), 'error');
+    return;
+  }
   showToast(t('toast_contact_deleted') || 'Cari silindi', 'success');
   await loadContacts();
 }
