@@ -151,6 +151,7 @@ textarea{min-height:60px;resize:vertical}
         <option value="customer" data-i18n="filter_customers">Müşteriler</option>
         <option value="supplier" data-i18n="filter_suppliers">Tedarikçiler</option>
         <option value="both" data-i18n="filter_both">Her İkisi</option>
+        <option value="employee" data-i18n="filter_employees">Personel</option>
       </select>
     </div>
 
@@ -407,9 +408,11 @@ async function loadContacts() {
 function updateStats() {
   const el = id => document.getElementById(id);
   el('stat-total').textContent = contacts.length;
-  el('stat-customers').textContent = contacts.filter(c => c.is_customer && !c.is_supplier).length;
-  el('stat-suppliers').textContent = contacts.filter(c => c.is_supplier && !c.is_customer).length;
-  el('stat-both').textContent = contacts.filter(c => c.is_customer && c.is_supplier).length;
+  // Stat counts ignore employee contacts so "müşteri/tedarikçi" rakamları
+  // sadece ticari cariyi yansıtır. Employee row'lar zaten ayrı rol.
+  el('stat-customers').textContent = contacts.filter(c => !c.is_employee && c.is_customer && !c.is_supplier).length;
+  el('stat-suppliers').textContent = contacts.filter(c => !c.is_employee && c.is_supplier && !c.is_customer).length;
+  el('stat-both').textContent      = contacts.filter(c => !c.is_employee && c.is_customer && c.is_supplier).length;
 }
 
 function filterContacts() {
@@ -417,9 +420,11 @@ function filterContacts() {
   const type = document.getElementById('filter-type').value;
   const filtered = contacts.filter(c => {
     if (q && !c.name.toLowerCase().includes(q) && !(c.email||'').toLowerCase().includes(q) && !(c.phone||'').includes(q)) return false;
-    if (type === 'customer' && !c.is_customer) return false;
-    if (type === 'supplier' && !c.is_supplier) return false;
-    if (type === 'both' && !(c.is_customer && c.is_supplier)) return false;
+    // Employee filter excludes personnel from customer/supplier/both buckets
+    if (type === 'customer' && (c.is_employee || !c.is_customer)) return false;
+    if (type === 'supplier' && (c.is_employee || !c.is_supplier)) return false;
+    if (type === 'both' && (c.is_employee || !(c.is_customer && c.is_supplier))) return false;
+    if (type === 'employee' && !c.is_employee) return false;
     return true;
   });
   renderContacts(filtered);
@@ -496,11 +501,17 @@ function renderContacts(list) {
     return;
   }
   tbody.innerHTML = list.map(c => {
-    const typeBadge = (c.is_customer && c.is_supplier)
-      ? `<span class="badge badge-purple">${t('lbl_both') || 'Her İkisi'}</span>`
-      : c.is_customer
-        ? `<span class="badge badge-green">${t('lbl_customer') || 'Müşteri'}</span>`
-        : `<span class="badge badge-blue">${t('lbl_supplier') || 'Tedarikçi'}</span>`;
+    // Employee category wins for the badge — personnel contacts shouldn't
+    // mis-label as "Tedarikçi" just because is_supplier defaults to false.
+    const typeBadge = c.is_employee
+      ? `<span class="badge badge-orange">${t('lbl_employee') || 'Personel'}</span>`
+      : (c.is_customer && c.is_supplier)
+        ? `<span class="badge badge-purple">${t('lbl_both') || 'Her İkisi'}</span>`
+        : c.is_customer
+          ? `<span class="badge badge-green">${t('lbl_customer') || 'Müşteri'}</span>`
+          : c.is_supplier
+            ? `<span class="badge badge-blue">${t('lbl_supplier') || 'Tedarikçi'}</span>`
+            : `<span class="badge badge-gray">—</span>`;
     // System contacts (Perakende Satışlar, future: Kasa Avans etc.) are
     // visually distinguished and their destructive menu items are hidden.
     const systemBadge = c.is_system
@@ -736,6 +747,7 @@ let _mergeContactSourceId = null;
 let _mergeContactTargetQA = null;
 
 function contactTypeLabel(c) {
+  if (c.is_employee) return t('lbl_employee') || 'Personel';
   if (c.is_customer && c.is_supplier) return t('lbl_both') || 'Her İkisi';
   if (c.is_customer) return t('lbl_customer') || 'Müşteri';
   if (c.is_supplier) return t('lbl_supplier') || 'Tedarikçi';
