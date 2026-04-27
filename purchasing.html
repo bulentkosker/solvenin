@@ -863,7 +863,7 @@ async function loadProjects() {
     .select('id,name,project_number,client_id,status')
     .eq('company_id', companyId)
     .is('deleted_at', null)
-    .in('status', ['planning','active','in_progress','on_hold'])
+    .in('status', ['planning','active','on_hold'])
     .order('project_number', { ascending: false });
   projects = data || [];
   renderProjectSelect();
