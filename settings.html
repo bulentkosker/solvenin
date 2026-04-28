@@ -3979,13 +3979,33 @@ const TRASH_CHILD_DEFS = {
   stock_movements:   [],
 };
 
+// Human labels (TR fallback) for blocker messages — keep in sync with
+// the i18n keys (tbl_<table>) that override these per-language.
+const TRASH_CHILD_LABELS = {
+  contact_transactions: 'cari hareket',
+  sales_orders:         'satış',
+  purchase_orders:      'alış',
+  bank_transactions:    'banka hareketi',
+  cash_transactions:    'kasa hareketi',
+  stock_movements:      'stok hareketi',
+  sales_order_items:    'satış kalemi',
+  purchase_order_items: 'alış kalemi',
+  payments:             'ödeme',
+  crm_opportunities:    'CRM fırsatı',
+  crm_quotes:           'CRM teklifi',
+};
+
+function _trashChildLabel(tbl) {
+  return t('tbl_' + tbl) || TRASH_CHILD_LABELS[tbl] || tbl;
+}
+
 async function _trashCheckActiveChildren(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   const blockers = [];
   for (const def of defs) {
     const { count } = await sb.from(def.table).select('id', { count: 'exact', head: true })
       .in(def.fk, ids).is('deleted_at', null);
-    if ((count || 0) > 0) blockers.push(`${count} ${def.table}`);
+    if ((count || 0) > 0) blockers.push(`${count} ${_trashChildLabel(def.table)}`);
   }
   return blockers.length ? blockers.join(', ') : null;
 }
