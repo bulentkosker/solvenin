@@ -1370,10 +1370,12 @@ function toggleDotMenu(btn) {
   const wasOpen = menu.classList.contains('open');
   closeDotMenus();
   if (wasOpen) return;
-  menu.classList.add('open');
-  // List is position:fixed (escapes table-card overflow). Compute top/left
-  // anchored to the button, flip upward when there isn't room below.
   const list = menu.querySelector('.dot-menu-list');
+  if (!list) return;
+  // List is position:fixed (escapes table-card overflow). Force display
+  // before measuring so offsetWidth/Height are real, then position it.
+  list.style.visibility = 'hidden';
+  list.style.display = 'block';
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
   const listW = list.offsetWidth;
@@ -1381,23 +1383,24 @@ function toggleDotMenu(btn) {
   const spaceAbove = btnRect.top;
   const flipUp = spaceBelow < listH + 8 && spaceAbove > listH + 8;
   list.style.top = (flipUp ? btnRect.top - listH - 4 : btnRect.bottom + 4) + 'px';
-  // Right-align to the button; clamp to viewport
   let left = btnRect.right - listW;
   if (left < 8) left = 8;
   if (left + listW > window.innerWidth - 8) left = window.innerWidth - listW - 8;
   list.style.left = left + 'px';
+  list.style.visibility = '';
+  menu.classList.add('open');
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
     m.classList.remove('open');
     m.classList.remove('up');
+    const list = m.querySelector('.dot-menu-list');
+    if (list) { list.style.display = ''; list.style.top = ''; list.style.left = ''; list.style.visibility = ''; }
   });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dot-menu')) closeDotMenus();
 });
-// Fixed-positioned menus don't track scroll — close on scroll/resize.
-window.addEventListener('scroll', closeDotMenus, true);
 window.addEventListener('resize', closeDotMenus);
 
 function openAddModal() {
@@ -2424,6 +2427,9 @@ async function confirmDelete() {
   if (blocker) {
     showToast('Silinemez: ' + blocker, 'error'); return;
   }
+  /* Note: stock_movements remain a hard delete blocker by design —
+     they're audit records. To remove a product, first delete its
+     movements (or use Birleştir to merge into another product). */
   const { data: { user: _u } } = await sb.auth.getUser();
   const { error } = await sb.from('products').update({
     is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id
@@ -2436,22 +2442,24 @@ async function confirmDelete() {
 }
 
 // Pre-check: returns null if deletable, else a human-readable reason.
-// Real blockers: open order line items (still pending obligation) or
-// non-zero stock balance (real inventory exists). Past stock_movements
-// alone are audit history — they don't block soft-delete.
+// Past stock_movements block delete to preserve audit integrity — a
+// product with movement history can't be removed silently. Only counts
+// items whose own deleted_at IS NULL (084 soft-deletes items when their
+// parent order is cascade-deleted, so orphans don't block).
 async function productDeleteBlocker(pid) {
-  const p = products.find(x => x.id === pid);
-  const qty = Number(p?.stock ?? p?.quantity ?? 0);
-  const [so, po] = await Promise.all([
+  const [so, po, mv] = await Promise.all([
     sb.from('sales_order_items').select('id', {count:'exact',head:true})
       .eq('product_id', pid).is('deleted_at', null),
     sb.from('purchase_order_items').select('id', {count:'exact',head:true})
       .eq('product_id', pid).is('deleted_at', null),
+    sb.from('stock_movements').select('id', {count:'exact',head:true})
+      .eq('product_id', pid).eq('is_active', true).is('deleted_at', null),
   ]);
   const orderCount = (so.count||0) + (po.count||0);
-  if (orderCount > 0) return `Bu ürünün ${orderCount} açık sipariş kalemi var`;
-  if (qty > 0) return `Stok bakiyesi ${qty} ${p?.unit||''}. Önce "Stok Düzelt" ile sıfırlayın.`;
-  return null;
+  const parts = [];
+  if (orderCount > 0) parts.push(orderCount + ' sipariş kalemi');
+  if ((mv.count||0) > 0) parts.push(mv.count + ' stok hareketi');
+  return parts.length ? 'Bu ürünün ' + parts.join(' / ') + ' var' : null;
 }
 
 // ===== MERGE PRODUCT =====
