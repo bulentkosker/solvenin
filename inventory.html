@@ -68,7 +68,7 @@ select.filter-btn { appearance:none; padding-right:28px; background-image:url("d
 .btn-secondary:hover { border-color:var(--gray300); background:var(--gray50); }
 
 /* TABLE */
-.table-card { background:var(--white); border-radius:10px; border:1px solid var(--gray200); box-shadow:var(--shadow-sm); overflow:hidden; }
+.table-card { background:var(--white); border-radius:10px; border:1px solid var(--gray200); box-shadow:var(--shadow-sm); }
 .table-header { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-bottom:1px solid var(--gray100); }
 .table-title { font-family:var(--font-display); font-size:13px; font-weight:700; }
 .table-count { font-size:12px; color:var(--gray400); background:var(--gray100); padding:3px 10px; border-radius:99px; }
@@ -121,10 +121,9 @@ tr:hover .action-btns { opacity:1; }
 .dot-menu { position:relative; display:inline-block; }
 .dot-menu-btn { background:none; border:none; font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; color:var(--gray400); line-height:1; transition:background .15s; }
 .dot-menu-btn:hover { background:var(--gray100); color:var(--gray700); }
-/* position:fixed so the menu escapes parent overflow:hidden (table-card).
-   Coordinates set in JS at open time. */
-.dot-menu-list { display:none; position:fixed; min-width:160px; background:#fff; border:1px solid var(--gray200); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.12); z-index:9999; padding:4px 0; }
+.dot-menu-list { display:none; position:absolute; right:0; top:100%; margin-top:4px; min-width:160px; background:#fff; border:1px solid var(--gray200); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.12); z-index:200; padding:4px 0; }
 .dot-menu.open .dot-menu-list { display:block; }
+.dot-menu.up .dot-menu-list { top:auto; bottom:100%; margin-top:0; margin-bottom:4px; }
 .dot-menu-item { display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:13px; cursor:pointer; transition:background .1s; white-space:nowrap; border:none; background:none; width:100%; text-align:left; color:var(--gray700); }
 .dot-menu-item:hover { background:var(--gray50); }
 .dot-menu-item.danger { color:#dc2626; }
@@ -1370,38 +1369,24 @@ function toggleDotMenu(btn) {
   const wasOpen = menu.classList.contains('open');
   closeDotMenus();
   if (wasOpen) return;
+  menu.classList.add('open');
+  // Flip upward when there isn't room for the dropdown below the button.
   const list = menu.querySelector('.dot-menu-list');
-  if (!list) return;
-  // List is position:fixed (escapes table-card overflow). Force display
-  // before measuring so offsetWidth/Height are real, then position it.
-  list.style.visibility = 'hidden';
-  list.style.display = 'block';
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
-  const listW = list.offsetWidth;
   const spaceBelow = window.innerHeight - btnRect.bottom;
   const spaceAbove = btnRect.top;
-  const flipUp = spaceBelow < listH + 8 && spaceAbove > listH + 8;
-  list.style.top = (flipUp ? btnRect.top - listH - 4 : btnRect.bottom + 4) + 'px';
-  let left = btnRect.right - listW;
-  if (left < 8) left = 8;
-  if (left + listW > window.innerWidth - 8) left = window.innerWidth - listW - 8;
-  list.style.left = left + 'px';
-  list.style.visibility = '';
-  menu.classList.add('open');
+  if (spaceBelow < listH + 8 && spaceAbove > listH + 8) menu.classList.add('up');
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
     m.classList.remove('open');
     m.classList.remove('up');
-    const list = m.querySelector('.dot-menu-list');
-    if (list) { list.style.display = ''; list.style.top = ''; list.style.left = ''; list.style.visibility = ''; }
   });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dot-menu')) closeDotMenus();
 });
-window.addEventListener('resize', closeDotMenus);
 
 function openAddModal() {
   editingId = null;
