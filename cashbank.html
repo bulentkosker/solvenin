@@ -1913,11 +1913,15 @@ async function populateTransferTargets(prefix) {
   const accs = accsRes.data || [];
   const bkById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
 
-  // Exclude the account the user is currently booking against. Booking
-  // from cash modal → selectedRegisterId filters; from bank → selectedAccountId.
-  const cashItems = regs.filter(r => r.id !== selectedRegisterId)
+  // Only exclude the SOURCE account — the one this modal books against.
+  // ctx (cash modal) → exclude selectedRegisterId from cash items only.
+  // btx (bank modal) → exclude selectedAccountId from bank items only.
+  // Cross-type filtering would wrongly hide the lone kasa when the user
+  // had previously opened it before switching to the bank modal.
+  const isCashModal = prefix === 'ctx';
+  const cashItems = regs.filter(r => !(isCashModal && r.id === selectedRegisterId))
     .map(r => `<option value="cash:${r.id}">💵 ${escapeHtmlCB(r.name)} (${r.currency_code}) · Kasa</option>`);
-  const bankItems = accs.filter(a => a.id !== selectedAccountId)
+  const bankItems = accs.filter(a => !(!isCashModal && a.id === selectedAccountId))
     .map(a => {
       const bank = bkById[a.bank_id];
       const label = (bank?.name ? bank.name + ' · ' : '') + a.account_name;
