@@ -3087,6 +3087,108 @@ const T = window.T = {
     import_create_new:'Create as new product',
     import_confirm_title:'Confirm Import',
     import_confirm_body:'This will create 1 invoice with {items} items and {newProducts} new products. Continue?',
+    btn_help:'Help',
+    help_projects_title:'Projects Module Help',
+    help_projects_content:`<h3>What does this module do?</h3>
+<p>It tracks work performed for a specific customer within a specific budget and timeframe as a separate unit. Each project has its own revenue, expenses, profit/loss and progress. When several jobs run in parallel, you can clearly see which is profitable and which is in trouble.</p>
+<p>It suits businesses that manage each engagement as a separate package — construction, installation, contracting, consulting, agencies, and similar.</p>
+
+<h3>When should you create a project?</h3>
+<p>Create a project if at least two or three of the following are "yes":</p>
+<ul>
+<li>Does this work have a defined start and end?</li>
+<li>Is there a separate budget planned for it?</li>
+<li>Do you need to see its profit/loss separately from other work?</li>
+</ul>
+<p>You don't need a project for one-off small jobs or general office expenses. Such transactions can also be saved without selecting a project.</p>
+
+<h3>Creating a project</h3>
+<p>Start from the Projects menu using the <strong>New Project</strong> button. Fill in:</p>
+<ul>
+<li><strong>Project name:</strong> A short, descriptive title</li>
+<li><strong>Customer:</strong> Who the work is for, who will be invoiced</li>
+<li><strong>Manager:</strong> The employee responsible</li>
+<li><strong>Budget:</strong> Planned total cost (reference only — actual is tracked separately)</li>
+<li><strong>Start and end dates</strong></li>
+<li><strong>Status:</strong> Planning, Active, Completed or Cancelled</li>
+</ul>
+<p>The project number is generated automatically and cannot be changed.</p>
+
+<h3>Linking transactions to a project</h3>
+<p>The core idea of this module is to set the <strong>Project</strong> field every time you record a financial transaction related to the project. Otherwise the project detail will not show correct totals.</p>
+
+<h4>Purchase invoices</h4>
+<p>For materials or services bought for the project:</p>
+<ol>
+<li>Purchasing → New Invoice</li>
+<li>Select the supplier</li>
+<li>Pick the project from the <strong>Project</strong> field</li>
+<li>Enter the line items and save</li>
+</ol>
+<p>When importing purchase invoices in bulk from Excel, choosing a Project at Step 1 automatically links every row in the file to that project.</p>
+
+<h4>Sales invoices</h4>
+<p>When invoicing the customer for milestone or work value:</p>
+<ol>
+<li>Sales → New Invoice</li>
+<li>Select the customer (project's customer)</li>
+<li><strong>Project</strong> field: that customer's active projects appear at the top automatically</li>
+<li>Enter the line items and save</li>
+</ol>
+<p>A project may have several sales invoices (initial milestone, interim milestone, final settlement, etc.). Each must be linked to the project separately.</p>
+
+<h4>Bank and cash transactions</h4>
+<p>For employee advances, subcontractor payments, small expenses, or collections:</p>
+<ol>
+<li>Finance → Bank or Cash</li>
+<li>Enter the transaction details (direction, amount, category, contact)</li>
+<li>Pick the project from the <strong>Project</strong> field</li>
+<li>Save</li>
+</ol>
+
+<h3>Tracking the project</h3>
+<p>The project detail page has three tabs:</p>
+
+<h4>Overview tab</h4>
+<p>Project info, customer, manager, dates and status.</p>
+
+<h4>Financial tab</h4>
+<ul>
+<li><strong>Revenue:</strong> Total of sales invoices linked to this project</li>
+<li><strong>Expenses:</strong> Total of linked purchases, bank/cash outflows, manual expenses</li>
+<li><strong>Net:</strong> Revenue − Expenses (positive = profit, negative = loss)</li>
+<li><strong>Budget usage:</strong> What percentage of the planned budget the actual expense represents</li>
+</ul>
+<p>If budget usage exceeds 100%, you've spent more than planned.</p>
+
+<h4>Movements tab</h4>
+<p>All sales, purchases, bank and cash transactions linked to the project, listed by date. Each row shows the type, counterparty and amount.</p>
+
+<h3>List view</h3>
+<p>All projects on a single screen. Each row shows:</p>
+<ul>
+<li>Net (profit/loss) with color coding</li>
+<li>Budget usage percentage</li>
+</ul>
+<p>This way you can tell at a glance which projects are doing well and which need attention.</p>
+
+<h3>Important notes</h3>
+<ul>
+<li><strong>Project selection is optional.</strong> Leave it blank for transactions unrelated to a project.</li>
+<li><strong>A transaction can only be linked to one project.</strong> If a shared expense spans multiple projects, record it as separate entries.</li>
+<li><strong>If a project is deleted</strong>, linked transactions are not lost — only the project link is removed.</li>
+<li><strong>POS sales</strong> are not linked to projects; they are used for retail flow.</li>
+<li><strong>For correct net</strong>, you must link both the project's revenue and its expenses. If only expenses are tagged, the project will appear permanently in the red.</li>
+</ul>
+
+<h3>Not yet supported</h3>
+<p>The following features will be added later:</p>
+<ul>
+<li>Automatic labour cost from payroll and employee time tracking</li>
+<li>Full task and milestone management UI</li>
+<li>Time-series chart comparing budget vs. actual</li>
+<li>Shared expenses split proportionally across multiple projects</li>
+</ul>`,
   },
   tr: {
     nav_dashboard:'Panel', nav_inventory:'Stok', nav_sales:'Satışlar',
@@ -4685,6 +4787,108 @@ const T = window.T = {
     import_create_new:'Yeni ürün oluştur',
     import_confirm_title:'İçe Aktarmayı Onayla',
     import_confirm_body:'{items} satır ve {newProducts} yeni ürün ile 1 fatura oluşturulacak. Devam edilsin mi?',
+    btn_help:'Yardım',
+    help_projects_title:'Proje Modülü Yardımı',
+    help_projects_content:`<h3>Bu modül ne işe yarar?</h3>
+<p>Belirli bir müşteri için, belirli bir bütçe ve sürede yapılan işleri ayrı ayrı takip etmek için kullanılır. Her projenin kendi gelir, gider, kar/zarar ve ilerlemesi ayrı görünür. Birden fazla iş paralel yürütüldüğünde hangisinin kazandırdığı, hangisinin sıkıntıda olduğu net şekilde anlaşılır.</p>
+<p>İnşaat, montaj, taahhüt, danışmanlık, ajans gibi her işi ayrı bir paket olarak yöneten işletmeler için uygundur.</p>
+
+<h3>Ne zaman proje açılmalı?</h3>
+<p>Aşağıdaki sorulardan ikisi veya üçü "evet" ise proje açın:</p>
+<ul>
+<li>Bu işin belirli bir başlangıcı ve sonu var mı?</li>
+<li>Bu iş için ayrı bir bütçe planlandı mı?</li>
+<li>Bu işin kar/zararını diğer işlerden ayrı görmek gerekiyor mu?</li>
+</ul>
+<p>Tek seferlik küçük işler veya genel ofis giderleri için proje açmaya gerek yoktur. Bu tür hareketler proje seçilmeden de kaydedilebilir.</p>
+
+<h3>Proje oluşturma</h3>
+<p>Projeler menüsünden <strong>Yeni Proje</strong> butonu ile başlanır. Doldurulması gerekenler:</p>
+<ul>
+<li><strong>Proje adı:</strong> İşi tanımlayan kısa ve anlaşılır bir başlık</li>
+<li><strong>Müşteri:</strong> İş kim için yapılıyor, faturalar kime kesilecek</li>
+<li><strong>Yönetici:</strong> Projeden sorumlu çalışan</li>
+<li><strong>Bütçe:</strong> Planlanan toplam maliyet (sadece referans amaçlı, gerçekleşen ayrı takip edilir)</li>
+<li><strong>Başlangıç ve bitiş tarihleri</strong></li>
+<li><strong>Durum:</strong> Planlama, Aktif, Tamamlandı veya İptal</li>
+</ul>
+<p>Proje numarası otomatik olarak üretilir ve değiştirilemez.</p>
+
+<h3>Hareketleri projeye bağlama</h3>
+<p>Bu modülün temel mantığı, projeyle ilgili her finansal hareketi sisteme girerken <strong>Proje</strong> alanını işaretlemektir. Aksi takdirde proje detayında doğru toplamlar oluşmaz.</p>
+
+<h4>Alış faturaları</h4>
+<p>Proje için alınan malzeme veya hizmet faturalarında:</p>
+<ol>
+<li>Satın Alma → Yeni Fatura</li>
+<li>Tedarikçiyi seçin</li>
+<li><strong>Proje</strong> alanından ilgili projeyi seçin</li>
+<li>Kalemleri girin ve kaydedin</li>
+</ol>
+<p>Excel'den toplu alış faturası içe aktarırken Adım 1'de Proje seçildiğinde, dosyadaki tüm satırlar otomatik olarak o projeye bağlanır.</p>
+
+<h4>Satış faturaları</h4>
+<p>Müşteriye hak ediş veya iş bedeli faturası kesilirken:</p>
+<ol>
+<li>Satışlar → Yeni Fatura</li>
+<li>Müşteriyi seçin (proje müşterisi)</li>
+<li><strong>Proje</strong> alanı: Müşterinin aktif projeleri otomatik olarak en üstte listelenir</li>
+<li>Kalemleri girin ve kaydedin</li>
+</ol>
+<p>Bir projenin birden fazla satış faturası olabilir (ilk hak ediş, ara hak ediş, kesin hesap gibi). Her birini ayrıca projeye bağlamak gerekir.</p>
+
+<h4>Banka ve kasa hareketleri</h4>
+<p>Çalışan avansı, taşeron ödemesi, küçük masraflar veya tahsilatlar için:</p>
+<ol>
+<li>Finans → Banka veya Kasa</li>
+<li>Hareket bilgilerini girin (yön, tutar, kategori, cari)</li>
+<li><strong>Proje</strong> alanından ilgili projeyi seçin</li>
+<li>Kaydedin</li>
+</ol>
+
+<h3>Proje takibi</h3>
+<p>Proje detay sayfası üç sekmeden oluşur:</p>
+
+<h4>Genel sekmesi</h4>
+<p>Proje bilgileri, müşteri, yönetici, tarihler ve durumu içerir.</p>
+
+<h4>Finansal sekmesi</h4>
+<ul>
+<li><strong>Gelirler:</strong> Bu projeye bağlı satış faturalarının toplamı</li>
+<li><strong>Giderler:</strong> Bağlı alışlar, banka ve kasa çıkışları, manuel masrafların toplamı</li>
+<li><strong>Net:</strong> Gelir − Gider farkı (pozitifse kâr, negatifse zarar)</li>
+<li><strong>Bütçe Kullanımı:</strong> Gerçekleşen gider, planlanan bütçenin yüzde kaçı</li>
+</ul>
+<p>Bütçe kullanımı %100'ü geçtiyse planlanandan fazla harcama yapılmış demektir.</p>
+
+<h4>Hareketler sekmesi</h4>
+<p>Projeye bağlı tüm satış, alış, banka ve kasa hareketleri tarih sırasıyla tek listede görünür. Her hareketin tipi, karşı tarafı ve tutarı listelenir.</p>
+
+<h3>Liste ekranı</h3>
+<p>Tüm projeler tek ekranda listelenir. Her satırda:</p>
+<ul>
+<li>Net (kâr/zarar) renk kodlu olarak görünür</li>
+<li>Bütçe Kullanımı yüzdesi gösterilir</li>
+</ul>
+<p>Bu sayede hangi projenin iyi gittiği, hangisinin müdahale gerektirdiği bir bakışta anlaşılır.</p>
+
+<h3>Önemli notlar</h3>
+<ul>
+<li><strong>Proje seçimi opsiyoneldir.</strong> Projeyle ilişkisiz hareketler için boş bırakılabilir.</li>
+<li><strong>Bir hareket sadece bir projeye bağlanabilir.</strong> Birden fazla projeye dağılan ortak gider varsa ayrı kayıtlar olarak girilmelidir.</li>
+<li><strong>Proje silinirse</strong> bağlı hareketler kaybolmaz, sadece proje bağlantıları kopar.</li>
+<li><strong>POS satışları</strong> projeye bağlanmaz; perakende satış akışı için kullanılır.</li>
+<li><strong>Net hesabının doğru olması için</strong>, projenin hem gelirlerini hem giderlerini sisteme bağlamak gerekir. Sadece giderler işaretlenirse proje sürekli zararda görünür.</li>
+</ul>
+
+<h3>Henüz desteklenmeyen özellikler</h3>
+<p>Aşağıdaki özellikler ileride eklenecektir:</p>
+<ul>
+<li>Bordro ve çalışan saat takibi üzerinden otomatik işçilik maliyeti</li>
+<li>Görev ve kilometre taşı yönetimi (tam UI)</li>
+<li>Bütçe ile gerçekleşmenin zaman içindeki karşılaştırma grafiği</li>
+<li>Birden fazla projeye yüzdesel dağıtılabilen ortak giderler</li>
+</ul>`,
   },
   de: {
     nav_dashboard:'Dashboard', nav_inventory:'Lager', nav_sales:'Verkauf',
@@ -5531,6 +5735,108 @@ const T = window.T = {
     pos_show_subtotal:'Zwischensumme',
     pos_show_vat:'MwSt. anzeigen',
     pos_show_cashier:'Kassierer zeigen',
+    btn_help:'Hilfe',
+    help_projects_title:'Hilfe zum Projektmodul',
+    help_projects_content:`<h3>Wozu dient dieses Modul?</h3>
+<p>Es dient dazu, Arbeiten, die für einen bestimmten Kunden innerhalb eines festen Budgets und Zeitraums erbracht werden, als separate Einheit zu verfolgen. Jedes Projekt hat eigene Einnahmen, Ausgaben, Gewinn/Verlust und Fortschritt. Wenn mehrere Aufträge parallel laufen, sehen Sie klar, welcher rentabel ist und welcher Probleme hat.</p>
+<p>Geeignet für Unternehmen, die jeden Auftrag als eigenes Paket verwalten — Bau, Montage, Auftragsfertigung, Beratung, Agenturen u. Ä.</p>
+
+<h3>Wann sollte ein Projekt angelegt werden?</h3>
+<p>Legen Sie ein Projekt an, wenn mindestens zwei oder drei der folgenden Fragen mit "ja" beantwortet werden:</p>
+<ul>
+<li>Hat diese Arbeit einen klaren Anfang und ein klares Ende?</li>
+<li>Wurde dafür ein eigenes Budget geplant?</li>
+<li>Soll das Ergebnis (Gewinn/Verlust) getrennt von anderen Aufträgen sichtbar sein?</li>
+</ul>
+<p>Für einmalige kleine Aufträge oder allgemeine Bürokosten ist kein Projekt nötig. Solche Vorgänge können auch ohne Projektzuordnung erfasst werden.</p>
+
+<h3>Projekt anlegen</h3>
+<p>Im Menü Projekte über den Button <strong>Neues Projekt</strong>. Auszufüllen:</p>
+<ul>
+<li><strong>Projektname:</strong> Kurzer, aussagekräftiger Titel</li>
+<li><strong>Kunde:</strong> Für wen die Arbeit erbracht wird, an wen Rechnungen gehen</li>
+<li><strong>Manager:</strong> Verantwortlicher Mitarbeiter</li>
+<li><strong>Budget:</strong> Geplante Gesamtkosten (nur Referenz, der Ist-Wert wird separat verfolgt)</li>
+<li><strong>Start- und Enddatum</strong></li>
+<li><strong>Status:</strong> Planung, Aktiv, Abgeschlossen oder Storniert</li>
+</ul>
+<p>Die Projektnummer wird automatisch erzeugt und ist nicht änderbar.</p>
+
+<h3>Vorgänge mit dem Projekt verknüpfen</h3>
+<p>Die Grundidee dieses Moduls: bei jedem projektbezogenen Finanzvorgang das Feld <strong>Projekt</strong> auswählen. Andernfalls werden in der Projektübersicht keine korrekten Summen ausgewiesen.</p>
+
+<h4>Eingangsrechnungen</h4>
+<p>Bei Material- oder Dienstleistungsrechnungen für das Projekt:</p>
+<ol>
+<li>Einkauf → Neue Rechnung</li>
+<li>Lieferant auswählen</li>
+<li>Im Feld <strong>Projekt</strong> das passende Projekt wählen</li>
+<li>Positionen erfassen und speichern</li>
+</ol>
+<p>Beim Excel-Import von Eingangsrechnungen werden alle Zeilen automatisch dem in Schritt 1 gewählten Projekt zugeordnet.</p>
+
+<h4>Ausgangsrechnungen</h4>
+<p>Beim Stellen einer Teil- oder Schlussrechnung an den Kunden:</p>
+<ol>
+<li>Verkauf → Neue Rechnung</li>
+<li>Kunden auswählen (Projektkunde)</li>
+<li>Feld <strong>Projekt</strong>: aktive Projekte des Kunden erscheinen automatisch oben</li>
+<li>Positionen erfassen und speichern</li>
+</ol>
+<p>Ein Projekt kann mehrere Ausgangsrechnungen haben (Anzahlung, Abschlag, Schlussrechnung). Jede ist einzeln dem Projekt zuzuordnen.</p>
+
+<h4>Bank- und Kassenvorgänge</h4>
+<p>Für Mitarbeitervorschüsse, Subunternehmerzahlungen, kleine Auslagen oder Eingänge:</p>
+<ol>
+<li>Finanzen → Bank oder Kasse</li>
+<li>Vorgangsdaten erfassen (Richtung, Betrag, Kategorie, Kontakt)</li>
+<li>Im Feld <strong>Projekt</strong> das Projekt wählen</li>
+<li>Speichern</li>
+</ol>
+
+<h3>Projektverfolgung</h3>
+<p>Die Projektdetailseite hat drei Reiter:</p>
+
+<h4>Übersicht</h4>
+<p>Projektdaten, Kunde, Manager, Termine und Status.</p>
+
+<h4>Finanzen</h4>
+<ul>
+<li><strong>Erträge:</strong> Summe der dem Projekt zugeordneten Ausgangsrechnungen</li>
+<li><strong>Aufwendungen:</strong> Summe der zugeordneten Einkäufe, Bank-/Kassenabflüsse, manuellen Auslagen</li>
+<li><strong>Netto:</strong> Erträge − Aufwendungen (positiv = Gewinn, negativ = Verlust)</li>
+<li><strong>Budgetauslastung:</strong> Wie viel Prozent des geplanten Budgets der Ist-Aufwand ausmacht</li>
+</ul>
+<p>Liegt die Auslastung über 100 %, wurde mehr als geplant ausgegeben.</p>
+
+<h4>Bewegungen</h4>
+<p>Alle dem Projekt zugeordneten Verkäufe, Einkäufe sowie Bank- und Kassenvorgänge in chronologischer Reihenfolge. Pro Zeile werden Typ, Kontakt und Betrag angezeigt.</p>
+
+<h3>Listenansicht</h3>
+<p>Alle Projekte auf einer Seite. Pro Zeile sehen Sie:</p>
+<ul>
+<li>Netto (Gewinn/Verlust) farblich codiert</li>
+<li>Budgetauslastung in Prozent</li>
+</ul>
+<p>So erkennen Sie auf einen Blick, welche Projekte gut laufen und welche Aufmerksamkeit brauchen.</p>
+
+<h3>Wichtige Hinweise</h3>
+<ul>
+<li><strong>Die Projektauswahl ist optional.</strong> Lassen Sie sie leer für nicht-projektbezogene Vorgänge.</li>
+<li><strong>Ein Vorgang kann nur einem Projekt zugeordnet werden.</strong> Bei Aufwendungen, die mehrere Projekte betreffen, sind separate Einträge zu erfassen.</li>
+<li><strong>Wird ein Projekt gelöscht</strong>, bleiben die Vorgänge erhalten — nur die Verknüpfung entfällt.</li>
+<li><strong>POS-Verkäufe</strong> werden nicht mit Projekten verknüpft; sie sind für den Einzelhandelsfluss.</li>
+<li><strong>Für ein korrektes Netto</strong> müssen sowohl Erträge als auch Aufwendungen des Projekts verknüpft sein. Werden nur Aufwendungen markiert, scheint das Projekt dauerhaft Verlust zu machen.</li>
+</ul>
+
+<h3>Noch nicht unterstützt</h3>
+<p>Die folgenden Funktionen kommen später:</p>
+<ul>
+<li>Automatische Lohnkosten aus Lohnabrechnung und Zeiterfassung</li>
+<li>Vollständige Aufgaben- und Meilensteinverwaltung</li>
+<li>Zeitlicher Soll-Ist-Vergleich des Budgets als Diagramm</li>
+<li>Gemeinkosten anteilig auf mehrere Projekte verteilen</li>
+</ul>`,
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_inventory:'Inventaire', nav_sales:'Ventes',
@@ -6378,6 +6684,108 @@ const T = window.T = {
     pos_show_subtotal:'Afficher sous-total',
     pos_show_vat:'Afficher TVA',
     pos_show_cashier:'Afficher caissier',
+    btn_help:'Aide',
+    help_projects_title:'Aide du module Projets',
+    help_projects_content:`<h3>À quoi sert ce module ?</h3>
+<p>Il sert à suivre, comme une unité distincte, les travaux effectués pour un client donné dans un budget et un délai donnés. Chaque projet possède ses propres revenus, dépenses, profit/perte et avancement. Lorsque plusieurs chantiers sont menés en parallèle, vous voyez clairement lequel rapporte et lequel pose problème.</p>
+<p>Adapté aux entreprises qui gèrent chaque mission comme un forfait — bâtiment, installation, sous-traitance, conseil, agences, etc.</p>
+
+<h3>Quand créer un projet ?</h3>
+<p>Créez un projet si au moins deux ou trois des questions suivantes ont la réponse "oui" :</p>
+<ul>
+<li>Cette mission a-t-elle un début et une fin clairs ?</li>
+<li>Un budget distinct a-t-il été planifié ?</li>
+<li>Faut-il en suivre le résultat séparément des autres missions ?</li>
+</ul>
+<p>Pas besoin de projet pour de petites prestations ponctuelles ou des frais de bureau généraux. Ces opérations peuvent aussi être saisies sans projet.</p>
+
+<h3>Créer un projet</h3>
+<p>Depuis le menu Projets, via le bouton <strong>Nouveau projet</strong>. À renseigner :</p>
+<ul>
+<li><strong>Nom du projet :</strong> intitulé court et explicite</li>
+<li><strong>Client :</strong> pour qui le travail est réalisé, à qui les factures seront émises</li>
+<li><strong>Responsable :</strong> collaborateur en charge</li>
+<li><strong>Budget :</strong> coût total prévu (référence uniquement, le réalisé est suivi à part)</li>
+<li><strong>Dates de début et de fin</strong></li>
+<li><strong>Statut :</strong> Planification, Actif, Terminé ou Annulé</li>
+</ul>
+<p>Le numéro de projet est généré automatiquement et n'est pas modifiable.</p>
+
+<h3>Lier des opérations au projet</h3>
+<p>Le principe : indiquer le champ <strong>Projet</strong> à chaque opération financière liée au projet. Sinon, les totaux du projet ne seront pas corrects.</p>
+
+<h4>Factures d'achat</h4>
+<p>Pour les achats de matériel ou de prestations destinés au projet :</p>
+<ol>
+<li>Achats → Nouvelle facture</li>
+<li>Sélectionner le fournisseur</li>
+<li>Choisir le projet dans le champ <strong>Projet</strong></li>
+<li>Saisir les lignes et enregistrer</li>
+</ol>
+<p>Lors d'un import Excel de factures d'achat, le projet choisi à l'étape 1 lie automatiquement toutes les lignes du fichier.</p>
+
+<h4>Factures de vente</h4>
+<p>Lors de la facturation d'un acompte ou d'une situation de travaux :</p>
+<ol>
+<li>Ventes → Nouvelle facture</li>
+<li>Sélectionner le client (client du projet)</li>
+<li>Champ <strong>Projet</strong> : les projets actifs de ce client apparaissent en premier</li>
+<li>Saisir les lignes et enregistrer</li>
+</ol>
+<p>Un projet peut comporter plusieurs factures de vente (acompte, situations intermédiaires, décompte final). Chacune doit être reliée séparément.</p>
+
+<h4>Opérations banque et caisse</h4>
+<p>Pour les avances aux salariés, paiements sous-traitants, petites dépenses ou encaissements :</p>
+<ol>
+<li>Finance → Banque ou Caisse</li>
+<li>Saisir le mouvement (sens, montant, catégorie, tiers)</li>
+<li>Choisir le projet dans le champ <strong>Projet</strong></li>
+<li>Enregistrer</li>
+</ol>
+
+<h3>Suivi du projet</h3>
+<p>La page de détail comporte trois onglets :</p>
+
+<h4>Aperçu</h4>
+<p>Informations, client, responsable, dates et statut.</p>
+
+<h4>Financier</h4>
+<ul>
+<li><strong>Recettes :</strong> total des factures de vente liées au projet</li>
+<li><strong>Dépenses :</strong> total des achats, sorties banque/caisse et frais manuels liés</li>
+<li><strong>Net :</strong> Recettes − Dépenses (positif = bénéfice, négatif = perte)</li>
+<li><strong>Utilisation du budget :</strong> pourcentage du budget prévu consommé</li>
+</ul>
+<p>Au-delà de 100 %, vous avez dépensé plus que prévu.</p>
+
+<h4>Mouvements</h4>
+<p>Toutes les ventes, achats, opérations banque et caisse liés au projet, listés par date. Chaque ligne indique le type, le tiers et le montant.</p>
+
+<h3>Liste des projets</h3>
+<p>Tous les projets sur un seul écran. Chaque ligne montre :</p>
+<ul>
+<li>Le net (bénéfice/perte) avec code couleur</li>
+<li>Le pourcentage d'utilisation du budget</li>
+</ul>
+<p>Vous voyez ainsi en un coup d'œil ce qui va bien et ce qui demande de l'attention.</p>
+
+<h3>Points importants</h3>
+<ul>
+<li><strong>Le choix du projet est optionnel.</strong> Laissez vide pour des opérations non rattachées.</li>
+<li><strong>Une opération ne peut être rattachée qu'à un seul projet.</strong> Pour une dépense partagée entre plusieurs projets, créez plusieurs écritures.</li>
+<li><strong>Si un projet est supprimé</strong>, les opérations liées ne sont pas perdues — seul le lien disparaît.</li>
+<li><strong>Les ventes POS</strong> ne sont pas liées aux projets ; elles relèvent du flux de vente au détail.</li>
+<li><strong>Pour un net correct</strong>, rattachez aussi bien les recettes que les dépenses du projet. Si seules les dépenses sont marquées, le projet apparaîtra durablement en perte.</li>
+</ul>
+
+<h3>Fonctionnalités à venir</h3>
+<p>Les fonctions suivantes seront ajoutées ultérieurement :</p>
+<ul>
+<li>Coût de main-d'œuvre automatique à partir de la paie et des feuilles de temps</li>
+<li>Gestion complète des tâches et jalons (UI complète)</li>
+<li>Graphique d'écart budget/réalisé dans le temps</li>
+<li>Frais communs répartis au pourcentage sur plusieurs projets</li>
+</ul>`,
   },
   es: {
     nav_dashboard:'Panel', nav_inventory:'Inventario', nav_sales:'Ventas',
@@ -7224,6 +7632,108 @@ const T = window.T = {
     pos_show_subtotal:'Mostrar subtotal',
     pos_show_vat:'Mostrar IVA',
     pos_show_cashier:'Mostrar cajero',
+    btn_help:'Ayuda',
+    help_projects_title:'Ayuda del módulo de Proyectos',
+    help_projects_content:`<h3>¿Para qué sirve este módulo?</h3>
+<p>Sirve para hacer un seguimiento, como unidad independiente, de los trabajos realizados para un cliente concreto dentro de un presupuesto y un plazo determinados. Cada proyecto tiene sus propios ingresos, gastos, beneficio/pérdida y avance. Cuando hay varios trabajos en paralelo, verá claramente cuál es rentable y cuál tiene problemas.</p>
+<p>Adecuado para empresas que gestionan cada encargo como un paquete propio — construcción, montaje, contratación, consultoría, agencias y similares.</p>
+
+<h3>¿Cuándo crear un proyecto?</h3>
+<p>Cree un proyecto si al menos dos o tres de las siguientes preguntas se responden con "sí":</p>
+<ul>
+<li>¿El trabajo tiene un inicio y un final definidos?</li>
+<li>¿Se ha planificado un presupuesto independiente?</li>
+<li>¿Necesita ver su beneficio/pérdida por separado del resto?</li>
+</ul>
+<p>No hace falta proyecto para encargos puntuales pequeños o gastos generales de oficina. Esas operaciones pueden registrarse sin seleccionar proyecto.</p>
+
+<h3>Crear un proyecto</h3>
+<p>En el menú Proyectos, con el botón <strong>Nuevo Proyecto</strong>. A rellenar:</p>
+<ul>
+<li><strong>Nombre del proyecto:</strong> título corto y descriptivo</li>
+<li><strong>Cliente:</strong> para quién es el trabajo y a quién se facturará</li>
+<li><strong>Responsable:</strong> empleado a cargo</li>
+<li><strong>Presupuesto:</strong> coste total previsto (solo referencia; el real se sigue aparte)</li>
+<li><strong>Fechas de inicio y fin</strong></li>
+<li><strong>Estado:</strong> Planificación, Activo, Completado o Cancelado</li>
+</ul>
+<p>El número de proyecto se genera automáticamente y no se puede modificar.</p>
+
+<h3>Vincular operaciones al proyecto</h3>
+<p>La idea base de este módulo: en cada operación financiera relacionada, marque el campo <strong>Proyecto</strong>. De lo contrario, los totales del proyecto no serán correctos.</p>
+
+<h4>Facturas de compra</h4>
+<p>Para materiales o servicios adquiridos para el proyecto:</p>
+<ol>
+<li>Compras → Nueva factura</li>
+<li>Seleccione el proveedor</li>
+<li>Elija el proyecto en el campo <strong>Proyecto</strong></li>
+<li>Introduzca las líneas y guarde</li>
+</ol>
+<p>Al importar facturas de compra desde Excel, el proyecto seleccionado en el paso 1 se aplica a todas las filas del archivo.</p>
+
+<h4>Facturas de venta</h4>
+<p>Al facturar al cliente certificaciones o importes de obra:</p>
+<ol>
+<li>Ventas → Nueva factura</li>
+<li>Seleccione al cliente (cliente del proyecto)</li>
+<li>Campo <strong>Proyecto</strong>: los proyectos activos de ese cliente aparecen primero</li>
+<li>Introduzca las líneas y guarde</li>
+</ol>
+<p>Un proyecto puede tener varias facturas de venta (anticipo, certificaciones, liquidación final). Cada una debe vincularse por separado.</p>
+
+<h4>Movimientos de banco y caja</h4>
+<p>Para anticipos a empleados, pagos a subcontratas, pequeños gastos o cobros:</p>
+<ol>
+<li>Finanzas → Banco o Caja</li>
+<li>Introduzca los datos (sentido, importe, categoría, contacto)</li>
+<li>Elija el proyecto en el campo <strong>Proyecto</strong></li>
+<li>Guarde</li>
+</ol>
+
+<h3>Seguimiento del proyecto</h3>
+<p>La página de detalle tiene tres pestañas:</p>
+
+<h4>General</h4>
+<p>Información del proyecto, cliente, responsable, fechas y estado.</p>
+
+<h4>Financiero</h4>
+<ul>
+<li><strong>Ingresos:</strong> total de facturas de venta vinculadas</li>
+<li><strong>Gastos:</strong> total de compras vinculadas, salidas de banco/caja, gastos manuales</li>
+<li><strong>Neto:</strong> Ingresos − Gastos (positivo = beneficio, negativo = pérdida)</li>
+<li><strong>Uso del presupuesto:</strong> porcentaje del presupuesto consumido por el gasto real</li>
+</ul>
+<p>Si el uso supera el 100 %, se ha gastado más de lo previsto.</p>
+
+<h4>Movimientos</h4>
+<p>Todas las ventas, compras y movimientos de banco y caja vinculados al proyecto, listados por fecha. Cada fila muestra tipo, contraparte e importe.</p>
+
+<h3>Vista de lista</h3>
+<p>Todos los proyectos en una sola pantalla. Cada fila muestra:</p>
+<ul>
+<li>Neto (beneficio/pérdida) con código de color</li>
+<li>Porcentaje de uso del presupuesto</li>
+</ul>
+<p>Así sabe de un vistazo qué proyectos van bien y cuáles requieren atención.</p>
+
+<h3>Notas importantes</h3>
+<ul>
+<li><strong>Seleccionar el proyecto es opcional.</strong> Déjelo vacío para operaciones no asociadas.</li>
+<li><strong>Una operación solo se puede vincular a un proyecto.</strong> Si un gasto es compartido por varios proyectos, regístrelo por separado.</li>
+<li><strong>Si se elimina un proyecto</strong>, las operaciones vinculadas no se pierden — solo desaparece el vínculo.</li>
+<li><strong>Las ventas POS</strong> no se vinculan a proyectos; corresponden al flujo de venta minorista.</li>
+<li><strong>Para que el neto sea correcto</strong>, vincule tanto los ingresos como los gastos del proyecto. Si solo se marcan los gastos, el proyecto aparecerá siempre en pérdida.</li>
+</ul>
+
+<h3>Funciones aún no soportadas</h3>
+<p>Las siguientes funciones se añadirán más adelante:</p>
+<ul>
+<li>Coste laboral automático a partir de nómina y hojas de tiempo</li>
+<li>Gestión completa de tareas e hitos</li>
+<li>Gráfico temporal de presupuesto frente a real</li>
+<li>Gastos comunes distribuidos en porcentaje entre varios proyectos</li>
+</ul>`,
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_inventory:'المخزون', nav_sales:'المبيعات',
@@ -8039,6 +8549,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'مساعدة',
+    help_projects_title:'مساعدة وحدة المشاريع',
+    help_projects_content:`<h3>ما الغرض من هذه الوحدة؟</h3>
+<p>تُستخدم لمتابعة الأعمال المنفذة لعميل معيّن ضمن ميزانية وفترة زمنية محددتين بوصفها وحدة مستقلة. لكل مشروع إيراداته ومصروفاته وأرباحه/خسائره وتقدّمه الخاص. عند تشغيل عدة أعمال بالتوازي يتضح أيها مربح وأيها متعثر.</p>
+<p>مناسب للشركات التي تدير كل عمل كحزمة منفصلة — البناء، التركيب، المقاولات، الاستشارات، الوكالات وما إلى ذلك.</p>
+
+<h3>متى تُنشئ مشروعاً؟</h3>
+<p>أنشئ مشروعاً إذا كانت إجابتك "نعم" على اثنين أو ثلاثة من الأسئلة التالية:</p>
+<ul>
+<li>هل لهذا العمل بداية ونهاية محددتان؟</li>
+<li>هل خُطّط له ميزانية مستقلة؟</li>
+<li>هل تحتاج إلى رؤية ربحه/خسارته منفصلاً عن باقي الأعمال؟</li>
+</ul>
+<p>لا حاجة لمشروع للأعمال الصغيرة لمرة واحدة أو لمصاريف المكتب العامة. يمكن تسجيل تلك الحركات دون تحديد مشروع.</p>
+
+<h3>إنشاء مشروع</h3>
+<p>من قائمة المشاريع عبر زر <strong>مشروع جديد</strong>. تُملأ:</p>
+<ul>
+<li><strong>اسم المشروع:</strong> عنوان قصير وواضح</li>
+<li><strong>العميل:</strong> لمن يُنفّذ العمل ولمن ستُصدَر الفواتير</li>
+<li><strong>المدير:</strong> الموظف المسؤول</li>
+<li><strong>الميزانية:</strong> التكلفة الإجمالية المخططة (مرجعية فقط؛ الفعلي يُتابع منفصلاً)</li>
+<li><strong>تاريخا البدء والانتهاء</strong></li>
+<li><strong>الحالة:</strong> تخطيط، نشط، مكتمل أو ملغى</li>
+</ul>
+<p>يُنشأ رقم المشروع تلقائياً ولا يمكن تغييره.</p>
+
+<h3>ربط الحركات بالمشروع</h3>
+<p>المبدأ الأساسي للوحدة: عند تسجيل أي حركة مالية مرتبطة بالمشروع حدّد حقل <strong>المشروع</strong>. وإلا فلن تظهر الإجماليات الصحيحة في تفاصيل المشروع.</p>
+
+<h4>فواتير الشراء</h4>
+<p>لمواد أو خدمات تُشترى لأجل المشروع:</p>
+<ol>
+<li>المشتريات → فاتورة جديدة</li>
+<li>اختر المورد</li>
+<li>اختر المشروع من حقل <strong>المشروع</strong></li>
+<li>أدخل البنود واحفظ</li>
+</ol>
+<p>عند الاستيراد المجمّع لفواتير الشراء من Excel، اختيار المشروع في الخطوة 1 يربط جميع الصفوف بالملف بذلك المشروع تلقائياً.</p>
+
+<h4>فواتير البيع</h4>
+<p>عند إصدار فاتورة استحقاق أو قيمة عمل للعميل:</p>
+<ol>
+<li>المبيعات → فاتورة جديدة</li>
+<li>اختر العميل (عميل المشروع)</li>
+<li>حقل <strong>المشروع</strong>: تظهر مشاريع هذا العميل النشطة في الأعلى تلقائياً</li>
+<li>أدخل البنود واحفظ</li>
+</ol>
+<p>قد يحتوي المشروع على عدة فواتير بيع (دفعة أولى، استحقاقات مرحلية، مخالصة نهائية). يجب ربط كل واحدة بالمشروع على حدة.</p>
+
+<h4>حركات البنك والصندوق</h4>
+<p>لسلف الموظفين، دفعات المقاولين من الباطن، مصروفات صغيرة أو تحصيلات:</p>
+<ol>
+<li>المالية → بنك أو صندوق</li>
+<li>أدخل بيانات الحركة (الاتجاه، المبلغ، الفئة، الجهة)</li>
+<li>اختر المشروع من حقل <strong>المشروع</strong></li>
+<li>احفظ</li>
+</ol>
+
+<h3>متابعة المشروع</h3>
+<p>تتكوّن صفحة تفاصيل المشروع من ثلاث علامات تبويب:</p>
+
+<h4>عام</h4>
+<p>بيانات المشروع والعميل والمدير والتواريخ والحالة.</p>
+
+<h4>المالية</h4>
+<ul>
+<li><strong>الإيرادات:</strong> مجموع فواتير البيع المرتبطة بالمشروع</li>
+<li><strong>المصروفات:</strong> مجموع المشتريات وصرفيات البنك/الصندوق والمصروفات اليدوية المرتبطة</li>
+<li><strong>الصافي:</strong> الإيرادات − المصروفات (موجب = ربح، سالب = خسارة)</li>
+<li><strong>استخدام الميزانية:</strong> النسبة التي يمثلها المنفق الفعلي من الميزانية المخططة</li>
+</ul>
+<p>إذا تجاوزت النسبة 100% فقد أُنفق أكثر من المخطط.</p>
+
+<h4>الحركات</h4>
+<p>جميع المبيعات والمشتريات وحركات البنك والصندوق المرتبطة بالمشروع مرتّبة حسب التاريخ. كل صف يعرض النوع والطرف والمبلغ.</p>
+
+<h3>قائمة المشاريع</h3>
+<p>كل المشاريع على شاشة واحدة. لكل صف:</p>
+<ul>
+<li>الصافي (ربح/خسارة) بترميز لوني</li>
+<li>نسبة استخدام الميزانية</li>
+</ul>
+<p>وهكذا يتضح بنظرة واحدة المشاريع الجيدة والتي تحتاج تدخّلاً.</p>
+
+<h3>ملاحظات مهمة</h3>
+<ul>
+<li><strong>اختيار المشروع اختياري.</strong> اتركه فارغاً للحركات غير المرتبطة بمشروع.</li>
+<li><strong>يمكن ربط الحركة بمشروع واحد فقط.</strong> إذا كانت مصروفاً مشتركاً موزّعاً على عدة مشاريع فأدخلها كقيود منفصلة.</li>
+<li><strong>عند حذف المشروع</strong> لا تُفقد الحركات المرتبطة، إنما يُفصم الارتباط فقط.</li>
+<li><strong>مبيعات نقاط البيع (POS)</strong> لا تُربط بالمشاريع؛ فهي ضمن مسار التجزئة.</li>
+<li><strong>لكي يكون الصافي صحيحاً</strong> يجب ربط إيرادات المشروع ومصروفاته معاً. إذا أُشّرت المصروفات فقط فسيظهر المشروع دائماً في الخسارة.</li>
+</ul>
+
+<h3>غير مدعوم بعد</h3>
+<p>ستُضاف الميزات التالية لاحقاً:</p>
+<ul>
+<li>تكلفة عمالة آلية من الرواتب وساعات العمل</li>
+<li>إدارة كاملة للمهام والمراحل</li>
+<li>رسم بياني زمني لمقارنة الميزانية بالفعلي</li>
+<li>مصروفات مشتركة موزّعة بنسب على مشاريع متعددة</li>
+</ul>`,
   },
   zh: {
     nav_dashboard:'控制台', nav_inventory:'库存', nav_sales:'销售',
@@ -8853,6 +9465,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'帮助',
+    help_projects_title:'项目模块帮助',
+    help_projects_content:`<h3>本模块的用途</h3>
+<p>用于按"独立单元"跟踪为某一客户、在特定预算与时间范围内执行的工作。每个项目都有自己的收入、支出、盈亏与进度。当多个项目并行推进时，可以清楚看出哪个赚钱、哪个吃紧。</p>
+<p>适用于将每项业务作为独立打包管理的企业 —— 建筑、安装、承包、咨询、代理等。</p>
+
+<h3>何时建立项目</h3>
+<p>下列问题中有两到三个回答"是"，就值得建立项目：</p>
+<ul>
+<li>这项工作是否有明确的开始与结束？</li>
+<li>是否有单独的预算？</li>
+<li>是否需要把它的盈亏与其他业务分开来看？</li>
+</ul>
+<p>一次性的小活儿或一般办公开销不必建项目。这类业务也可以不选项目直接保存。</p>
+
+<h3>新建项目</h3>
+<p>在"项目"菜单点击 <strong>新建项目</strong> 按钮。需要填写：</p>
+<ul>
+<li><strong>项目名称：</strong>简短易懂的标题</li>
+<li><strong>客户：</strong>为谁干活、向谁开票</li>
+<li><strong>负责人：</strong>项目负责员工</li>
+<li><strong>预算：</strong>计划的总成本（仅作参考，实际另行跟踪）</li>
+<li><strong>开始与结束日期</strong></li>
+<li><strong>状态：</strong>规划中、进行中、已完成或已取消</li>
+</ul>
+<p>项目编号自动生成，不可修改。</p>
+
+<h3>把业务挂到项目上</h3>
+<p>本模块的核心做法：录入每一笔与项目相关的财务业务时，都要勾选 <strong>项目</strong> 字段。否则项目详情中的合计将不正确。</p>
+
+<h4>采购发票</h4>
+<p>为项目购买的材料或服务：</p>
+<ol>
+<li>采购 → 新建发票</li>
+<li>选择供应商</li>
+<li>在 <strong>项目</strong> 字段选择对应项目</li>
+<li>录入明细并保存</li>
+</ol>
+<p>用 Excel 批量导入采购发票时，在第 1 步选择项目，文件中的所有行都会自动挂到该项目。</p>
+
+<h4>销售发票</h4>
+<p>向客户开具进度款或工程款发票时：</p>
+<ol>
+<li>销售 → 新建发票</li>
+<li>选择客户（项目客户）</li>
+<li><strong>项目</strong> 字段：该客户的进行中项目会自动排在最前面</li>
+<li>录入明细并保存</li>
+</ol>
+<p>一个项目可以有多张销售发票（首期、中期、结算等），每张都需单独挂到项目。</p>
+
+<h4>银行与现金业务</h4>
+<p>员工借支、分包付款、零星费用或收款：</p>
+<ol>
+<li>财务 → 银行或现金</li>
+<li>填写业务（方向、金额、类别、对方）</li>
+<li>在 <strong>项目</strong> 字段选择项目</li>
+<li>保存</li>
+</ol>
+
+<h3>项目跟踪</h3>
+<p>项目详情页有三个标签：</p>
+
+<h4>概览</h4>
+<p>项目信息、客户、负责人、日期与状态。</p>
+
+<h4>财务</h4>
+<ul>
+<li><strong>收入：</strong>挂在该项目的销售发票合计</li>
+<li><strong>支出：</strong>挂在该项目的采购、银行/现金支出、手工费用合计</li>
+<li><strong>净额：</strong>收入 − 支出（正为盈、负为亏）</li>
+<li><strong>预算占用：</strong>实际支出占计划预算的百分比</li>
+</ul>
+<p>占用率超过 100% 即说明已超支。</p>
+
+<h4>明细</h4>
+<p>挂在项目上的所有销售、采购、银行与现金业务按日期统一排列。每行显示类型、对方与金额。</p>
+
+<h3>项目列表</h3>
+<p>所有项目集中显示。每行包含：</p>
+<ul>
+<li>净额（盈亏）按颜色区分</li>
+<li>预算占用百分比</li>
+</ul>
+<p>一眼即可看出哪些项目良好、哪些需要干预。</p>
+
+<h3>重要提示</h3>
+<ul>
+<li><strong>项目选择是可选项。</strong>与项目无关的业务可不填。</li>
+<li><strong>一笔业务只能挂一个项目。</strong>共担费用应分别录入。</li>
+<li><strong>项目被删除</strong>时，已挂的业务不会丢失，仅断开关联。</li>
+<li><strong>POS 销售</strong>不挂项目，用于零售流程。</li>
+<li><strong>为使净额准确</strong>，要把项目的收入和支出都挂上去。只挂支出会让项目永远显示亏损。</li>
+</ul>
+
+<h3>暂不支持</h3>
+<p>下列功能将在后续加入：</p>
+<ul>
+<li>基于工资和工时的人工成本自动计算</li>
+<li>完整的任务与里程碑管理</li>
+<li>预算与实际的时序对比图</li>
+<li>按比例分摊到多个项目的共同费用</li>
+</ul>`,
   },
   ru: {
     nav_dashboard:'Панель', nav_inventory:'Склад', nav_sales:'Продажи',
@@ -9958,6 +10672,108 @@ const T = window.T = {
     pos_show_subtotal:'Показать подытог',
     pos_show_vat:'Показать НДС',
     pos_show_cashier:'Показать кассира',
+    btn_help:'Справка',
+    help_projects_title:'Справка модуля «Проекты»',
+    help_projects_content:`<h3>Для чего нужен этот модуль?</h3>
+<p>Он позволяет вести отдельный учёт работ, выполняемых для конкретного клиента в рамках конкретного бюджета и срока. У каждого проекта свои доходы, расходы, прибыль/убыток и прогресс. Когда параллельно идут несколько работ, сразу видно, какая приносит прибыль, а какая — в минусе.</p>
+<p>Подходит компаниям, которые ведут каждую работу как отдельный пакет — строительство, монтаж, подряд, консалтинг, агентства и т. п.</p>
+
+<h3>Когда создавать проект?</h3>
+<p>Создавайте проект, если на 2–3 из следующих вопросов ответ — «да»:</p>
+<ul>
+<li>У этой работы есть чёткое начало и конец?</li>
+<li>Запланирован ли отдельный бюджет?</li>
+<li>Нужно ли видеть её прибыль/убыток отдельно от других?</li>
+</ul>
+<p>Для разовых небольших работ или общих офисных расходов проект не нужен — такие операции можно сохранять и без выбора проекта.</p>
+
+<h3>Создание проекта</h3>
+<p>Меню «Проекты» → кнопка <strong>Новый проект</strong>. Заполните:</p>
+<ul>
+<li><strong>Название проекта:</strong> короткий и понятный заголовок</li>
+<li><strong>Клиент:</strong> для кого выполняется работа, кому будут счета</li>
+<li><strong>Менеджер:</strong> ответственный сотрудник</li>
+<li><strong>Бюджет:</strong> плановая общая стоимость (только справочно, факт ведётся отдельно)</li>
+<li><strong>Даты начала и окончания</strong></li>
+<li><strong>Статус:</strong> Планирование, Активный, Завершён или Отменён</li>
+</ul>
+<p>Номер проекта формируется автоматически и не редактируется.</p>
+
+<h3>Привязка операций к проекту</h3>
+<p>Главный принцип модуля — при каждом финансовом движении, связанном с проектом, заполнять поле <strong>Проект</strong>. Иначе в карточке проекта суммы будут неверны.</p>
+
+<h4>Счета поставщиков (закупки)</h4>
+<p>Для материалов или услуг, приобретённых для проекта:</p>
+<ol>
+<li>Закупки → Новый счёт</li>
+<li>Выберите поставщика</li>
+<li>В поле <strong>Проект</strong> укажите нужный проект</li>
+<li>Введите позиции и сохраните</li>
+</ol>
+<p>При импорте закупочных счетов из Excel выбранный на шаге 1 проект автоматически привязывает все строки файла.</p>
+
+<h4>Счета покупателям (продажи)</h4>
+<p>При выставлении актов или счёта на сумму работ клиенту:</p>
+<ol>
+<li>Продажи → Новый счёт</li>
+<li>Выберите клиента (клиент проекта)</li>
+<li>Поле <strong>Проект</strong>: активные проекты этого клиента отображаются вверху</li>
+<li>Введите позиции и сохраните</li>
+</ol>
+<p>У проекта может быть несколько счетов продажи (аванс, промежуточные акты, окончательный расчёт). Каждый счёт привязывается к проекту отдельно.</p>
+
+<h4>Банковские и кассовые операции</h4>
+<p>Авансы сотрудникам, оплаты субподрядчикам, мелкие расходы и поступления:</p>
+<ol>
+<li>Финансы → Банк или Касса</li>
+<li>Заполните данные (направление, сумма, категория, контрагент)</li>
+<li>В поле <strong>Проект</strong> выберите проект</li>
+<li>Сохраните</li>
+</ol>
+
+<h3>Контроль проекта</h3>
+<p>Карточка проекта состоит из трёх вкладок:</p>
+
+<h4>Общее</h4>
+<p>Сведения о проекте, клиент, менеджер, даты и статус.</p>
+
+<h4>Финансы</h4>
+<ul>
+<li><strong>Доходы:</strong> сумма счетов продажи, привязанных к проекту</li>
+<li><strong>Расходы:</strong> сумма привязанных закупок, банковских/кассовых расходов и ручных трат</li>
+<li><strong>Чистый результат:</strong> Доходы − Расходы (плюс — прибыль, минус — убыток)</li>
+<li><strong>Использование бюджета:</strong> сколько процентов планового бюджета составляет фактический расход</li>
+</ul>
+<p>Если показатель выше 100 %, потрачено больше, чем планировалось.</p>
+
+<h4>Движения</h4>
+<p>Все продажи, закупки, банковские и кассовые операции, привязанные к проекту, в едином списке по дате. В каждой строке — тип, контрагент и сумма.</p>
+
+<h3>Список проектов</h3>
+<p>Все проекты на одном экране. В каждой строке:</p>
+<ul>
+<li>Чистый результат (прибыль/убыток) с цветовой подсветкой</li>
+<li>Процент использования бюджета</li>
+</ul>
+<p>С первого взгляда видно, какие проекты идут хорошо, а каким нужно внимание.</p>
+
+<h3>Важные замечания</h3>
+<ul>
+<li><strong>Выбор проекта необязателен.</strong> Для не связанных с проектом операций оставьте поле пустым.</li>
+<li><strong>Операцию можно привязать только к одному проекту.</strong> Общий расход на несколько проектов вводите отдельными записями.</li>
+<li><strong>При удалении проекта</strong> привязанные операции не теряются — пропадает только связь.</li>
+<li><strong>POS-продажи</strong> не привязываются к проектам — это розничный поток.</li>
+<li><strong>Чтобы чистый результат был верным</strong>, привязывайте к проекту и доходы, и расходы. Если отмечать только расходы, проект всегда будет показывать убыток.</li>
+</ul>
+
+<h3>Пока не поддерживается</h3>
+<p>Эти возможности появятся позже:</p>
+<ul>
+<li>Автоматический учёт затрат на труд из зарплаты и табелей</li>
+<li>Полноценный UI задач и контрольных точек</li>
+<li>График сравнения бюджета и факта во времени</li>
+<li>Общие расходы с пропорциональным распределением между проектами</li>
+</ul>`,
   },
   pt: {
     nav_dashboard:'Painel', nav_inventory:'Estoque', nav_sales:'Vendas',
@@ -10836,6 +11652,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Ajuda',
+    help_projects_title:'Ajuda do módulo de Projetos',
+    help_projects_content:`<h3>Para que serve este módulo?</h3>
+<p>Serve para acompanhar, como uma unidade separada, os trabalhos executados para um cliente específico dentro de um orçamento e prazo definidos. Cada projeto tem suas próprias receitas, despesas, lucro/prejuízo e progresso. Quando vários trabalhos correm em paralelo, você vê claramente qual é lucrativo e qual está em apuros.</p>
+<p>Indicado para empresas que gerem cada serviço como um pacote próprio — construção, montagem, empreitada, consultoria, agências, etc.</p>
+
+<h3>Quando criar um projeto?</h3>
+<p>Crie um projeto se duas ou três das perguntas seguintes forem "sim":</p>
+<ul>
+<li>O trabalho tem início e fim definidos?</li>
+<li>Há um orçamento separado planejado?</li>
+<li>É necessário ver o lucro/prejuízo separadamente?</li>
+</ul>
+<p>Para serviços pontuais pequenos ou despesas gerais de escritório não é necessário projeto. Tais operações também podem ser registradas sem selecionar projeto.</p>
+
+<h3>Criar um projeto</h3>
+<p>No menu Projetos, pelo botão <strong>Novo Projeto</strong>. Preencha:</p>
+<ul>
+<li><strong>Nome do projeto:</strong> título curto e descritivo</li>
+<li><strong>Cliente:</strong> para quem o trabalho é feito e quem será faturado</li>
+<li><strong>Gestor:</strong> colaborador responsável</li>
+<li><strong>Orçamento:</strong> custo total previsto (apenas referência; o realizado é acompanhado à parte)</li>
+<li><strong>Datas de início e fim</strong></li>
+<li><strong>Estado:</strong> Planeamento, Ativo, Concluído ou Cancelado</li>
+</ul>
+<p>O número do projeto é gerado automaticamente e não pode ser alterado.</p>
+
+<h3>Ligar movimentos ao projeto</h3>
+<p>O princípio do módulo: em cada movimento financeiro relacionado, marque o campo <strong>Projeto</strong>. Caso contrário, os totais do projeto não estarão corretos.</p>
+
+<h4>Faturas de compra</h4>
+<p>Para materiais ou serviços comprados para o projeto:</p>
+<ol>
+<li>Compras → Nova fatura</li>
+<li>Selecione o fornecedor</li>
+<li>No campo <strong>Projeto</strong>, escolha o projeto</li>
+<li>Insira as linhas e guarde</li>
+</ol>
+<p>Ao importar faturas de compra do Excel, o projeto escolhido no Passo 1 é aplicado automaticamente a todas as linhas do ficheiro.</p>
+
+<h4>Faturas de venda</h4>
+<p>Ao faturar autos de medição ou valor de obra ao cliente:</p>
+<ol>
+<li>Vendas → Nova fatura</li>
+<li>Selecione o cliente (cliente do projeto)</li>
+<li>Campo <strong>Projeto</strong>: os projetos ativos do cliente aparecem no topo</li>
+<li>Insira as linhas e guarde</li>
+</ol>
+<p>Um projeto pode ter várias faturas de venda (adiantamento, medições, acerto final). Cada uma deve ser ligada ao projeto separadamente.</p>
+
+<h4>Movimentos de banco e caixa</h4>
+<p>Para adiantamentos a colaboradores, pagamentos a subempreiteiros, pequenas despesas ou recebimentos:</p>
+<ol>
+<li>Financeiro → Banco ou Caixa</li>
+<li>Preencha os dados (sentido, valor, categoria, contacto)</li>
+<li>No campo <strong>Projeto</strong>, escolha o projeto</li>
+<li>Guarde</li>
+</ol>
+
+<h3>Acompanhamento</h3>
+<p>A página de detalhe tem três separadores:</p>
+
+<h4>Geral</h4>
+<p>Dados do projeto, cliente, gestor, datas e estado.</p>
+
+<h4>Financeiro</h4>
+<ul>
+<li><strong>Receitas:</strong> total das faturas de venda ligadas ao projeto</li>
+<li><strong>Despesas:</strong> total de compras, saídas de banco/caixa e despesas manuais ligadas</li>
+<li><strong>Líquido:</strong> Receitas − Despesas (positivo = lucro, negativo = prejuízo)</li>
+<li><strong>Utilização do orçamento:</strong> percentagem do orçamento previsto consumida</li>
+</ul>
+<p>Acima de 100 % gastou mais do que o planeado.</p>
+
+<h4>Movimentos</h4>
+<p>Todas as vendas, compras, movimentos de banco e caixa ligados ao projeto, em ordem cronológica. Cada linha mostra tipo, contraparte e valor.</p>
+
+<h3>Lista de projetos</h3>
+<p>Todos os projetos num só ecrã. Cada linha apresenta:</p>
+<ul>
+<li>Líquido (lucro/prejuízo) com cor</li>
+<li>Percentagem de uso do orçamento</li>
+</ul>
+<p>De relance vê quais projetos vão bem e quais precisam de atenção.</p>
+
+<h3>Notas importantes</h3>
+<ul>
+<li><strong>Selecionar o projeto é opcional.</strong> Deixe vazio para operações não relacionadas.</li>
+<li><strong>Uma operação só pode ligar-se a um projeto.</strong> Despesas partilhadas devem ser registadas em entradas separadas.</li>
+<li><strong>Se um projeto for apagado</strong>, as operações ligadas não se perdem — só a ligação desaparece.</li>
+<li><strong>As vendas POS</strong> não ligam a projetos; são para o fluxo de retalho.</li>
+<li><strong>Para um líquido correto</strong>, ligue ao projeto tanto receitas como despesas. Marcando só despesas, o projeto aparecerá sempre em prejuízo.</li>
+</ul>
+
+<h3>Ainda não suportado</h3>
+<p>As seguintes funcionalidades virão depois:</p>
+<ul>
+<li>Custo de mão-de-obra automático a partir do salário e tempo</li>
+<li>Gestão completa de tarefas e marcos</li>
+<li>Gráfico temporal orçamento vs. realizado</li>
+<li>Despesas partilhadas distribuídas proporcionalmente entre projetos</li>
+</ul>`,
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_inventory:'在庫', nav_sales:'売上',
@@ -11650,6 +12568,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'ヘルプ',
+    help_projects_title:'プロジェクトモジュールのヘルプ',
+    help_projects_content:`<h3>このモジュールの用途</h3>
+<p>特定の顧客に対し、定められた予算と期間で行う仕事を独立した単位として管理するためのものです。各プロジェクトごとに売上、支出、損益、進捗を別々に把握できます。複数の案件が並行する場合でも、どれが利益を生み、どれが苦戦しているかが一目で分かります。</p>
+<p>建設、設置、請負、コンサルティング、エージェンシーなど、案件ごとにパッケージとして管理する事業に適しています。</p>
+
+<h3>いつプロジェクトを作るか</h3>
+<p>次の問いの2〜3つに「はい」と答えられるなら作成しましょう：</p>
+<ul>
+<li>その仕事には明確な始まりと終わりがあるか？</li>
+<li>独立した予算が組まれているか？</li>
+<li>他の案件と区別して損益を把握する必要があるか？</li>
+</ul>
+<p>単発の小さな仕事や一般事務費にはプロジェクトは不要です。それらの取引はプロジェクトを選ばずに保存できます。</p>
+
+<h3>プロジェクトの作成</h3>
+<p>プロジェクトメニューの <strong>新規プロジェクト</strong> ボタンから開始します。入力する項目：</p>
+<ul>
+<li><strong>プロジェクト名：</strong>仕事を表す短く分かりやすいタイトル</li>
+<li><strong>顧客：</strong>誰のための仕事か、誰に請求するか</li>
+<li><strong>担当者：</strong>担当する社員</li>
+<li><strong>予算：</strong>計画上の総コスト（参考値。実績は別途集計）</li>
+<li><strong>開始日と終了日</strong></li>
+<li><strong>ステータス：</strong>計画中／進行中／完了／キャンセル</li>
+</ul>
+<p>プロジェクト番号は自動採番され、変更できません。</p>
+
+<h3>取引のプロジェクト紐付け</h3>
+<p>本モジュールの基本ルール：プロジェクトに関わる金銭取引を入力する際は、毎回 <strong>プロジェクト</strong> 欄を指定します。指定しないと詳細で正しい合計が表示されません。</p>
+
+<h4>仕入請求書</h4>
+<p>プロジェクト用に購入した材料・サービスの請求書：</p>
+<ol>
+<li>仕入 → 新規請求書</li>
+<li>仕入先を選択</li>
+<li><strong>プロジェクト</strong> 欄で該当プロジェクトを選択</li>
+<li>明細を入力して保存</li>
+</ol>
+<p>仕入請求書を Excel から一括取り込みする際、ステップ1でプロジェクトを選ぶと、ファイルの全行が自動的にそのプロジェクトに紐付きます。</p>
+
+<h4>売上請求書</h4>
+<p>顧客への出来高または工事代金の請求：</p>
+<ol>
+<li>売上 → 新規請求書</li>
+<li>顧客を選択（プロジェクトの顧客）</li>
+<li><strong>プロジェクト</strong> 欄：その顧客の進行中プロジェクトが先頭に自動表示されます</li>
+<li>明細を入力して保存</li>
+</ol>
+<p>1つのプロジェクトに複数の売上請求書が発生し得ます（着手金、中間金、最終精算など）。それぞれ個別にプロジェクトへ紐付けてください。</p>
+
+<h4>銀行・現金取引</h4>
+<p>従業員への前払い、下請業者への支払い、少額経費、入金など：</p>
+<ol>
+<li>財務 → 銀行または現金</li>
+<li>取引を入力（方向、金額、カテゴリ、相手先）</li>
+<li><strong>プロジェクト</strong> 欄でプロジェクトを選択</li>
+<li>保存</li>
+</ol>
+
+<h3>プロジェクトの追跡</h3>
+<p>詳細画面は3つのタブで構成されます：</p>
+
+<h4>概要</h4>
+<p>プロジェクト情報、顧客、担当者、日付、ステータス。</p>
+
+<h4>財務</h4>
+<ul>
+<li><strong>収益：</strong>このプロジェクトに紐付く売上請求書の合計</li>
+<li><strong>支出：</strong>紐付く仕入、銀行・現金の出金、手動経費の合計</li>
+<li><strong>純額：</strong>収益 − 支出（プラスは利益、マイナスは損失）</li>
+<li><strong>予算消化率：</strong>実績支出が計画予算の何％に当たるか</li>
+</ul>
+<p>消化率が100%を超えると計画より多く支出していることになります。</p>
+
+<h4>動き</h4>
+<p>プロジェクトに紐付くすべての売上、仕入、銀行・現金取引を日付順で1つのリストに表示します。各行に種別、相手先、金額が出ます。</p>
+
+<h3>一覧画面</h3>
+<p>すべてのプロジェクトを1画面で表示します。各行に：</p>
+<ul>
+<li>純額（損益）が色分けで表示</li>
+<li>予算消化率（%）</li>
+</ul>
+<p>順調なプロジェクトと注意が必要なプロジェクトが一目で分かります。</p>
+
+<h3>重要事項</h3>
+<ul>
+<li><strong>プロジェクトの選択は任意。</strong>関係しない取引では空欄で構いません。</li>
+<li><strong>1つの取引は1つのプロジェクトにのみ紐付けられます。</strong>複数プロジェクトに分散する共通費は別レコードとして登録してください。</li>
+<li><strong>プロジェクトを削除しても</strong>紐付いていた取引は失われず、リンクのみ解除されます。</li>
+<li><strong>POS 売上</strong>はプロジェクトに紐付けません。小売フロー用です。</li>
+<li><strong>純額を正しくするには</strong>、プロジェクトの収益と支出の両方を紐付けてください。支出だけ印を付けるとプロジェクトは常に赤字に見えます。</li>
+</ul>
+
+<h3>未対応の機能</h3>
+<p>以下は今後追加予定です：</p>
+<ul>
+<li>給与・勤怠データからの自動人件費計上</li>
+<li>タスク・マイルストーン管理の完全UI</li>
+<li>予算と実績の時系列比較グラフ</li>
+<li>複数プロジェクトに按分できる共通費</li>
+</ul>`,
   },
   kz: {
     // NAV
@@ -11933,6 +12953,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Анықтама',
+    help_projects_title:'Жобалар модулі бойынша анықтама',
+    help_projects_content:`<h3>Бұл модуль не үшін?</h3>
+<p>Нақты клиент үшін, белгілі бюджет пен мерзімде жасалатын жұмыстарды бөлек бірлік ретінде есепке алуға арналған. Әр жобаның өз кірісі, шығысы, пайдасы/залалы және ілгерілеуі бөлек көрінеді. Бірнеше жұмыс қатар жүргенде қайсысы пайда әкеліп жатқаны, қайсысы мәселелі екені анық байқалады.</p>
+<p>Құрылыс, монтаждау, келісімшарт, кеңес беру, агенттік сияқты әр жұмысты жеке пакет ретінде басқаратын кәсіпорындарға жарамды.</p>
+
+<h3>Жобаны қашан ашу керек?</h3>
+<p>Төмендегі сұрақтардың екеуі-үшеуіне «иә» десеңіз жобаны ашыңыз:</p>
+<ul>
+<li>Бұл жұмыстың айқын басталуы мен аяқталуы бар ма?</li>
+<li>Оған бөлек бюджет жоспарланды ма?</li>
+<li>Оның пайдасын/залалын басқа жұмыстардан бөлек көру қажет пе?</li>
+</ul>
+<p>Бір реттік шағын жұмыстарға немесе жалпы кеңсе шығындарына жоба ашудың қажеті жоқ. Олар жоба таңдалмай-ақ сақталады.</p>
+
+<h3>Жоба құру</h3>
+<p>Жобалар мәзірінен <strong>Жаңа жоба</strong> түймесімен басталады. Толтырылатындар:</p>
+<ul>
+<li><strong>Жоба атауы:</strong> жұмысты сипаттайтын қысқа әрі түсінікті атау</li>
+<li><strong>Клиент:</strong> жұмыс кім үшін істеледі, шот-фактура кімге жазылады</li>
+<li><strong>Менеджер:</strong> жобаға жауапты қызметкер</li>
+<li><strong>Бюджет:</strong> жоспарланған жалпы құн (тек анықтама үшін; нақтысы бөлек жүргізіледі)</li>
+<li><strong>Басталу және аяқталу күндері</strong></li>
+<li><strong>Күй:</strong> Жоспарлау, Белсенді, Аяқталды немесе Бас тартылды</li>
+</ul>
+<p>Жоба нөмірі автоматты түрде жасалады және өзгертілмейді.</p>
+
+<h3>Қозғалыстарды жобаға байланыстыру</h3>
+<p>Модульдің негізгі идеясы: жобаға қатысты әрбір қаржылық қозғалысты жасағанда <strong>Жоба</strong> өрісін белгілеу. Әйтпесе жоба егжей-тегжейінде дұрыс жалпы соммалар көрінбейді.</p>
+
+<h4>Сатып алу шот-фактуралары</h4>
+<p>Жоба үшін сатып алынған материал немесе қызметтер бойынша:</p>
+<ol>
+<li>Сатып алу → Жаңа шот-фактура</li>
+<li>Жеткізушіні таңдаңыз</li>
+<li><strong>Жоба</strong> өрісінен қажетті жобаны таңдаңыз</li>
+<li>Жолдарды енгізіп сақтаңыз</li>
+</ol>
+<p>Excel-ден көп шот-фактура импорттағанда 1-қадамда жобаны таңдау файлдағы барлық жолдарды автоматты түрде сол жобаға байланыстырады.</p>
+
+<h4>Сату шот-фактуралары</h4>
+<p>Клиентке кезеңдік немесе жұмыс құнын фактуралағанда:</p>
+<ol>
+<li>Сатылым → Жаңа шот-фактура</li>
+<li>Клиентті таңдаңыз (жоба клиенті)</li>
+<li><strong>Жоба</strong> өрісі: бұл клиенттің белсенді жобалары автоматты түрде жоғарыда тізіледі</li>
+<li>Жолдарды енгізіп сақтаңыз</li>
+</ol>
+<p>Бір жобаның бірнеше сату шот-фактурасы болуы мүмкін (алғашқы кезең, аралық кезең, түпкілікті есеп). Әрқайсысын жобаға бөлек байланыстыру қажет.</p>
+
+<h4>Банк және касса қозғалыстары</h4>
+<p>Қызметкер аванстары, мердігер төлемдері, ұсақ шығындар немесе түсімдер үшін:</p>
+<ol>
+<li>Қаржы → Банк немесе Касса</li>
+<li>Қозғалыс деректерін енгізіңіз (бағыты, сома, санат, контрагент)</li>
+<li><strong>Жоба</strong> өрісінен жобаны таңдаңыз</li>
+<li>Сақтаңыз</li>
+</ol>
+
+<h3>Жобаны бақылау</h3>
+<p>Жоба егжей-тегжейі үш қойындыдан тұрады:</p>
+
+<h4>Жалпы</h4>
+<p>Жоба ақпараты, клиент, менеджер, күндер және күй.</p>
+
+<h4>Қаржы</h4>
+<ul>
+<li><strong>Кірістер:</strong> жобаға байланысқан сату шот-фактураларының жалпы соммасы</li>
+<li><strong>Шығыстар:</strong> байланысқан сатып алулар, банк/касса шығысы, қолмен шығыстардың жалпысы</li>
+<li><strong>Таза:</strong> Кіріс − Шығыс (оң — пайда, теріс — залал)</li>
+<li><strong>Бюджеттің пайдаланылуы:</strong> нақты шығын жоспарланған бюджеттің неше пайызын құрайды</li>
+</ul>
+<p>Пайда 100%-дан асса, жоспардан көп жұмсалған.</p>
+
+<h4>Қозғалыстар</h4>
+<p>Жобаға байланыстырылған барлық сату, сатып алу, банк және касса қозғалыстары күн тәртібімен бір тізімде. Әр жолда түрі, контрагенті және сомасы көрсетіледі.</p>
+
+<h3>Тізім экраны</h3>
+<p>Барлық жобалар бір экранда. Әр жолда:</p>
+<ul>
+<li>Таза (пайда/залал) түс кодымен</li>
+<li>Бюджеттің пайдалану пайызы</li>
+</ul>
+<p>Қай жобаның жақсы кетіп жатқанын, қайсысының назар сұрайтынын бір көзқараспен байқайсыз.</p>
+
+<h3>Маңызды ескертулер</h3>
+<ul>
+<li><strong>Жоба таңдау міндетті емес.</strong> Жобамен байланысы жоқ қозғалыстар үшін бос қалдырыңыз.</li>
+<li><strong>Бір қозғалыс тек бір жобаға байланысады.</strong> Бірнеше жобаға таралған ортақ шығыс жеке жазбалар ретінде енгізілуі тиіс.</li>
+<li><strong>Жоба жойылса</strong> байланысты қозғалыстар жоғалмайды, тек байланыс үзіледі.</li>
+<li><strong>POS сатылымдар</strong> жобаға байланыстырылмайды; олар бөлшек ағыны үшін.</li>
+<li><strong>Таза дұрыс болуы үшін</strong> жобаның кірістерін де, шығыстарын да байланыстыру керек. Тек шығыстар белгіленсе, жоба үнемі залалда болып көрінеді.</li>
+</ul>
+
+<h3>Әзірге қолдау көрсетілмейтін</h3>
+<p>Төмендегі мүмкіндіктер кейінірек қосылады:</p>
+<ul>
+<li>Жалақы мен жұмыс уақытынан автоматты еңбек құны</li>
+<li>Тапсырма мен кезең (milestone) толық басқаруы</li>
+<li>Бюджет пен нақтының уақыт бойынша салыстыру графигі</li>
+<li>Бірнеше жобаға пайыздық бөлінуге болатын ортақ шығыстар</li>
+</ul>`,
   },
   kg: {
     // NAV
@@ -12216,6 +13338,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Жардам',
+    help_projects_title:'Долбоорлор модулу боюнча жардам',
+    help_projects_content:`<h3>Бул модуль эмне үчүн?</h3>
+<p>Белгилүү кардар үчүн, белгилүү бюджет жана мөөнөттө жасалган иштерди өзүнчө бирдик катары эсепке алуу үчүн. Ар бир долбоордун өз кирешеси, чыгашасы, пайда/зыяны жана прогресси өзүнчө көрүнөт. Бир нече иш бирге жүргөндө кайсы пайда алып келип жатканы, кайсы кыйналып жатканы даана белгилүү болот.</p>
+<p>Курулуш, монтаж, подряд, консалтинг, агенттик сыяктуу ар бир ишти өзүнчө пакет катары башкарган ишканалар үчүн ылайыктуу.</p>
+
+<h3>Долбоор качан ачылышы керек?</h3>
+<p>Төмөнкү суроолордун экөө же үчөө "ооба" болсо, долбоор ачыңыз:</p>
+<ul>
+<li>Бул иштин ачык башталышы менен аягы барбы?</li>
+<li>Ага өзүнчө бюджет пландалганбы?</li>
+<li>Анын пайда/зыянын башка иштерден өзүнчө көрүү керекпи?</li>
+</ul>
+<p>Бир жолку чакан иштерге же жалпы кеңсе чыгашаларына долбоор ачуунун кереги жок. Мындай кыймылдар долбоор тандалбай эле сакталат.</p>
+
+<h3>Долбоор түзүү</h3>
+<p>Долбоорлор менюсунан <strong>Жаңы долбоор</strong> баскычы менен. Толтуруу керек:</p>
+<ul>
+<li><strong>Долбоордун аты:</strong> ишти сыпаттаган кыска жана түшүнүктүү аталыш</li>
+<li><strong>Кардар:</strong> иш ким үчүн жасалат, эсеп-фактуралар кимге жазылат</li>
+<li><strong>Менеджер:</strong> долбоор үчүн жооптуу кызматкер</li>
+<li><strong>Бюджет:</strong> пландалган жалпы наркы (шилтеме катары гана; иш жүзүндөгүсү өзүнчө эсепке алынат)</li>
+<li><strong>Башталыш жана аяктоо күндөрү</strong></li>
+<li><strong>Абалы:</strong> Пландоо, Активдүү, Аяктаган же Жокко чыгарылган</li>
+</ul>
+<p>Долбоордун номери автоматтык түрдө түзүлөт жана өзгөртүлбөйт.</p>
+
+<h3>Кыймылдарды долбоорго байлоо</h3>
+<p>Бул модулдун негизги принциби — долбоорго тиешелүү ар бир каржылык кыймылды киргизүүдө <strong>Долбоор</strong> талаасын белгилөө. Болбосо долбоордун чоо-жайында туура суммалар чыкпайт.</p>
+
+<h4>Сатып алуу эсеп-фактуралары</h4>
+<p>Долбоор үчүн сатылып алынган материал же кызматтардын эсеп-фактураларында:</p>
+<ol>
+<li>Сатып алуу → Жаңы эсеп-фактура</li>
+<li>Жеткирүүчүнү тандаңыз</li>
+<li><strong>Долбоор</strong> талаасынан тиешелүү долбоорду тандаңыз</li>
+<li>Саптарды киргизип сактаңыз</li>
+</ol>
+<p>Excel'ден чогуу сатып алуу эсеп-фактураларын импорттогондо 1-кадамда долбоор тандалса, файлдагы бардык саптар автоматтык түрдө ошол долбоорго байланат.</p>
+
+<h4>Сатуу эсеп-фактуралары</h4>
+<p>Кардарга кезеңдик же иш наркы боюнча эсеп-фактура чыгарганда:</p>
+<ol>
+<li>Сатуулар → Жаңы эсеп-фактура</li>
+<li>Кардарды тандаңыз (долбоор кардары)</li>
+<li><strong>Долбоор</strong> талаасы: ал кардардын активдүү долбоорлору жогоруда автоматтык түрдө көрсөтүлөт</li>
+<li>Саптарды киргизип сактаңыз</li>
+</ol>
+<p>Бир долбоордун бир нече сатуу эсеп-фактурасы болушу мүмкүн (биринчи кезең, аралык кезеңдер, акыркы эсеп). Ар бирин долбоорго өзүнчө байлоо керек.</p>
+
+<h4>Банк жана касса кыймылдары</h4>
+<p>Кызматкерге аванс, подрядчыга төлөм, майда чыгашалар же келип түшүүлөр үчүн:</p>
+<ol>
+<li>Каржы → Банк же Касса</li>
+<li>Кыймылдын маалыматтарын киргизиңиз (багыты, суммасы, категориясы, контрагенти)</li>
+<li><strong>Долбоор</strong> талаасынан долбоорду тандаңыз</li>
+<li>Сактаңыз</li>
+</ol>
+
+<h3>Долбоордун көзөмөлү</h3>
+<p>Долбоордун чоо-жай бети үч өтмөктөн турат:</p>
+
+<h4>Жалпы</h4>
+<p>Долбоордун маалыматы, кардар, менеджер, күндөр жана абалы.</p>
+
+<h4>Каржы</h4>
+<ul>
+<li><strong>Кирешелер:</strong> бул долбоорго байланган сатуу эсеп-фактураларынын жалпысы</li>
+<li><strong>Чыгашалар:</strong> байланган сатып алуулар, банк/касса чыгуулары, кол менен чыгашалардын жалпысы</li>
+<li><strong>Таза:</strong> Киреше − Чыгаша (оң — пайда, терс — зыян)</li>
+<li><strong>Бюджет колдонуусу:</strong> иш жүзүндөгү чыгаша пландалган бюджеттин нече пайызын түзөт</li>
+</ul>
+<p>100%дан жогору болсо, пландалгандан көп сарпталган.</p>
+
+<h4>Кыймылдар</h4>
+<p>Долбоорго байланган бардык сатуу, сатып алуу, банк жана касса кыймылдары күн тартибинде бир тизмеде. Ар бир сапта түрү, контрагенти жана суммасы көрсөтүлөт.</p>
+
+<h3>Тизме экраны</h3>
+<p>Бардык долбоорлор бир экранда. Ар бир сапта:</p>
+<ul>
+<li>Таза (пайда/зыян) түс менен</li>
+<li>Бюджет колдонуу пайызы</li>
+</ul>
+<p>Кайсы долбоор жакшы кетип жатканы, кайсы көңүл бурууну талап кылганы бир караштан билинет.</p>
+
+<h3>Маанилүү эскертүүлөр</h3>
+<ul>
+<li><strong>Долбоорду тандоо милдеттүү эмес.</strong> Долбоорго тиешеси жок кыймылдар үчүн бош калтыруу мүмкүн.</li>
+<li><strong>Бир кыймыл бир гана долбоорго байланат.</strong> Бир нече долбоорго таралган жалпы чыгаша өзүнчө жазуулар катары киргизилиши керек.</li>
+<li><strong>Долбоор өчүрүлсө</strong>, байланган кыймылдар жоголбойт, байланыш гана үзүлөт.</li>
+<li><strong>POS сатуулары</strong> долбоорго байланбайт; алар чекене сатуу агымы үчүн.</li>
+<li><strong>Таза эсеп туура болушу үчүн</strong> долбоордун кирешелерин да, чыгашаларын да байлоо керек. Чыгашалар гана белгиленсе, долбоор тынымсыз зыянда көрүнөт.</li>
+</ul>
+
+<h3>Азырынча колдоого алынбаган</h3>
+<p>Төмөнкү функциялар кийинчерээк кошулат:</p>
+<ul>
+<li>Эмгек акы жана убакыт каттоосунан автоматтык эмгек наркы</li>
+<li>Тапшырма жана этаптарды толук башкаруу UI</li>
+<li>Бюджет менен иш жүзүндөгүнүн убакыт боюнча салыштыруу графиги</li>
+<li>Бир нече долбоорго пайыз менен бөлүштүрүлчү жалпы чыгашалар</li>
+</ul>`,
   },
   uz: {
     // NAV
@@ -12499,6 +13723,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Yordam',
+    help_projects_title:'Loyihalar moduli bo\'yicha yordam',
+    help_projects_content:`<h3>Bu modul nima uchun?</h3>
+<p>Aniq mijoz uchun, belgilangan byudjet va muddat ichida bajariladigan ishlarni alohida birlik sifatida kuzatish uchun. Har bir loyihaning o'z daromadi, xarajatlari, foyda/zarari va borishi alohida ko'rinadi. Bir necha ish parallel olib borilganda qaysi biri foyda keltirayotgani, qaysi biri qiyinchilikda ekanligi aniq ko'rinadi.</p>
+<p>Qurilish, montaj, pudratchilik, konsalting, agentlik kabi har bir ishni alohida paket sifatida boshqaradigan tashkilotlarga mos.</p>
+
+<h3>Loyiha qachon ochiladi?</h3>
+<p>Quyidagi savollarning ikkitasi yoki uchtasiga "ha" deb javob bersangiz, loyiha oching:</p>
+<ul>
+<li>Bu ishning aniq boshlanishi va tugashi bormi?</li>
+<li>Unga alohida byudjet rejalashtirilganmi?</li>
+<li>Uning foyda/zararini boshqa ishlardan alohida ko'rish kerakmi?</li>
+</ul>
+<p>Bir martalik kichik ishlar yoki umumiy ofis xarajatlari uchun loyiha ochish shart emas. Bunday harakatlar loyiha tanlanmasdan ham saqlanishi mumkin.</p>
+
+<h3>Loyiha yaratish</h3>
+<p>Loyihalar menyusidan <strong>Yangi Loyiha</strong> tugmasi orqali. To'ldirilishi kerak:</p>
+<ul>
+<li><strong>Loyiha nomi:</strong> ishni tavsiflovchi qisqa va tushunarli sarlavha</li>
+<li><strong>Mijoz:</strong> ish kim uchun bajariladi, fakturalar kimga yoziladi</li>
+<li><strong>Menejer:</strong> loyiha uchun mas'ul xodim</li>
+<li><strong>Byudjet:</strong> rejalashtirilgan umumiy xarajat (faqat ma'lumot uchun; aslida alohida kuzatiladi)</li>
+<li><strong>Boshlanish va tugash sanalari</strong></li>
+<li><strong>Holat:</strong> Rejalashtirish, Faol, Tugatilgan yoki Bekor qilingan</li>
+</ul>
+<p>Loyiha raqami avtomatik yaratiladi va o'zgartirib bo'lmaydi.</p>
+
+<h3>Harakatlarni loyihaga bog'lash</h3>
+<p>Bu modulning asosiy g'oyasi: loyihaga oid har bir moliyaviy harakatni kiritishda <strong>Loyiha</strong> maydonini belgilash. Aks holda loyiha tafsilotida to'g'ri jamlamalar chiqmaydi.</p>
+
+<h4>Xarid fakturalari</h4>
+<p>Loyiha uchun olingan material yoki xizmat fakturalarida:</p>
+<ol>
+<li>Xarid → Yangi faktura</li>
+<li>Yetkazib beruvchini tanlang</li>
+<li><strong>Loyiha</strong> maydonidan kerakli loyihani tanlang</li>
+<li>Bandlarni kiriting va saqlang</li>
+</ol>
+<p>Excel'dan ommaviy xarid fakturasini import qilishda 1-bosqichda Loyiha tanlansa, fayldagi barcha qatorlar avtomatik ravishda shu loyihaga bog'lanadi.</p>
+
+<h4>Sotuv fakturalari</h4>
+<p>Mijozga mehnat haqi yoki ish narxi fakturasini chiqarishda:</p>
+<ol>
+<li>Sotuv → Yangi faktura</li>
+<li>Mijozni tanlang (loyiha mijozi)</li>
+<li><strong>Loyiha</strong> maydoni: shu mijozning faol loyihalari avtomatik ravishda yuqorida ko'rsatiladi</li>
+<li>Bandlarni kiriting va saqlang</li>
+</ol>
+<p>Bir loyihada bir nechta sotuv fakturasi bo'lishi mumkin (birinchi bosqich, oraliq bosqich, yakuniy hisob). Har birini loyihaga alohida bog'lash kerak.</p>
+
+<h4>Bank va kassa harakatlari</h4>
+<p>Xodim avansi, subpudratchi to'lovi, mayda xarajatlar yoki tushumlar uchun:</p>
+<ol>
+<li>Moliya → Bank yoki Kassa</li>
+<li>Harakat ma'lumotlarini kiriting (yo'nalish, summa, toifa, kontragent)</li>
+<li><strong>Loyiha</strong> maydonidan loyihani tanlang</li>
+<li>Saqlang</li>
+</ol>
+
+<h3>Loyihani kuzatish</h3>
+<p>Loyiha tafsilot sahifasi uchta yorliqdan iborat:</p>
+
+<h4>Umumiy</h4>
+<p>Loyiha ma'lumotlari, mijoz, menejer, sanalar va holati.</p>
+
+<h4>Moliyaviy</h4>
+<ul>
+<li><strong>Daromadlar:</strong> bu loyihaga bog'langan sotuv fakturalarining umumiy summasi</li>
+<li><strong>Xarajatlar:</strong> bog'langan xaridlar, bank/kassa chiqimlari, qo'l bilan kiritilgan xarajatlar yig'indisi</li>
+<li><strong>Sof:</strong> Daromad − Xarajat (musbat — foyda, manfiy — zarar)</li>
+<li><strong>Byudjet ishlatilishi:</strong> haqiqiy xarajat rejadagi byudjetning necha foizini tashkil qiladi</li>
+</ul>
+<p>Foiz 100%dan oshsa, rejadan ortiq sarflangan demakdir.</p>
+
+<h4>Harakatlar</h4>
+<p>Loyihaga bog'langan barcha sotuv, xarid, bank va kassa harakatlari sana tartibida bir ro'yxatda. Har bir qatorda turi, tomon va summasi ko'rsatiladi.</p>
+
+<h3>Ro'yxat ekrani</h3>
+<p>Barcha loyihalar bir ekranda. Har qatorda:</p>
+<ul>
+<li>Sof (foyda/zarar) rang bilan</li>
+<li>Byudjet ishlatilishi foizi</li>
+</ul>
+<p>Qaysi loyiha yaxshi ketayotgani va qay birlari e'tibor talab qilayotganini bir ko'rishda anglash mumkin.</p>
+
+<h3>Muhim eslatmalar</h3>
+<ul>
+<li><strong>Loyiha tanlash ixtiyoriy.</strong> Loyiha bilan bog'lanmagan harakatlar uchun bo'sh qoldirish mumkin.</li>
+<li><strong>Bitta harakat faqat bitta loyihaga bog'lanadi.</strong> Bir nechta loyiha bo'yicha tarqalgan umumiy xarajatlarni alohida yozuvlar sifatida kiriting.</li>
+<li><strong>Loyiha o'chirilsa</strong>, bog'langan harakatlar yo'qolmaydi, faqat bog'lanish uziladi.</li>
+<li><strong>POS sotuvlari</strong> loyihaga bog'lanmaydi; ular chakana savdo oqimi uchun.</li>
+<li><strong>Sof to'g'ri bo'lishi uchun</strong> loyihaning daromadlarini ham, xarajatlarini ham bog'lash kerak. Faqat xarajatlar belgilansa, loyiha doimo zararda ko'rinadi.</li>
+</ul>
+
+<h3>Hozircha qo'llab-quvvatlanmagan</h3>
+<p>Quyidagi imkoniyatlar keyinroq qo'shiladi:</p>
+<ul>
+<li>Maosh va ish vaqtidan avtomatik mehnat xarajati</li>
+<li>Vazifa va bosqichlarni to'liq boshqarish UI</li>
+<li>Byudjet va haqiqiyni vaqt bo'yicha solishtirish grafigi</li>
+<li>Bir nechta loyihaga foizda taqsimlanadigan umumiy xarajatlar</li>
+</ul>`,
   },
   tm: {
     // NAV
@@ -12782,6 +14108,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Kömek',
+    help_projects_title:'Taslamalar moduly üçin kömek',
+    help_projects_content:`<h3>Bu modul näme üçin?</h3>
+<p>Belli bir müşderi üçin, belli bir býujet we möhletde edilýän işleri aýratyn birlik hökmünde yzarlamak üçin. Her taslamanyň öz girdejisi, çykdajysy, peýdasy/zyýany we ösüşi aýratyn görünýär. Birnäçe iş paralel alnyp barylanda haýsysy peýda getirýäni, haýsysy kynçylykda ekenligi aýdyň görünýär.</p>
+<p>Gurluşyk, gurnama, potratçylyk, maslahat, agentlik ýaly her işi aýratyn paket hökmünde dolandyrýan kärhanalara laýyk.</p>
+
+<h3>Taslama haçan açmaly?</h3>
+<p>Aşakdaky soraglardan ikisi ýa üçüsi "hawa" bolsa, taslama açyň:</p>
+<ul>
+<li>Bu işiň aýdyň başlangyjy we ahyry barmy?</li>
+<li>Oňa aýratyn býujet meýilleşdirildimi?</li>
+<li>Onuň peýdasyny/zyýanyny beýleki işlerden aýratyn görmek gerekmi?</li>
+</ul>
+<p>Bir gezeklik kiçi işler ýa-da umumy edara çykdajylary üçin taslama açmagyň zerurlygy ýok. Şeýle hereketler taslama saýlanmazdan hem saklanyp bilner.</p>
+
+<h3>Taslama dörediň</h3>
+<p>Taslamalar menýusyndan <strong>Täze Taslama</strong> düwmesi bilen başlanýar. Doldurmaly:</p>
+<ul>
+<li><strong>Taslama ady:</strong> işi häsiýetlendirýän gysga we düşnükli at</li>
+<li><strong>Müşderi:</strong> iş kim üçin edilýär, hasap-fakturalar kime ýazylar</li>
+<li><strong>Menejer:</strong> taslamadan jogapkär işgär</li>
+<li><strong>Býujet:</strong> meýilleşdirilen umumy çykdajy (diňe salgylanma; hakykysy aýratyn ýörelýär)</li>
+<li><strong>Başlangyç we ahyrky senesi</strong></li>
+<li><strong>Ýagdaýy:</strong> Meýilleşdirme, Aktiw, Tamamlanan ýa Ýatyrylan</li>
+</ul>
+<p>Taslama belgisi awtomatiki döredilýär we üýtgedip bolmaýar.</p>
+
+<h3>Hereketleri taslama baglamak</h3>
+<p>Bu modulyň esasy düşünjesi: taslama bilen baglanyşykly her maliýe hereketini girizeniňde <strong>Taslama</strong> meýdanyny bellemek. Şeýtmedik ýagdaýyňda taslama jikme-jiklerinde dogry jemler emele gelmez.</p>
+
+<h4>Satyn alyş hasap-fakturalary</h4>
+<p>Taslama üçin alynan material ýa-da hyzmat hasap-fakturalarynda:</p>
+<ol>
+<li>Satyn alyş → Täze hasap-faktura</li>
+<li>Üpjün edijini saýlaň</li>
+<li><strong>Taslama</strong> meýdanyndan degişli taslamany saýlaň</li>
+<li>Setirleri giriziň we saklaň</li>
+</ol>
+<p>Excel'den toplumlaýyn satyn alyş hasap-fakturalaryny içeri geçirjek bolsaň, 1-nji ädimde Taslama saýlananda, faýldaky ähli setirler şol taslama awtomatiki baglanýar.</p>
+
+<h4>Satuw hasap-fakturalary</h4>
+<p>Müşderä iş bahasy ýa-da iş bölegi hasap-fakturasyny ýazanyňda:</p>
+<ol>
+<li>Satuwlar → Täze hasap-faktura</li>
+<li>Müşderini saýlaň (taslama müşderisi)</li>
+<li><strong>Taslama</strong> meýdany: şol müşderiniň aktiw taslamalary awtomatiki ýokarda görkezilýär</li>
+<li>Setirleri giriziň we saklaň</li>
+</ol>
+<p>Bir taslamanyň birnäçe satuw hasap-fakturasy bolup biler (birinji bölek, aralyk bölek, kesgitleýji hasap). Her birini taslama aýratyn baglamak gerek.</p>
+
+<h4>Bank we kassa hereketleri</h4>
+<p>Işgär awansy, podratçy tölegi, ownuk çykdajylar ýa girdejiler üçin:</p>
+<ol>
+<li>Maliýe → Bank ýa Kassa</li>
+<li>Hereket maglumatlaryny giriziň (ugur, möçber, kategoriýa, kontragent)</li>
+<li><strong>Taslama</strong> meýdanyndan taslamany saýlaň</li>
+<li>Saklaň</li>
+</ol>
+
+<h3>Taslama gözegçiligi</h3>
+<p>Taslama jikme-jiklik sahypasy üç sahypaçadan ybarat:</p>
+
+<h4>Umumy</h4>
+<p>Taslama maglumatlary, müşderi, menejer, seneler we ýagdaýy.</p>
+
+<h4>Maliýe</h4>
+<ul>
+<li><strong>Girdejiler:</strong> bu taslama baglanan satuw hasap-fakturalarynyň jemi</li>
+<li><strong>Çykdajylar:</strong> baglanan satyn alyşlar, bank/kassa çykmalary, el bilen çykdajylaryň jemi</li>
+<li><strong>Sap:</strong> Girdeji − Çykdajy (oňyn — peýda, otrisat — zyýan)</li>
+<li><strong>Býujet ulanylyşy:</strong> hakyky çykdajy meýilleşdirilen býujetiň näçe göterimi</li>
+</ul>
+<p>100%-den geçse, meýilleşdirileninden köp sarp edilipdir.</p>
+
+<h4>Hereketler</h4>
+<p>Taslama baglanan ähli satuw, satyn alyş, bank we kassa hereketleri sene tertibinde bir sanawda. Her setirde görnüş, taraplar we möçber görkezilýär.</p>
+
+<h3>Sanaw ekrany</h3>
+<p>Ähli taslamalar bir ekranda. Her setirde:</p>
+<ul>
+<li>Sap (peýda/zyýan) reňk bilen</li>
+<li>Býujet ulanylyş göterimi</li>
+</ul>
+<p>Şeýdip haýsy taslamanyň gowy gidýäni, haýsynyň üns talap edýäni bir bakyşda mälim bolýar.</p>
+
+<h3>Möhüm bellikler</h3>
+<ul>
+<li><strong>Taslama saýlamak hökmany däl.</strong> Taslama bilen baglanyşygy bolmadyk hereketler üçin boş galdyrylyp bilner.</li>
+<li><strong>Bir hereket diňe bir taslama baglanyp biler.</strong> Birnäçe taslama paýlanan umumy çykdajy bolsa, aýry-aýry ýazgylar hökmünde girizilmelidir.</li>
+<li><strong>Taslama pozulanda</strong> baglanan hereketler ýitmeýär, diňe baglanyşyk üzülýär.</li>
+<li><strong>POS satuwlary</strong> taslama baglanmaýar; olar bölekleýin satuw akymy üçin.</li>
+<li><strong>Sap hasaby dogry bolar ýaly</strong> taslamanyň hem girdejilerini hem çykdajylaryny baglamak gerek. Diňe çykdajylar bellense, taslama hemişe zyýandaky ýaly görner.</li>
+</ul>
+
+<h3>Häzirlikçe goldaw berilmeýän</h3>
+<p>Aşakdaky aýratynlyklar soňra goşular:</p>
+<ul>
+<li>Aýlyk we wagt yzarlamasyndan awtomatiki zähmet çykdajysy</li>
+<li>Ýumuş we kilometr daşy (milestone) doly UI</li>
+<li>Býujet bilen hakyky görkezijiniň wagt boýunça deňeşdirme grafigi</li>
+<li>Birnäçe taslama göterim bilen paýlanyp bilýän umumy çykdajylar</li>
+</ul>`,
   },
   az: {
     // NAV
@@ -13065,6 +14493,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Yardım',
+    help_projects_title:'Layihələr modulu üçün yardım',
+    help_projects_content:`<h3>Bu modul nə üçündür?</h3>
+<p>Müəyyən müştəri üçün, müəyyən büdcə və müddətdə görülən işləri ayrı vahid kimi izləmək üçündür. Hər layihənin öz gəliri, xərci, mənfəəti/zərəri və irəliləyişi ayrı görünür. Bir neçə iş paralel aparıldıqda hansının qazandırdığı, hansının çətinlikdə olduğu açıq görünür.</p>
+<p>Tikinti, quraşdırma, müqavilə, məsləhət, agentlik kimi hər işi ayrı paket olaraq idarə edən şirkətlər üçün uyğundur.</p>
+
+<h3>Layihə nə vaxt açılmalıdır?</h3>
+<p>Aşağıdakı suallardan ikisi və ya üçü "bəli" olarsa layihə açın:</p>
+<ul>
+<li>Bu işin müəyyən başlanğıcı və sonu varmı?</li>
+<li>Onun üçün ayrıca büdcə planlaşdırılıbmı?</li>
+<li>Onun mənfəət/zərərini digər işlərdən ayrı görmək lazımdırmı?</li>
+</ul>
+<p>Birdəfəlik kiçik işlər və ya ümumi ofis xərcləri üçün layihə açmağa ehtiyac yoxdur. Belə hərəkətlər layihə seçilmədən də saxlanıla bilər.</p>
+
+<h3>Layihə yaratma</h3>
+<p>Layihələr menyusundan <strong>Yeni Layihə</strong> düyməsi ilə. Doldurulmalı sahələr:</p>
+<ul>
+<li><strong>Layihə adı:</strong> işi təsvir edən qısa və aydın başlıq</li>
+<li><strong>Müştəri:</strong> iş kimin üçündür, hesab-fakturalar kimə yazılacaq</li>
+<li><strong>Menecer:</strong> layihəyə cavabdeh işçi</li>
+<li><strong>Büdcə:</strong> planlaşdırılan ümumi xərc (yalnız istinad üçün; faktiki ayrıca izlənilir)</li>
+<li><strong>Başlama və bitmə tarixləri</strong></li>
+<li><strong>Status:</strong> Planlaşdırma, Aktiv, Tamamlanmış və ya Ləğv edilmiş</li>
+</ul>
+<p>Layihə nömrəsi avtomatik olaraq yaradılır və dəyişdirilə bilməz.</p>
+
+<h3>Hərəkətləri layihəyə bağlama</h3>
+<p>Bu modulun əsas məntiqi: layihə ilə əlaqəli hər maliyyə hərəkətini sistemə daxil edərkən <strong>Layihə</strong> sahəsini işarələmək. Əks halda layihə təfərrüatında düzgün cəmlər formalaşmır.</p>
+
+<h4>Alış hesab-fakturaları</h4>
+<p>Layihə üçün alınan material və ya xidmət hesab-fakturalarında:</p>
+<ol>
+<li>Satınalma → Yeni hesab-faktura</li>
+<li>Təchizatçını seçin</li>
+<li><strong>Layihə</strong> sahəsindən müvafiq layihəni seçin</li>
+<li>Sətirləri daxil edin və yadda saxlayın</li>
+</ol>
+<p>Excel'dən toplu alış hesab-fakturasını idxal edərkən 1-ci addımda Layihə seçilərsə, fayldakı bütün sətirlər avtomatik o layihəyə bağlanır.</p>
+
+<h4>Satış hesab-fakturaları</h4>
+<p>Müştəriyə işin dəyəri və ya hak ediş hesab-fakturası kəsilərkən:</p>
+<ol>
+<li>Satışlar → Yeni hesab-faktura</li>
+<li>Müştərini seçin (layihə müştərisi)</li>
+<li><strong>Layihə</strong> sahəsi: bu müştərinin aktiv layihələri avtomatik olaraq yuxarıda göstərilir</li>
+<li>Sətirləri daxil edin və yadda saxlayın</li>
+</ol>
+<p>Bir layihənin bir neçə satış hesab-fakturası ola bilər (ilkin mərhələ, aralıq mərhələ, yekun hesab). Hər birini ayrılıqda layihəyə bağlamaq lazımdır.</p>
+
+<h4>Bank və kassa hərəkətləri</h4>
+<p>İşçi avansı, subpodratçı ödənişi, kiçik xərclər və ya gəlir üçün:</p>
+<ol>
+<li>Maliyyə → Bank və ya Kassa</li>
+<li>Hərəkət məlumatlarını daxil edin (istiqamət, məbləğ, kateqoriya, qarşı tərəf)</li>
+<li><strong>Layihə</strong> sahəsindən layihəni seçin</li>
+<li>Yadda saxlayın</li>
+</ol>
+
+<h3>Layihə izləmə</h3>
+<p>Layihə təfərrüat səhifəsi üç tabdan ibarətdir:</p>
+
+<h4>Ümumi</h4>
+<p>Layihə məlumatları, müştəri, menecer, tarixlər və status.</p>
+
+<h4>Maliyyə</h4>
+<ul>
+<li><strong>Gəlirlər:</strong> bu layihəyə bağlı satış hesab-fakturalarının cəmi</li>
+<li><strong>Xərclər:</strong> bağlı alışlar, bank və kassa çıxışları, manual xərclərin cəmi</li>
+<li><strong>Net:</strong> Gəlir − Xərc (müsbət — mənfəət, mənfi — zərər)</li>
+<li><strong>Büdcə istifadəsi:</strong> faktiki xərc planlaşdırılan büdcənin neçə faizidir</li>
+</ul>
+<p>İstifadə 100%-i keçərsə, planlaşdırılandan çox xərclənmiş deməkdir.</p>
+
+<h4>Hərəkətlər</h4>
+<p>Layihəyə bağlı bütün satış, alış, bank və kassa hərəkətləri tarix ardıcıllığı ilə tək siyahıda görünür. Hər sətirdə növ, qarşı tərəf və məbləğ göstərilir.</p>
+
+<h3>Siyahı ekranı</h3>
+<p>Bütün layihələr bir ekranda. Hər sətirdə:</p>
+<ul>
+<li>Net (mənfəət/zərər) rəng kodlu</li>
+<li>Büdcə istifadəsi faizi</li>
+</ul>
+<p>Bunun sayəsində hansı layihənin yaxşı getdiyi, hansının müdaxilə tələb etdiyi bir baxışda anlaşılır.</p>
+
+<h3>Vacib qeydlər</h3>
+<ul>
+<li><strong>Layihə seçimi məcburi deyil.</strong> Layihə ilə əlaqəsi olmayan hərəkətlər üçün boş buraxıla bilər.</li>
+<li><strong>Bir hərəkət yalnız bir layihəyə bağlana bilər.</strong> Bir neçə layihəyə bölünən ortaq xərc olarsa, ayrı qeydlər kimi daxil edilməlidir.</li>
+<li><strong>Layihə silinərsə</strong> bağlı hərəkətlər itmir, yalnız layihə əlaqəsi qopur.</li>
+<li><strong>POS satışları</strong> layihəyə bağlanmır; pərakəndə satış axını üçündür.</li>
+<li><strong>Net hesabının düzgün olması üçün</strong>, layihənin həm gəlirlərini həm xərclərini sistemə bağlamaq lazımdır. Yalnız xərclər işarələnərsə, layihə daim zərərdə görünər.</li>
+</ul>
+
+<h3>Hələ dəstəklənməyən</h3>
+<p>Aşağıdakı xüsusiyyətlər gələcəkdə əlavə olunacaq:</p>
+<ul>
+<li>Maaş və işçi saatına əsasən avtomatik əmək haqqı maliyyəti</li>
+<li>Tapşırıq və mərhələ idarəetməsi (tam UI)</li>
+<li>Büdcə ilə faktiki nəticənin zaman üzrə müqayisə qrafiki</li>
+<li>Birdən çox layihəyə faiz əsasında bölünə bilən ortaq xərclər</li>
+</ul>`,
   },
   pl: {
     // === POLISH FULL BLOCK (user-spec keys; rest fall back to en at runtime) ===
@@ -13301,6 +14831,108 @@ const T = window.T = {
     pos_show_subtotal:'Show subtotal',
     pos_show_vat:'Show VAT amount',
     pos_show_cashier:'Show cashier name',
+    btn_help:'Pomoc',
+    help_projects_title:'Pomoc modułu Projekty',
+    help_projects_content:`<h3>Do czego służy ten moduł?</h3>
+<p>Służy do osobnego śledzenia prac wykonywanych dla konkretnego klienta w ramach określonego budżetu i czasu. Każdy projekt ma własne przychody, koszty, zysk/stratę i postęp. Gdy kilka prac biegnie równolegle, od razu widać, który jest rentowny, a który ma kłopoty.</p>
+<p>Odpowiedni dla firm zarządzających każdym zleceniem jako osobnym pakietem — budownictwo, montaż, kontrakty, doradztwo, agencje itp.</p>
+
+<h3>Kiedy zakładać projekt?</h3>
+<p>Załóż projekt, jeśli na 2–3 z poniższych pytań odpowiesz "tak":</p>
+<ul>
+<li>Czy ta praca ma określony początek i koniec?</li>
+<li>Czy zaplanowano dla niej osobny budżet?</li>
+<li>Czy potrzebujesz osobnego widoku zysku/straty?</li>
+</ul>
+<p>Dla jednorazowych drobnych prac lub ogólnych kosztów biurowych projekt nie jest potrzebny. Takie operacje można też zapisywać bez wybierania projektu.</p>
+
+<h3>Tworzenie projektu</h3>
+<p>Z menu Projekty przyciskiem <strong>Nowy projekt</strong>. Do uzupełnienia:</p>
+<ul>
+<li><strong>Nazwa projektu:</strong> krótki, jasny tytuł</li>
+<li><strong>Klient:</strong> dla kogo praca, na kogo wystawiane faktury</li>
+<li><strong>Kierownik:</strong> odpowiedzialny pracownik</li>
+<li><strong>Budżet:</strong> planowany koszt całkowity (tylko orientacyjnie; rzeczywisty jest osobno)</li>
+<li><strong>Daty rozpoczęcia i zakończenia</strong></li>
+<li><strong>Status:</strong> Planowanie, Aktywny, Zakończony lub Anulowany</li>
+</ul>
+<p>Numer projektu nadawany jest automatycznie i nie podlega edycji.</p>
+
+<h3>Powiązanie operacji z projektem</h3>
+<p>Główna zasada modułu: przy każdej operacji finansowej dotyczącej projektu zaznacz pole <strong>Projekt</strong>. W przeciwnym razie szczegóły projektu nie pokażą poprawnych sum.</p>
+
+<h4>Faktury zakupu</h4>
+<p>Dla materiałów lub usług zakupionych na potrzeby projektu:</p>
+<ol>
+<li>Zakupy → Nowa faktura</li>
+<li>Wybierz dostawcę</li>
+<li>W polu <strong>Projekt</strong> wskaż właściwy projekt</li>
+<li>Uzupełnij pozycje i zapisz</li>
+</ol>
+<p>Przy importowaniu faktur zakupu z Excela wybór Projektu w kroku 1 powoduje automatyczne powiązanie wszystkich wierszy pliku z tym projektem.</p>
+
+<h4>Faktury sprzedaży</h4>
+<p>Przy fakturowaniu klientowi etapów lub wartości robót:</p>
+<ol>
+<li>Sprzedaż → Nowa faktura</li>
+<li>Wybierz klienta (klienta projektu)</li>
+<li>Pole <strong>Projekt</strong>: aktywne projekty tego klienta automatycznie pokazują się na górze listy</li>
+<li>Uzupełnij pozycje i zapisz</li>
+</ol>
+<p>Projekt może mieć wiele faktur sprzedaży (zaliczka, faktury etapowe, rozliczenie końcowe). Każdą trzeba osobno powiązać z projektem.</p>
+
+<h4>Operacje bankowe i kasowe</h4>
+<p>Zaliczki dla pracownika, płatności dla podwykonawców, drobne wydatki lub wpłaty:</p>
+<ol>
+<li>Finanse → Bank lub Kasa</li>
+<li>Wprowadź dane operacji (kierunek, kwota, kategoria, kontrahent)</li>
+<li>W polu <strong>Projekt</strong> wskaż projekt</li>
+<li>Zapisz</li>
+</ol>
+
+<h3>Śledzenie projektu</h3>
+<p>Strona szczegółów projektu ma trzy zakładki:</p>
+
+<h4>Ogólne</h4>
+<p>Informacje o projekcie, klient, kierownik, daty i status.</p>
+
+<h4>Finanse</h4>
+<ul>
+<li><strong>Przychody:</strong> suma faktur sprzedaży powiązanych z projektem</li>
+<li><strong>Koszty:</strong> suma powiązanych zakupów, wypływów z banku/kasy, kosztów ręcznych</li>
+<li><strong>Wynik netto:</strong> Przychody − Koszty (dodatni = zysk, ujemny = strata)</li>
+<li><strong>Wykorzystanie budżetu:</strong> jaki procent planowanego budżetu stanowi rzeczywisty koszt</li>
+</ul>
+<p>Powyżej 100% wydano więcej niż planowano.</p>
+
+<h4>Operacje</h4>
+<p>Wszystkie powiązane sprzedaże, zakupy, operacje bankowe i kasowe w jednej liście chronologicznej. Każdy wiersz pokazuje typ, kontrahenta i kwotę.</p>
+
+<h3>Lista projektów</h3>
+<p>Wszystkie projekty na jednym ekranie. W każdym wierszu:</p>
+<ul>
+<li>Wynik netto (zysk/strata) z kolorystyką</li>
+<li>Procent wykorzystania budżetu</li>
+</ul>
+<p>Dzięki temu od razu widać, który projekt idzie dobrze, a który wymaga uwagi.</p>
+
+<h3>Ważne uwagi</h3>
+<ul>
+<li><strong>Wybór projektu jest opcjonalny.</strong> Dla operacji niezwiązanych z projektem zostaw puste.</li>
+<li><strong>Operację można powiązać tylko z jednym projektem.</strong> Wspólne koszty rozłożone na kilka projektów wprowadź jako osobne wpisy.</li>
+<li><strong>Po usunięciu projektu</strong> powiązane operacje nie znikają — odłączane jest tylko powiązanie.</li>
+<li><strong>Sprzedaż POS</strong> nie jest wiązana z projektami; służy do obsługi sprzedaży detalicznej.</li>
+<li><strong>Aby wynik netto był poprawny</strong>, trzeba powiązać z projektem zarówno przychody, jak i koszty. Gdy oznaczone są tylko koszty, projekt zawsze pokaże stratę.</li>
+</ul>
+
+<h3>Funkcje jeszcze nieobsługiwane</h3>
+<p>Poniższe funkcje pojawią się w przyszłości:</p>
+<ul>
+<li>Automatyczny koszt pracy z listy płac i ewidencji czasu</li>
+<li>Pełen UI zadań i kamieni milowych</li>
+<li>Wykres porównujący budżet i wykonanie w czasie</li>
+<li>Wspólne koszty rozdzielane procentowo na wiele projektów</li>
+</ul>`,
   },
 };
 

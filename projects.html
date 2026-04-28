@@ -141,6 +141,16 @@ tr:hover .row-actions{opacity:1}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
 .field textarea{resize:vertical;min-height:68px}
 
+/* Help body */
+.help-body h3{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--gray800);margin-top:20px;margin-bottom:8px;border-left:3px solid var(--blue);padding-left:10px}
+.help-body h3:first-child{margin-top:0}
+.help-body h4{font-size:13px;font-weight:700;color:var(--gray700);margin-top:14px;margin-bottom:6px}
+.help-body p{font-size:13px;color:var(--gray700);margin-bottom:8px}
+.help-body ul,.help-body ol{margin:6px 0 12px 20px;padding:0}
+.help-body li{font-size:13px;color:var(--gray700);margin-bottom:4px;line-height:1.5}
+.help-body strong{color:var(--gray800);font-weight:700}
+.help-body code{background:var(--gray100);padding:1px 5px;border-radius:4px;font-size:12px;font-family:var(--font-body);color:var(--blue)}
+
 /* Expense summary */
 .budget-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
 .budget-card{background:#fff;border:1px solid var(--gray200);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm)}
@@ -216,6 +226,7 @@ tr:hover .row-actions{opacity:1}
           <p data-i18n="page_projects_sub">Proje, görev ve milestone yönetimi</p>
         </div>
         <div class="header-actions">
+          <button class="btn btn-outline" onclick="openHelpModal()" title="Help"><span style="margin-right:4px">❓</span><span data-i18n="btn_help">Yardım</span></button>
           <button class="btn btn-primary" onclick="openProjectModal()" data-i18n="btn_add_project">+ New Project</button>
         </div>
       </div>
@@ -264,6 +275,17 @@ tr:hover .row-actions{opacity:1}
       <div id="detail-tab-content"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- ===== HELP MODAL ===== -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal" style="max-width:760px;max-height:85vh">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="help_projects_title">Proje Modülü Yardımı</div>
+      <button class="modal-close" onclick="closeModal('help-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="help-projects-body" style="overflow-y:auto;max-height:calc(85vh - 60px);line-height:1.55"></div>
   </div>
 </div>
 
@@ -1398,6 +1420,14 @@ function fmtCurr(n) {
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openHelpModal() {
+  const body = document.getElementById('help-projects-body');
+  if (body) {
+    body.className = 'modal-body help-body';
+    body.innerHTML = t('help_projects_content') || '';
+  }
+  openModal('help-modal');
+}
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
