@@ -1567,6 +1567,9 @@ const T = window.T = {
     view_low_stock:'View Low Stock →',
     modal_add_product:'Add Product', modal_edit_product:'Edit Product',
     label_product_name:'Product Name *', label_sku:'SKU',
+    section_details:'▾ Details', btn_adjust_stock:'Adjust Stock',
+    hint_stock_via_movements:'Stock changes are managed through stock movements — not edited directly here.',
+    hint_stock_create:'New product starts at 0 stock. Use "Adjust Stock" after saving to record opening stock.',
     label_category:'Category', label_unit:'Unit',
     label_description:'Description', label_current_stock:'Current Stock *',
     label_min_stock:'Min. Stock (Alert)', label_max_stock:'Max. Stock',
@@ -3356,7 +3359,10 @@ const T = window.T = {
     low_stock_alert:'ürünün stoğu düşük, yenilenmesi gerekiyor.',
     view_low_stock:'Düşük Stoğu Gör →',
     modal_add_product:'Ürün Ekle', modal_edit_product:'Ürünü Düzenle',
-    label_product_name:'Ürün Adı *', label_sku:'SKU',
+    label_product_name:'Ürün Adı *', label_sku:'Ürün Kodu',
+    section_details:'▾ Detaylar', btn_adjust_stock:'Stok Düzelt',
+    hint_stock_via_movements:'Stok değişiklikleri stok hareketleri üzerinden yönetilir — burada doğrudan düzenlenmez.',
+    hint_stock_create:'Yeni ürün stok 0 ile başlar. Kaydettikten sonra "Stok Düzelt" ile açılış stoğunu girebilirsiniz.',
     label_category:'Kategori', label_unit:'Birim',
     label_description:'Açıklama', label_current_stock:'Mevcut Stok *',
     label_min_stock:'Min. Stok (Uyarı)', label_max_stock:'Maks. Stok',
@@ -3739,7 +3745,7 @@ const T = window.T = {
     btn_hard_delete:'Kalıcı Sil',
     btn_restore:'Geri Yükle',
     col_movement:'Hareket',
-    col_sku:'SKU',
+    col_sku:'Ürün Kodu',
     company_not_found:'Şirket bulunamadı',
     confirm_delete_category:'Bu kategoriyi silmek istiyor musunuz?',
     confirm_delete_customer:'Bu müşteriyi silmek istiyor musunuz?',
@@ -10332,7 +10338,7 @@ const T = window.T = {
     modal_add_product:'Добавить товар',
     modal_edit_product:'Редактировать товар',
     label_product_name:'Название товара *',
-    label_sku:'SKU',
+    label_sku:'Артикул', col_sku:'Артикул',
     label_current_stock:'Текущий запас *',
     label_min_stock:'Мин. запас (тревога)',
     label_max_stock:'Макс. запас',
@@ -12682,6 +12688,7 @@ const T = window.T = {
 </ul>`,
   },
   kz: {
+    label_sku:'Өнім коды', col_sku:'Өнім коды',
     // NAV
     nav_dashboard:'Басты бет', nav_inventory:'Қойма', nav_sales:'Сатылым', nav_purchasing:'Сатып алу',
     nav_production:'Өндіріс', nav_hr:'Қызметкерлер', nav_company:'Компания', nav_crm:'CRM',
@@ -13067,6 +13074,7 @@ const T = window.T = {
 </ul>`,
   },
   kg: {
+    label_sku:'Товар коду', col_sku:'Товар коду',
     // NAV
     nav_dashboard:'Башкы бет', nav_inventory:'Кампа', nav_sales:'Сатуу', nav_purchasing:'Сатып алуу',
     nav_production:'Өндүрүш', nav_hr:'Кызматкерлер', nav_company:'Компания', nav_crm:'CRM',
@@ -13452,6 +13460,7 @@ const T = window.T = {
 </ul>`,
   },
   uz: {
+    label_sku:"Mahsulot kodi", col_sku:"Mahsulot kodi",
     // NAV
     nav_dashboard:'Bosh sahifa', nav_inventory:'Ombor', nav_sales:'Sotuv', nav_purchasing:'Xarid',
     nav_production:'Ishlab chiqarish', nav_hr:'Xodimlar', nav_company:'Kompaniya', nav_crm:'CRM',
@@ -13837,6 +13846,7 @@ const T = window.T = {
 </ul>`,
   },
   tm: {
+    label_sku:'Haryt kody', col_sku:'Haryt kody',
     // NAV
     nav_dashboard:'Baş sahypa', nav_inventory:'Ammar', nav_sales:'Satuw', nav_purchasing:'Satyn alyş',
     nav_production:'Önümçilik', nav_hr:'Işgärler', nav_company:'Kompaniýa', nav_crm:'CRM',
@@ -14222,6 +14232,7 @@ const T = window.T = {
 </ul>`,
   },
   az: {
+    label_sku:'Məhsul kodu', col_sku:'Məhsul kodu',
     // NAV
     nav_dashboard:'Ana səhifə', nav_inventory:'Anbar', nav_sales:'Satış', nav_purchasing:'Alış',
     nav_production:'İstehsal', nav_hr:'İşçi heyəti', nav_company:'Şirkət', nav_crm:'CRM',
