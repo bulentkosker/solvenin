@@ -1370,13 +1370,25 @@ function toggleDotMenu(btn) {
   closeDotMenus();
   if (wasOpen) return;
   menu.classList.add('open');
-  // Flip upward when there isn't room for the dropdown below the button.
+  // Decide flip from the ACTUAL rendered list rect (offsetHeight can lag
+  // in Firefox if styles haven't settled). If it overflows the viewport
+  // bottom, flip upward; if upward also overflows, keep whichever side
+  // has more room.
   const list = menu.querySelector('.dot-menu-list');
-  const btnRect = btn.getBoundingClientRect();
-  const listH = list.offsetHeight;
-  const spaceBelow = window.innerHeight - btnRect.bottom;
-  const spaceAbove = btnRect.top;
-  if (spaceBelow < listH + 8 && spaceAbove > listH + 8) menu.classList.add('up');
+  if (!list) return;
+  const margin = 8;
+  let r = list.getBoundingClientRect();
+  if (r.bottom > window.innerHeight - margin) {
+    menu.classList.add('up');
+    const r2 = list.getBoundingClientRect();
+    if (r2.top < margin) {
+      // Both directions clip — keep whichever has more space
+      const btnRect = btn.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - btnRect.bottom;
+      const spaceAbove = btnRect.top;
+      if (spaceBelow >= spaceAbove) menu.classList.remove('up');
+    }
+  }
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
