@@ -121,9 +121,10 @@ tr:hover .action-btns { opacity:1; }
 .dot-menu { position:relative; display:inline-block; }
 .dot-menu-btn { background:none; border:none; font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; color:var(--gray400); line-height:1; transition:background .15s; }
 .dot-menu-btn:hover { background:var(--gray100); color:var(--gray700); }
-.dot-menu-list { display:none; position:absolute; right:0; top:100%; margin-top:4px; min-width:160px; background:#fff; border:1px solid var(--gray200); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.12); z-index:200; padding:4px 0; }
+/* position:fixed so the menu escapes parent overflow:hidden (table-card).
+   Coordinates set in JS at open time. */
+.dot-menu-list { display:none; position:fixed; min-width:160px; background:#fff; border:1px solid var(--gray200); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.12); z-index:9999; padding:4px 0; }
 .dot-menu.open .dot-menu-list { display:block; }
-.dot-menu.up .dot-menu-list { top:auto; bottom:100%; margin-top:0; margin-bottom:4px; }
 .dot-menu-item { display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:13px; cursor:pointer; transition:background .1s; white-space:nowrap; border:none; background:none; width:100%; text-align:left; color:var(--gray700); }
 .dot-menu-item:hover { background:var(--gray50); }
 .dot-menu-item.danger { color:#dc2626; }
@@ -1370,14 +1371,21 @@ function toggleDotMenu(btn) {
   closeDotMenus();
   if (wasOpen) return;
   menu.classList.add('open');
-  // Flip upward when there isn't room for the dropdown below the button.
-  // Measured after toggling .open so the list has its real rendered height.
+  // List is position:fixed (escapes table-card overflow). Compute top/left
+  // anchored to the button, flip upward when there isn't room below.
   const list = menu.querySelector('.dot-menu-list');
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
+  const listW = list.offsetWidth;
   const spaceBelow = window.innerHeight - btnRect.bottom;
   const spaceAbove = btnRect.top;
-  if (spaceBelow < listH + 8 && spaceAbove > listH + 8) menu.classList.add('up');
+  const flipUp = spaceBelow < listH + 8 && spaceAbove > listH + 8;
+  list.style.top = (flipUp ? btnRect.top - listH - 4 : btnRect.bottom + 4) + 'px';
+  // Right-align to the button; clamp to viewport
+  let left = btnRect.right - listW;
+  if (left < 8) left = 8;
+  if (left + listW > window.innerWidth - 8) left = window.innerWidth - listW - 8;
+  list.style.left = left + 'px';
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
@@ -1388,6 +1396,9 @@ function closeDotMenus() {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dot-menu')) closeDotMenus();
 });
+// Fixed-positioned menus don't track scroll — close on scroll/resize.
+window.addEventListener('scroll', closeDotMenus, true);
+window.addEventListener('resize', closeDotMenus);
 
 function openAddModal() {
   editingId = null;
@@ -2411,7 +2422,7 @@ function openDeleteModal(id) {
 async function confirmDelete() {
   const blocker = await productDeleteBlocker(deletingId);
   if (blocker) {
-    showToast('Silinemez: Bu ürünün ' + blocker + ' var', 'error'); return;
+    showToast('Silinemez: ' + blocker, 'error'); return;
   }
   const { data: { user: _u } } = await sb.auth.getUser();
   const { error } = await sb.from('products').update({
@@ -2425,22 +2436,22 @@ async function confirmDelete() {
 }
 
 // Pre-check: returns null if deletable, else a human-readable reason.
-// Only counts items whose own deleted_at IS NULL (084 soft-deletes items
-// when their parent order is cascade-deleted, so orphans don't block).
+// Real blockers: open order line items (still pending obligation) or
+// non-zero stock balance (real inventory exists). Past stock_movements
+// alone are audit history — they don't block soft-delete.
 async function productDeleteBlocker(pid) {
-  const [so, po, mv] = await Promise.all([
+  const p = products.find(x => x.id === pid);
+  const qty = Number(p?.stock ?? p?.quantity ?? 0);
+  const [so, po] = await Promise.all([
     sb.from('sales_order_items').select('id', {count:'exact',head:true})
       .eq('product_id', pid).is('deleted_at', null),
     sb.from('purchase_order_items').select('id', {count:'exact',head:true})
       .eq('product_id', pid).is('deleted_at', null),
-    sb.from('stock_movements').select('id', {count:'exact',head:true})
-      .eq('product_id', pid).eq('is_active', true).is('deleted_at', null),
   ]);
   const orderCount = (so.count||0) + (po.count||0);
-  const parts = [];
-  if (orderCount > 0) parts.push(orderCount + ' sipariş kalemi');
-  if ((mv.count||0) > 0) parts.push(mv.count + ' stok hareketi');
-  return parts.length ? parts.join(' / ') : null;
+  if (orderCount > 0) return `Bu ürünün ${orderCount} açık sipariş kalemi var`;
+  if (qty > 0) return `Stok bakiyesi ${qty} ${p?.unit||''}. Önce "Stok Düzelt" ile sıfırlayın.`;
+  return null;
 }
 
 // ===== MERGE PRODUCT =====
