@@ -3783,6 +3783,7 @@ async function loadRecycleBin() {
   if (!companyId) return;
   const tbody = document.getElementById('recycle-tbody');
   if (!tbody) return;
+  _bindRecycleDelegation();
   tbody.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--gray400)">${t('loading')||'Loading...'}</td></tr>`;
 
   // Query each table for soft-deleted records
@@ -3860,18 +3861,47 @@ function renderRecycleBin(records) {
 
   tbody.innerHTML = records.map(r => `
     <tr style="border-bottom:1px solid var(--gray100)">
-      <td style="padding:10px 12px;text-align:center"><input type="checkbox" class="recycle-row-check" data-type="${r.type}" data-id="${r.id}" onchange="updateBulkRecycleBar()" style="cursor:pointer"></td>
-      <td style="padding:10px 16px"><span class="badge badge-gray">${typeLabels[r.type] || r.type}</span></td>
-      <td style="padding:10px 16px;font-weight:500">${r.label}${r.extra}</td>
-      <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_at ? new Date(r.deleted_at).toLocaleString() : '—'}</td>
-      <td style="padding:10px 16px;color:var(--gray500);font-size:12px" title="${r.deleted_by || ''}">${r.deleted_by_name || (r.deleted_by ? r.deleted_by.substring(0,8)+'…' : '—')}</td>
+      <td style="padding:10px 12px;text-align:center"><input type="checkbox" class="recycle-row-check" data-type="${escRec(r.type)}" data-id="${escRec(r.id)}" style="cursor:pointer"></td>
+      <td style="padding:10px 16px"><span class="badge badge-gray">${escRec(typeLabels[r.type] || r.type)}</span></td>
+      <td style="padding:10px 16px;font-weight:500">${escRec((r.label||'') + (r.extra||''))}</td>
+      <td style="padding:10px 16px;color:var(--gray500);font-size:12px">${r.deleted_at ? escRec(new Date(r.deleted_at).toLocaleString()) : '—'}</td>
+      <td style="padding:10px 16px;color:var(--gray500);font-size:12px" title="${escRec(r.deleted_by || '')}">${escRec(r.deleted_by_name || (r.deleted_by ? r.deleted_by.substring(0,8)+'…' : '—'))}</td>
       <td style="padding:10px 16px;text-align:right">
-        <button class="btn btn-sm btn-success" onclick="restoreRecord('${r.type}','${r.id}')" style="margin-right:6px">↩ ${t('btn_restore')||'Restore'}</button>
-        <button class="btn btn-sm btn-danger" onclick="hardDeleteRecord('${r.type}','${r.id}','${r.label}')">✕ ${t('btn_hard_delete')||'Delete Forever'}</button>
+        <button class="btn btn-sm btn-success recycle-restore-btn" data-type="${escRec(r.type)}" data-id="${escRec(r.id)}" style="margin-right:6px">↩ ${t('btn_restore')||'Restore'}</button>
+        <button class="btn btn-sm btn-danger recycle-delete-btn" data-type="${escRec(r.type)}" data-id="${escRec(r.id)}">✕ ${t('btn_hard_delete')||'Delete Forever'}</button>
       </td>
     </tr>`).join('');
   const sa = document.getElementById('recycle-select-all'); if (sa) { sa.checked = false; sa.indeterminate = false; }
   updateBulkRecycleBar();
+}
+
+function escRec(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function _findRecycleRecord(id) {
+  return (allDeletedRecords || []).find(r => r.id === id);
+}
+
+// Delegated listener on the tbody container — survives innerHTML
+// re-renders that would otherwise wipe listeners attached to row buttons.
+// The dataset guard prevents double-binding when loadRecycleBin re-runs.
+function _bindRecycleDelegation() {
+  const tbody = document.getElementById('recycle-tbody');
+  if (!tbody || tbody.dataset.delegated === '1') return;
+  tbody.dataset.delegated = '1';
+  tbody.addEventListener('click', (e) => {
+    const restore = e.target.closest('.recycle-restore-btn');
+    const del = e.target.closest('.recycle-delete-btn');
+    if (restore) restoreRecord(restore.dataset.type, restore.dataset.id);
+    else if (del) {
+      const rec = _findRecycleRecord(del.dataset.id);
+      hardDeleteRecord(del.dataset.type, del.dataset.id, rec?.label || del.dataset.id);
+    }
+  });
+  tbody.addEventListener('change', (e) => {
+    if (e.target.classList?.contains('recycle-row-check')) updateBulkRecycleBar();
+  });
 }
 
 function getRecycleSelection() {
@@ -3911,6 +3941,64 @@ const RECYCLE_TABLE_MAP = {
   bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
 };
 
+// Children to inspect (active = blocker) and cascade hard-delete (soft-
+// deleted only) when a parent row is permanently removed from the trash.
+// All listed child tables have a `deleted_at` column (verified at design time).
+const TRASH_CHILD_DEFS = {
+  contacts: [
+    { table: 'sales_orders',         fk: 'customer_id' },
+    { table: 'purchase_orders',      fk: 'supplier_id' },
+    { table: 'bank_transactions',    fk: 'contact_id'  },
+    { table: 'cash_transactions',    fk: 'contact_id'  },
+    { table: 'contact_transactions', fk: 'contact_id'  },
+    { table: 'crm_opportunities',    fk: 'contact_id'  },
+    { table: 'crm_quotes',           fk: 'contact_id'  },
+  ],
+  sales_orders: [
+    { table: 'sales_order_items', fk: 'order_id'        },
+    { table: 'payments',          fk: 'order_id'        },
+    { table: 'stock_movements',   fk: 'sales_order_id'  },
+    { table: 'bank_transactions', fk: 'sales_order_id'  },
+    { table: 'cash_transactions', fk: 'sales_order_id'  },
+  ],
+  purchase_orders: [
+    { table: 'purchase_order_items', fk: 'order_id'           },
+    { table: 'payments',             fk: 'purchase_order_id'  },
+    { table: 'stock_movements',      fk: 'purchase_order_id'  },
+    { table: 'bank_transactions',    fk: 'purchase_order_id'  },
+    { table: 'cash_transactions',    fk: 'purchase_order_id'  },
+  ],
+  products: [
+    { table: 'stock_movements',      fk: 'product_id' },
+    { table: 'sales_order_items',    fk: 'product_id' },
+    { table: 'purchase_order_items', fk: 'product_id' },
+  ],
+  cash_registers:    [{ table: 'cash_transactions', fk: 'register_id' }],
+  bank_accounts:     [{ table: 'bank_transactions', fk: 'account_id'  }],
+  chart_of_accounts: [],
+  stock_movements:   [],
+};
+
+async function _trashCheckActiveChildren(table, ids) {
+  const defs = TRASH_CHILD_DEFS[table] || [];
+  const blockers = [];
+  for (const def of defs) {
+    const { count } = await sb.from(def.table).select('id', { count: 'exact', head: true })
+      .in(def.fk, ids).is('deleted_at', null);
+    if ((count || 0) > 0) blockers.push(`${count} ${def.table}`);
+  }
+  return blockers.length ? blockers.join(', ') : null;
+}
+
+async function _trashCascadeHardDelete(table, ids) {
+  const defs = TRASH_CHILD_DEFS[table] || [];
+  for (const def of defs) {
+    // Only purge already-soft-deleted children — active ones were caught
+    // by _trashCheckActiveChildren above and the parent delete was refused.
+    await sb.from(def.table).delete().in(def.fk, ids).not('deleted_at', 'is', null);
+  }
+}
+
 async function bulkRestoreRecycle() {
   const sel = getRecycleSelection();
   if (!sel.length) return;
@@ -3944,15 +4032,22 @@ async function bulkHardDeleteRecycle() {
     if (!tbl) return;
     (groups[tbl] = groups[tbl] || []).push(id);
   });
-  let okCount = 0, failCount = 0, lastErr = null;
+  let okCount = 0, blockedCount = 0, failCount = 0, lastErr = null;
   for (const [table, ids] of Object.entries(groups)) {
+    const blocker = await _trashCheckActiveChildren(table, ids);
+    if (blocker) { blockedCount += ids.length; continue; }
+    await _trashCascadeHardDelete(table, ids);
     const { error } = await sb.from(table).delete().in('id', ids);
     if (error) { failCount += ids.length; lastErr = error; }
     else okCount += ids.length;
   }
-  if (failCount && !okCount) showToast(getErrorMessage(lastErr), 'error');
-  else if (failCount) showToast(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'} · ${failCount} ${t('toast_failed_count')||'başarısız'}`, 'error');
-  else showToast(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'} ✓`, 'success');
+  const parts = [];
+  if (okCount) parts.push(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'}`);
+  if (blockedCount) parts.push(`${blockedCount} ${t('toast_blocked_active_children')||'aktif ilişki nedeniyle silinemedi'}`);
+  if (failCount) parts.push(`${failCount} ${t('toast_failed_count')||'başarısız'}`);
+  const isError = (blockedCount || failCount) && !okCount;
+  showToast(parts.join(' · ') + (okCount && !blockedCount && !failCount ? ' ✓' : ''), isError ? 'error' : (okCount ? 'success' : 'error'));
+  if (isError && failCount && lastErr) console.error('[trash] last error:', lastErr);
   await loadRecycleBin();
 }
 
@@ -3973,14 +4068,14 @@ async function restoreRecord(type, id) {
 
 async function hardDeleteRecord(type, id, label) {
   if (!await showConfirm(`${t('confirm_hard_delete')||'Kalıcı olarak sil'} "${label}"? ${t('confirm_hard_delete_sub')||'Bu işlem geri alınamaz.'}`, t('btn_hard_delete')||'Kalıcı Sil')) return;
-  const tableMap = {
-    product: 'products', contact: 'contacts', customer: 'contacts', supplier: 'contacts',
-    sales_order: 'sales_orders', purchase_order: 'purchase_orders',
-    stock_movement: 'stock_movements', cash_register: 'cash_registers',
-    bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
-  };
-  const table = tableMap[type];
+  const table = RECYCLE_TABLE_MAP[type];
   if (!table) return;
+  const blocker = await _trashCheckActiveChildren(table, [id]);
+  if (blocker) {
+    showToast((t('toast_blocked_by_active')||'Silinemez — aktif ilişki:') + ' ' + blocker, 'error');
+    return;
+  }
+  await _trashCascadeHardDelete(table, [id]);
   const { error } = await sb.from(table).delete().eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
