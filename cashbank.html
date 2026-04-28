@@ -1919,9 +1919,27 @@ async function populateTransferTargets(prefix) {
   // Cross-type filtering would wrongly hide the lone kasa when the user
   // had previously opened it before switching to the bank modal.
   const isCashModal = prefix === 'ctx';
-  const cashItems = regs.filter(r => !(isCashModal && r.id === selectedRegisterId))
+
+  // Resolve the source account's currency. Transfers are same-currency
+  // by design — different currencies must use the Döviz Konvertasyonu
+  // category, which has its own RPC + dual-amount UI. Mixing 1:1 here
+  // would silently swap currencies on the destination row.
+  let sourceCur = null;
+  if (isCashModal) {
+    const src = regs.find(r => r.id === selectedRegisterId);
+    sourceCur = src?.currency_code || null;
+  } else {
+    const src = accs.find(a => a.id === selectedAccountId);
+    sourceCur = src?.currency_code || null;
+  }
+
+  const cashItems = regs
+    .filter(r => !(isCashModal && r.id === selectedRegisterId))
+    .filter(r => !sourceCur || r.currency_code === sourceCur)
     .map(r => `<option value="cash:${r.id}">💵 ${escapeHtmlCB(r.name)} (${r.currency_code}) · Kasa</option>`);
-  const bankItems = accs.filter(a => !(!isCashModal && a.id === selectedAccountId))
+  const bankItems = accs
+    .filter(a => !(!isCashModal && a.id === selectedAccountId))
+    .filter(a => !sourceCur || a.currency_code === sourceCur)
     .map(a => {
       const bank = bkById[a.bank_id];
       const label = (bank?.name ? bank.name + ' · ' : '') + a.account_name;
@@ -1929,9 +1947,12 @@ async function populateTransferTargets(prefix) {
     });
 
   const opts = cashItems.join('') + bankItems.join('');
+  const emptyMsg = sourceCur
+    ? `Transfer edilecek ${sourceCur} hesap yok — farklı döviz için "Döviz Konvertasyonu" kategorisini kullanın`
+    : 'Transfer edilecek başka hesap yok';
   sel.innerHTML = opts
     ? '<option value="">Seçin...</option>' + opts
-    : '<option value="">Transfer edilecek başka hesap yok</option>';
+    : `<option value="">${emptyMsg}</option>`;
 }
 
 function escapeHtmlCB(s) {
