@@ -965,8 +965,8 @@ async function deleteWO(id) {
   if (!await showConfirm(t('confirm_delete_wo'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('work_order_parts').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('work_order_id', id);
-  await sb.from('work_orders').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('work_order_parts').update({ deleted_at:_now, deleted_by:_u?.id }).eq('work_order_id', id);
+  await sb.from('work_orders').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   showToast(t('toast_wo_deleted'),'success');
   await loadWOs(); updateStats(); renderWOs();
 }
@@ -1034,7 +1034,7 @@ async function deleteEquip(id) {
   if (!await showConfirm(t('confirm_delete_equip'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('equipment').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('equipment').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   showToast(t('toast_equip_deleted'),'success');
   await loadEquipment(); updateStats(); renderEquipment();
 }
@@ -1111,7 +1111,7 @@ async function deletePlan(id) {
   if (!await showConfirm(t('confirm_delete_plan'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('maintenance_plans').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('maintenance_plans').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   await loadPlans(); updateStats(); renderPlans();
 }
 
@@ -1161,7 +1161,7 @@ async function deleteFailure(id) {
   if (!await showConfirm(t('confirm_delete_failure'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('failure_records').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('failure_records').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   await loadFailures(); updateStats(); renderFailures();
 }
 
@@ -1211,7 +1211,7 @@ async function deleteProvider(id) {
   if (!await showConfirm(t('confirm_delete_provider'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('service_providers').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('service_providers').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   await loadProviders(); renderProviders();
 }
 

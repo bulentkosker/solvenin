@@ -1187,7 +1187,7 @@ async function deleteProject(id) {
   if (!await showConfirm(t('confirm_delete_project'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('projects').update({ is_active:false, deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
+  await sb.from('projects').update({ deleted_at:_now, deleted_by:_u?.id }).eq('id', id);
   showToast(t('toast_project_deleted'),'success');
   if (currentProject?.id === id) closeDetail();
   await loadProjects();

@@ -1209,7 +1209,7 @@ async function completeProduction(orderId) {
 function askDeleteOrder(id) {
   deleteCallback = async () => {
     const now = new Date().toISOString();
-    const { error } = await sb.from('production_orders').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('id', id);
+    const { error } = await sb.from('production_orders').update({ deleted_at: now, deleted_by: currentUserId }).eq('id', id);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_deleted'), 'success');
     await loadOrders();
@@ -1226,7 +1226,7 @@ function askDeleteBom(id) {
     const used = orders.some(o => o.bom_id === id && ['planned','in_progress'].includes(o.status));
     if (used) { showToast(t('toast_bom_in_use'), 'error'); closeDeleteModal(); return; }
 
-    const { error } = await sb.from('bom').update({ is_active: false, deleted_at: now, deleted_by: currentUserId }).eq('id', id);
+    const { error } = await sb.from('bom').update({ deleted_at: now, deleted_by: currentUserId }).eq('id', id);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_deleted'), 'success');
     await loadBoms();

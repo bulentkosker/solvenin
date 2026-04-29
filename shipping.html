@@ -778,8 +778,8 @@ async function deleteShipment(id) {
   if (!await showConfirm(t('confirm_delete_shipment'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('shipment_items').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('shipment_id', id);
-  await sb.from('shipments').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
+  await sb.from('shipment_items').update({ deleted_at: _now, deleted_by: _u?.id }).eq('shipment_id', id);
+  await sb.from('shipments').update({ deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('toast_shipment_deleted'), 'success');
   await loadShipments();
   updateStats();
@@ -883,7 +883,7 @@ async function deleteVehicle(id) {
   if (!await showConfirm(t('confirm_delete_vehicle'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('vehicles').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
+  await sb.from('vehicles').update({ deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('toast_vehicle_deleted'), 'success');
   await loadVehicles();
   updateStats();
@@ -946,7 +946,7 @@ async function deleteDriver(id) {
   if (!await showConfirm(t('confirm_delete_driver'), t('lbl_delete')||'Delete')) return;
   const _now = new Date().toISOString();
   const { data: { user: _u } } = await sb.auth.getUser();
-  await sb.from('drivers').update({ is_active: false, deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
+  await sb.from('drivers').update({ deleted_at: _now, deleted_by: _u?.id }).eq('id', id);
   showToast(t('toast_driver_deleted'), 'success');
   await loadDrivers();
   renderDrivers();

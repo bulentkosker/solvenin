@@ -722,7 +722,7 @@ async function reportStock() {
   const minQty   = parseFloat(document.getElementById('f-min-qty')?.value);
   const maxQty   = parseFloat(document.getElementById('f-max-qty')?.value);
   let q = sb.from('products').select('id,name,sku,barcode,unit,cost_price,quantity,min_stock,category_id,categories(name)')
-    .eq('company_id', companyId).eq('is_active', true).order('name');
+    .eq('company_id', companyId).is('deleted_at', null).order('name');
   if (catId) q = q.eq('category_id', catId);
   const { data } = await q;
   let items = data || [];
@@ -763,7 +763,7 @@ async function reportStockMovements() {
   const { data: product } = await sb.from('products').select('name,sku,unit').eq('id', productId).single();
 
   // Opening balance (before start date)
-  let openQ = sb.from('stock_movements').select('type,quantity').eq('company_id', companyId).eq('product_id', productId).eq('is_active', true);
+  let openQ = sb.from('stock_movements').select('type,quantity').eq('company_id', companyId).eq('product_id', productId).is('deleted_at', null);
   if (from) openQ = openQ.lt('created_at', from);
   const { data: openData } = await openQ;
   let opening = 0;
@@ -771,7 +771,7 @@ async function reportStockMovements() {
 
   // Period movements
   let q = sb.from('stock_movements').select('created_at,reference,type,notes,quantity,warehouse_id,warehouses(name)')
-    .eq('company_id', companyId).eq('product_id', productId).eq('is_active', true);
+    .eq('company_id', companyId).eq('product_id', productId).is('deleted_at', null);
   if (from) q = q.gte('created_at', from);
   if (to) q = q.lte('created_at', to + 'T23:59:59');
   if (whFilter) q = q.eq('warehouse_id', whFilter);
@@ -848,7 +848,7 @@ async function reportLowStock() {
   const catId = document.getElementById('f-category')?.value;
   const overrideThreshold = parseFloat(document.getElementById('f-threshold')?.value);
   let q = sb.from('products').select('id,name,sku,unit,quantity,min_stock,category_id,categories(name)')
-    .eq('company_id', companyId).eq('is_active', true).order('name');
+    .eq('company_id', companyId).is('deleted_at', null).order('name');
   if (catId) q = q.eq('category_id', catId);
   const { data } = await q;
   const filtered = (data||[]).filter(p => {
@@ -882,7 +882,7 @@ async function reportLowStock() {
 async function reportStockValue() {
   const catFilter = document.getElementById('f-category')?.value;
   let q = sb.from('products').select('id,name,sku,unit,cost_price,quantity,category_id,categories(name)')
-    .eq('company_id', companyId).eq('is_active', true);
+    .eq('company_id', companyId).is('deleted_at', null);
   if (catFilter) q = q.eq('category_id', catFilter);
   const { data } = await q.order('name');
 
@@ -931,7 +931,7 @@ async function reportReceivables() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
   let q = sb.from('sales_orders').select('id,order_number,issue_date,due_date,total,status,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','overdue']);
+    .eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','overdue']);
   if (from) q = q.gte('issue_date', from);
   if (to) q = q.lte('issue_date', to);
   const { data } = await q.order('due_date');
@@ -972,7 +972,7 @@ async function reportPayables() {
   const from = document.getElementById('f-from')?.value;
   const to = document.getElementById('f-to')?.value;
   let q = sb.from('purchase_orders').select('id,order_number,issue_date,expected_date,total,status,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','overdue']);
+    .eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','overdue']);
   if (from) q = q.gte('issue_date', from);
   if (to) q = q.lte('issue_date', to);
   const { data } = await q.order('expected_date');
@@ -1015,7 +1015,7 @@ async function reportSales() {
   const group = document.getElementById('f-group')?.value || 'daily';
   const statusFilter = document.getElementById('f-status')?.value;
   let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true);
+    .eq('company_id', companyId).is('deleted_at', null);
   if (statusFilter){
     q = q.eq('status', statusFilter);
   } else {
@@ -1213,7 +1213,7 @@ async function reportStatement() {
   const lines = [];
 
   if (contact?.is_customer) {
-    let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('customer_id', contactId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('customer_id', contactId).is('deleted_at', null).in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
     const { data } = await q;
@@ -1230,7 +1230,7 @@ async function reportStatement() {
     }
   }
   if (contact?.is_supplier) {
-    let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('supplier_id', contactId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status').eq('company_id', companyId).eq('supplier_id', contactId).is('deleted_at', null).in('status', ['invoiced','paid','overdue']);
     if (from) q = q.gte('issue_date', from);
     if (to) q = q.lte('issue_date', to);
     const { data } = await q;
@@ -1246,7 +1246,7 @@ async function reportStatement() {
     }
   }
   // Manual transactions
-  let mq = sb.from('contact_transactions').select('*').eq('company_id', companyId).eq('contact_id', contactId).eq('is_active', true);
+  let mq = sb.from('contact_transactions').select('*').eq('company_id', companyId).eq('contact_id', contactId).is('deleted_at', null);
   if (from) mq = mq.gte('date', from);
   if (to) mq = mq.lte('date', to);
   const { data: mtx } = await mq;
@@ -1325,7 +1325,7 @@ async function reportTrial() {
 // ===== HELPER: Get orders with items =====
 async function _getSalesOrders(from, to) {
   let q = sb.from('sales_orders').select('id,order_number,issue_date,total,status,customer_id,assigned_to,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+    .eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','paid','overdue']);
   if (from) q = q.gte('issue_date', from);
   if (to) q = q.lte('issue_date', to);
   const { data } = await q;
@@ -1334,7 +1334,7 @@ async function _getSalesOrders(from, to) {
 
 async function _getPurchaseOrders(from, to) {
   let q = sb.from('purchase_orders').select('id,order_number,issue_date,total,status,supplier_id,contacts(name)')
-    .eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue','received']);
+    .eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','paid','overdue','received']);
   if (from) q = q.gte('issue_date', from);
   if (to) q = q.lte('issue_date', to);
   const { data } = await q;
@@ -1343,7 +1343,7 @@ async function _getPurchaseOrders(from, to) {
 
 // ===== STOK: Kategori Bazlı =====
 async function reportStockByCategory() {
-  const { data } = await sb.from('products').select('quantity,cost_price,category_id,categories(name)').eq('company_id', companyId).eq('is_active', true);
+  const { data } = await sb.from('products').select('quantity,cost_price,category_id,categories(name)').eq('company_id', companyId).is('deleted_at', null);
   const groups = {};
   (data||[]).forEach(p => {
     const name = p.categories?.name || '(Kategorisiz)';
@@ -1574,12 +1574,12 @@ async function reportContactAging() {
 async function reportContactSummary() {
   const typeFilter = document.getElementById('f-contact-type')?.value;
   const minAmount = parseFloat(document.getElementById('f-min-amount')?.value);
-  let cq = sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true);
+  let cq = sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).is('deleted_at', null);
   if (typeFilter === 'customer') cq = cq.eq('is_customer', true);
   if (typeFilter === 'supplier') cq = cq.eq('is_supplier', true);
   const { data: contacts } = await cq;
-  const { data: salesOrders } = await sb.from('sales_orders').select('customer_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
-  const { data: purchaseOrders } = await sb.from('purchase_orders').select('supplier_id,total').eq('company_id', companyId).eq('is_active', true).in('status', ['invoiced','paid','overdue']);
+  const { data: salesOrders } = await sb.from('sales_orders').select('customer_id,total').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','paid','overdue']);
+  const { data: purchaseOrders } = await sb.from('purchase_orders').select('supplier_id,total').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','paid','overdue']);
 
   const salesMap = {}, purchaseMap = {};
   (salesOrders||[]).forEach(o => { salesMap[o.customer_id] = (salesMap[o.customer_id]||0) + parseFloat(o.total||0); });

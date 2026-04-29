@@ -1197,7 +1197,8 @@ function deleteAccount(id) {
     const { count } = await sb.from('journal_lines').select('id', {count:'exact',head:true}).eq('account_id', id);
     if (count > 0) { showToast((t('err_has_journal_lines') || 'Önce yevmiye kayıtlarını silin: {0} kayıt var').replace('{0}', count), 'error'); return; }
     const { data: { user: _u } } = await sb.auth.getUser();
-    await sb.from('chart_of_accounts').update({ is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
+    // Soft-delete: only deleted_at (is_active is the archive flag, independent)
+    await sb.from('chart_of_accounts').update({ deleted_at: new Date().toISOString(), deleted_by: _u?.id }).eq('id', id);
     await loadAccounts(); updateStats();
     showToast(t('toast_deleted'), 'success');
   };

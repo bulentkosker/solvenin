@@ -5125,9 +5125,9 @@ async function deleteRegime(id, name) {
   );
   if (!confirmed) return;
 
-  // Soft delete
+  // Soft delete: only deleted_at (is_active is the archive flag, independent)
   const { error } = await sb.from('tax_regimes')
-    .update({ is_active: false, deleted_at: new Date().toISOString() })
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   await loadRegimes();
