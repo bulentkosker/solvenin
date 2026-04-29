@@ -585,7 +585,7 @@ tr:hover td{background:var(--gray50)}
     <div class="modal-body">
       <input type="hidden" id="pay-order-id">
       <div class="form-grid cols-1">
-        <div class="field"><label><span data-i18n="col_amount">Tutar *</span></label><input type="number" id="pay-amount" step="0.01"></div>
+        <div class="field"><label><span data-i18n="col_amount">Tutar *</span></label><input type="text" class="num-input" id="pay-amount" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this)"></div>
         <div class="field"><label><span data-i18n="lbl_payment_date">Ödeme Tarihi *</span></label><input type="date" id="pay-date"></div>
         <div class="field"><label data-i18n="label_pay_method">Ödeme Yöntemi</label>
           <select id="pay-method" onchange="onPayMethodChange()">
@@ -1954,7 +1954,7 @@ async function deleteCustomer(id) {
 // ===== PAYMENT =====
 function openPaymentModal(orderId, remaining) {
   document.getElementById('pay-order-id').value = orderId;
-  document.getElementById('pay-amount').value = parseFloat(remaining || 0).toFixed(2);
+  document.getElementById('pay-amount').value = fmtNum(parseFloat(remaining || 0));
   document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('pay-method').value = 'bank';
   document.getElementById('pay-ref').value = '';
@@ -1972,7 +1972,7 @@ async function savePayment() {
   if (submitting()) return;
   try {
   const orderId = document.getElementById('pay-order-id').value;
-  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const amount = parseNum(document.getElementById('pay-amount').value);
   const method = document.getElementById('pay-method').value;
   const registerId = document.getElementById('pay-register').value;
   const accountId = document.getElementById('pay-account').value;
