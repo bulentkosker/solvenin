@@ -1408,6 +1408,9 @@ function toggleDotMenu(btn) {
   const up = (spaceBelow < listH + 8 && spaceAbove > listH + 8);
   let left = btnRect.right - listW;
   if (left < 8) left = 8;
+  // Clamp right edge so the menu never overflows the viewport (kebab
+  // button can sit at/past viewport.innerWidth when the table scrolls).
+  if (left + listW > window.innerWidth - 8) left = window.innerWidth - listW - 8;
   const top = up ? (btnRect.top - listH - 4) : (btnRect.bottom + 4);
   list.style.position = 'fixed';
   list.style.top = top + 'px';
