@@ -852,7 +852,7 @@ async function loadOrders() {
 }
 
 async function loadCustomers() {
-  const { data } = await sb.from('contacts').select('*').eq('company_id', companyId).eq('is_active', true).eq('is_customer', true).order('name');
+  const { data } = await sb.from('contacts').select('*').eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).eq('is_customer', true).order('name');
   customers = data || [];
   renderCustomers(customers);
   updateCustomerSelects();
@@ -903,6 +903,7 @@ async function loadProducts() {
     .select('id,name,sale_price,unit,product_type,is_service,quantity,category_id,tax_source,tax_rate_id,tax_rate_override')
     .eq('company_id', companyId)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .order('is_service').order('name');
   products = data || [];
 }

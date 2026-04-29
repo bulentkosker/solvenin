@@ -3786,16 +3786,17 @@ async function loadRecycleBin() {
   _bindRecycleDelegation();
   tbody.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--gray400)">${t('loading')||'Loading...'}</td></tr>`;
 
-  // Query each table for soft-deleted records
+  // Trash = deleted_at IS NOT NULL (regardless of is_active). is_active
+  // is the archive flag, independent of soft-delete.
   const queries = await Promise.all([
-    sb.from('products').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('contacts').select('id,name,is_customer,is_supplier,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('sales_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('purchase_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('stock_movements').select('id,type,quantity,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('cash_registers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('bank_accounts').select('id,account_name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
-    sb.from('chart_of_accounts').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).eq('is_active', false).not('deleted_at', 'is', null),
+    sb.from('products').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('contacts').select('id,name,is_customer,is_supplier,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('sales_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('purchase_orders').select('id,order_number,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('stock_movements').select('id,type,quantity,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('cash_registers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('bank_accounts').select('id,account_name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('chart_of_accounts').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
   ]);
 
   const types = ['product','contact','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account'];
@@ -4031,7 +4032,9 @@ async function bulkRestoreRecycle() {
   if (!Object.keys(groups).length) return;
   let okCount = 0, failCount = 0, lastErr = null;
   for (const [table, ids] of Object.entries(groups)) {
-    const { error } = await sb.from(table).update({ is_active: true, deleted_at: null, deleted_by: null }).in('id', ids);
+    // Restore = clear deleted_at only. is_active stays as it was —
+    // a deleted-while-archived record stays archived after restore.
+    const { error } = await sb.from(table).update({ deleted_at: null, deleted_by: null }).in('id', ids);
     if (error) { failCount += ids.length; lastErr = error; }
     else okCount += ids.length;
   }
@@ -4080,7 +4083,7 @@ async function restoreRecord(type, id) {
   };
   const table = tableMap[type];
   if (!table) { showToast('Bilinmeyen kayıt türü: ' + type, 'error'); return; }
-  const { error } = await sb.from(table).update({ is_active: true, deleted_at: null, deleted_by: null }).eq('id', id);
+  const { error } = await sb.from(table).update({ deleted_at: null, deleted_by: null }).eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_restored')||'Kayıt geri yüklendi ✓', 'success');
   await loadRecycleBin();

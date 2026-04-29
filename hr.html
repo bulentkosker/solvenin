@@ -222,6 +222,9 @@ tr:hover .row-actions{opacity:1}
           <option value="active">Aktif</option>
           <option value="inactive">Pasif</option>
         </select>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-left:8px">
+          <input type="checkbox" id="emp-only-active" checked onchange="renderEmployees()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+        </label>
       </div>
       <div class="table-card">
         <div class="table-wrap">
@@ -787,7 +790,9 @@ async function loadPositions() {
   positions = data || [];
 }
 async function loadEmployees() {
-  const { data } = await sb.from('employees').select('*').eq('company_id', companyId).eq('is_active', true).order('last_name');
+  // Load active + inactive (archived). Soft-deleted excluded.
+  // Lists/dropdowns apply is_active filter where appropriate.
+  const { data } = await sb.from('employees').select('*').eq('company_id', companyId).is('deleted_at', null).order('last_name');
   employees = data || [];
   populateEmpSelects();
 }
@@ -841,7 +846,9 @@ function populateDeptSelects() {
   document.getElementById('emp-dept-filter').innerHTML = '<option value="">Tüm Departmanlar</option>' + deptOpts;
 }
 function populateEmpSelects() {
-  const empOpts = employees.map(e => `<option value="${e.id}">${e.first_name} ${e.last_name}</option>`).join('');
+  // Dropdowns hide archived employees (is_active=false). Lists/filters
+  // still see them via the loader cache.
+  const empOpts = employees.filter(e => e.is_active !== false).map(e => `<option value="${e.id}">${e.first_name} ${e.last_name}</option>`).join('');
   ['lr-emp','att-emp','leave-emp-filter','att-emp-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -877,6 +884,7 @@ function renderEmployees() {
   const deptFilter = document.getElementById('emp-dept-filter').value;
   const statusFilter = document.getElementById('emp-status-filter').value;
 
+  const onlyActive = document.getElementById('emp-only-active')?.checked !== false;
   let list = employees.filter(e => {
     const fullName = `${e.first_name} ${e.last_name}`.toLowerCase();
     const dept = departments.find(d => d.id === e.department_id);
@@ -884,6 +892,7 @@ function renderEmployees() {
     if (search && !fullName.includes(search) && !(dept?.name||'').toLowerCase().includes(search) && !(pos?.name||'').toLowerCase().includes(search)) return false;
     if (deptFilter && e.department_id !== deptFilter) return false;
     if (statusFilter && e.status !== statusFilter) return false;
+    if (onlyActive && e.is_active === false) return false;
     return true;
   });
 
@@ -1846,8 +1855,13 @@ async function openDeleteModal(type, id, name) {
   deleteCallback = async () => {
     let error;
     const softDelete = { is_active: false, deleted_at: new Date().toISOString(), deleted_by: currentUser?.id };
+    // Employees: only deleted_at — is_active is the archive flag, kept
+    // separate so a deleted employee can later be restored to whatever
+    // active/inactive state they had. Other tables (departments etc.)
+    // still use the legacy is_active+deleted_at pattern (Phase 2).
+    const empSoftDelete = { deleted_at: new Date().toISOString(), deleted_by: currentUser?.id };
     if (type === 'emp') {
-      ({ error } = await sb.from('employees').update(softDelete).eq('id', id));
+      ({ error } = await sb.from('employees').update(empSoftDelete).eq('id', id));
       if (!error) { await loadEmployees(); renderEmployees(); updateStats(); }
     } else if (type === 'dept') {
       ({ error } = await sb.from('departments').update(softDelete).eq('id', id));

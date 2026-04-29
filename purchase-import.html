@@ -375,7 +375,7 @@ async function init() {
 async function loadSuppliers() {
   const { data } = await sb.from('contacts')
     .select('id,name')
-    .eq('company_id', companyId).eq('is_active', true).eq('is_supplier', true)
+    .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).eq('is_supplier', true)
     .order('name');
   suppliers = data || [];
 }
@@ -383,7 +383,7 @@ async function loadSuppliers() {
 async function loadProducts() {
   const { data } = await sb.from('products')
     .select('id,name,sku,barcode,unit,is_service,cost_price')
-    .eq('company_id', companyId).eq('is_active', true)
+    .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null)
     .order('name');
   products = data || [];
 }

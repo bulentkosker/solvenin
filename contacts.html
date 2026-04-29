@@ -153,6 +153,9 @@ textarea{min-height:60px;resize:vertical}
         <option value="both" data-i18n="filter_both">Her İkisi</option>
         <option value="employee" data-i18n="filter_employees">Personel</option>
       </select>
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-left:8px">
+        <input type="checkbox" id="filter-only-active" checked onchange="filterContacts()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+      </label>
     </div>
 
     <!-- TABLE -->
@@ -341,6 +344,13 @@ textarea{min-height:60px;resize:vertical}
         <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" id="c-credit" value="0" min="0" step="0.01"></div>
         <div class="field full"><label data-i18n="col_address">Adres</label><textarea id="c-address"></textarea></div>
         <div class="field full"><label data-i18n="label_notes">Notlar</label><textarea id="c-notes"></textarea></div>
+        <div class="field full">
+          <label data-i18n="lbl_status">Durum</label>
+          <label style="display:inline-flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer">
+            <input type="checkbox" id="c-active" checked>
+            <span><strong data-i18n="status_active">Aktif</strong> — <span style="font-size:11px;color:var(--gray500)" data-i18n="info_inactive_in_reports">Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut tüm geçmiş veriler korunur.</span></span>
+          </label>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -394,10 +404,12 @@ async function init() {
 }
 
 async function loadContacts() {
+  // Load active + inactive (archived). Soft-deleted excluded.
+  // List applies "Sadece aktifler" filter client-side.
   const { data, error } = await sb.from('contacts')
     .select('*')
     .eq('company_id', companyId)
-    .eq('is_active', true)
+    .is('deleted_at', null)
     .order('name');
   if (error) { console.error('loadContacts:', error); }
   contacts = data || [];
@@ -418,6 +430,7 @@ function updateStats() {
 function filterContacts() {
   const q = (document.getElementById('contact-search').value || '').toLowerCase();
   const type = document.getElementById('filter-type').value;
+  const onlyActive = document.getElementById('filter-only-active')?.checked !== false;
   const filtered = contacts.filter(c => {
     if (q && !c.name.toLowerCase().includes(q) && !(c.email||'').toLowerCase().includes(q) && !(c.phone||'').includes(q)) return false;
     // Employee filter excludes personnel from customer/supplier/both buckets
@@ -425,6 +438,7 @@ function filterContacts() {
     if (type === 'supplier' && (c.is_employee || !c.is_supplier)) return false;
     if (type === 'both' && (c.is_employee || !(c.is_customer && c.is_supplier))) return false;
     if (type === 'employee' && !c.is_employee) return false;
+    if (onlyActive && c.is_active === false) return false;
     return true;
   });
   renderContacts(filtered);
@@ -517,11 +531,14 @@ function renderContacts(list) {
     const systemBadge = c.is_system
       ? ` <span class="badge badge-gray" title="${t('lbl_system_contact_tooltip')||'Sistem carisi — silinemez, birleştirilemez'}" style="margin-left:4px">🔒 ${t('lbl_system')||'Sistem'}</span>`
       : '';
+    const inactiveBadge = c.is_active === false
+      ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : '';
+    const rowOpacity = c.is_active === false ? ';opacity:0.55' : '';
     const b = balances[c.id] || { debit:0, credit:0 };
     const bal = b.debit - b.credit;
     const balColor = bal > 0 ? 'var(--red)' : bal < 0 ? 'var(--green)' : 'var(--gray400)';
-    return `<tr style="cursor:pointer" onclick="openStatement('${c.id}')">
-      <td><strong>${c.name}</strong>${systemBadge}</td>
+    return `<tr style="cursor:pointer${rowOpacity}" onclick="openStatement('${c.id}')">
+      <td><strong>${c.name}</strong>${systemBadge}${inactiveBadge}</td>
       <td>${typeBadge}</td>
       <td style="text-align:right;color:var(--red);font-weight:600">${b.debit ? fmtMoney(b.debit) : '—'}</td>
       <td style="text-align:right;color:var(--green);font-weight:600">${b.credit ? fmtMoney(b.credit) : '—'}</td>
@@ -535,6 +552,7 @@ function renderContacts(list) {
             <button class="dot-menu-item" onclick="closeDotMenus();openStatement('${c.id}')">📋 ${t('lbl_statement')||'Hesap Ekstresi'}</button>
             <button class="dot-menu-item" onclick="closeDotMenus();editContact('${c.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
             ${c.is_system ? '' : `<button class="dot-menu-item" onclick="closeDotMenus();openMergeContactModal('${c.id}')">🔀 ${t('btn_merge')||'Birleştir'}</button>`}
+            ${c.is_system ? '' : `<button class="dot-menu-item" onclick="closeDotMenus();toggleContactActive('${c.id}')">${c.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>`}
             ${c.is_system ? '' : `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteContact('${c.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>`}
           </div>
         </div>
@@ -563,6 +581,7 @@ function initCurrencySelect(baseCur) {
 function openContactModal() {
   editingId = null;
   document.getElementById('contact-modal-title').textContent = t('btn_new_contact') || 'Yeni Cari';
+  document.getElementById('c-active').checked = true;
   document.getElementById('c-name').value = '';
   document.getElementById('c-is-customer').checked = true;
   document.getElementById('c-is-supplier').checked = false;
@@ -588,6 +607,7 @@ function editContact(id) {
   if (!c) return;
   editingId = id;
   document.getElementById('contact-modal-title').textContent = t('title_edit_contact') || 'Cariyi Düzenle';
+  document.getElementById('c-active').checked = c.is_active !== false;
   document.getElementById('c-name').value = c.name;
   document.getElementById('c-is-customer').checked = c.is_customer;
   document.getElementById('c-is-supplier').checked = c.is_supplier;
@@ -647,6 +667,7 @@ async function saveContact() {
     credit_limit: parseFloat(document.getElementById('c-credit').value) || 0,
     address: document.getElementById('c-address').value.trim() || null,
     notes: document.getElementById('c-notes').value.trim() || null,
+    is_active: !!document.getElementById('c-active')?.checked,
   };
 
   try {
@@ -663,6 +684,26 @@ async function saveContact() {
   } catch (e) {
     showToast(getErrorMessage(e), 'error');
   } finally { submitting.reset(); }
+}
+
+async function toggleContactActive(id) {
+  const c = contacts.find(x => x.id === id);
+  if (!c) return;
+  if (c.is_system) { showToast(t('err_system_contact_action')||'Sistem carisi değiştirilemez', 'error'); return; }
+  const goingInactive = c.is_active !== false;
+  // Soft warning if archiving with non-zero balance.
+  if (goingInactive) {
+    const b = balances[c.id] || { debit:0, credit:0 };
+    const bal = b.debit - b.credit;
+    if (Math.abs(bal) > 0.01) {
+      const msg = (t('confirm_inactive_with_balance') || 'Bu cari hesabın {balance} bakiyesi var. Pasif yapsanız bile bakiye korunur. Devam edilsin mi?').replace('{balance}', fmtMoney(Math.abs(bal)));
+      if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+    }
+  }
+  const { error } = await sb.from('contacts').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
+  await loadContacts();
 }
 
 async function deleteContact(id) {
@@ -700,8 +741,10 @@ async function deleteContact(id) {
   const { data: { user } } = await sb.auth.getUser();
   // DB triggers (M091/M092) provide a hard guarantee — surface their error
   // instead of swallowing it with a misleading "silindi" toast.
+  // Soft-delete: only deleted_at. is_active is the active/inactive
+  // (archive) flag, independent of soft-delete.
   const { error } = await sb.from('contacts').update({
-    is_active: false, deleted_at: new Date().toISOString(), deleted_by: user?.id
+    deleted_at: new Date().toISOString(), deleted_by: user?.id
   }).eq('id', id);
   if (error) {
     console.error('[contacts] deleteContact:', error);

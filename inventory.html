@@ -358,6 +358,9 @@ tr:hover .action-btns { opacity:1; }
           <option value="product" data-i18n="label_products_only">📦 Products</option>
           <option value="service" data-i18n="label_services_only">🔧 Services</option>
         </select>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap">
+          <input type="checkbox" id="filter-only-active" checked onchange="filterTable()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+        </label>
       </div>
       <button class="btn-secondary" onclick="exportCSV()" data-i18n="inv_export">⬆️ Export</button>
       <button class="btn-secondary" onclick="openAdjustModal()" data-i18n="inv_adjust_stock">📊 Adjust Stock</button>
@@ -488,6 +491,15 @@ tr:hover .action-btns { opacity:1; }
         <div class="form-group">
           <label><span data-i18n="label_product_name">Product Name *</span></label>
           <input type="text" id="p-name" data-i18n-placeholder="label_product_name" placeholder="Product Name *">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label><span data-i18n="lbl_status">Durum</span></label>
+          <label style="display:inline-flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+            <input type="checkbox" id="p-active" checked>
+            <span><strong data-i18n="status_active">Aktif</strong> — <span style="font-size:11px;color:var(--gray500)" data-i18n="info_inactive_in_reports">Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut tüm geçmiş veriler korunur.</span></span>
+          </label>
         </div>
       </div>
       <div class="form-row">
@@ -1062,6 +1074,7 @@ function applyFilters() {
   const cat = document.getElementById('filter-category')?.value || '';
   const statusFilter = document.getElementById('filter-status')?.value || '';
   const itemTypeFilter = document.getElementById('filter-item-type')?.value || '';
+  const onlyActive = document.getElementById('filter-only-active')?.checked !== false;
 
   filteredProducts = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search) || (p.barcode||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
@@ -1075,7 +1088,8 @@ function applyFilters() {
     const matchType = !itemTypeFilter
       || (itemTypeFilter === 'product' && !p.is_service)
       || (itemTypeFilter === 'service' && p.is_service);
-    return matchSearch && matchCat && matchStatus && matchTab && matchType;
+    const matchActive = !onlyActive || p.is_active !== false;
+    return matchSearch && matchCat && matchStatus && matchTab && matchType && matchActive;
   });
 
   // Sort
@@ -1127,11 +1141,13 @@ function renderTable() {
     const typeBadge = p.is_service
       ? `<span class="badge" style="background:#ede9fe;color:#7c3aed;font-size:10px">🔧 ${t('label_service')||'Service'}</span>`
       : `<span class="badge badge-gray" style="font-size:10px">📦 ${t('label_product')||'Product'}</span>`;
-    return `<tr>
+    const inactiveBadge = p.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500" data-i18n="status_inactive">Pasif</span>` : '';
+    const rowOpacity = p.is_active === false ? ';opacity:0.55' : '';
+    return `<tr style="${rowOpacity}">
       <td><input type="checkbox" class="row-check" data-id="${p.id}"${_bulkSelected.has(p.id)?' checked':''} onchange="onRowCheckChange(this)"></td>
       <td><div class="td-name">
         <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
-        <span>${p.name}</span>
+        <span>${p.name}${inactiveBadge}</span>
       </div></td>
       <td data-col="kategori"><span class="badge ${catBadge}">${p.category || '—'}</span></td>
       <td data-col="stok">${p.is_service ? '<span style="color:var(--gray400)">—</span>' : `<div class="stock-bar-wrap">
@@ -1151,6 +1167,7 @@ function renderTable() {
             <button class="dot-menu-item" onclick="closeDotMenus();openEditModal('${p.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
             <button class="dot-menu-item" onclick="closeDotMenus();openAdjustForProduct('${p.id}')">${t('inv_adjust_stock')||'📊 Stok Ayarla'}</button>
             <button class="dot-menu-item" onclick="closeDotMenus();openMergeProductModal('${p.id}')">🔀 ${t('btn_merge')||'Birleştir'}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();toggleProductActive('${p.id}')">${p.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>
             <button class="dot-menu-item danger" onclick="closeDotMenus();openDeleteModal('${p.id}')">🗑️ ${t('btn_delete')||'Sil'}</button>
           </div>
         </div>
@@ -1409,6 +1426,7 @@ function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = t('title_add_product');
   ['p-name','p-sku','p-barcode','p-desc','p-min-stock','p-max-stock','p-cost','p-price','p-plu-code'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('p-active').checked = true;
   document.getElementById('p-is-weight').checked = false;
   document.getElementById('p-plu-wrap').style.display = 'none';
   document.getElementById('p-category-id').value = '';
@@ -1443,6 +1461,7 @@ function openEditModal(id) {
   if (!p) return;
   const titleTpl = t('title_edit_product') || 'Ürünü Düzenle';
   document.getElementById('modal-title').textContent = `${titleTpl}: ${p.name}`;
+  document.getElementById('p-active').checked = p.is_active !== false;
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-sku').value = p.sku || '';
   document.getElementById('p-barcode').value = p.barcode || '';
@@ -1512,10 +1531,12 @@ function onItemTypeChange() {
 // ===== LOAD FROM SUPABASE =====
 async function loadProducts() {
   if (!companyId) return;
+  // Load BOTH active and inactive (archived) — list applies the
+  // "Sadece aktifler" filter client-side. Soft-deleted rows still excluded.
   const { data, error } = await sb.from('products')
     .select('id,name,sku,barcode,category_id,unit,product_type,quantity,min_stock,max_stock,cost_price,sale_price,notes,is_active,company_id,tracking_type,has_variants,is_service,tax_source,tax_rate_id,tax_rate_override,is_weight_product,plu_code,reorder_point,lead_time_days')
     .eq('company_id', companyId)
-    .eq('is_active', true)
+    .is('deleted_at', null)
     .order('name');
   if (error) { console.error('loadProducts:', error); return; }
   products = (data || []).map(p => ({
@@ -1544,6 +1565,7 @@ async function loadProducts() {
     plu_code: p.plu_code || '',
     reorder_point: p.reorder_point != null ? parseFloat(p.reorder_point) : null,
     lead_time_days: p.lead_time_days != null ? parseInt(p.lead_time_days) : null,
+    is_active: p.is_active !== false,
   }));
 }
 
@@ -1846,7 +1868,7 @@ async function saveProduct() {
     cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
     sale_price: parseFloat(document.getElementById('p-price').value) || 0,
     company_id: companyId,
-    is_active: true,
+    is_active: !!document.getElementById('p-active')?.checked,
     is_service: isService,
     tracking_type: trackingType,
     has_variants: trackingType === 'variant',
@@ -2473,8 +2495,10 @@ async function confirmDelete() {
      they're audit records. To remove a product, first delete its
      movements (or use Birleştir to merge into another product). */
   const { data: { user: _u } } = await sb.auth.getUser();
+  // Soft-delete: only deleted_at. is_active is the active/inactive
+  // (archive) flag, independent of soft-delete.
   const { error } = await sb.from('products').update({
-    is_active: false, deleted_at: new Date().toISOString(), deleted_by: _u?.id
+    deleted_at: new Date().toISOString(), deleted_by: _u?.id
   }).eq('id', deletingId);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   closeModal('delete-modal');
@@ -2726,6 +2750,25 @@ function openMovementModal() {
   const cost = document.getElementById('adj-cost'); if (cost) cost.value = '';
   onAdjTypeChange();
   openModal('adjust-modal');
+}
+
+async function toggleProductActive(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const goingInactive = p.is_active !== false;
+  // Soft warning when archiving a product with stock or pending orders.
+  // The user can override — archive doesn't break history, only hides
+  // the product from new pickers.
+  if (goingInactive && p.stock > 0) {
+    const msg = (t('confirm_inactive_with_stock') || 'Bu ürünün {qty} {unit} stoğu var. Pasif yapsanız bile stok korunur. Devam edilsin mi?')
+      .replace('{qty}', p.stock).replace('{unit}', p.unit || '');
+    if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+  }
+  const { error } = await sb.from('products').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
+  await loadProducts();
+  renderAll();
 }
 
 function openAdjustForProduct(id) {
