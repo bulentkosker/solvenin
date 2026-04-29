@@ -15134,6 +15134,12 @@ function applyTranslations() {
       }
     }
   });
+  // data-i18n-title → element.title (for tooltip ⓘ icons etc.)
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = lookup(key);
+    if (val !== undefined) el.title = val;
+  });
   // Refresh select option texts
   const catSel = document.getElementById('filter-category');
   if (catSel) {
@@ -15257,6 +15263,12 @@ function applyTranslations() {
     if (val !== undefined) {
       el.placeholder = val;
     }
+  });
+  // Also handle data-i18n-title (for tooltip text)
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = lookup(key);
+    if (val !== undefined) el.title = val;
   });
   // RTL toggling on documentElement (also covers <html dir>)
   try {

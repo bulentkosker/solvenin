@@ -320,7 +320,14 @@ textarea{min-height:60px;resize:vertical}
     <div class="modal-body">
       <div class="form-grid">
         <div class="field full">
-          <label data-i18n="col_name">Ad *</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <label style="margin:0" data-i18n="col_name">Ad *</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--gray600);text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="c-active" checked style="margin:0">
+              <span data-i18n="status_active">Aktif</span>
+              <span style="cursor:help;color:var(--gray400);font-size:13px" data-i18n-title="info_inactive_in_reports" title="Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut — tüm geçmiş veri korunur.">ⓘ</span>
+            </label>
+          </div>
           <input type="text" id="c-name" required>
         </div>
         <div class="field full">
@@ -344,13 +351,6 @@ textarea{min-height:60px;resize:vertical}
         <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" id="c-credit" value="0" min="0" step="0.01"></div>
         <div class="field full"><label data-i18n="col_address">Adres</label><textarea id="c-address"></textarea></div>
         <div class="field full"><label data-i18n="label_notes">Notlar</label><textarea id="c-notes"></textarea></div>
-        <div class="field full">
-          <label data-i18n="lbl_status">Durum</label>
-          <label style="display:inline-flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer">
-            <input type="checkbox" id="c-active" checked>
-            <span><strong data-i18n="status_active">Aktif</strong> — <span style="font-size:11px;color:var(--gray500)" data-i18n="info_inactive_in_reports">Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut tüm geçmiş veriler korunur.</span></span>
-          </label>
-        </div>
       </div>
     </div>
     <div class="modal-footer">
