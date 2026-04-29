@@ -2248,9 +2248,11 @@ async function saveQAProduct() {
   }).select().single();
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_product_quick_added') || 'Ürün eklendi ✓', 'success');
+  // Capture callback BEFORE closing — closeQAProductModal() nulls _qaProductCb
+  const cb = _qaProductCb;
   closeQAProductModal();
   products.push(data);
-  if (_qaProductCb) _qaProductCb(data);
+  if (cb) cb(data);
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 function openQASupplierModal(name) {
