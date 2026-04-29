@@ -1400,6 +1400,10 @@ function toggleDotMenu(btn) {
   list.dataset.parentMenu = '1';
   list._menuParent = menu;
   document.body.appendChild(list);
+  // After detaching from .dot-menu.open, the CSS show rule no longer
+  // matches — force display:block so offsetWidth/Height return real values.
+  list.style.visibility = 'hidden';
+  list.style.display = 'block';
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
   const listW = list.offsetWidth;
@@ -1418,7 +1422,7 @@ function toggleDotMenu(btn) {
   list.style.right = 'auto';
   list.style.bottom = 'auto';
   list.style.margin = '0';
-  list.style.display = 'block';  // .open class no longer matches once list is detached
+  list.style.visibility = '';  // measured; reveal at the new position
   if (up) menu.classList.add('up');
 }
 function closeDotMenus() {
