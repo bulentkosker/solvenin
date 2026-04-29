@@ -1392,30 +1392,34 @@ function toggleDotMenu(btn) {
   closeDotMenus();
   if (wasOpen) return;
   menu.classList.add('open');
-  // Decide flip from the ACTUAL rendered list rect (offsetHeight can lag
-  // in Firefox if styles haven't settled). If it overflows the viewport
-  // bottom, flip upward; if upward also overflows, keep whichever side
-  // has more room.
   const list = menu.querySelector('.dot-menu-list');
   if (!list) return;
-  const margin = 8;
-  let r = list.getBoundingClientRect();
-  if (r.bottom > window.innerHeight - margin) {
-    menu.classList.add('up');
-    const r2 = list.getBoundingClientRect();
-    if (r2.top < margin) {
-      // Both directions clip — keep whichever has more space
-      const btnRect = btn.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - btnRect.bottom;
-      const spaceAbove = btnRect.top;
-      if (spaceBelow >= spaceAbove) menu.classList.remove('up');
-    }
-  }
+  // Same pattern as sales.html — use position:fixed + computed coords
+  // so the dropdown escapes any ancestor clipping (table cell, table-card)
+  // and reliably renders all items even on the first/last row.
+  const btnRect = btn.getBoundingClientRect();
+  const listH = list.offsetHeight;
+  const listW = list.offsetWidth;
+  const spaceBelow = window.innerHeight - btnRect.bottom;
+  const spaceAbove = btnRect.top;
+  const up = (spaceBelow < listH + 8 && spaceAbove > listH + 8);
+  let left = btnRect.right - listW;
+  if (left < 8) left = 8;
+  const top = up ? (btnRect.top - listH - 4) : (btnRect.bottom + 4);
+  list.style.position = 'fixed';
+  list.style.top = top + 'px';
+  list.style.left = left + 'px';
+  list.style.right = 'auto';
+  list.style.bottom = 'auto';
+  list.style.margin = '0';
+  if (up) menu.classList.add('up');
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
     m.classList.remove('open');
     m.classList.remove('up');
+    const list = m.querySelector('.dot-menu-list');
+    if (list) list.style.cssText = '';
   });
 }
 document.addEventListener('click', (e) => {
