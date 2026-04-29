@@ -533,11 +533,13 @@ function renderContacts(list) {
       : '';
     const inactiveBadge = c.is_active === false
       ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : '';
-    const rowOpacity = c.is_active === false ? ';opacity:0.55' : '';
+    // Background tint instead of opacity — opacity creates a stacking
+    // context that drags the kebab dropdown's visibility down with it.
+    const rowStyle = c.is_active === false ? ';background:var(--gray50,#f8fafc);color:var(--gray400)' : '';
     const b = balances[c.id] || { debit:0, credit:0 };
     const bal = b.debit - b.credit;
     const balColor = bal > 0 ? 'var(--red)' : bal < 0 ? 'var(--green)' : 'var(--gray400)';
-    return `<tr style="cursor:pointer${rowOpacity}" onclick="openStatement('${c.id}')">
+    return `<tr style="cursor:pointer${rowStyle}" onclick="openStatement('${c.id}')">
       <td><strong>${c.name}</strong>${systemBadge}${inactiveBadge}</td>
       <td>${typeBadge}</td>
       <td style="text-align:right;color:var(--red);font-weight:600">${b.debit ? fmtMoney(b.debit) : '—'}</td>

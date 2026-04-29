@@ -1142,8 +1142,10 @@ function renderTable() {
       ? `<span class="badge" style="background:#ede9fe;color:#7c3aed;font-size:10px">🔧 ${t('label_service')||'Service'}</span>`
       : `<span class="badge badge-gray" style="font-size:10px">📦 ${t('label_product')||'Product'}</span>`;
     const inactiveBadge = p.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500" data-i18n="status_inactive">Pasif</span>` : '';
-    const rowOpacity = p.is_active === false ? ';opacity:0.55' : '';
-    return `<tr style="${rowOpacity}">
+    // Use background tint instead of opacity — opacity creates a
+    // stacking context that drags the kebab dropdown down with it.
+    const rowStyle = p.is_active === false ? 'background:var(--gray50,#f8fafc);color:var(--gray400)' : '';
+    return `<tr style="${rowStyle}">
       <td><input type="checkbox" class="row-check" data-id="${p.id}"${_bulkSelected.has(p.id)?' checked':''} onchange="onRowCheckChange(this)"></td>
       <td><div class="td-name">
         <div class="item-icon">${p.is_service ? '🔧' : getCatIcon(p.category)}</div>
