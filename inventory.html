@@ -1394,9 +1394,12 @@ function toggleDotMenu(btn) {
   menu.classList.add('open');
   const list = menu.querySelector('.dot-menu-list');
   if (!list) return;
-  // Same pattern as sales.html — use position:fixed + computed coords
-  // so the dropdown escapes any ancestor clipping (table cell, table-card)
-  // and reliably renders all items even on the first/last row.
+  // Portal the list to <body> so position:fixed escapes any ancestor
+  // that has `transform` set (e.g. .fade-up animation on .table-card,
+  // which would otherwise become the fixed-positioning containing block).
+  list.dataset.parentMenu = '1';
+  list._menuParent = menu;
+  document.body.appendChild(list);
   const btnRect = btn.getBoundingClientRect();
   const listH = list.offsetHeight;
   const listW = list.offsetWidth;
@@ -1412,18 +1415,29 @@ function toggleDotMenu(btn) {
   list.style.right = 'auto';
   list.style.bottom = 'auto';
   list.style.margin = '0';
+  list.style.display = 'block';  // .open class no longer matches once list is detached
   if (up) menu.classList.add('up');
 }
 function closeDotMenus() {
   document.querySelectorAll('.dot-menu.open, .dot-menu.up').forEach(m => {
     m.classList.remove('open');
     m.classList.remove('up');
-    const list = m.querySelector('.dot-menu-list');
-    if (list) list.style.cssText = '';
+  });
+  // Find any portal'd lists and put them back where they came from.
+  document.querySelectorAll('.dot-menu-list[data-parent-menu="1"]').forEach(list => {
+    list.style.cssText = '';
+    delete list.dataset.parentMenu;
+    if (list._menuParent && list._menuParent.isConnected) {
+      list._menuParent.appendChild(list);
+    }
+    list._menuParent = null;
   });
 }
+// On any click outside .dot-menu OR .dot-menu-list, close.
+// (.dot-menu-list is portal'd to body so closest('.dot-menu') won't match
+// when clicking a menu item — check both.)
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.dot-menu')) closeDotMenus();
+  if (!e.target.closest('.dot-menu') && !e.target.closest('.dot-menu-list')) closeDotMenus();
 });
 
 function openAddModal() {
