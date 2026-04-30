@@ -466,3 +466,73 @@ window.addLogoToPdf = function(doc, x, y, maxWidth, maxHeight) {
   window.numFormat = formatTyped;
   window.numParse = (t) => { const n = parseFloat(toNumeric(t)); return isNaN(n) ? 0 : n; };
 })();
+
+// ============================================================
+// formDirtyTracker — "Unsaved changes" guard for entity modals
+// ============================================================
+// init(modalId)  — call after openX() populates the form. Attaches one
+//   delegated listener and resets the dirty flag.
+// reset(modalId) — call after a successful save (skips the confirm
+//   dialog when closeModal runs immediately after).
+// confirmClose(modalId) — async; returns true if the caller may close.
+//   Shows the unsaved-changes confirm when the form is dirty, otherwise
+//   resolves true immediately.
+// closeModalSafe(modalId) — convenience: confirmClose() then closeModal()
+//   if the user agrees. Wire onclick="closeModalSafe('product-modal')"
+//   on the X button and Cancel button.
+// ============================================================
+window.formDirtyTracker = (function() {
+  const states = new Map();   // modalId → { dirty: bool, handler: fn }
+
+  function init(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    let entry = states.get(modalId);
+    if (entry) {
+      entry.dirty = false;
+      return; // listener already attached on this modal element
+    }
+    entry = { dirty: false, handler: null };
+    const onChange = (e) => {
+      // Ignore checkbox-induced changes from selectAll patterns? Just any input/change marks dirty.
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) {
+        const cur = states.get(modalId);
+        if (cur) cur.dirty = true;
+      }
+    };
+    modal.addEventListener('input', onChange);
+    modal.addEventListener('change', onChange);
+    entry.handler = onChange;
+    states.set(modalId, entry);
+  }
+
+  function reset(modalId) {
+    const entry = states.get(modalId);
+    if (entry) entry.dirty = false;
+  }
+
+  function isDirty(modalId) {
+    const entry = states.get(modalId);
+    return !!(entry && entry.dirty);
+  }
+
+  async function confirmClose(modalId) {
+    if (!isDirty(modalId)) return true;
+    const tt = (typeof t === 'function') ? t : (k => k);
+    const msg = tt('unsaved_changes_msg') || 'Değişiklikler kaybolacak. Çıkmak istediğinize emin misiniz?';
+    const title = tt('unsaved_changes_title') || 'Kaydedilmemiş Değişiklikler';
+    const ok = tt('btn_discard') || 'Çık';
+    if (typeof showConfirm !== 'function') return true;
+    const proceed = await showConfirm(msg, title, ok);
+    if (proceed) reset(modalId);
+    return proceed;
+  }
+
+  async function closeModalSafe(modalId) {
+    const ok = await confirmClose(modalId);
+    if (ok && typeof closeModal === 'function') closeModal(modalId);
+  }
+
+  return { init, reset, isDirty, confirmClose, closeModalSafe };
+})();
+window.closeModalSafe = window.formDirtyTracker.closeModalSafe;

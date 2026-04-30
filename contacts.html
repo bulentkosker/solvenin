@@ -316,7 +316,7 @@ textarea{min-height:60px;resize:vertical}
   <div class="modal" style="max-width:600px">
     <div class="modal-head">
       <span class="modal-title" id="contact-modal-title" data-i18n="btn_new_contact">Yeni Cari</span>
-      <button class="modal-close" onclick="closeModal('contact-modal')">✕</button>
+      <button class="modal-close" onclick="closeModalSafe('contact-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -355,7 +355,7 @@ textarea{min-height:60px;resize:vertical}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('contact-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-outline" onclick="closeModalSafe('contact-modal')" data-i18n="btn_cancel">İptal</button>
       <button class="btn btn-primary" onclick="saveContact()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
@@ -602,6 +602,7 @@ function openContactModal() {
   document.getElementById('c-credit').value = '0';
   document.getElementById('c-address').value = '';
   document.getElementById('c-notes').value = '';
+  if (window.formDirtyTracker) formDirtyTracker.init('contact-modal');
   openModal('contact-modal');
 }
 
@@ -629,6 +630,7 @@ function editContact(id) {
   document.getElementById('c-credit').value = c.credit_limit || 0;
   document.getElementById('c-address').value = c.address || '';
   document.getElementById('c-notes').value = c.notes || '';
+  if (window.formDirtyTracker) formDirtyTracker.init('contact-modal');
   openModal('contact-modal');
 }
 
@@ -682,6 +684,7 @@ async function saveContact() {
       if (error) throw error;
     }
     showToast(t('toast_contact_saved') || 'Cari kaydedildi', 'success');
+    if (window.formDirtyTracker) formDirtyTracker.reset('contact-modal');
     closeModal('contact-modal');
     await loadContacts();
   } catch (e) {

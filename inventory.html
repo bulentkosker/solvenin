@@ -469,7 +469,7 @@ tr:hover .action-btns { opacity:1; }
   <div class="modal" style="width:700px">
     <div class="modal-head">
       <div class="modal-title" id="modal-title">Add Product</div>
-      <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
+      <button class="modal-close" onclick="closeModalSafe('product-modal')">✕</button>
     </div>
     <div class="modal-body">
       <!-- ITEM TYPE SELECTOR -->
@@ -714,7 +714,7 @@ tr:hover .action-btns { opacity:1; }
       </details>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('product-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-secondary" onclick="closeModalSafe('product-modal')" data-i18n="btn_cancel">Cancel</button>
       <button class="btn-primary" onclick="saveProduct()" data-action="save" data-action="save" data-i18n="btn_save_product">Save Product</button>
     </div>
   </div>
@@ -1478,6 +1478,7 @@ function openAddModal() {
   _lotList = [];
   onTrackingTypeChange();
   onItemTypeChange();
+  if (window.formDirtyTracker) formDirtyTracker.init('product-modal');
   openModal('product-modal');
 }
 
@@ -1535,6 +1536,7 @@ function openEditModal(id) {
   loadTrackingDataForProduct(id, tt);
   onTrackingTypeChange();
   onItemTypeChange();
+  if (window.formDirtyTracker) formDirtyTracker.init('product-modal');
   openModal('product-modal');
 }
 
@@ -1934,6 +1936,7 @@ async function saveProduct() {
   }
 
   showToast(t('toast_saved') || 'Saved ✓', 'success');
+  if (window.formDirtyTracker) formDirtyTracker.reset('product-modal');
   closeModal('product-modal');
   await loadProducts();
   renderAll();

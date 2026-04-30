@@ -768,6 +768,7 @@ window.T.tr = {
     status_invoiced:'Faturalandı', status_paid:'Ödendi', status_overdue:'Gecikmiş',
     btn_confirm:'Onayla', btn_invoice:'Faturalandır', btn_mark_paid:'Ödendi İşaretle',
     toast_status_updated:'Durum güncellendi', no_invoices:'Henüz fatura yok', title_create_invoice:'Fatura Oluştur', msg_confirm_invoice:'Bu siparişi faturalandırmak istiyor musunuz?', lbl_invoice_date:'Fatura Tarihi', toast_invoiced:'Fatura oluşturuldu', title_record_payment:'Ödeme Kaydet', btn_save_payment:'Ödemeyi Kaydet', toast_invoice_locked:'Muhasebe entegrasyonu aktif — bu fatura düzenlenemez', nav_integrations:'Muhasebe Ayarları', sale_invoice:'Satış faturası', title_view_order:'Sipariş Detayı', confirm_cancel_order:'Bu siparişi iptal etmek istediğinizden emin misiniz?', btn_cancel_order:'İptal Et', toast_order_cancelled:'Sipariş iptal edildi', confirm_unsaved:'Kaydedilmemiş değişiklikler var. Çıkmak istediğinizden emin misiniz?', btn_discard:'Değişiklikleri İptal Et',
+    unsaved_changes_title:'Kaydedilmemiş Değişiklikler', unsaved_changes_msg:'Değişiklikler kaybolacak. Çıkmak istediğinize emin misiniz?', btn_keep_editing:'Düzenlemeye Devam Et',
     col_invoice_no:'Fatura No', search_invoices:'Fatura ara...',
     status_shipped:'Kargoya Verildi',
     status_partial:'Kısmi',
