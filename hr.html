@@ -734,6 +734,7 @@ let attendanceRecords = [];
 // currentPayrollId removed: payroll is per-employee-per-period (no header table)
 let currentTab = 'employees';
 let editingEmpId = null, editingPayItemId = null;
+const payrollDefaults = { tax: null, ins: null };
 let editingLeaveId = null, editingLeaveTypeId = null;
 let editingAttId = null, editingDeptId = null, editingPosId = null;
 let deleteCallback = null;
@@ -764,6 +765,13 @@ async function init() {
   companyId = _active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
   currentUser = user;
+
+  // Load company-level payroll defaults (used as new-employee default rates)
+  const { data: _co } = await sb.from('companies')
+    .select('payroll_default_tax_rate, payroll_default_insurance_rate')
+    .eq('id', companyId).single();
+  payrollDefaults.tax = (typeof _co?.payroll_default_tax_rate === 'number' && Number.isFinite(_co.payroll_default_tax_rate)) ? _co.payroll_default_tax_rate : null;
+  payrollDefaults.ins = (typeof _co?.payroll_default_insurance_rate === 'number' && Number.isFinite(_co.payroll_default_insurance_rate)) ? _co.payroll_default_insurance_rate : null;
 
   // Init payroll year/month selectors
   const now = new Date();
@@ -990,15 +998,20 @@ function openEmpModal(id = null) {
   document.getElementById('e-email').value = e?.email || '';
   document.getElementById('e-phone').value = e?.phone || '';
   document.getElementById('e-salary').value = e?.base_salary || '';
-  // Explicit validation + String() conversion to bypass Chromium <input type=number>
-  // edge cases where setting .value = 0 (Number) on a step="0.1" input may end up
-  // empty/placeholder. ?? alone wasn't enough — observed empty input even with
-  // e.tax_rate === 0 confirmed in DB. Belt-and-suspenders: validate type, then
-  // convert to string explicitly.
-  const _taxVal = (typeof e?.tax_rate === 'number' && Number.isFinite(e.tax_rate)) ? e.tax_rate : 15;
-  const _insVal = (typeof e?.insurance_rate === 'number' && Number.isFinite(e.insurance_rate)) ? e.insurance_rate : 14;
-  document.getElementById('e-tax').value = String(_taxVal);
-  document.getElementById('e-ins').value = String(_insVal);
+  // Edit mode: use employee's stored override.
+  // Create mode: fall back to company-level payrollDefaults; if those are NULL,
+  // leave field empty + show placeholder pointing to settings.
+  const taxEl = document.getElementById('e-tax');
+  const insEl = document.getElementById('e-ins');
+  const _empTax = (typeof e?.tax_rate === 'number' && Number.isFinite(e.tax_rate)) ? e.tax_rate : null;
+  const _empIns = (typeof e?.insurance_rate === 'number' && Number.isFinite(e.insurance_rate)) ? e.insurance_rate : null;
+  const _taxVal = e ? _empTax : payrollDefaults.tax;
+  const _insVal = e ? _empIns : payrollDefaults.ins;
+  taxEl.value = (_taxVal === null || _taxVal === undefined) ? '' : String(_taxVal);
+  insEl.value = (_insVal === null || _insVal === undefined) ? '' : String(_insVal);
+  const _ph = t('placeholder_payroll_not_set') || 'Önce Ayarlar → Vergi Oranları\'ndan girin';
+  taxEl.placeholder = (!e && payrollDefaults.tax === null) ? _ph : '';
+  insEl.placeholder = (!e && payrollDefaults.ins === null) ? _ph : '';
   document.getElementById('e-status').value = e?.status || 'active';
   document.getElementById('e-notes').value = e?.notes || '';
   document.getElementById('e-hiredate').value = e?.hire_date || new Date().toISOString().slice(0,10);

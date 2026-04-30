@@ -346,7 +346,6 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('stock-settings', this)"><span class="settings-nav-icon">📦</span> <span data-i18n="nav_stock_settings">Stok Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('warehouses', this)"><span class="settings-nav-icon">🏗️</span> <span data-i18n="nav_warehouses">Warehouses</span></button>
         <button class="settings-nav-item" onclick="switchSection('taxes', this)"><span class="settings-nav-icon">📋</span> <span data-i18n="nav_tax_rates">Tax Rates</span></button>
-        <button class="settings-nav-item" onclick="switchSection('tax-regime', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="nav_tax_regime">Tax Regime</span></button>
         <button class="settings-nav-item" onclick="switchSection('modules', this)"><span class="settings-nav-icon">🧩</span> <span data-i18n="nav_modules">Modules</span></button>
         <button class="settings-nav-item" onclick="switchSection('invoice-settings', this)"><span class="settings-nav-icon">🧾</span> <span data-i18n="nav_invoice_settings">Fatura Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('integrations', this)"><span class="settings-nav-icon">📒</span> <span data-i18n="nav_integrations">Muhasebe Ayarları</span></button>
@@ -839,6 +838,26 @@ tr:hover .action-btns { opacity:1; }
 
         <!-- TAXES -->
         <div class="settings-section" id="section-taxes">
+          <!-- Payroll default rates (company-level) -->
+          <div class="settings-card" style="margin-bottom:16px">
+            <div class="settings-card-head">
+              <div><div class="settings-card-title" data-i18n="card_payroll_defaults">Bordro Varsayılan Oranları</div><div class="settings-card-desc" data-i18n="desc_payroll_defaults">Yeni çalışan eklerken default olarak gelecek oranlar. Çalışan kartında manuel değiştirilebilir.</div></div>
+              <button class="btn-primary" onclick="savePayrollDefaults()" data-action="save"><span data-i18n="btn_save">Kaydet</span></button>
+            </div>
+            <div class="settings-card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label data-i18n="lbl_payroll_tax_rate">Gelir Vergisi (%)</label>
+                  <input type="text" inputmode="decimal" id="pd-tax-rate" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="lbl_payroll_insurance_rate">Sigorta Primi (%)</label>
+                  <input type="text" inputmode="decimal" id="pd-ins-rate" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title" data-i18n="tab_tax_rates">Tax Rates</div><div class="settings-card-desc" data-i18n="desc_tax_rates">Define tax rates for invoices</div></div>
@@ -849,46 +868,6 @@ tr:hover .action-btns { opacity:1; }
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="taxes-list" class="manage-list"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAX REGIME -->
-        <div class="settings-section" id="section-tax-regime">
-          <div class="settings-card" style="margin-bottom:16px">
-            <div class="settings-card-head">
-              <div>
-                <div class="settings-card-title" data-i18n="lbl_active_regime">Active Tax Regime</div>
-                <div class="settings-card-desc" data-i18n="desc_active_regime">The tax regime currently applied to your company</div>
-              </div>
-            </div>
-            <div class="settings-card-body">
-              <div id="active-regime-display" style="padding:12px 0;color:var(--gray500);font-size:13px" data-i18n="lbl_no_regime_set">No regime set</div>
-            </div>
-          </div>
-
-          <div class="settings-card" style="margin-bottom:16px">
-            <div class="settings-card-head">
-              <div>
-                <div class="settings-card-title" data-i18n="lbl_template_regimes">Template Regimes</div>
-                <div class="settings-card-desc" data-i18n="desc_template_regimes">Predefined regimes for your country</div>
-              </div>
-            </div>
-            <div class="settings-card-body" style="padding:0 24px">
-              <div id="template-regimes-list" class="manage-list"></div>
-            </div>
-          </div>
-
-          <div class="settings-card">
-            <div class="settings-card-head">
-              <div>
-                <div class="settings-card-title" data-i18n="lbl_custom_regimes">Custom Regimes</div>
-                <div class="settings-card-desc" data-i18n="desc_custom_regimes">Your company's custom tax regimes</div>
-              </div>
-              <button class="btn-primary" onclick="openRegimeModal()"><span data-i18n="btn_add_regime">+ Add Regime</span></button>
-            </div>
-            <div class="settings-card-body" style="padding:0 24px">
-              <div id="custom-regimes-list" class="manage-list"></div>
             </div>
           </div>
         </div>
@@ -1646,56 +1625,6 @@ tr:hover .action-btns { opacity:1; }
   </div>
 </div>
 
-<!-- Tax Regime Modal -->
-<div class="modal-overlay" id="regime-modal">
-  <div class="modal" style="width:520px">
-    <div class="modal-head">
-      <div class="modal-title" id="regime-modal-title">Add Tax Regime</div>
-      <button class="modal-close" onclick="closeModal('regime-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row full">
-        <div class="form-group"><label data-i18n="label_name">Name *</label><input type="text" id="rg-name" placeholder="e.g. Standard VAT Regime"></div>
-      </div>
-      <div class="form-row full">
-        <div class="form-group"><label data-i18n="lbl_description">Description</label><textarea id="rg-desc" style="min-height:60px" placeholder=""></textarea></div>
-      </div>
-      <div style="height:1px;background:var(--gray200);margin:16px 0"></div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="lbl_vat_applicable">VAT Applicable?</label>
-          <select id="rg-vat-applicable">
-            <option value="true" data-i18n="lbl_yes">Yes</option>
-            <option value="false" data-i18n="lbl_no">No</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="lbl_vat_rate">VAT Rate (%)</label>
-          <input type="number" lang="en" id="rg-vat-rate" value="0" min="0" max="100" step="0.01">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="lbl_income_tax_type">Income/Corporate Tax Type</label>
-          <select id="rg-income-type">
-            <option value="none" data-i18n="lbl_none">None</option>
-            <option value="revenue_based" data-i18n="lbl_revenue_based">Revenue Based</option>
-            <option value="profit_based" data-i18n="lbl_profit_based">Profit Based</option>
-            <option value="fixed" data-i18n="lbl_fixed">Fixed</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="lbl_income_tax_rate">Tax Rate (%)</label>
-          <input type="number" lang="en" id="rg-income-rate" value="0" min="0" max="100" step="0.01">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('regime-modal')" data-i18n="btn_cancel">Cancel</button>
-      <button class="btn-primary" onclick="saveRegime()" data-action="save" data-i18n="btn_save">Save</button>
-    </div>
-  </div>
-</div>
 
 <!-- New Company Modal -->
 <div class="new-company-modal" id="new-company-modal">
@@ -1734,8 +1663,6 @@ let activeCurrencies = [];
 let baseCurrency = 'USD';
 let editingWhId = null;
 let editingTaxId = null;
-let editingRegimeId = null;
-let allRegimes = [];
 let deleteCallback = null;
 
 // ===== SUPABASE =====
@@ -1920,7 +1847,7 @@ async function init() {
     console.time('[settings] all data');
     await Promise.all([
       loadCompanies(), loadCountriesForModal(), loadCompanyData(),
-      loadCategories(), loadWarehouses(), loadTaxes(), loadRegimes(), loadModules(), loadUsers(), loadInvoiceSettings(), loadIntegrationSettings(), loadPosSettings()
+      loadCategories(), loadWarehouses(), loadTaxes(), loadPayrollDefaults(), loadModules(), loadUsers(), loadInvoiceSettings(), loadIntegrationSettings(), loadPosSettings()
     ]);
     console.timeEnd('[settings] all data');
 
@@ -5001,183 +4928,40 @@ async function confirmRemoveUser() {
   await loadUsers();
 }
 
-// ===== TAX REGIMES =====
-async function loadRegimes() {
+// ===== PAYROLL DEFAULTS (company-level) =====
+async function loadPayrollDefaults() {
   if (!companyId) return;
-  const countryCode = companyData?.country_code || '';
-
-  // Fetch template regimes (company_id IS NULL, matching country)
-  let templateRegimes = [];
-  if (countryCode) {
-    const { data: loc } = await sb.from('localizations').select('id').eq('country_code', countryCode).single();
-    if (loc) {
-      const { data } = await sb.from('tax_regimes')
-        .select('*')
-        .is('company_id', null)
-        .eq('localization_id', loc.id)
-        .eq('is_active', true)
-        .order('name');
-      templateRegimes = data || [];
-    }
-  }
-
-  // Fetch custom regimes (company's own)
-  const { data: customData } = await sb.from('tax_regimes')
-    .select('*')
-    .eq('company_id', companyId)
-    .eq('is_active', true)
-    .order('name');
-  const customRegimes = customData || [];
-
-  allRegimes = [...templateRegimes, ...customRegimes];
-
-  const activeId = companyData?.tax_regime_id || null;
-
-  // Render active regime
-  const activeRegime = allRegimes.find(r => r.id === activeId);
-  const activeEl = document.getElementById('active-regime-display');
-  if (activeEl) {
-    if (activeRegime) {
-      activeEl.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-size:20px">🏛️</span>
-          <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text)">${activeRegime.name}</div>
-            ${activeRegime.description ? `<div style="font-size:12px;color:var(--gray500);margin-top:2px">${activeRegime.description}</div>` : ''}
-            <div style="font-size:11px;color:var(--gray400);margin-top:4px">
-              ${activeRegime.vat_applicable ? 'VAT ' + (activeRegime.vat_rate||0) + '%' : t('lbl_no_vat')||'No VAT'}
-              ${activeRegime.income_tax_type && activeRegime.income_tax_type !== 'none' ? ' · ' + activeRegime.income_tax_type + ' ' + (activeRegime.income_tax_rate||0) + '%' : ''}
-            </div>
-          </div>
-        </div>`;
-    } else {
-      activeEl.innerHTML = `<span style="color:var(--gray400)">${t('lbl_no_regime_set')||'No regime set'}</span>`;
-    }
-  }
-
-  // Render template regimes
-  renderRegimeList('template-regimes-list', templateRegimes, activeId, false);
-  // Render custom regimes
-  renderRegimeList('custom-regimes-list', customRegimes, activeId, true);
+  const { data, error } = await sb.from('companies')
+    .select('payroll_default_tax_rate, payroll_default_insurance_rate')
+    .eq('id', companyId).single();
+  if (error) { console.error(error); return; }
+  const tax = document.getElementById('pd-tax-rate');
+  const ins = document.getElementById('pd-ins-rate');
+  if (tax) tax.value = (data?.payroll_default_tax_rate ?? '') === '' ? '' : String(data.payroll_default_tax_rate);
+  if (ins) ins.value = (data?.payroll_default_insurance_rate ?? '') === '' ? '' : String(data.payroll_default_insurance_rate);
 }
 
-function renderRegimeList(containerId, regimes, activeId, editable) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  if (!regimes.length) {
-    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_regimes')||'No regimes found'}</div>`;
-    return;
-  }
-  container.innerHTML = regimes.map(r => `
-    <div class="manage-item">
-      <div class="manage-item-icon">🏛️</div>
-      <div class="manage-item-info" style="flex:1">
-        <div class="manage-item-name">
-          ${r.name}
-          ${r.id === activeId ? `<span class="badge badge-green" style="margin-left:8px;font-size:10px">${t('lbl_active')||'Active'}</span>` : ''}
-        </div>
-        <div class="manage-item-meta">
-          ${r.vat_applicable ? 'VAT ' + (r.vat_rate||0) + '%' : t('lbl_no_vat')||'No VAT'}
-          ${r.income_tax_type && r.income_tax_type !== 'none' ? ' · ' + r.income_tax_type + ' ' + (r.income_tax_rate||0) + '%' : ''}
-          ${r.description ? ' · ' + r.description : ''}
-        </div>
-      </div>
-      <div class="manage-item-actions">
-        ${r.id !== activeId ? `<button class="btn-primary btn-sm" onclick="applyRegime('${r.id}','${r.name.replace(/'/g,"\\'")}')" style="font-size:11px;padding:5px 12px">${t('btn_apply')||'Apply'}</button>` : ''}
-        ${editable ? `<button class="action-btn" onclick="openRegimeModal('${r.id}')">✏️</button><button class="action-btn danger" onclick="deleteRegime('${r.id}','${r.name.replace(/'/g,"\\'")}')">🗑️</button>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-async function applyRegime(regimeId, name) {
-  const confirmed = await showConfirm(
-    (t('confirm_apply_regime')||'Apply "{0}" as your company\'s tax regime?').replace('{0}', name),
-    t('lbl_apply_regime')||'Apply Regime',
-    t('lbl_yes')||'Yes'
-  );
-  if (!confirmed) return;
-
-  const { error } = await sb.from('companies')
-    .update({ tax_regime_id: regimeId })
-    .eq('id', companyId);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  companyData = { ...companyData, tax_regime_id: regimeId };
-  await loadRegimes();
-  showToast((t('toast_regime_applied')||'Tax regime applied: {0}').replace('{0}', name), 'success');
-}
-
-function openRegimeModal(id=null) {
-  editingRegimeId = id;
-  const r = id ? allRegimes.find(x => x.id === id) : null;
-  document.getElementById('regime-modal-title').textContent = id ? (t('title_edit_regime')||'Edit Tax Regime') : (t('title_add_regime')||'Add Tax Regime');
-  document.getElementById('rg-name').value = r?.name || '';
-  document.getElementById('rg-desc').value = r?.description || '';
-  document.getElementById('rg-vat-applicable').value = r?.vat_applicable !== false ? 'true' : 'false';
-  document.getElementById('rg-vat-rate').value = r?.vat_rate || 0;
-  document.getElementById('rg-income-type').value = r?.income_tax_type || 'none';
-  document.getElementById('rg-income-rate').value = r?.income_tax_rate || 0;
-  openModal('regime-modal');
-}
-
-async function saveRegime() {
+async function savePayrollDefaults() {
   if (submitting()) return;
   try {
-  const name = document.getElementById('rg-name').value.trim();
-  if (!name) { showToast(t('toast_name_required')||'Name is required', 'error'); return; }
-
-  // Empty rate inputs → 0 (kullanıcı sıfır oran istediğinde alanı boşaltabilir).
-  // `parseFloat('') || 0` zaten 0 dönüyor; explicit yapmak okunur kılar.
-  const _rate = (id) => {
-    const v = (document.getElementById(id).value || '').trim();
-    if (v === '') return 0;
-    const n = parseFloat(v);
-    return isNaN(n) ? 0 : n;
-  };
-  const payload = {
-    company_id: companyId,
-    name,
-    description: document.getElementById('rg-desc').value.trim() || null,
-    vat_applicable: document.getElementById('rg-vat-applicable').value === 'true',
-    vat_rate: _rate('rg-vat-rate'),
-    income_tax_type: document.getElementById('rg-income-type').value,
-    income_tax_rate: _rate('rg-income-rate'),
-    is_active: true,
-  };
-
-  let error;
-  if (editingRegimeId) {
-    ({ error } = await sb.from('tax_regimes').update(payload).eq('id', editingRegimeId));
-  } else {
-    ({ error } = await sb.from('tax_regimes').insert(payload));
-  }
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  closeModal('regime-modal');
-  await loadRegimes();
-  showToast(t('toast_saved')||'Saved ✓', 'success');
-  } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
-}
-
-async function deleteRegime(id, name) {
-  // Check if this regime is active
-  if (companyData?.tax_regime_id === id) {
-    showToast(t('err_cannot_delete_active_regime')||'Cannot delete the active regime. Switch to another one first.', 'error');
-    return;
-  }
-  const confirmed = await showConfirm(
-    (t('confirm_delete_regime')||'Delete regime "{0}"?').replace('{0}', name),
-    t('confirm_delete')||'Confirm Delete',
-    t('btn_delete')||'Delete'
-  );
-  if (!confirmed) return;
-
-  // Soft delete: only deleted_at (is_active is the archive flag, independent)
-  const { error } = await sb.from('tax_regimes')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  await loadRegimes();
-  showToast(t('toast_deleted')||'Deleted ✓', 'success');
+    if (!companyId) return;
+    const _parseRate = (id) => {
+      const raw = (document.getElementById(id).value || '').trim();
+      if (raw === '') return null;
+      const n = parseNum(raw);
+      if (isNaN(n)) return null;
+      if (n < 0 || n > 100) { showToast(t('toast_invalid_rate')||'Oran 0-100 arasında olmalı','error'); throw new Error('rate-out-of-range'); }
+      return n;
+    };
+    const tax = _parseRate('pd-tax-rate');
+    const ins = _parseRate('pd-ins-rate');
+    const { error } = await sb.from('companies')
+      .update({ payroll_default_tax_rate: tax, payroll_default_insurance_rate: ins })
+      .eq('id', companyId);
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+    showToast(t('toast_payroll_defaults_saved')||'Bordro varsayılanları kaydedildi','success');
+  } catch(_e) { if (_e.message !== 'rate-out-of-range') { console.error(_e); showToast(getErrorMessage(_e),'error'); } }
+  finally { submitting.reset(); }
 }
 </script>
 </body>
