@@ -293,6 +293,7 @@ window.T.en = {
     btn_confirm:'Confirm', btn_invoice:'Create Invoice', btn_mark_paid:'Mark Paid',
     toast_status_updated:'Status updated', no_invoices:'No invoices yet', title_create_invoice:'Create Invoice', msg_confirm_invoice:'Do you want to create an invoice for this order?', lbl_invoice_date:'Invoice Date', toast_invoiced:'Invoice created', title_record_payment:'Record Payment', btn_save_payment:'Save Payment', toast_invoice_locked:'Accounting integration active — this invoice cannot be edited', nav_integrations:'Accounting Settings', sale_invoice:'Sales invoice', title_view_order:'Order Details', confirm_cancel_order:'Are you sure you want to cancel this order?', btn_cancel_order:'Cancel Order', toast_order_cancelled:'Order cancelled', confirm_unsaved:'You have unsaved changes. Are you sure you want to leave?', btn_discard:'Discard Changes',
     unsaved_changes_title:'Unsaved Changes', unsaved_changes_msg:'Your changes will be lost. Are you sure you want to exit?', btn_keep_editing:'Keep Editing',
+    btn_select_columns:'Select Columns', modal_select_columns_title:'Select Columns', lbl_select_columns_hint:'Pick the columns to export', lbl_select_all:'Select All', lbl_deselect_all:'Deselect All', lbl_export_format:'Format', toast_no_report_data:'Run the report first', toast_select_at_least_one_col:'Select at least one column',
     col_invoice_no:'Invoice #', search_invoices:'Search invoices...',
     stat_paid_invoices:'Paid Invoices',
     stat_pending:'Pending',
