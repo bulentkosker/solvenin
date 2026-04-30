@@ -15134,11 +15134,17 @@ function applyTranslations() {
       }
     }
   });
-  // data-i18n-title → element.title (for tooltip ⓘ icons etc.)
+  // data-i18n-title → element.title (legacy, native tooltip)
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.getAttribute('data-i18n-title');
     const val = lookup(key);
     if (val !== undefined) el.title = val;
+  });
+  // data-i18n-tooltip → data-tooltip attribute (custom CSS bubble, .help-hint)
+  document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
+    const key = el.getAttribute('data-i18n-tooltip');
+    const val = lookup(key);
+    if (val !== undefined) el.setAttribute('data-tooltip', val);
   });
   // Refresh select option texts
   const catSel = document.getElementById('filter-category');
@@ -15264,11 +15270,17 @@ function applyTranslations() {
       el.placeholder = val;
     }
   });
-  // Also handle data-i18n-title (for tooltip text)
+  // Also handle data-i18n-title (legacy native tooltip)
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.getAttribute('data-i18n-title');
     const val = lookup(key);
     if (val !== undefined) el.title = val;
+  });
+  // data-i18n-tooltip → data-tooltip (custom CSS bubble, .help-hint)
+  document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
+    const key = el.getAttribute('data-i18n-tooltip');
+    const val = lookup(key);
+    if (val !== undefined) el.setAttribute('data-tooltip', val);
   });
   // RTL toggling on documentElement (also covers <html dir>)
   try {

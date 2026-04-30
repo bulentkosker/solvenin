@@ -849,3 +849,27 @@ input[type=number] { -moz-appearance: textfield; }
 .btn-spinner.dark { border-color:rgba(0,0,0,.15);border-top-color:var(--gray600); }
 @keyframes btn-spin { to { transform:rotate(360deg); } }
 button[disabled] { opacity:.65;cursor:not-allowed!important; }
+
+/* ================================================================
+   HELP HINT — small rounded "?" badge with styled hover tooltip.
+   Replaces native title=/cursor:help (which renders the ugly OS
+   help cursor). Use data-tooltip="..." for the bubble text.
+   ================================================================ */
+.help-hint{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--gray100);color:var(--gray500);
+  font-size:10px;font-weight:600;line-height:1;cursor:default;
+  position:relative;user-select:none;flex-shrink:0;
+}
+.help-hint:hover{background:var(--gray200);color:var(--gray700)}
+.help-hint[data-tooltip]:hover::after{
+  content:attr(data-tooltip);
+  position:absolute;bottom:calc(100% + 6px);right:0;
+  background:#1a2744;color:#fff;
+  padding:8px 12px;border-radius:6px;
+  font-size:11px;font-weight:400;line-height:1.4;
+  width:max-content;max-width:260px;white-space:normal;text-align:left;
+  z-index:10000;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
