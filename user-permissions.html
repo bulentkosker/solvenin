@@ -196,7 +196,7 @@ async function init() {
   if (!targetUserId) { window.location.href = 'settings.html'; return; }
 
   // Check admin access
-  const { data: companies } = await sb.rpc('get_my_companies');
+  const { data: companies } = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
   myCompanies = (companies || []).filter(c => c.role === 'owner' || c.role === 'admin');
   if (!myCompanies.length) { window.location.href = 'settings.html'; return; }
 

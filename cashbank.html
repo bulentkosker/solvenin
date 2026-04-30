@@ -1040,7 +1040,7 @@ let editingAccountId = null;
 async function init() {
   const [sessionRes, companiesRes] = await Promise.all([
     sb.auth.getSession(),
-    sb.rpc('get_my_companies')
+    (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'))
   ]);
   const session = sessionRes.data.session;
   if (!session) { window.location.href = '/auth.html'; return; }
@@ -2988,7 +2988,7 @@ document.addEventListener('click', e => {
 
 async function loadCompanies() {
   try {
-    const { data, error } = await sb.rpc('get_my_companies');
+    const { data, error } = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
     if (error) throw error;
     _myCompanies = data || [];
     const active = _myCompanies.find(c => c.is_active) || _myCompanies[0];

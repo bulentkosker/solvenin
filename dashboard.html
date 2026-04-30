@@ -1093,7 +1093,7 @@ let currentUser = null;
 async function init() {
   const [sessionRes, stateRes] = await Promise.all([
     sb.auth.getSession(),
-    sb.rpc('get_my_account_state')
+    window.tenantCache ? window.tenantCache.getMyAccountState(sb) : sb.rpc('get_my_account_state')
   ]);
   const session = sessionRes.data.session;
 
@@ -1126,7 +1126,7 @@ async function init() {
   }
 
   // Has at least one active company → continue with normal flow
-  const companiesRes = await sb.rpc('get_my_companies');
+  const companiesRes = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
   const companies = companiesRes.data;
   let plan = 'free';
   const savedId = localStorage.getItem('currentCompanyId');
@@ -1253,7 +1253,9 @@ async function createFirstCompany() {
       return;
     }
 
-    // Persist new company id, then show the module picker before reload
+    // Persist new company id, then show the module picker before reload.
+    // Clear tenant cache so the freshly created company appears in lists.
+    if (window.tenantCache) window.tenantCache.clear();
     localStorage.setItem('currentCompanyId', data.company_id);
     document.getElementById('onboarding-overlay').style.display = 'none';
     showModulePicker(data.company_id);

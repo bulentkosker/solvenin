@@ -293,7 +293,7 @@ async function init() {
   if (!session) { window.location.href = 'auth.html'; return; }
   currentUser = session.user;
 
-  const { data: companies } = await sb.rpc('get_my_companies');
+  const { data: companies } = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
   if (!companies?.length) { window.location.href = 'dashboard.html'; return; }
   const saved = localStorage.getItem('currentCompanyId');
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];

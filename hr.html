@@ -732,7 +732,7 @@ let html5QrScanner = null;
 async function init() {
   const [sessionRes, companiesRes] = await Promise.all([
     sb.auth.getSession(),
-    sb.rpc('get_my_companies')
+    (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'))
   ]);
   let session = sessionRes.data.session;
   if (!session) {

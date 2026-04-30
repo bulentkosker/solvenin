@@ -81,5 +81,27 @@
       inflight.set(key, p);
       return p;
     },
+
+    // ---- High-level wrappers for the four hot tenant queries ---------
+    // Each returns a { data, error } shape so call-sites can drop them
+    // into existing destructure patterns: const { data } = await ...
+
+    // get_my_companies — list of companies the user has access to.
+    async getMyCompanies(sb) {
+      const data = await this.fetch('myCompanies', async () => {
+        const r = await sb.rpc('get_my_companies');
+        return r.error ? null : r.data;
+      });
+      return { data, error: data == null ? { message: 'fetch failed' } : null };
+    },
+
+    // get_my_account_state — plan/subscription/limits for the current user.
+    async getMyAccountState(sb) {
+      const data = await this.fetch('accountState', async () => {
+        const r = await sb.rpc('get_my_account_state');
+        return r.error ? null : r.data;
+      });
+      return { data, error: data == null ? { message: 'fetch failed' } : null };
+    },
   };
 })();

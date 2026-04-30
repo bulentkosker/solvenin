@@ -319,7 +319,7 @@ function normalizeUnit(u) {
 async function init() {
   const [sessionRes, companiesRes] = await Promise.all([
     sb.auth.getSession(),
-    sb.rpc('get_my_companies')
+    (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'))
   ]);
   const session = sessionRes.data.session;
   if (!session) { window.location.href = '/auth.html'; return; }

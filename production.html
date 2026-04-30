@@ -558,7 +558,7 @@ async function init() {
   (document.getElementById('sb-user-name')||{}).textContent = name;
 
   const _savedId = localStorage.getItem('currentCompanyId');
-  const { data: _myCompanies } = await sb.rpc('get_my_companies');
+  const { data: _myCompanies } = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
   if (!_myCompanies || _myCompanies.length === 0) { showToast(t('company_not_found'), 'error'); return; }
   const _active = _savedId
     ? (_myCompanies.find(c => c.company_id === _savedId) || _myCompanies.find(c => c.is_active) || _myCompanies[0])
