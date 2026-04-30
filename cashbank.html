@@ -316,7 +316,11 @@
     <!-- ════ CASH TAB ════ -->
     <div id="tab-cash" class="fade-up fade-up-3">
       <div class="page-header" style="margin-bottom:16px">
-        <div></div>
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600)">
+            <input type="checkbox" id="cash-only-active" checked onchange="renderCashGrid()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+          </label>
+        </div>
         <div class="header-actions">
           <button class="btn btn-primary" onclick="openRegisterModal()">
             <span>+</span> <span data-i18n="btn_add_register">Add Register</span>
@@ -383,7 +387,11 @@
     <!-- ════ BANK TAB ════ -->
     <div id="tab-bank" style="display:none" class="fade-up fade-up-3">
       <div class="page-header" style="margin-bottom:16px">
-        <div></div>
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600)">
+            <input type="checkbox" id="bank-only-active" checked onchange="renderBankTree()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+          </label>
+        </div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="openBankModal()">
             🏦 <span data-i18n="btn_add_bank">Add Bank</span>
@@ -1051,12 +1059,14 @@ async function init() {
   const plan = _active.plan || 'free';
   const planEl = document.getElementById('user-plan-label');
   if (planEl) planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
-  // Load companies + data queries in parallel
+  // Load companies + data queries in parallel.
+  // Load active + inactive (archive); soft-deleted excluded. Render shows
+  // inactive rows with a "Pasif" badge so users can reactivate them.
   const [, registersRes, banksRes, accountsRes, coaRes, defaultsRes] = await Promise.all([
     loadCompanies(),
-    sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at'),
-    sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name'),
-    sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name'),
+    sb.from('cash_registers').select('*').eq('company_id', companyId).is('deleted_at', null).order('created_at'),
+    sb.from('banks').select('*').eq('company_id', companyId).is('deleted_at', null).order('name'),
+    sb.from('bank_accounts').select('*').eq('company_id', companyId).is('deleted_at', null).order('account_name'),
     sb.from('chart_of_accounts').select('id, code, name, name_local, type, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
     sb.from('companies').select('default_salary_account_id, default_advance_account_id, base_currency').eq('id', companyId).single(),
   ]);
@@ -1192,7 +1202,9 @@ document.addEventListener('click', (e) => {
 // ===== CASH GRID =====
 function renderCashGrid() {
   const grid = document.getElementById('cash-grid');
-  const cards = registers.map(r => {
+  const onlyActive = document.getElementById('cash-only-active')?.checked !== false;
+  const list = onlyActive ? registers.filter(r => r.is_active !== false) : registers;
+  const cards = list.map(r => {
     const bal = parseFloat(r.current_balance || 0);
     const curr = currencies.find(c => c.code === r.currency_code);
     const symbol = curr?.symbol || r.currency_code;
@@ -1323,8 +1335,10 @@ function renderBankTree() {
     return;
   }
 
-  tree.innerHTML = banks.map(bank => {
-    const bankAccounts = accounts.filter(a => a.bank_id === bank.id);
+  const onlyActive = document.getElementById('bank-only-active')?.checked !== false;
+  const banksList = onlyActive ? banks.filter(b => b.is_active !== false) : banks;
+  tree.innerHTML = banksList.map(bank => {
+    const bankAccounts = accounts.filter(a => a.bank_id === bank.id && (!onlyActive || a.is_active !== false));
     const accRows = bankAccounts.map(a => {
       const bal = parseFloat(a.current_balance || 0);
       const curr = currencies.find(c => c.code === a.currency_code);
