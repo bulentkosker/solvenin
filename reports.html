@@ -522,8 +522,8 @@ function switchReport(key, el) {
       <option value="out">${FW.tx('rp_out','Stok Yok')}</option>
       <option value="neg">${FW.tx('rp_negative','Negatif')}</option>
     </select>`;
-    row2 += `<input type="number" id="f-min-qty" placeholder="Min" style="width:90px" oninput="onFilterChange()">`;
-    row2 += `<input type="number" id="f-max-qty" placeholder="Max" style="width:90px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" lang="en" id="f-min-qty" placeholder="Min" style="width:90px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" lang="en" id="f-max-qty" placeholder="Max" style="width:90px" oninput="onFilterChange()">`;
   }
   if (key === 'stock_movements'){
     row2 += `<select id="f-product" style="min-width:220px" onchange="onFilterChange()"><option value="">${FW.tx('rp_select_product','Ürün Seç…')}</option></select>`;
@@ -534,7 +534,7 @@ function switchReport(key, el) {
     </select>`;
   }
   if (key === 'low_stock'){
-    row2 += `<input type="number" id="f-threshold" placeholder="${FW.tx('rp_threshold_override','Eşik (opsiyonel)')}" style="width:160px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" lang="en" id="f-threshold" placeholder="${FW.tx('rp_threshold_override','Eşik (opsiyonel)')}" style="width:160px" oninput="onFilterChange()">`;
   }
   if (key === 'sales' || key === 'purchase_summary'){
     row2 += `<select id="f-status" onchange="onFilterChange()">
@@ -582,10 +582,10 @@ function switchReport(key, el) {
       <option value="customer">${FW.tx('rp_customer','Müşteri')}</option>
       <option value="supplier">${FW.tx('rp_supplier','Tedarikçi')}</option>
     </select>`;
-    row2 += `<input type="number" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" lang="en" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
   }
   if (key === 'receivables' || key === 'payables'){
-    row2 += `<input type="number" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
+    row2 += `<input type="number" lang="en" id="f-min-amount" placeholder="${FW.tx('rp_min_amount','Min. Tutar')}" style="width:140px" oninput="onFilterChange()">`;
   }
 
   // Action row: manual filter + reset

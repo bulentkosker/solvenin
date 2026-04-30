@@ -260,7 +260,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field">
           <label data-i18n="lbl_cost">Cost</label>
-          <input type="number" id="wo-cost" min="0" step="0.01">
+          <input type="number" lang="en" id="wo-cost" min="0" step="0.01">
         </div>
         <div class="field">
           <label data-i18n="lbl_assignee">Assigned To</label>
@@ -387,7 +387,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field" id="pl-interval-field" style="display:none">
           <label>Interval (days)</label>
-          <input type="number" id="pl-interval" min="1" value="30" oninput="updateNextMaintDate()">
+          <input type="number" lang="en" id="pl-interval" min="1" value="30" oninput="updateNextMaintDate()">
         </div>
         <div class="field">
           <label data-i18n="lbl_last_maintenance">Last Maintenance</label>
@@ -433,7 +433,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field">
           <label data-i18n="lbl_resolution_time">Resolution Time (h)</label>
-          <input type="number" id="fa-resolution" min="0" step="0.5">
+          <input type="number" lang="en" id="fa-resolution" min="0" step="0.5">
         </div>
         <div class="field full">
           <label>Description</label>
@@ -852,8 +852,8 @@ function renderWOParts() {
         <option value="">Free text</option>
         ${products.map(pr => `<option value="${pr.id}" ${p.product_id===pr.id?'selected':''}>${pr.name}</option>`).join('')}
       </select></td>
-      <td><input type="number" min="0" step="0.01" value="${p.qty||1}" oninput="woParts[${i}].qty=parseFloat(this.value)||1"></td>
-      <td><input type="number" min="0" step="0.01" value="${p.cost||0}" oninput="woParts[${i}].cost=parseFloat(this.value)||0"></td>
+      <td><input type="number" lang="en" min="0" step="0.01" value="${p.qty||1}" oninput="woParts[${i}].qty=parseFloat(this.value)||1"></td>
+      <td><input type="number" lang="en" min="0" step="0.01" value="${p.cost||0}" oninput="woParts[${i}].cost=parseFloat(this.value)||0"></td>
       <td><button class="btn btn-sm btn-danger btn-icon" onclick="woParts.splice(${i},1);renderWOParts()">✕</button></td>
     </tr>`).join('');
 }

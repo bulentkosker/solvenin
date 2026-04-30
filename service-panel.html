@@ -876,7 +876,7 @@ async function showSubscriptionModal(companyId) {
     </div>
     <div class="field">
       <label>Max Kullanıcı *</label>
-      <input type="number" id="sub-max" min="1" required value="${info?.max_users||1}">
+      <input type="number" lang="en" id="sub-max" min="1" required value="${info?.max_users||1}">
       <div style="font-size:10px;color:var(--gray400);margin-top:3px">Kaç kullanıcı için ödeme yapıldı?</div>
     </div>
     <div class="field"><label>Durum</label>
@@ -992,7 +992,7 @@ async function openUserPlanModal(u) {
       <div style="font-size:11px;color:var(--gray400);margin-top:3px">Boş bırakılırsa süresiz</div>
     </div>
     <div class="field"><label>Kullanıcı Limiti (plan_user_count)</label>
-      <input type="number" id="up-count" min="1" value="${currentCount}" oninput="checkUserCountOverage(${activeUsers})">
+      <input type="number" lang="en" id="up-count" min="1" value="${currentCount}" oninput="checkUserCountOverage(${activeUsers})">
       <div id="up-count-warn" style="font-size:11px;color:var(--gray400);margin-top:3px">Aktif kullanıcı sayısı: ${activeUsers}. Sınırsız için 999999 girin.</div>
     </div>
   `, [

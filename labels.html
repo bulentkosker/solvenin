@@ -200,7 +200,7 @@
           </div>
           <div><label data-i18n="label.model_code">Model / Kod</label><input type="text" id="f-model" oninput="updatePreview()"></div>
           <div><label data-i18n="label.origin">Menşei Ülke</label><input type="text" id="f-origin" oninput="updatePreview()"></div>
-          <div><label data-i18n="label.net_quantity">Net Miktar / Ağırlık</label><input type="number" id="f-qty" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.net_quantity">Net Miktar / Ağırlık</label><input type="number" lang="en" id="f-qty" oninput="updatePreview()"></div>
           <div><label data-i18n="label.unit">Birim</label>
             <select id="f-unit" onchange="updatePreview()">
               <option>kg</option><option>g</option><option>lt</option><option>ml</option>
@@ -255,7 +255,7 @@
             <div id="exp-dur-wrap" class="hidden">
               <label data-i18n="label.exp_duration">Süre</label>
               <div style="display:flex;gap:6px">
-                <input type="number" id="f-exp-n" style="flex:1" oninput="updatePreview()">
+                <input type="number" lang="en" id="f-exp-n" style="flex:1" oninput="updatePreview()">
                 <select id="f-exp-unit" style="width:90px" onchange="updatePreview()">
                   <option value="ay">ay</option><option value="yıl">yıl</option><option value="gün">gün</option>
                 </select>
@@ -346,7 +346,7 @@
         <h3>⚡ <span data-i18n="label.electronic_details">Elektronik Detayları</span></h3>
         <div class="grid-2">
           <div><label data-i18n="label.voltage">Voltaj / Frekans</label><input type="text" id="f-voltage" placeholder="220V / 50Hz" oninput="updatePreview()"></div>
-          <div><label data-i18n="label.power">Güç (W)</label><input type="number" id="f-power" oninput="updatePreview()"></div>
+          <div><label data-i18n="label.power">Güç (W)</label><input type="number" lang="en" id="f-power" oninput="updatePreview()"></div>
           <div><label data-i18n="label.ip_rating">IP Koruma Sınıfı</label><input type="text" id="f-ip" placeholder="IP54" oninput="updatePreview()"></div>
           <div><label data-i18n="label.warranty">Garanti Süresi</label><input type="text" id="f-warranty" placeholder="2 yıl" oninput="updatePreview()"></div>
         </div>
@@ -412,11 +412,11 @@
           </div>
           <div>
             <label data-i18n="label.padding">İç Boşluk (mm)</label>
-            <input type="number" step="0.5" min="0" max="20" id="d-padding" value="4" oninput="updatePreview()">
+            <input type="number" lang="en" step="0.5" min="0" max="20" id="d-padding" value="4" oninput="updatePreview()">
           </div>
           <div>
             <label data-i18n="label.line_height">Satır Aralığı</label>
-            <input type="number" step="0.05" min="1" max="2" id="d-line-height" value="1.25" oninput="updatePreview()">
+            <input type="number" lang="en" step="0.05" min="1" max="2" id="d-line-height" value="1.25" oninput="updatePreview()">
           </div>
           <div>
             <label data-i18n="label.font_family">Yazı Tipi</label>
@@ -474,13 +474,13 @@
         </div>
 
         <div class="grid-3">
-          <div><label><span data-i18n="label.width">Genişlik</span> (<span class="unit-lbl">mm</span>)</label><input type="number" id="out-w" value="80" step="0.1" oninput="onDimInput()"></div>
-          <div><label><span data-i18n="label.height">Uzunluk</span> (<span class="unit-lbl">mm</span>)</label><input type="number" id="out-h" value="120" step="0.1" oninput="onDimInput()"></div>
-          <div id="out-copies-wrap" class="hidden"><label data-i18n="label.copies">Kopya Sayısı</label><input type="number" id="out-copies" value="10" oninput="applyDimensions()"></div>
+          <div><label><span data-i18n="label.width">Genişlik</span> (<span class="unit-lbl">mm</span>)</label><input type="number" lang="en" id="out-w" value="80" step="0.1" oninput="onDimInput()"></div>
+          <div><label><span data-i18n="label.height">Uzunluk</span> (<span class="unit-lbl">mm</span>)</label><input type="number" lang="en" id="out-h" value="120" step="0.1" oninput="onDimInput()"></div>
+          <div id="out-copies-wrap" class="hidden"><label data-i18n="label.copies">Kopya Sayısı</label><input type="number" lang="en" id="out-copies" value="10" oninput="applyDimensions()"></div>
         </div>
         <div id="a4-extras" class="grid-3 hidden" style="margin-top:10px">
-          <div><label data-i18n="label.margin">Kenar Boşluğu (mm)</label><input type="number" id="a4-margin" value="10" oninput="applyDimensions()"></div>
-          <div><label data-i18n="label.gap">Etiket Arası (mm)</label><input type="number" id="a4-gap" value="2" oninput="applyDimensions()"></div>
+          <div><label data-i18n="label.margin">Kenar Boşluğu (mm)</label><input type="number" lang="en" id="a4-margin" value="10" oninput="applyDimensions()"></div>
+          <div><label data-i18n="label.gap">Etiket Arası (mm)</label><input type="number" lang="en" id="a4-gap" value="2" oninput="applyDimensions()"></div>
           <div style="display:flex;align-items:end;font-size:12px;color:var(--gray500)" id="a4-fit">—</div>
         </div>
       </div>
@@ -737,7 +737,7 @@ function addNutrRow(name='',value='',unit='g'){
   const wrap = document.getElementById('nutr-rows');
   const row = document.createElement('div'); row.className='dyn-row';
   row.innerHTML = `<input type="text" placeholder="Besin (örn. Protein)" value="${escapeHtml(name)}" oninput="updatePreview()">
-    <input type="number" placeholder="0" value="${escapeHtml(value)}" oninput="updatePreview()">
+    <input type="number" lang="en" placeholder="0" value="${escapeHtml(value)}" oninput="updatePreview()">
     <input type="text" value="${escapeHtml(unit)}" oninput="updatePreview()">
     <button class="del-btn" onclick="this.parentNode.remove();updatePreview()">✕</button>`;
   wrap.appendChild(row);
@@ -745,7 +745,7 @@ function addNutrRow(name='',value='',unit='g'){
 function addTexRow(pct='',mat=''){
   const wrap = document.getElementById('tex-rows');
   const row = document.createElement('div'); row.className='dyn-row'; row.style.gridTemplateColumns='80px 1fr 36px';
-  row.innerHTML = `<input type="number" placeholder="%" value="${escapeHtml(pct)}" oninput="texTotal();updatePreview()">
+  row.innerHTML = `<input type="number" lang="en" placeholder="%" value="${escapeHtml(pct)}" oninput="texTotal();updatePreview()">
     <input type="text" placeholder="Materyal (örn. Pamuk)" value="${escapeHtml(mat)}" oninput="updatePreview()">
     <button class="del-btn" onclick="this.parentNode.remove();texTotal();updatePreview()">✕</button>`;
   wrap.appendChild(row); texTotal();

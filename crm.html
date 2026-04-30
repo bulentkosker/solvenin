@@ -216,8 +216,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
       <div class="form-grid">
         <div class="field full"><label data-i18n="crm_lbl_customer_req">Müşteri *</label><select id="opp-contact"><option value="" data-i18n="crm_select_prompt">Seç...</option></select></div>
         <div class="field full"><label data-i18n="crm_lbl_title_req">Fırsat Başlığı *</label><input type="text" id="opp-title" placeholder="Örn: Mercimek ihracatı" data-i18n-placeholder="crm_placeholder_title"></div>
-        <div class="field"><label data-i18n="crm_lbl_value">Tahmini Tutar</label><input type="number" id="opp-value" placeholder="0" min="0" step="0.01"></div>
-        <div class="field"><label data-i18n="crm_lbl_probability">Olasılık %</label><input type="number" id="opp-prob" value="10" min="0" max="100"></div>
+        <div class="field"><label data-i18n="crm_lbl_value">Tahmini Tutar</label><input type="number" lang="en" id="opp-value" placeholder="0" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="crm_lbl_probability">Olasılık %</label><input type="number" lang="en" id="opp-prob" value="10" min="0" max="100"></div>
         <div class="field"><label data-i18n="crm_lbl_close_date">Beklenen Kapanış</label><input type="date" id="opp-close"></div>
         <div class="field"><label data-i18n="crm_lbl_stage">Aşama</label>
           <select id="opp-stage">
@@ -641,8 +641,8 @@ function renderQuoteItems() {
     <td style="padding:4px"><select onchange="onQuoteProductSelect(${i},this.value)" style="${inputS}">
       <option value="">${t('crm_select_prompt')}</option>${products.map(p => `<option value="${p.id}" ${p.id === it.product_id ? 'selected' : ''}>${p.name}</option>`).join('')}
     </select></td>
-    <td style="padding:4px"><input type="number" value="${it.qty || 1}" min="0.001" step="0.001" onchange="quoteItems[${i}].qty=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
-    <td style="padding:4px"><input type="number" value="${it.price || 0}" min="0" step="0.01" onchange="quoteItems[${i}].price=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
+    <td style="padding:4px"><input type="number" lang="en" value="${it.qty || 1}" min="0.001" step="0.001" onchange="quoteItems[${i}].qty=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
+    <td style="padding:4px"><input type="number" lang="en" value="${it.price || 0}" min="0" step="0.01" onchange="quoteItems[${i}].price=parseFloat(this.value)||0;recalcQuote()" style="${inputS}text-align:right"></td>
     <td style="padding:4px;text-align:right;font-weight:600" id="qi-total-${i}">${F(it.qty * it.price)}</td>
     <td style="padding:4px;text-align:center"><button onclick="quoteItems.splice(${i},1);renderQuoteItems()" style="background:none;border:none;color:var(--red);cursor:pointer">✕</button></td>
   </tr>`).join('');

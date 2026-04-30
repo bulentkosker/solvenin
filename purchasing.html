@@ -578,7 +578,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         <div class="field"><label data-i18n="col_city">City</label><input type="text" id="s-city" placeholder="Chicago"></div>
         <div class="field"><label data-i18n="label_country">Country</label><input type="text" id="s-country" placeholder="USA"></div>
         <div class="field"><label data-i18n="col_tax_no">Tax Number</label><input type="text" id="s-tax" placeholder="Tax/VAT ID"></div>
-        <div class="field"><label data-i18n="label_payment_terms">Payment Terms (days)</label><input type="number" id="s-terms" value="30" min="0"></div>
+        <div class="field"><label data-i18n="label_payment_terms">Payment Terms (days)</label><input type="number" lang="en" id="s-terms" value="30" min="0"></div>
         <div class="field full"><label data-i18n="label_notes">Notes</label><textarea id="s-notes" placeholder="Optional notes..."></textarea></div>
       </div>
     </div>
@@ -711,7 +711,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
           </select>
         </div>
       </div>
-      <div class="form-group"><label data-i18n="lbl_cost_price">Alış Fiyatı</label><input type="number" id="qa-p-cost" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
+      <div class="form-group"><label data-i18n="lbl_cost_price">Alış Fiyatı</label><input type="number" lang="en" id="qa-p-cost" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeQAProductModal()" data-i18n="btn_cancel">Cancel</button>
@@ -2062,7 +2062,7 @@ async function openReceiveModal(orderId) {
         <div class="receive-item-name">${item.description || item.products?.name || '—'}</div>
         <div class="receive-item-info">Ordered: ${item.quantity} ${item.products?.unit||'pcs'} · Received so far: ${item.received_qty||0}</div>
       </div>
-      <input class="receive-qty-input" type="number" id="recv-${item.id}" value="${item.quantity - (item.received_qty||0)}" min="0" step="0.01">
+      <input class="receive-qty-input" type="number" lang="en" id="recv-${item.id}" value="${item.quantity - (item.received_qty||0)}" min="0" step="0.01">
     </div>
   `).join('');
   document.getElementById('receive-notes').value = '';

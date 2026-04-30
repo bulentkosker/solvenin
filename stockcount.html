@@ -128,7 +128,7 @@
         <div><label>Kategori (opsiyonel)</label><select id="ns-category"><option value="">Tüm kategoriler</option></select></div>
       </div>
       <div class="grid-2" style="margin-bottom:10px">
-        <div><label>Tolerans Eşiği (%)</label><input type="number" id="ns-threshold" value="2" step="0.1" min="0"></div>
+        <div><label>Tolerans Eşiği (%)</label><input type="number" lang="en" id="ns-threshold" value="2" step="0.1" min="0"></div>
         <div></div>
       </div>
       <div><label>Notlar</label><textarea id="ns-notes" rows="2"></textarea></div>
@@ -531,7 +531,7 @@ async function renderEntry(){
         <input type="text" id="in-barcode" placeholder="Barkod okut veya yaz → Enter" autocomplete="off" onkeydown="onBarcodeKey(event)">
         <div id="in-product-name" style="color:var(--gray400);font-size:13px">Ürün adı burada görünecek…</div>
         <div id="in-unit" class="col-unit" style="color:var(--gray500);font-size:13px"></div>
-        <input type="number" id="in-qty" placeholder="0" step="0.001" onkeydown="onQtyKey(event)">
+        <input type="number" lang="en" id="in-qty" placeholder="0" step="0.001" onkeydown="onQtyKey(event)">
         <div></div>
       </div>` : '<div style="padding:16px;text-align:center;color:var(--gray400)">🔒 Bu fiş kilitli, düzenlenemez</div>'}
       <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--gray50);font-size:12px">
@@ -562,7 +562,7 @@ function paintItems(){
       <div style="font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--gray500)">${escapeHtml(it.barcode || it.products?.sku || '—')}</div>
       <div>${i+1}. ${escapeHtml(it.products?.name || '—')}</div>
       <div class="col-unit" style="color:var(--gray500)">${escapeHtml(it.unit || it.products?.unit || '')}</div>
-      <div><input type="number" value="${it.counted_quantity}" step="0.001" onchange="updateItemQty('${it.id}', this.value)"></div>
+      <div><input type="number" lang="en" value="${it.counted_quantity}" step="0.001" onchange="updateItemQty('${it.id}', this.value)"></div>
       <div><button class="del" onclick="deleteItem('${it.id}')">✕</button></div>
     </div>`).join('');
   const lbl = document.getElementById('item-count-lbl');

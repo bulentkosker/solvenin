@@ -526,7 +526,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label><span data-i18n="label_selling_price">Selling Price</span> (<span id="lbl-price-sym">$</span>)</label>
-          <input type="number" id="p-price" placeholder="0.00" step="0.01" min="0">
+          <input type="number" lang="en" id="p-price" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
 
@@ -587,7 +587,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row" data-product-only>
         <div class="form-group">
           <label><span data-i18n="label_unit_cost">Unit Cost</span> (<span id="lbl-cost-sym">$</span>)</label>
-          <input type="number" id="p-cost" placeholder="0.00" step="0.01" min="0">
+          <input type="number" lang="en" id="p-cost" placeholder="0.00" step="0.01" min="0">
         </div>
       </div>
       <div class="form-row full">
@@ -625,24 +625,24 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row" data-product-only>
         <div class="form-group">
           <label data-i18n="label_min_stock">Min. Stock (Alert)</label>
-          <input type="number" id="p-min-stock" placeholder="—" min="0">
+          <input type="number" lang="en" id="p-min-stock" placeholder="—" min="0">
           <div style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_min_stock">Acil durum tamponu</div>
         </div>
         <div class="form-group">
           <label data-i18n="label_max_stock">Max. Stock</label>
-          <input type="number" id="p-max-stock" placeholder="—" min="0">
+          <input type="number" lang="en" id="p-max-stock" placeholder="—" min="0">
         </div>
       </div>
       <div class="form-row" data-product-only>
         <div class="form-group">
           <label data-i18n="label_lead_time">Tedarik Süresi (gün)</label>
-          <input type="number" id="p-lead-time" placeholder="—" min="0">
+          <input type="number" lang="en" id="p-lead-time" placeholder="—" min="0">
           <div style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_lead_time">Siparişten teslimata kadar</div>
         </div>
         <div class="form-group">
           <label data-i18n="label_reorder_point">Yeniden Sipariş Noktası</label>
           <div style="display:flex;gap:6px;align-items:center">
-            <input type="number" id="p-reorder-point" placeholder="—" min="0" style="flex:1">
+            <input type="number" lang="en" id="p-reorder-point" placeholder="—" min="0" style="flex:1">
             <button type="button" class="btn btn-outline btn-sm" onclick="calcReorderPoint()" style="white-space:nowrap;padding:6px 10px;font-size:11px" data-i18n="btn_auto_calculate">🔄 Hesapla</button>
           </div>
           <div id="reorder-hint" style="font-size:10px;color:var(--gray400);margin-top:2px" data-i18n="helper_reorder_point">Bu seviyede sipariş ver</div>
@@ -747,7 +747,7 @@ tr:hover .action-btns { opacity:1; }
         </div>
         <div class="form-group">
           <label data-i18n="label_adj_qty">Quantity</label>
-          <input type="number" id="adj-qty" placeholder="0" min="0.01" step="0.01">
+          <input type="number" lang="en" id="adj-qty" placeholder="0" min="0.01" step="0.01">
         </div>
       </div>
       <!-- Single warehouse (opening / count_excess / count_short / damage) -->
@@ -780,7 +780,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row full" id="adj-cost-row" style="display:none">
         <div class="form-group">
           <label data-i18n="label_adj_unit_cost">Birim Maliyet</label>
-          <input type="number" id="adj-cost" placeholder="0.00" min="0" step="0.01">
+          <input type="number" lang="en" id="adj-cost" placeholder="0.00" min="0" step="0.01">
           <div style="font-size:11px;color:var(--gray500);margin-top:4px" data-i18n="hint_adj_unit_cost">Açılış stoğu için birim maliyet — boş bırakılırsa ürünün mevcut maliyeti kullanılır.</div>
         </div>
       </div>
@@ -915,11 +915,11 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row">
         <div class="form-group">
           <label><span data-i18n="lbl_cost_price">Alış Fiyatı</span></label>
-          <input type="number" id="qa-p-cost" min="0" step="0.01" placeholder="0.00">
+          <input type="number" lang="en" id="qa-p-cost" min="0" step="0.01" placeholder="0.00">
         </div>
         <div class="form-group">
           <label><span data-i18n="lbl_sale_price">Satış Fiyatı</span></label>
-          <input type="number" id="qa-p-sale" min="0" step="0.01" placeholder="0.00">
+          <input type="number" lang="en" id="qa-p-sale" min="0" step="0.01" placeholder="0.00">
         </div>
       </div>
     </div>
@@ -2089,8 +2089,8 @@ function renderVariantMatrix() {
             <td style="padding:6px;border-bottom:1px solid #f1f5f9">${v.combo.join(' / ')}</td>
             <td style="padding:6px;border-bottom:1px solid #f1f5f9"><input type="text" value="${(v.sku||'').replace(/"/g,'&quot;')}" oninput="_variantMatrix[${i}].sku=this.value" style="width:120px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px"></td>
             <td style="padding:6px;border-bottom:1px solid #f1f5f9"><input type="text" value="${(v.barcode||'').replace(/"/g,'&quot;')}" oninput="_variantMatrix[${i}].barcode=this.value" style="width:120px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px"></td>
-            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" value="${v.stock}" oninput="_variantMatrix[${i}].stock=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
-            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" step="0.01" value="${v.price_extra}" oninput="_variantMatrix[${i}].price_extra=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" lang="en" value="${v.stock}" oninput="_variantMatrix[${i}].stock=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
+            <td style="padding:6px;border-bottom:1px solid #f1f5f9;text-align:right"><input type="number" lang="en" step="0.01" value="${v.price_extra}" oninput="_variantMatrix[${i}].price_extra=parseFloat(this.value)||0" style="width:70px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;text-align:right"></td>
           </tr>
         `).join('')}
       </tbody>
