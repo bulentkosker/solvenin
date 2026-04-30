@@ -3209,8 +3209,9 @@ function updateWbExample() {
 // ===== WAREHOUSES =====
 async function loadWarehouses() {
   if (!companyId) return;
+  // Load active + inactive (archive); soft-deleted excluded.
   const { data, error } = await sb.from('warehouses')
-    .select('*').eq('company_id', companyId).order('name');
+    .select('*').eq('company_id', companyId).is('deleted_at', null).order('name');
   if (error) { console.error(error); return; }
   allWarehouses = data || [];
   renderWarehousesList();
@@ -3224,18 +3225,20 @@ function renderWarehousesList() {
     return;
   }
   container.innerHTML = allWarehouses.map(w => `
-    <div class="manage-item">
+    <div class="manage-item" style="${w.is_active===false ? 'background:var(--gray50,#f8fafc);color:var(--gray400)' : ''}">
       <div class="manage-item-icon">🏗️</div>
       <div class="manage-item-info">
         <div class="manage-item-name" style="display:flex;align-items:center;gap:8px">
           ${w.name}
           ${w.is_default ? `<span class="badge badge-blue" style="font-size:10px">★ ${t('lbl_default')||'Varsayılan'}</span>` : ''}
+          ${w.is_active===false ? `<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500">${t('status_inactive')||'Pasif'}</span>` : ''}
         </div>
         ${w.location ? `<div class="manage-item-meta">${w.location}</div>` : ''}
       </div>
       <div class="manage-item-actions">
         ${!w.is_default ? `<button class="action-btn" title="${t('btn_set_default')||'Varsayılan Yap'}" onclick="setDefaultWarehouse('${w.id}')">★</button>` : ''}
         <button class="action-btn" onclick="openWarehouseModal('${w.id}')">✏️</button>
+        <button class="action-btn" onclick="toggleWarehouseActive('${w.id}')" title="${w.is_active === false ? (t('btn_set_active')||'Aktif Yap') : (t('btn_set_inactive')||'Pasif Yap')}">${w.is_active === false ? '✅' : '⏸️'}</button>
         <button class="action-btn danger" onclick="openDeleteWarehouse('${w.id}','${w.name}')">🗑️</button>
       </div>
     </div>
@@ -3292,6 +3295,26 @@ async function saveWarehouse() {
     console.error('saveWarehouse error:', e);
     showToast(getErrorMessage(e), 'error');
   } finally { submitting.reset(); }
+}
+
+async function toggleWarehouseActive(id) {
+  const w = allWarehouses.find(x => x.id === id);
+  if (!w) return;
+  const goingInactive = w.is_active !== false;
+  if (goingInactive) {
+    // Count distinct products with stock movements in this warehouse
+    const { data: rows } = await sb.from('stock_movements').select('product_id')
+      .eq('company_id', companyId).eq('warehouse_id', id).is('deleted_at', null);
+    const distinctProducts = new Set((rows || []).map(r => r.product_id)).size;
+    if (distinctProducts > 0) {
+      const msg = (t('confirm_inactive_warehouse_has_stock') || 'Bu depoda {count} kalemde stok var. Pasif yapsanız bile stok korunur. Devam edilsin mi?').replace('{count}', distinctProducts);
+      if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+    }
+  }
+  const { error } = await sb.from('warehouses').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
+  await loadWarehouses();
 }
 
 async function setDefaultWarehouse(id) {

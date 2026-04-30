@@ -570,7 +570,8 @@ async function handleLogout() {
 
 // ===== LOADERS =====
 async function loadProjects() {
-  const { data } = await sb.from('projects').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false });
+  // Load active + inactive (archive); soft-deleted excluded.
+  const { data } = await sb.from('projects').select('*').eq('company_id', companyId).is('deleted_at', null).order('created_at', { ascending: false });
   projects = data || [];
 }
 
@@ -660,12 +661,15 @@ function renderProjects() {
     const net = fin.revenue - fin.expense;
     const budgetUsed = p.budget && Number(p.budget) > 0 ? Math.round((fin.expense / Number(p.budget)) * 100) : null;
     const overBudget = p.budget && fin.expense > Number(p.budget);
+    const inactiveStyle = p.is_active === false ? 'background:var(--gray50,#f8fafc);color:var(--gray400)' : '';
+    const inactiveBadge = p.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:6px">${t('status_inactive')||'Pasif'}</span>` : '';
     return `
-    <div class="project-card" onclick="openDetail('${p.id}')">
+    <div class="project-card" onclick="openDetail('${p.id}')" style="${inactiveStyle}">
       <div class="project-card-top">
-        <div class="project-card-name">${p.name}</div>
+        <div class="project-card-name">${p.name}${inactiveBadge}</div>
         <div class="project-card-actions" onclick="event.stopPropagation()">
           <button class="btn btn-sm btn-outline btn-icon" onclick="openProjectModal('${p.id}')" title="${t('btn_edit')}">✏️</button>
+          <button class="btn btn-sm btn-outline btn-icon" onclick="toggleProjectActive('${p.id}')" title="${p.is_active === false ? (t('btn_set_active')||'Aktif Yap') : (t('btn_set_inactive')||'Pasif Yap')}">${p.is_active === false ? '✅' : '⏸️'}</button>
           <button class="btn btn-sm btn-danger btn-icon" onclick="deleteProject('${p.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
         </div>
       </div>
@@ -1180,6 +1184,34 @@ async function saveProject() {
   }
   showToast(t('toast_project_saved'),'success');
   closeModal('project-modal');
+  await loadProjects();
+  await loadAllProjectsFinancials();
+  renderProjects();
+}
+
+async function toggleProjectActive(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  const goingInactive = p.is_active !== false;
+  if (goingInactive) {
+    // Count active orders linked to this project
+    const [so, po] = await Promise.all([
+      sb.from('sales_orders').select('id',{count:'exact',head:true})
+        .eq('company_id', companyId).eq('project_id', id).eq('is_active', true)
+        .in('status',['draft','confirmed','invoiced']),
+      sb.from('purchase_orders').select('id',{count:'exact',head:true})
+        .eq('company_id', companyId).eq('project_id', id).eq('is_active', true)
+        .in('status',['draft','confirmed','invoiced']),
+    ]);
+    const count = (so.count||0) + (po.count||0);
+    if (count > 0) {
+      const msg = (t('confirm_inactive_project_has_orders') || 'Bu projeye bağlı {count} aktif sipariş/fatura var. Pasif yapsanız bile bağlantılar korunur. Devam edilsin mi?').replace('{count}', count);
+      if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+    }
+  }
+  const { error } = await sb.from('projects').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
   await loadProjects();
   await loadAllProjectsFinancials();
   renderProjects();

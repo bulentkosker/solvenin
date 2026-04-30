@@ -1127,15 +1127,16 @@ function renderProjectSelects() {
 }
 
 async function loadRegisters() {
-  const { data } = await sb.from('cash_registers').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at');
+  // Load active + inactive (archive); soft-deleted excluded.
+  const { data } = await sb.from('cash_registers').select('*').eq('company_id', companyId).is('deleted_at', null).order('created_at');
   registers = data || [];
   renderCashGrid();
 }
 
 async function loadBanks() {
-  const { data: banksData } = await sb.from('banks').select('*').eq('company_id', companyId).eq('is_active', true).order('name');
+  const { data: banksData } = await sb.from('banks').select('*').eq('company_id', companyId).is('deleted_at', null).order('name');
   banks = banksData || [];
-  const { data: accsData } = await sb.from('bank_accounts').select('*').eq('company_id', companyId).eq('is_active', true).order('account_name');
+  const { data: accsData } = await sb.from('bank_accounts').select('*').eq('company_id', companyId).is('deleted_at', null).order('account_name');
   accounts = accsData || [];
   renderBankTree();
   updateAccountFilter();
@@ -1195,18 +1196,20 @@ function renderCashGrid() {
     const curr = currencies.find(c => c.code === r.currency_code);
     const symbol = curr?.symbol || r.currency_code;
     const isSelected = r.id === selectedRegisterId;
-    return `<div class="account-card ${isSelected ? 'selected' : ''}" onclick="selectRegister('${r.id}')">
+    const inactiveStyle = r.is_active === false ? 'background:var(--gray50,#f8fafc);' : '';
+    return `<div class="account-card ${isSelected ? 'selected' : ''}" onclick="selectRegister('${r.id}')" style="${inactiveStyle}">
       <div class="account-card-header">
         <div class="account-icon cash">💵</div>
         <div class="dot-menu" onclick="event.stopPropagation()">
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
           <div class="dot-menu-list">
             <button class="dot-menu-item" onclick="closeDotMenus();editRegister('${r.id}')">✏️ ${t('btn_edit')}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();toggleRegisterActive('${r.id}')">${r.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>
             <button class="dot-menu-item danger" onclick="closeDotMenus();deleteRegister('${r.id}')">🗑️ ${t('btn_delete')}</button>
           </div>
         </div>
       </div>
-      <div class="account-name">${r.name}</div>
+      <div class="account-name">${r.name}${r.is_active===false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : ''}</div>
       <div class="account-meta">${r.currency_code}${r.description ? ' · ' + r.description : ''}</div>
       <div class="account-balance ${bal >= 0 ? 'positive' : 'negative'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
     </div>`;
@@ -1326,9 +1329,11 @@ function renderBankTree() {
       const curr = currencies.find(c => c.code === a.currency_code);
       const symbol = curr?.symbol || a.currency_code;
       const isSelected = a.id === selectedAccountId;
-      return `<div class="account-row ${isSelected ? 'selected' : ''}" onclick="selectAccount('${a.id}')">
+      const inactiveStyle = a.is_active === false ? 'background:var(--gray50,#f8fafc);color:var(--gray500)' : '';
+      const inactiveBadge = a.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : '';
+      return `<div class="account-row ${isSelected ? 'selected' : ''}" onclick="selectAccount('${a.id}')" style="${inactiveStyle}">
         <div class="account-row-info">
-          <div class="account-row-name">${a.account_name}</div>
+          <div class="account-row-name">${a.account_name}${inactiveBadge}</div>
           <div class="account-row-iban">${a.iban || a.account_number || '—'}</div>
         </div>
         <span class="badge badge-gray" style="font-size:11px">${a.currency_code}</span>
@@ -1337,6 +1342,7 @@ function renderBankTree() {
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
           <div class="dot-menu-list">
             <button class="dot-menu-item" onclick="closeDotMenus();editAccount('${a.id}')">✏️ ${t('btn_edit')}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();toggleAccountActive('${a.id}')">${a.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>
             <button class="dot-menu-item danger" onclick="closeDotMenus();deleteAccount('${a.id}')">🗑️ ${t('btn_delete')}</button>
           </div>
         </div>
@@ -1562,6 +1568,42 @@ async function saveRegister() {
   await loadRegisters();
   updateStats();
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
+}
+
+async function toggleRegisterActive(id) {
+  const r = registers.find(x => x.id === id);
+  if (!r) return;
+  const goingInactive = r.is_active !== false;
+  if (goingInactive) {
+    const bal = parseFloat(r.current_balance || r.opening_balance || 0);
+    if (Math.abs(bal) > 0.01) {
+      const msg = (t('confirm_inactive_register_balance') || 'Bu kasanın {balance} bakiyesi var. Pasif yapsanız bile bakiye korunur. Devam edilsin mi?')
+        .replace('{balance}', fmtNum(bal) + ' ' + (r.currency_code||''));
+      if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+    }
+  }
+  const { error } = await sb.from('cash_registers').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
+  await loadRegisters();
+}
+
+async function toggleAccountActive(id) {
+  const a = accounts.find(x => x.id === id);
+  if (!a) return;
+  const goingInactive = a.is_active !== false;
+  if (goingInactive) {
+    const bal = parseFloat(a.current_balance || a.opening_balance || 0);
+    if (Math.abs(bal) > 0.01) {
+      const msg = (t('confirm_inactive_account_balance') || 'Bu hesabın {balance} bakiyesi var. Pasif yapsanız bile bakiye korunur. Devam edilsin mi?')
+        .replace('{balance}', fmtNum(bal) + ' ' + (a.currency_code||''));
+      if (!await showConfirm(msg, t('btn_set_inactive')||'Pasif Yap')) return;
+    }
+  }
+  const { error } = await sb.from('bank_accounts').update({ is_active: !goingInactive }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(goingInactive ? (t('toast_set_inactive')||'Pasif yapıldı') : (t('toast_set_active')||'Aktif yapıldı'), 'success');
+  await loadBanks();
 }
 
 function deleteRegister(id) {
