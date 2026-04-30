@@ -766,12 +766,13 @@ async function init() {
   localStorage.setItem('currentCompanyId', companyId);
   currentUser = user;
 
-  // Load company-level payroll defaults (used as new-employee default rates)
-  const { data: _co } = await sb.from('companies')
-    .select('payroll_default_tax_rate, payroll_default_insurance_rate')
-    .eq('id', companyId).single();
-  payrollDefaults.tax = (typeof _co?.payroll_default_tax_rate === 'number' && Number.isFinite(_co.payroll_default_tax_rate)) ? _co.payroll_default_tax_rate : null;
-  payrollDefaults.ins = (typeof _co?.payroll_default_insurance_rate === 'number' && Number.isFinite(_co.payroll_default_insurance_rate)) ? _co.payroll_default_insurance_rate : null;
+  // Load tenant-level payroll defaults from dedicated payroll_settings table
+  // (UNIQUE company_id — at most 1 row per company, may not exist yet)
+  const { data: _ps } = await sb.from('payroll_settings')
+    .select('default_tax_rate, default_insurance_rate')
+    .eq('company_id', companyId).maybeSingle();
+  payrollDefaults.tax = (typeof _ps?.default_tax_rate === 'number' && Number.isFinite(_ps.default_tax_rate)) ? _ps.default_tax_rate : null;
+  payrollDefaults.ins = (typeof _ps?.default_insurance_rate === 'number' && Number.isFinite(_ps.default_insurance_rate)) ? _ps.default_insurance_rate : null;
 
   // Init payroll year/month selectors
   const now = new Date();
