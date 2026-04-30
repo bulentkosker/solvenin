@@ -2535,7 +2535,7 @@ function renderRatesTable(rates) {
       <td><strong>${currency}</strong></td>
       <td>1 ${currency}</td>
       <td>
-        <input class="rate-input" type="number" lang="en" step="0.000001" min="0"
+        <input class="rate-input" type="text" inputmode="decimal"
           id="rate-${currency}" value="${rate}" placeholder="${t('placeholder_enter_rate')}">
         <span style="margin-left:6px;font-size:12px;color:var(--gray400)">${baseCurrency}</span>
       </td>
@@ -2549,7 +2549,10 @@ function renderRatesTable(rates) {
 }
 
 async function saveManualRate(currency) {
-  const val = parseFloat(document.getElementById(`rate-${currency}`).value);
+  // parseNum (utils.js) handles both "1.234,56" (TR) and "1,234.56" (EN);
+  // raw parseFloat would mis-parse "469.483568" as 469 in TR locale.
+  const raw = document.getElementById(`rate-${currency}`).value;
+  const val = (typeof parseNum === 'function') ? parseNum(raw) : parseFloat(raw);
   if (!val || val <= 0) { showToast(t('toast_invalid_exchange_rate'), 'error'); return; }
   const today = new Date().toISOString().slice(0,10);
   const { error } = await sb.from('exchange_rates').upsert({
