@@ -376,15 +376,27 @@ async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'auth.html'; return; }
 
-  const { data: companies } = await sb.rpc('get_my_companies');
+  // Use shared tenant cache (sidebar already populated it on this page).
+  const cacheT = window.tenantCache;
+  const companies = cacheT
+    ? await cacheT.fetch('myCompanies', async () => {
+        const r = await sb.rpc('get_my_companies'); return r.error ? null : r.data;
+      })
+    : (await sb.rpc('get_my_companies')).data;
   if (!companies?.length) return;
   const saved = localStorage.getItem('currentCompanyId');
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
   localStorage.setItem('currentCompanyId', companyId);
 
-  // Load company base currency
-  const { data: compInfo } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
+  // Company base_currency is a stable per-tenant attribute — cache and
+  // skip the round-trip on subsequent navigations.
+  const compInfo = cacheT
+    ? await cacheT.fetch('companyBase.'+companyId, async () => {
+        const r = await sb.from('companies').select('base_currency').eq('id', companyId).single();
+        return r.error ? null : r.data;
+      })
+    : (await sb.from('companies').select('base_currency').eq('id', companyId).single()).data;
   const baseCur = compInfo?.base_currency || 'KZT';
   initCurrencySelect(baseCur);
 
@@ -393,8 +405,9 @@ async function init() {
   const filterParam = params.get('filter');
   if (filterParam) document.getElementById('filter-type').value = filterParam;
 
-  await loadContacts();
-  await loadBalances();
+  // loadContacts + loadBalances are independent — run in parallel so
+  // page open is bounded by the slower of the two, not the sum.
+  await Promise.all([loadContacts(), loadBalances()]);
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -448,59 +461,46 @@ function filterContacts() {
 async function loadBalances() {
   if (!companyId) return;
   balances = {};
+  // Run all 4 independent queries in parallel. Sales/purchase orders'
+  // own select pulls `id` too so we can map payments → contact directly,
+  // dropping the two duplicate id-only re-fetches that used to live here.
+  const [salesRes, purchasesRes, paymentsRes, manualRes] = await Promise.all([
+    sb.from('sales_orders').select('id, customer_id, total')
+      .eq('company_id', companyId).is('deleted_at', null)
+      .in('status', ['invoiced','paid','overdue']),
+    sb.from('purchase_orders').select('id, supplier_id, total')
+      .eq('company_id', companyId).is('deleted_at', null)
+      .in('status', ['invoiced','paid','overdue']),
+    sb.from('payments').select('order_id, purchase_order_id, amount')
+      .eq('company_id', companyId).is('deleted_at', null),
+    sb.from('contact_transactions').select('contact_id, type, amount')
+      .eq('company_id', companyId).is('deleted_at', null),
+  ]);
+  const sales = salesRes.data || [];
+  const purchases = purchasesRes.data || [];
+  const allPayments = paymentsRes.data || [];
+  const manualTx = manualRes.data || [];
+
+  const bump = (cid, side, amt) => {
+    if (!cid) return;
+    if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
+    balances[cid][side] += parseFloat(amt||0);
+  };
   // Sales invoices (customer owes us = debit for customer)
-  const { data: sales } = await sb.from('sales_orders')
-    .select('customer_id, total')
-    .eq('company_id', companyId).eq('is_active', true)
-    .in('status', ['invoiced','paid','overdue']);
-  (sales||[]).forEach(o => {
-    if (!balances[o.customer_id]) balances[o.customer_id] = { debit:0, credit:0 };
-    balances[o.customer_id].debit += parseFloat(o.total||0);
-  });
-  // Purchase invoices (we owe supplier = credit for supplier, but from supplier perspective it's debit)
-  const { data: purchases } = await sb.from('purchase_orders')
-    .select('supplier_id, total')
-    .eq('company_id', companyId).eq('is_active', true)
-    .in('status', ['invoiced','paid','overdue']);
-  (purchases||[]).forEach(o => {
-    if (!balances[o.supplier_id]) balances[o.supplier_id] = { debit:0, credit:0 };
-    balances[o.supplier_id].credit += parseFloat(o.total||0);
-  });
-  // Payments — map via order tables
-  const { data: allPayments } = await sb.from('payments').select('order_id, purchase_order_id, payment_type, amount').eq('company_id', companyId);
-  if (allPayments?.length) {
-    const { data: soMap } = await sb.from('sales_orders').select('id,customer_id').eq('company_id', companyId).eq('is_active', true);
-    const { data: poMap } = await sb.from('purchase_orders').select('id,supplier_id').eq('company_id', companyId).eq('is_active', true);
-    const custMap = {}; (soMap||[]).forEach(o => { custMap[o.id] = o.customer_id; });
-    const suppMap = {}; (poMap||[]).forEach(o => { suppMap[o.id] = o.supplier_id; });
+  sales.forEach(o => bump(o.customer_id, 'debit', o.total));
+  // Purchase invoices (supplier perspective: credit)
+  purchases.forEach(o => bump(o.supplier_id, 'credit', o.total));
+  // Payments routed via the just-fetched order maps
+  if (allPayments.length) {
+    const custMap = Object.fromEntries(sales.map(o => [o.id, o.customer_id]));
+    const suppMap = Object.fromEntries(purchases.map(o => [o.id, o.supplier_id]));
     allPayments.forEach(p => {
-      // Sale payments → credit (customer paid us)
-      if (p.order_id) {
-        const cid = custMap[p.order_id];
-        if (cid) {
-          if (!balances[cid]) balances[cid] = { debit:0, credit:0 };
-          balances[cid].credit += parseFloat(p.amount||0);
-        }
-      }
-      // Purchase payments → debit (we paid supplier)
-      if (p.purchase_order_id) {
-        const sid = suppMap[p.purchase_order_id];
-        if (sid) {
-          if (!balances[sid]) balances[sid] = { debit:0, credit:0 };
-          balances[sid].debit += parseFloat(p.amount||0);
-        }
-      }
+      if (p.order_id)          bump(custMap[p.order_id],          'credit', p.amount);
+      if (p.purchase_order_id) bump(suppMap[p.purchase_order_id], 'debit',  p.amount);
     });
   }
   // Manual contact transactions
-  const { data: manualTx } = await sb.from('contact_transactions')
-    .select('contact_id, type, amount')
-    .eq('company_id', companyId).eq('is_active', true);
-  (manualTx||[]).forEach(tx => {
-    if (!balances[tx.contact_id]) balances[tx.contact_id] = { debit:0, credit:0 };
-    if (tx.type === 'debit') balances[tx.contact_id].debit += parseFloat(tx.amount||0);
-    else balances[tx.contact_id].credit += parseFloat(tx.amount||0);
-  });
+  manualTx.forEach(tx => bump(tx.contact_id, tx.type === 'debit' ? 'debit' : 'credit', tx.amount));
   filterContacts();
 }
 
