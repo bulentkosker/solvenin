@@ -980,11 +980,23 @@
       const companyId = localStorage.getItem('currentCompanyId');
       if (!companyId) return;
 
-      // Fetch company info and user plan in parallel
-      const [compRes, profileRes] = await Promise.all([
-        sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single(),
+      // Fetch company info and user plan in parallel.
+      // Company row is cache-aside — sidebar runs on every page open;
+      // session-level cache eliminates repeated round-trips for the same
+      // tenant context.
+      const cacheT = window.tenantCache;
+      const [compData, profileRes] = await Promise.all([
+        cacheT
+          ? cacheT.fetch('company.'+companyId, async () => {
+              const r = await sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single();
+              return r.error ? null : r.data;
+            })
+          : sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single().then(r => r.data),
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
+      // Adapter: keep downstream { error, data } shape so existing
+      // gate/freeze checks below don't need a rewrite.
+      const compRes = { data: compData, error: compData ? null : { message: 'not found' } };
 
       // Deleted-company gate: if RLS hides this company (it's soft-deleted or
       // the user lost access), the lookup returns no rows. In that case
@@ -1067,13 +1079,21 @@
       if (cpEl) cpEl.textContent = plan.toUpperCase();
       if (upEl) upEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
 
-      const { data: companies } = await sb.rpc('get_my_companies');
+      // get_my_companies + company_modules: cache-aside (15min TTL)
+      const companies = cacheT
+        ? await cacheT.fetch('myCompanies', async () => {
+            const r = await sb.rpc('get_my_companies');
+            return r.error ? null : r.data;
+          })
+        : (await sb.rpc('get_my_companies')).data;
       if (companies) renderCompanyMenu(companies, companyId);
 
-      // Module visibility (company-level)
-      const { data: modules } = await sb.from('company_modules')
-        .select('module, is_active')
-        .eq('company_id', companyId);
+      const modules = cacheT
+        ? await cacheT.fetch('modules.'+companyId, async () => {
+            const r = await sb.from('company_modules').select('module, is_active').eq('company_id', companyId);
+            return r.error ? null : r.data;
+          })
+        : (await sb.from('company_modules').select('module, is_active').eq('company_id', companyId)).data;
       if (modules) applyModuleVisibility(modules);
 
       // User permission visibility (user-level)
@@ -1234,6 +1254,7 @@
       const sb = window._supabase || window.supabase;
       if (sb && sb.auth) await sb.auth.signOut();
     } catch (e) { console.warn(e); }
+    if (window.tenantCache) window.tenantCache.clear();
     localStorage.removeItem('currentCompanyId');
     window.location.href = 'auth.html';
   };
@@ -1260,6 +1281,9 @@
       const sb = window._supabase || window.supabase;
       if (!sb) return;
       await sb.rpc('switch_company', { p_company_id: id });
+      // Clear tenant cache before reload — old company's modules/permissions
+      // would otherwise leak into the new context until TTL expires.
+      if (window.tenantCache) window.tenantCache.clear();
       localStorage.setItem('currentCompanyId', id);
       window.location.reload();
     } catch (e) {

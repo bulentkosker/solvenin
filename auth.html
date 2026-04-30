@@ -1191,6 +1191,9 @@ async function handleLogin() {
     }
 
     if (cu) localStorage.setItem('currentCompanyId', cu.company_id);
+    // Fresh sign-in: clear any stale tenant cache from a previous session
+    if (window.tenantCache) window.tenantCache.clear();
+    else { try { for (let i=sessionStorage.length-1;i>=0;i--){ const k=sessionStorage.key(i); if(k&&k.startsWith('tenant.'))sessionStorage.removeItem(k);} } catch(e){} }
 
     if (profile?.must_change_password) {
       showChangePasswordScreen(data.user.id);

@@ -29,12 +29,18 @@
     if (!session) return FULL_ACCESS;
     const userId = session.user.id;
 
-    // Check role first — owner/admin skip permission table
-    const { data: cu } = await sb.from('company_users')
-      .select('role')
-      .eq('company_id', companyId)
-      .eq('user_id', userId)
-      .single();
+    // Check role first — owner/admin skip permission table.
+    // Cache-aside: sidebar + permission helpers all hit company_users for
+    // the same (company_id, user_id) on every page; session cache
+    // eliminates repeats.
+    const cacheT = window.tenantCache;
+    const cu = cacheT
+      ? await cacheT.fetch('user.'+companyId, async () => {
+          const r = await sb.from('company_users')
+            .select('role').eq('company_id', companyId).eq('user_id', userId).single();
+          return r.error ? null : r.data;
+        })
+      : (await sb.from('company_users').select('role').eq('company_id', companyId).eq('user_id', userId).single()).data;
 
     if (!cu) return FULL_ACCESS;
     if (cu.role === 'owner' || cu.role === 'admin') return FULL_ACCESS;
@@ -111,12 +117,15 @@
     if (!session) return {};
     const userId = session.user.id;
 
-    // Owner/admin → full access to everything
-    const { data: cu } = await sb.from('company_users')
-      .select('role')
-      .eq('company_id', companyId)
-      .eq('user_id', userId)
-      .single();
+    // Owner/admin → full access to everything (same cache key as above)
+    const cacheT2 = window.tenantCache;
+    const cu = cacheT2
+      ? await cacheT2.fetch('user.'+companyId, async () => {
+          const r = await sb.from('company_users')
+            .select('role').eq('company_id', companyId).eq('user_id', userId).single();
+          return r.error ? null : r.data;
+        })
+      : (await sb.from('company_users').select('role').eq('company_id', companyId).eq('user_id', userId).single()).data;
 
     if (!cu || cu.role === 'owner' || cu.role === 'admin') return {};
 
