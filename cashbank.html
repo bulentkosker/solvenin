@@ -526,7 +526,14 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label data-i18n="label_register_name">Register Name *</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <label style="margin:0" data-i18n="label_register_name">Register Name *</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--gray600);text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="reg-active" checked style="margin:0">
+            <span data-i18n="status_active">Aktif</span>
+            <span style="cursor:help;color:var(--gray400);font-size:13px" data-i18n-title="info_inactive_in_reports" title="Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut — tüm geçmiş veri korunur.">ⓘ</span>
+          </label>
+        </div>
         <input type="text" id="reg-name" placeholder="e.g. Main Register, Dollar Register">
       </div>
       <div class="form-row">
@@ -666,7 +673,14 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label data-i18n="label_bank">Bank *</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <label style="margin:0" data-i18n="label_bank">Bank *</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--gray600);text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="acc-active" checked style="margin:0">
+            <span data-i18n="status_active">Aktif</span>
+            <span style="cursor:help;color:var(--gray400);font-size:13px" data-i18n-title="info_inactive_in_reports" title="Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut — tüm geçmiş veri korunur.">ⓘ</span>
+          </label>
+        </div>
         <select id="acc-bank">
           <!-- filled by JS -->
         </select>
@@ -1508,12 +1522,14 @@ function openRegisterModal(id = null) {
     setCurrency('reg-currency','reg-currency-input', r.currency_code);
     document.getElementById('reg-opening').value = r.opening_balance;
     document.getElementById('reg-desc').value = r.description || '';
+    document.getElementById('reg-active').checked = r.is_active !== false;
   } else {
     title.textContent = t('title_add_register');
     document.getElementById('reg-name').value = '';
     setCurrency('reg-currency','reg-currency-input','TRY');
     document.getElementById('reg-opening').value = '';
     document.getElementById('reg-desc').value = '';
+    document.getElementById('reg-active').checked = true;
   }
   openModal('register-modal');
 }
@@ -1530,10 +1546,11 @@ async function saveRegister() {
 
   if (!name) { showToast(t('toast_name_required'), 'error'); return; }
 
-  const payload = { company_id: companyId, name, currency_code: currency, opening_balance: opening, current_balance: opening, description: desc };
+  const isActive = !!document.getElementById('reg-active')?.checked;
+  const payload = { company_id: companyId, name, currency_code: currency, opening_balance: opening, current_balance: opening, description: desc, is_active: isActive };
 
   if (editingRegisterId) {
-    const { error } = await sb.from('cash_registers').update({ name, currency_code: currency, description: desc }).eq('id', editingRegisterId);
+    const { error } = await sb.from('cash_registers').update({ name, currency_code: currency, description: desc, is_active: isActive }).eq('id', editingRegisterId);
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
     showToast(t('toast_register_saved'), 'success');
   } else {
@@ -2396,6 +2413,7 @@ function openAccountModal(preselectedBankId = null) {
   document.getElementById('acc-iban').value = '';
   setCurrency('acc-currency','acc-currency-input','TRY');
   document.getElementById('acc-opening').value = '';
+  document.getElementById('acc-active').checked = true;
   updateBankSelect(preselectedBankId);
   openModal('account-modal');
 }
@@ -2409,6 +2427,7 @@ function editAccount(id) {
   document.getElementById('acc-iban').value = a.iban || '';
   setCurrency('acc-currency','acc-currency-input', a.currency_code);
   document.getElementById('acc-opening').value = a.opening_balance;
+  document.getElementById('acc-active').checked = a.is_active !== false;
   openModal('account-modal');
 }
 
@@ -2436,11 +2455,12 @@ async function saveAccount() {
     if (existing) { showToast(t('toast_iban_exists'), 'error'); return; }
   }
 
+  const isActive = !!document.getElementById('acc-active')?.checked;
   if (editingAccountId) {
-    const { error } = await sb.from('bank_accounts').update({ bank_id: bankId, account_name: name, iban: iban || null, currency_code: currency }).eq('id', editingAccountId);
+    const { error } = await sb.from('bank_accounts').update({ bank_id: bankId, account_name: name, iban: iban || null, currency_code: currency, is_active: isActive }).eq('id', editingAccountId);
     if (error) throw error;
   } else {
-    const { error } = await sb.from('bank_accounts').insert({ company_id: companyId, bank_id: bankId, account_name: name, iban: iban || null, account_number: null, currency_code: currency, opening_balance: opening, current_balance: opening });
+    const { error } = await sb.from('bank_accounts').insert({ company_id: companyId, bank_id: bankId, account_name: name, iban: iban || null, account_number: null, currency_code: currency, opening_balance: opening, current_balance: opening, is_active: isActive });
     if (error) throw error;
   }
   showToast(t('toast_account_saved'), 'success');

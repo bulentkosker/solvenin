@@ -303,7 +303,14 @@ tr:hover .row-actions{opacity:1}
           <input type="text" id="p-number" readonly placeholder="Otomatik üretilecek" data-i18n-placeholder="placeholder_auto_generated" style="background:var(--gray50,#f8fafc);color:var(--gray500,#64748b)">
         </div>
         <div class="field full">
-          <label data-i18n="lbl_project_name">Project Name</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <label style="margin:0" data-i18n="lbl_project_name">Project Name</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--gray500);text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="p-active" checked style="margin:0">
+              <span data-i18n="status_active">Aktif</span>
+              <span style="cursor:help;color:var(--gray400);font-size:13px" data-i18n-title="info_inactive_in_reports" title="Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut — tüm geçmiş veri korunur.">ⓘ</span>
+            </label>
+          </div>
           <input type="text" id="p-name">
         </div>
         <div class="field full">
@@ -1101,6 +1108,7 @@ function openProjectModal(id = null) {
     document.getElementById('p-progress').value = '0';
     document.getElementById('p-status').value = 'planning';
     document.getElementById('p-priority').value = 'medium';
+    document.getElementById('p-active').checked = true;
   } else {
     const p = projects.find(x => x.id === id);
     if (!p) return;
@@ -1113,6 +1121,7 @@ function openProjectModal(id = null) {
     document.getElementById('p-end').value = p.end_date||'';
     document.getElementById('p-budget').value = p.budget!=null ? p.budget : '';
     document.getElementById('p-progress').value = p.progress||0;
+    document.getElementById('p-active').checked = p.is_active !== false;
   }
   applyTranslations();
   openModal('project-modal');
@@ -1154,6 +1163,7 @@ async function saveProject() {
     end_date: document.getElementById('p-end').value||null,
     budget: parseFloat(document.getElementById('p-budget').value)||null,
     progress: parseInt(document.getElementById('p-progress').value)||0,
+    is_active: !!document.getElementById('p-active')?.checked,
     created_by: user.id
   };
   if (editingProjectId) {

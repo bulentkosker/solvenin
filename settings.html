@@ -1570,7 +1570,17 @@ tr:hover .action-btns { opacity:1; }
       <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row full"><div class="form-group"><label data-i18n="label_warehouse_name">Warehouse Name *</label><input type="text" id="wh-name" data-i18n-placeholder="placeholder_wh_name" placeholder="e.g. Main Warehouse"></div></div>
+      <div class="form-row full"><div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <label style="margin:0" data-i18n="label_warehouse_name">Warehouse Name *</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--gray600);text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="wh-active" checked style="margin:0">
+            <span data-i18n="status_active">Aktif</span>
+            <span style="cursor:help;color:var(--gray400);font-size:13px" data-i18n-title="info_inactive_in_reports" title="Pasif kayıtlar listelerde ve dropdown'larda görünmez ama raporlarda mevcut — tüm geçmiş veri korunur.">ⓘ</span>
+          </label>
+        </div>
+        <input type="text" id="wh-name" data-i18n-placeholder="placeholder_wh_name" placeholder="e.g. Main Warehouse">
+      </div></div>
       <div class="form-row full"><div class="form-group"><label data-i18n="label_location">Location / Address</label><input type="text" id="wh-location" data-i18n-placeholder="placeholder_wh_location" placeholder="e.g. Building A, Floor 2"></div></div>
       <div class="form-row full"><div class="form-group"><label data-i18n="label_notes">Notes</label><textarea id="wh-notes" data-i18n-placeholder="placeholder_wh_notes" placeholder="Optional notes..." style="min-height:60px"></textarea></div></div>
       <div class="form-row full"><div class="form-group">
@@ -3245,6 +3255,7 @@ function openWarehouseModal(id=null) {
   document.getElementById('wh-location').value = w?.location || '';
   document.getElementById('wh-notes').value = w?.notes || '';
   document.getElementById('wh-default').checked = w?.is_default || false;
+  document.getElementById('wh-active').checked = w ? (w.is_active !== false) : true;
   updateDefaultTrack();
   document.getElementById('wh-default').onchange = updateDefaultTrack;
   openModal('warehouse-modal');
@@ -3261,6 +3272,7 @@ async function saveWarehouse() {
       location: document.getElementById('wh-location').value.trim() || null,
       notes: document.getElementById('wh-notes').value.trim() || null,
       is_default: isDefault,
+      is_active: !!document.getElementById('wh-active')?.checked,
       company_id: companyId,
     };
     if (isDefault) {
