@@ -1767,7 +1767,8 @@ function renderCatSelector(parentId, level, selectedId) {
     }
     document.getElementById('p-category-id').value = finalVal;
     if (typeof _updateTaxHint === 'function') _updateTaxHint();
-    if (sel.value) renderCatSelector(sel.value, level + 1, null);
+    // Max 3 levels (depth 0/1/2) — don't render a level-3 sub-picker
+    if (sel.value && level < 2) renderCatSelector(sel.value, level + 1, null);
   });
 
   const addBtn = document.createElement('button');
@@ -1840,9 +1841,9 @@ function buildInlineForm(parentId, level) {
     const currentParent = sel ? (sel.dataset.parentId || null) : (parentId || null);
     renderCatSelector(currentParent || null, level, data.id);
 
-    // Trigger next level render
+    // Trigger next level render — but cap at 3 levels (depth 0/1/2)
     document.getElementById('p-category-id').value = data.id;
-    renderCatSelector(data.id, level + 1, null);
+    if (level < 2) renderCatSelector(data.id, level + 1, null);
 
     showToast(t('toast_category_added').replace('{0}', name), 'success');
     } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
