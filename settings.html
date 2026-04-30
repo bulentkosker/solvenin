@@ -332,8 +332,8 @@ tr:hover .action-btns { opacity:1; }
   <div class="topbar">
     <div class="topbar-title">⚙️ <span data-i18n="page_settings">Settings</span></div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </div>
   <div class="content">
@@ -901,7 +901,7 @@ tr:hover .action-btns { opacity:1; }
                 <div style="font-size:12px;color:var(--gray400);margin-top:4px" id="accounting-status-text">Kapalı — Faturalar serbest düzenlenebilir</div>
               </div>
               <div>
-                <button class="btn-primary" id="btn-toggle-accounting" onclick="openAccountingModal()" style="padding:8px 16px;font-size:12px">Aktif Et</button>
+                <button class="btn-primary" id="btn-toggle-accounting" onclick="openAccountingModal()" style="padding:8px 16px;font-size:12px" data-i18n="btn_activate">Aktif Et</button>
               </div>
             </div>
           </div>
@@ -912,10 +912,10 @@ tr:hover .action-btns { opacity:1; }
         <div class="settings-card" style="margin-top:16px">
           <div class="settings-card-head">
             <div>
-              <div class="settings-card-title">Muhasebe Varsayılanları</div>
-              <div class="settings-card-desc">Kasa/banka modal'ında Maaş ve Avans kategorileri için otomatik kullanılacak hesaplar</div>
+              <div class="settings-card-title" data-i18n="card_accounting_defaults">Muhasebe Varsayılanları</div>
+              <div class="settings-card-desc" data-i18n="desc_accounting_defaults">Kasa/banka modal'ında Maaş ve Avans kategorileri için otomatik kullanılacak hesaplar</div>
             </div>
-            <button class="btn-primary" onclick="savePayrollDefaults()" data-action="save">Kaydet</button>
+            <button class="btn-primary" onclick="savePayrollDefaults()" data-action="save" data-i18n="btn_save">Kaydet</button>
           </div>
           <div class="settings-card-body">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -1188,17 +1188,17 @@ tr:hover .action-btns { opacity:1; }
           </div>
           <div class="settings-card-body">
             <div class="form-row">
-              <div class="form-group"><label data-i18n="lbl_fullname">Full Name</label><input type="text" id="add-user-name" placeholder="John Doe"></div>
+              <div class="form-group"><label data-i18n="lbl_fullname">Full Name</label><input type="text" id="add-user-name" data-i18n-placeholder="placeholder_full_name" placeholder="John Doe"></div>
               <div class="form-group"><label data-i18n="lbl_email">Email</label><input type="email" id="add-user-email" placeholder="user@example.com"></div>
             </div>
             <div class="form-row">
               <div class="form-group"><label data-i18n="lbl_password">Password</label><input type="password" id="add-user-pass" placeholder="Min 8 characters" minlength="8"></div>
               <div class="form-group"><label data-i18n="lbl_role">Role</label>
                 <select id="add-user-role">
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="employee" selected>Employee</option>
-                  <option value="accountant">Accountant</option>
+                  <option value="admin" data-i18n="role_admin">Admin</option>
+                  <option value="manager" data-i18n="role_manager">Manager</option>
+                  <option value="employee" selected data-i18n="role_employee">Employee</option>
+                  <option value="accountant" data-i18n="role_accountant">Accountant</option>
                 </select>
               </div>
             </div>
@@ -1392,15 +1392,15 @@ tr:hover .action-btns { opacity:1; }
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <select id="recycle-filter" onchange="filterRecycleBin()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--gray200)">
-                <option value="">All Types</option>
-                <option value="product">Products</option>
-                <option value="contact">Contacts</option>
-                <option value="sales_order">Sales Orders</option>
-                <option value="purchase_order">Purchase Orders</option>
-                <option value="stock_movement">Stock Movements</option>
-                <option value="cash_register">Cash Registers</option>
-                <option value="bank_account">Bank Accounts</option>
-                <option value="coa_account">COA Accounts</option>
+                <option value="" data-i18n="recycle_all_types">All Types</option>
+                <option value="product" data-i18n="recycle_type_products">Products</option>
+                <option value="contact" data-i18n="recycle_type_contacts">Contacts</option>
+                <option value="sales_order" data-i18n="recycle_type_sales_orders">Sales Orders</option>
+                <option value="purchase_order" data-i18n="recycle_type_purchase_orders">Purchase Orders</option>
+                <option value="stock_movement" data-i18n="recycle_type_stock_movements">Stock Movements</option>
+                <option value="cash_register" data-i18n="recycle_type_cash_registers">Cash Registers</option>
+                <option value="bank_account" data-i18n="recycle_type_bank_accounts">Bank Accounts</option>
+                <option value="coa_account" data-i18n="recycle_type_coa_accounts">COA Accounts</option>
               </select>
             </div>
           </div>
@@ -1441,14 +1441,14 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="pos-button-modal">
   <div class="modal" style="max-width:440px">
     <div class="modal-head">
-      <span class="modal-title" id="pos-btn-modal-title">Buton Ekle</span>
+      <span class="modal-title" id="pos-btn-modal-title" data-i18n="pos_add_button">Buton Ekle</span>
       <button class="modal-close" onclick="closeModal('pos-button-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Ürün *</label>
-          <input type="text" id="pb-product-search" placeholder="🔍 Ürün ara..." autocomplete="off" oninput="filterPbProducts()" style="width:100%">
+          <label data-i18n="lbl_product_required">Ürün *</label>
+          <input type="text" id="pb-product-search" data-i18n-placeholder="placeholder_product_search" placeholder="🔍 Ürün ara..." autocomplete="off" oninput="filterPbProducts()" style="width:100%">
           <input type="hidden" id="pb-product">
           <div id="pb-product-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray200);border-radius:8px;margin-top:4px;display:none"></div>
           <div id="pb-product-selected" style="display:none;margin-top:6px;padding:8px 12px;background:var(--gray50);border-radius:8px;font-size:13px;font-weight:600;color:var(--gray800)"></div>
@@ -1456,7 +1456,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Buton Adı *</label>
+          <label data-i18n="lbl_button_name_required">Buton Adı *</label>
           <input type="text" id="pb-name" placeholder="Ekmek">
         </div>
       </div>
@@ -1468,14 +1468,14 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Renk</label>
+          <label data-i18n="lbl_color">Renk</label>
           <div id="pb-colors" style="display:flex;gap:6px;margin-top:4px"></div>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal('pos-button-modal')">İptal</button>
-      <button class="btn-primary" onclick="savePosButton()" data-action="save">Kaydet</button>
+      <button class="btn-outline" onclick="closeModal('pos-button-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" onclick="savePosButton()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -1496,7 +1496,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Renk</label>
+          <label data-i18n="lbl_color">Renk</label>
           <div id="pg-colors" style="display:flex;gap:6px;margin-top:4px"></div>
         </div>
       </div>
@@ -1551,7 +1551,7 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="warehouse-modal">
   <div class="modal" style="width:440px">
     <div class="modal-head">
-      <div class="modal-title" id="wh-modal-title">Add Warehouse</div>
+      <div class="modal-title" id="wh-modal-title" data-i18n="title_add_warehouse">Add Warehouse</div>
       <button class="modal-close" onclick="closeModal('warehouse-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -2399,7 +2399,7 @@ function renderActiveCurrencies() {
   container.innerHTML = activeCurrencies.map(c => `
     <div class="currency-chip active">
       <span>${c}</span>
-      ${c !== baseCurrency ? `<span class="chip-remove" onclick="removeCurrency('${c}')" title="Remove">×</span>` : '<span style="font-size:10px;color:var(--blue)">★</span>'}
+      ${c !== baseCurrency ? `<span class="chip-remove" onclick="removeCurrency('${c}')" title="${t('title_remove')||'Remove'}">×</span>` : '<span style="font-size:10px;color:var(--blue)">★</span>'}
     </div>
   `).join('');
 }
@@ -2469,7 +2469,7 @@ function renderRatesTable(rates) {
       <td class="rate-date">${date}</td>
       <td><span class="rate-badge ${isManual?'manual':'auto'}">${isManual?t('lbl_manual'):t('lbl_auto')}</span></td>
       <td>
-        <button class="btn-secondary" style="padding:5px 10px;font-size:11px" onclick="saveManualRate('${currency}')">Save</button>
+        <button class="btn-secondary" style="padding:5px 10px;font-size:11px" onclick="saveManualRate('${currency}')">${t('btn_save')||'Save'}</button>
       </td>
     </tr>`;
   }).join('');
@@ -2921,8 +2921,8 @@ function renderCatItem(cat, depth, childCount, isCollapsed, hasChildren) {
     <div class="manage-item-actions">
       ${vatBadge}
       ${depth < 2 ? `<button class="action-btn" title="Add sub-category" onclick="openAddCatForm('${cat.id}', ${depth+1})">＋</button>` : ''}
-      <button class="action-btn" title="Rename" onclick="openRenameCat('${cat.id}')">✏️</button>
-      <button class="action-btn danger" title="Delete" onclick="openDeleteCat('${cat.id}', '${cat.name}')">🗑️</button>
+      <button class="action-btn" title="${t('title_rename')||'Rename'}" onclick="openRenameCat('${cat.id}')">✏️</button>
+      <button class="action-btn danger" title="${t('title_delete')||'Delete'}" onclick="openDeleteCat('${cat.id}', '${cat.name}')">🗑️</button>
     </div>
   </div>`;
 }
@@ -2982,7 +2982,7 @@ function openAddCatForm(parentId, depth) {
     <div style="font-size:11px;color:var(--gray400);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${label}</div>
     <div style="display:flex;gap:8px">
       <input type="text" id="new-cat-input" placeholder="${t('placeholder_category_name')}" style="flex:1;padding:8px 12px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none">
-      <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')" data-action="save">Save</button>
+      <button class="btn-primary" style="padding:8px 14px" onclick="saveCatAdd('${parentId||''}')" data-action="save">${t('btn_save')||'Save'}</button>
       <button class="btn-secondary" style="padding:8px 14px" onclick="document.getElementById('inline-add-cat')?.remove()">✕</button>
     </div>
   `;
@@ -3490,11 +3490,11 @@ async function loadBackupHistory() {
   if (!data?.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray400);font-size:12px">Henüz yedek kaydı yok</div>'; return; }
   el.innerHTML = `<table style="width:100%;font-size:12px">
     <thead><tr style="background:var(--gray50)">
-      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">TARİH</th>
-      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">TÜR</th>
-      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">DOSYA</th>
-      <th style="padding:8px;text-align:right;font-size:10px;color:var(--gray500)">BOYUT</th>
-      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)">DURUM</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)" data-i18n="col_date">TARİH</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)" data-i18n="col_type">TÜR</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)" data-i18n="col_file">DOSYA</th>
+      <th style="padding:8px;text-align:right;font-size:10px;color:var(--gray500)" data-i18n="col_size">BOYUT</th>
+      <th style="padding:8px;text-align:left;font-size:10px;color:var(--gray500)" data-i18n="col_status">DURUM</th>
     </tr></thead>
     <tbody>
       ${data.map(b => `<tr>
@@ -4343,7 +4343,7 @@ function renderGroupTabs() {
     return `<div style="display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:10px;font-size:13px;font-weight:${active?'700':'500'};cursor:pointer;border:1.5px solid ${active?g.color:'var(--gray200)'};background:${active?g.color+'12':'var(--white)'};color:${active?g.color:'var(--gray600)'};transition:all .15s" onclick="_activeGroupTab='${g.id}';renderPosGroups()">
       <span>${g.name} (${count})</span>
       <span onclick="event.stopPropagation();editPosGroup('${g.id}')" style="cursor:pointer;font-size:11px;opacity:.6" title="Düzenle">✏️</span>
-      <span onclick="event.stopPropagation();confirmDeletePosGroup('${g.id}')" style="cursor:pointer;font-size:11px;opacity:.6" title="Sil">🗑️</span>
+      <span onclick="event.stopPropagation();confirmDeletePosGroup('${g.id}')" style="cursor:pointer;font-size:11px;opacity:.6" title="${t('title_delete')||'Sil'}">🗑️</span>
     </div>`;
   }).join('') +
   `<div style="display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px dashed var(--gray300);background:var(--white);color:var(--gray500)" onclick="openPosGroupModal()">+ ${t('pos_add_group')||'Grup Ekle'}</div>`;
