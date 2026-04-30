@@ -312,6 +312,9 @@
           <span>🔍</span>
           <input type="text" id="coa-search" placeholder="Hesap ara... (kod veya isim)" oninput="setCoaSearch(this.value)">
         </div>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-left:12px">
+          <input type="checkbox" id="coa-only-active" checked onchange="renderCOA()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+        </label>
       </div>
       <div id="coa-container"></div>
     </div>
@@ -408,6 +411,9 @@
           <p data-i18n="tax_sub">VAT and tax configuration</p>
         </div>
         <div class="header-actions">
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-right:8px">
+            <input type="checkbox" id="tax-only-active" checked onchange="renderTaxTable()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+          </label>
           <button class="btn btn-primary" onclick="openTaxModal()">+ <span data-i18n="btn_add_tax">Add Tax Rate</span></button>
         </div>
       </div>
@@ -933,10 +939,12 @@ function renderCOA() {
   // a user can find "kira" (local) or "770" (code) or "Administrative"
   // (EN) without switching fields.
   const q = _coaSearch;
-  const matches = acc => !q ||
+  const onlyActive = document.getElementById('coa-only-active')?.checked !== false;
+  const matches = acc => (!q ||
     (acc.code || '').toLowerCase().includes(q) ||
     (acc.name || '').toLowerCase().includes(q) ||
-    (acc.name_local || '').toLowerCase().includes(q);
+    (acc.name_local || '').toLowerCase().includes(q))
+    && (!onlyActive || acc.is_active !== false);
 
   container.innerHTML = types.map(type => {
     const meta = TYPE_META[type];
@@ -949,9 +957,11 @@ function renderCOA() {
     const rows = typeAccounts.map(acc => {
       const bal = parseFloat(acc.balance||0);
       const balClass = bal > 0 ? 'positive' : bal < 0 ? 'negative' : 'zero';
-      return `<div class="coa-account-row">
+      const inactiveStyle = acc.is_active === false ? ' style="background:var(--gray50,#f8fafc);color:var(--gray400)"' : '';
+      const inactiveBadge = acc.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : '';
+      return `<div class="coa-account-row"${inactiveStyle}>
         <span class="acc-code">${acc.code}</span>
-        <span class="acc-name">${(function(){const lang=(localStorage.getItem('solvenin_lang')||'en').toLowerCase();const primary=lang==='tr'&&acc.name_local?acc.name_local:acc.name;const secondary=lang==='tr'?acc.name:acc.name_local;return primary+(secondary&&secondary!==primary?` <span style="color:var(--gray400);font-size:11px">(${secondary})</span>`:'');})()}</span>
+        <span class="acc-name">${(function(){const lang=(localStorage.getItem('solvenin_lang')||'en').toLowerCase();const primary=lang==='tr'&&acc.name_local?acc.name_local:acc.name;const secondary=lang==='tr'?acc.name:acc.name_local;return primary+(secondary&&secondary!==primary?` <span style="color:var(--gray400);font-size:11px">(${secondary})</span>`:'');})()}${inactiveBadge}</span>
         <span style="font-size:11px;color:var(--gray400)">${acc.subtype?.replace(/_/g,' ')||''}</span>
         <span class="acc-balance ${balClass}">${fmtAmt(Math.abs(bal))}</span>
         <div class="row-actions" style="justify-content:flex-end">
@@ -1654,12 +1664,14 @@ async function saveTaxRate() {
 
 function renderTaxTable() {
   const tbody = document.getElementById('tax-tbody');
-  if (!taxRates.length) {
+  const onlyActive = document.getElementById('tax-only-active')?.checked !== false;
+  const list = onlyActive ? taxRates.filter(tx => tx.is_active !== false) : taxRates;
+  if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_tax_rates')}</h3></div></td></tr>`;
     return;
   }
   const typeColors = { vat:'badge-blue', sales_tax:'badge-green', withholding:'badge-orange', none:'badge-gray' };
-  tbody.innerHTML = taxRates.map(tax => {
+  tbody.innerHTML = list.map(tax => {
     const acc = accounts.find(a => a.id === tax.account_id);
     return `<tr>
       <td><strong>${tax.name}</strong> ${tax.is_default ? `<span class="badge badge-green" style="font-size:10px">${t('status_default')}</span>` : ''}</td>

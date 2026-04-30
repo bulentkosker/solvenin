@@ -248,6 +248,9 @@ tr:hover .row-actions{opacity:1}
           <option value="high" data-i18n="priority_high">High</option>
           <option value="critical" data-i18n="priority_critical">Critical</option>
         </select>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-left:8px">
+          <input type="checkbox" id="proj-only-active" checked onchange="renderProjects()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+        </label>
       </div>
 
       <div class="projects-grid" id="projects-grid"></div>
@@ -643,11 +646,13 @@ function renderProjects() {
   const q = (document.getElementById('proj-search')?.value||'').toLowerCase();
   const sf = document.getElementById('proj-status')?.value||'';
   const pf = document.getElementById('proj-priority')?.value||'';
+  const onlyActive = document.getElementById('proj-only-active')?.checked !== false;
 
   const list = projects.filter(p =>
     (!q || p.name.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q)) &&
     (!sf || p.status === sf) &&
-    (!pf || p.priority === pf)
+    (!pf || p.priority === pf) &&
+    (!onlyActive || p.is_active !== false)
   );
 
   const grid = document.getElementById('projects-grid');

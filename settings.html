@@ -824,7 +824,12 @@ tr:hover .action-btns { opacity:1; }
           <div class="settings-card">
             <div class="settings-card-head">
               <div><div class="settings-card-title" data-i18n="label_warehouses">Warehouses</div><div class="settings-card-desc" data-i18n="desc_warehouses">Manage storage locations</div></div>
-              <button class="btn-primary" onclick="openWarehouseModal()"><span data-i18n="btn_add_warehouse">+ Add Warehouse</span></button>
+              <div style="display:flex;gap:12px;align-items:center">
+                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap">
+                  <input type="checkbox" id="wh-only-active" checked onchange="renderWarehousesList()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+                </label>
+                <button class="btn-primary" onclick="openWarehouseModal()"><span data-i18n="btn_add_warehouse">+ Add Warehouse</span></button>
+              </div>
             </div>
             <div class="settings-card-body" style="padding:0 24px">
               <div id="warehouses-list" class="manage-list"></div>
@@ -3221,11 +3226,13 @@ async function loadWarehouses() {
 function renderWarehousesList() {
   const container = document.getElementById('warehouses-list');
   if (!container) return;
-  if (!allWarehouses.length) {
+  const onlyActive = document.getElementById('wh-only-active')?.checked !== false;
+  const list = onlyActive ? allWarehouses.filter(w => w.is_active !== false) : allWarehouses;
+  if (!list.length) {
     container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray400);font-size:13px">${t('lbl_no_warehouses')}</div>`;
     return;
   }
-  container.innerHTML = allWarehouses.map(w => `
+  container.innerHTML = list.map(w => `
     <div class="manage-item" style="${w.is_active===false ? 'background:var(--gray50,#f8fafc);color:var(--gray400)' : ''}">
       <div class="manage-item-icon">🏗️</div>
       <div class="manage-item-info">
