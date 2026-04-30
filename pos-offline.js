@@ -270,8 +270,8 @@
 
         const sb = window._supabase || (window.supabase && window.supabase.createClient
           ? window.supabase.createClient(
-              'https://jaakjdzpdizjbzvbtcld.supabase.co',
-              'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+              'https://ocjynwjydygvyjvijiye.supabase.co',
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ'
             )
           : null);
         if (!sb) return;

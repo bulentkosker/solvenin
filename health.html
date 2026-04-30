@@ -56,8 +56,8 @@ body{font-family:'DM Sans',sans-serif;background:#0a0f1e;color:#fff;min-height:1
 </div>
 <script>
 const sb = window.supabase.createClient(
-  'https://jaakjdzpdizjbzvbtcld.supabase.co',
-  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+  'https://ocjynwjydygvyjvijiye.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ'
 );
 
 function classify(ms, ok) {
@@ -103,10 +103,10 @@ async function runChecks() {
   });
   // 3. API ping (raw HEAD-style fetch on the REST root)
   const apiResult = await timed(async () => {
-    const r = await fetch('https://jaakjdzpdizjbzvbtcld.supabase.co/rest/v1/feature_flags?select=flag_name&limit=1', {
+    const r = await fetch('https://ocjynwjydygvyjvijiye.supabase.co/rest/v1/feature_flags?select=flag_name&limit=1', {
       headers: {
-        apikey: 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9',
-        Authorization: 'Bearer sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ',
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ'
       }
     });
     if (!r.ok) throw new Error('http '+r.status);

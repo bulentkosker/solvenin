@@ -13,9 +13,9 @@ require('dotenv').config();
 
 const { createClient } = require('@supabase/supabase-js');
 
-const URL = 'https://jaakjdzpdizjbzvbtcld.supabase.co';
+const URL = 'https://ocjynwjydygvyjvijiye.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const ANON_KEY = 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ';
 
 if (!SERVICE_KEY) {
   console.error('Set SUPABASE_SERVICE_KEY env variable');

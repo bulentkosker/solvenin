@@ -1048,7 +1048,7 @@
           <h2 style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:800">Hesabınız Askıya Alınmıştır</h2>
           <p style="font-size:14px;color:rgba(255,255,255,.7);max-width:500px;line-height:1.6">${compRes.data.freeze_reason || 'Hesabınız yönetici tarafından askıya alınmıştır.'}</p>
           <p style="font-size:13px;color:rgba(255,255,255,.5);margin-top:20px">Detaylar için: <a href="mailto:support@solvenin.com" style="color:#38bdf8">support@solvenin.com</a></p>
-          <button onclick="supabase.createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9').auth.signOut().then(()=>location.href='auth.html')" style="margin-top:20px;padding:10px 24px;background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">Çıkış Yap</button>
+          <button onclick="supabase.createClient('https://ocjynwjydygvyjvijiye.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ').auth.signOut().then(()=>location.href='auth.html')" style="margin-top:20px;padding:10px 24px;background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">Çıkış Yap</button>
         </div>`;
         return;
       }

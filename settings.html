@@ -1714,8 +1714,8 @@ tr:hover .action-btns { opacity:1; }
 <script>
 const { createClient } = supabase;
 const sb = createClient(
-  'https://jaakjdzpdizjbzvbtcld.supabase.co',
-  'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+  'https://ocjynwjydygvyjvijiye.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ'
 );
 window._supabase = sb; // expose for sidebar.js
 
@@ -4933,9 +4933,9 @@ async function addUser() {
   try {
     // Call edge function to create user (requires service key)
     const { data: { session } } = await sb.auth.getSession();
-    const res = await fetch('https://jaakjdzpdizjbzvbtcld.supabase.co/functions/v1/create-user', {
+    const res = await fetch('https://ocjynwjydygvyjvijiye.supabase.co/functions/v1/create-user', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ' },
       body: JSON.stringify({ email, password: pass, full_name: name, company_id: companyId, role })
     });
     const result = await res.json();

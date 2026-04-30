@@ -191,7 +191,7 @@ tr:hover td{background:var(--gray50)}
 
 <script>
 const { createClient } = supabase;
-const sb = createClient('https://jaakjdzpdizjbzvbtcld.supabase.co','sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9');
+const sb = createClient('https://ocjynwjydygvyjvijiye.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ');
 
 let user = null; // {id, email, name, role}
 let currentPage = 'dashboard';
@@ -398,7 +398,7 @@ async function refreshSystemHealth() {
   const icon = (c) => c === 'green' ? '🟢' : c === 'amber' ? '🟡' : '🔴';
   const dbR = await time(() => sb.from('feature_flags').select('flag_name').eq('flag_name','app_version').single());
   const auR = await time(() => sb.auth.getSession());
-  const apR = await time(() => fetch('https://jaakjdzpdizjbzvbtcld.supabase.co/rest/v1/feature_flags?select=flag_name&limit=1', { headers: { apikey: 'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9', Authorization: 'Bearer sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9' } }).then(r => { if (!r.ok) throw new Error(); }));
+  const apR = await time(() => fetch('https://ocjynwjydygvyjvijiye.supabase.co/rest/v1/feature_flags?select=flag_name&limit=1', { headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ' } }).then(r => { if (!r.ok) throw new Error(); }));
   document.getElementById('sys-db-icon').textContent = icon(cls(dbR));
   document.getElementById('sys-db-ms').textContent = dbR.ok ? dbR.ms+'ms' : 'error';
   document.getElementById('sys-auth-icon').textContent = icon(cls(auR));

@@ -24,8 +24,8 @@
           let sb = window._supabase;
           if (!sb && window.supabase && window.supabase.createClient) {
             sb = window.supabase.createClient(
-              'https://jaakjdzpdizjbzvbtcld.supabase.co',
-              'sb_publishable_Zp3NcrPr7yPrL8zgpiNmfA_YF7RGHe9'
+              'https://ocjynwjydygvyjvijiye.supabase.co',
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ'
             );
           }
           if (!sb) { console.warn('[FeatureFlags] no supabase client'); this._loaded = true; return; }
