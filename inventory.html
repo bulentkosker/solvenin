@@ -725,7 +725,7 @@ tr:hover .action-btns { opacity:1; }
   <div class="modal" style="width:480px">
     <div class="modal-head">
       <div class="modal-title" data-i18n="modal_adjust">Stock Movement</div>
-      <button class="modal-close" onclick="closeModal('adjust-modal')">✕</button>
+      <button class="modal-close" onclick="closeAdjustModal()">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row full">
@@ -795,7 +795,7 @@ tr:hover .action-btns { opacity:1; }
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('adjust-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-secondary" onclick="closeAdjustModal()" data-i18n="btn_cancel">Cancel</button>
       <button class="btn-primary" onclick="saveAdjustment()" data-action="save" data-i18n="btn_save_movement">Save Movement</button>
     </div>
   </div>
@@ -1544,6 +1544,15 @@ function onItemTypeChange() {
   document.querySelectorAll('[data-product-only]').forEach(el => {
     el.style.display = isService ? 'none' : '';
   });
+  // Stock info/hint are product-only (toggled above) AND mode-specific.
+  // The generic sweep resets to display:'' which overrides the create/edit
+  // visibility that openAdd/EditModal set — re-apply it here.
+  if (!isService) {
+    const sInfo = document.getElementById('p-stock-info-row');
+    const sHint = document.getElementById('p-stock-create-hint');
+    if (sInfo) sInfo.style.display = editingId ? '' : 'none';
+    if (sHint) sHint.style.display = editingId ? 'none' : '';
+  }
   // Update modal title hint
   const titleEl = document.getElementById('modal-title');
   if (titleEl && !editingId) {
@@ -2499,6 +2508,9 @@ async function saveAdjustment() {
   await Promise.all([loadProducts(), loadMovements()]);
   renderAll();
   showToast(t('toast_movement_saved'), 'success');
+  // If opened from the product-edit modal, refresh its readonly stock
+  // display and restore the temporarily elevated z-index.
+  if (typeof _refreshEditStockAfterAdjust === 'function') await _refreshEditStockAfterAdjust();
   } catch(_e) { console.error(_e); showToast(getErrorMessage(_e),'error'); } finally { submitting.reset(); }
 }
 
@@ -2802,11 +2814,49 @@ function openAdjustForProduct(id) {
   setTimeout(() => { if (adjProductQA) adjProductQA.setValue(id); }, 50);
 }
 
+// Wraps closeModal('adjust-modal') so the elevated z-index from
+// modal-on-modal mode gets restored even on cancel/X.
+function closeAdjustModal() {
+  closeModal('adjust-modal');
+  if (_adjustOpenedFromEdit) {
+    _adjustOpenedFromEdit = null;
+    const adj = document.getElementById('adjust-modal');
+    if (adj) adj.style.zIndex = '';
+  }
+}
+
 function openAdjustForCurrentEdit() {
   const id = editingId;
   if (!id) return;
-  closeModal('product-modal');
+  // Modal-on-modal: keep product-modal open in the background so the
+  // user returns to their edit context after saving the adjustment.
+  // Elevate adjust-modal's z-index above product-modal (default 100 → 200)
+  // and remember to refresh the readonly stock display on close.
+  const adj = document.getElementById('adjust-modal');
+  if (adj) adj.style.zIndex = '200';
+  _adjustOpenedFromEdit = id;
   openAdjustForProduct(id);
+}
+let _adjustOpenedFromEdit = null;
+
+// Hook called after a successful adjustment save when opened from the
+// product-modal — refresh the readonly stock display.
+async function _refreshEditStockAfterAdjust() {
+  if (!_adjustOpenedFromEdit) return;
+  const id = _adjustOpenedFromEdit;
+  // Reload the products cache so p.stock reflects the new movement
+  await loadProducts();
+  const p = products.find(x => x.id === id);
+  if (p) {
+    const stockDisp = document.getElementById('p-stock-display');
+    const stockUnit = document.getElementById('p-stock-unit-display');
+    if (stockDisp) stockDisp.textContent = (p.stock != null ? p.stock : 0);
+    if (stockUnit) stockUnit.textContent = p.unit || '';
+  }
+  _adjustOpenedFromEdit = null;
+  // Restore default z-index for next time
+  const adj = document.getElementById('adjust-modal');
+  if (adj) adj.style.zIndex = '';
 }
 
 // ===== VIEW TOGGLE =====
