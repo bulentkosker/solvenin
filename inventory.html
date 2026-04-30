@@ -1758,15 +1758,16 @@ function renderCatSelector(parentId, level, selectedId) {
     container.querySelectorAll(`[data-level]`).forEach(el => {
       if (parseInt(el.dataset.level) > level) el.remove();
     });
-    // Set category-id to deepest selected value
+    // Set category-id to deepest selected value (unbounded depth)
     let finalVal = '';
-    for (let l = 2; l >= 0; l--) {
-      const s = container.querySelector(`select[data-level="${l}"]`);
-      if (s && s.value) { finalVal = s.value; break; }
+    const allSelects = Array.from(container.querySelectorAll('select[data-level]'))
+      .sort((a, b) => parseInt(b.dataset.level) - parseInt(a.dataset.level));
+    for (const s of allSelects) {
+      if (s.value) { finalVal = s.value; break; }
     }
     document.getElementById('p-category-id').value = finalVal;
     if (typeof _updateTaxHint === 'function') _updateTaxHint();
-    if (sel.value && level < 2) renderCatSelector(sel.value, level + 1, null);
+    if (sel.value) renderCatSelector(sel.value, level + 1, null);
   });
 
   const addBtn = document.createElement('button');
@@ -1774,7 +1775,6 @@ function renderCatSelector(parentId, level, selectedId) {
   addBtn.className = 'cat-add-btn';
   addBtn.title = level === 0 ? 'Add root category' : 'Add sub-category here';
   addBtn.textContent = '＋';
-  if (level >= 2) addBtn.style.display = 'none';
   addBtn.addEventListener('click', () => {
     // Toggle inline form
     const existing = wrap.querySelector('.cat-inline-form');
