@@ -4045,7 +4045,10 @@ const RECYCLE_TABLE_MAP = {
 //                  references the parent (e.g. sales_orders.customer_id).
 //                  Active rows BLOCK the permanent-delete; soft-deleted
 //                  rows cascade with the parent.
-// All listed child tables have a `deleted_at` column (verified at design time).
+// `noSoftDelete: true` marks reference children that have NO `deleted_at`
+// column — they can only block (active existence check), never cascade.
+// The DB's RESTRICT/NO ACTION rule is the source of truth there; the user
+// has to clear them via the owning module before the trash record can go.
 const TRASH_CHILD_DEFS = {
   // Reference children — block on active, cascade soft-deleted only.
   contacts: [
@@ -4056,6 +4059,10 @@ const TRASH_CHILD_DEFS = {
     { table: 'contact_transactions', fk: 'contact_id'  },
     { table: 'crm_opportunities',    fk: 'contact_id'  },
     { table: 'crm_quotes',           fk: 'contact_id'  },
+    { table: 'employees',            fk: 'contact_id'  },
+    { table: 'projects',             fk: 'client_id'   },
+    { table: 'data_import_lines',    fk: 'matched_contact_id',   noSoftDelete: true },
+    { table: 'data_import_lines',    fk: 'suggested_contact_id', noSoftDelete: true },
   ],
   // Owned children — items, payments, and movements that exist solely as
   // part of the parent order. Soft-delete on the parent does not always
@@ -4068,6 +4075,12 @@ const TRASH_CHILD_DEFS = {
     { table: 'stock_movements',   fk: 'sales_order_id',  owned: true },
     { table: 'bank_transactions', fk: 'sales_order_id',  owned: true },
     { table: 'cash_transactions', fk: 'sales_order_id',  owned: true },
+    // Independent records that reference the order — block on active,
+    // cascade soft-deleted only.
+    { table: 'crm_quotes',        fk: 'converted_to_order_id'    },
+    { table: 'journal_entries',   fk: 'sales_order_id'           },
+    { table: 'shipments',         fk: 'order_id'                 },
+    { table: 'serial_numbers',    fk: 'sales_order_id', noSoftDelete: true },
   ],
   purchase_orders: [
     { table: 'purchase_order_items', fk: 'order_id',           owned: true },
@@ -4075,17 +4088,46 @@ const TRASH_CHILD_DEFS = {
     { table: 'stock_movements',      fk: 'purchase_order_id',  owned: true },
     { table: 'bank_transactions',    fk: 'purchase_order_id',  owned: true },
     { table: 'cash_transactions',    fk: 'purchase_order_id',  owned: true },
+    { table: 'journal_entries',      fk: 'purchase_order_id'   },
+    { table: 'serial_numbers',       fk: 'purchase_order_id',  noSoftDelete: true },
   ],
   // Products: history is kept by reference, not owned — block on active.
   products: [
-    { table: 'stock_movements',      fk: 'product_id' },
-    { table: 'sales_order_items',    fk: 'product_id' },
-    { table: 'purchase_order_items', fk: 'product_id' },
+    { table: 'stock_movements',       fk: 'product_id' },
+    { table: 'sales_order_items',     fk: 'product_id' },
+    { table: 'purchase_order_items',  fk: 'product_id' },
+    { table: 'bom_inputs',            fk: 'product_id', noSoftDelete: true },
+    { table: 'bom_outputs',           fk: 'product_id', noSoftDelete: true },
+    { table: 'crm_quote_items',       fk: 'product_id', noSoftDelete: true },
+    { table: 'inventory_results',     fk: 'product_id', noSoftDelete: true },
+    { table: 'inventory_sheet_items', fk: 'product_id', noSoftDelete: true },
+    { table: 'product_lots',          fk: 'product_id', noSoftDelete: true },
+    { table: 'production_entries',    fk: 'product_id', noSoftDelete: true },
+    { table: 'serial_numbers',        fk: 'product_id', noSoftDelete: true },
+    { table: 'shipment_items',        fk: 'product_id', noSoftDelete: true },
+    { table: 'work_order_parts',      fk: 'product_id', noSoftDelete: true },
   ],
-  cash_registers:    [{ table: 'cash_transactions', fk: 'register_id' }],
-  bank_accounts:     [{ table: 'bank_transactions', fk: 'account_id'  }],
-  chart_of_accounts: [],
-  stock_movements:   [],
+  cash_registers: [
+    { table: 'cash_transactions', fk: 'register_id' },
+    { table: 'bank_transactions', fk: 'transfer_target_register_id' },
+    { table: 'cash_transactions', fk: 'transfer_target_register_id' },
+  ],
+  bank_accounts: [
+    { table: 'bank_transactions', fk: 'account_id' },
+    { table: 'bank_transactions', fk: 'transfer_target_bank_id' },
+    { table: 'cash_transactions', fk: 'transfer_target_bank_id' },
+    { table: 'data_imports',      fk: 'bank_account_id' },
+    { table: 'data_import_lines', fk: 'target_bank_account_id', noSoftDelete: true },
+  ],
+  chart_of_accounts: [
+    { table: 'chart_of_accounts', fk: 'parent_id'           },
+    { table: 'bank_transactions', fk: 'chart_of_account_id' },
+    { table: 'cash_transactions', fk: 'chart_of_account_id' },
+    { table: 'tax_rates',         fk: 'account_id'          },
+    { table: 'data_import_lines', fk: 'matched_account_id', noSoftDelete: true },
+    { table: 'journal_lines',     fk: 'account_id',         noSoftDelete: true },
+  ],
+  stock_movements: [],
 };
 
 // Human labels (TR fallback) for blocker messages — keep in sync with
@@ -4168,26 +4210,31 @@ async function _trashBatchCheckChildren(parentTable, parentIds) {
     blockers.get(pid).push(entry);
   };
 
-  // Each child table contributes 2 queries (active + trashed) — all run
-  // in parallel via flatMap into Promise.all.
+  // Each child table contributes 1-2 queries (active + trashed) — all
+  // run in parallel via flatMap into Promise.all. Tables marked
+  // noSoftDelete have no deleted_at column, so we only run the active
+  // (existence) query and never cascade them — they are pure blockers.
   await Promise.all(defs.flatMap(def => {
     if (def.owned) return [];
     const nameField = _TRASH_CHILD_NAME_FIELDS[def.table];
 
-    const activePromise = sb.from(def.table)
+    let activeQuery = sb.from(def.table)
       .select(def.fk)
       .in(def.fk, parentIds)
-      .is('deleted_at', null)
-      .limit(50000)
-      .then(({ data, error }) => {
-        if (error) return;
-        const counts = new Map();
-        (data || []).forEach(r => {
-          const pid = r[def.fk];
-          counts.set(pid, (counts.get(pid) || 0) + 1);
-        });
-        counts.forEach((count, pid) => addBlocker(pid, { table: def.table, count, kind: 'active' }));
+      .limit(50000);
+    if (!def.noSoftDelete) activeQuery = activeQuery.is('deleted_at', null);
+
+    const activePromise = activeQuery.then(({ data, error }) => {
+      if (error) return;
+      const counts = new Map();
+      (data || []).forEach(r => {
+        const pid = r[def.fk];
+        counts.set(pid, (counts.get(pid) || 0) + 1);
       });
+      counts.forEach((count, pid) => addBlocker(pid, { table: def.table, count, kind: 'active' }));
+    });
+
+    if (def.noSoftDelete) return [activePromise];
 
     const trashedCols = nameField
       ? `id, ${def.fk}, deleted_at, ${nameField}`
@@ -4226,6 +4273,11 @@ async function _trashBatchCheckChildren(parentTable, parentIds) {
 async function _trashCascadeHardDelete(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   for (const def of defs) {
+    // noSoftDelete reference children are NOT cascaded — they're pure
+    // blockers. The batch check refuses the parent delete when any of
+    // these exist; we must never silently delete them on the user's
+    // behalf because the DB schema explicitly says RESTRICT.
+    if (def.noSoftDelete) continue;
     let q = sb.from(def.table).delete().in(def.fk, ids);
     // Reference children: only purge already-soft-deleted rows. Active
     // ones were caught by the blocker check above and the parent delete
@@ -4324,15 +4376,25 @@ async function bulkHardDeleteRecycle() {
   }
 
   // Delete the clean rows — one cascade + delete per parent table, all
-  // tables in parallel.
+  // tables in parallel. If the atomic IN-delete fails (e.g. a future FK
+  // not yet enumerated in TRASH_CHILD_DEFS), retry per-row so the rest
+  // still go through. Without this, one bad row poisons the whole batch
+  // and the user gets "50 başarısız" for 49 perfectly fine records.
   _trashSetLoading(t('trash_loading_delete') || 'Siliniyor…');
   let okCount = 0, failCount = 0, lastErr = null;
   await Promise.all(Object.entries(okByTable).map(async ([table, ids]) => {
     try {
       await _trashCascadeHardDelete(table, ids);
-      const { error } = await sb.from(table).delete().in('id', ids);
-      if (error) { failCount += ids.length; lastErr = error; }
-      else okCount += ids.length;
+      const { error: bulkErr } = await sb.from(table).delete().in('id', ids);
+      if (!bulkErr) { okCount += ids.length; return; }
+      // Atomic delete failed — fall back to per-row.
+      console.warn('[trash] bulk delete failed, falling back to per-row:', bulkErr);
+      lastErr = bulkErr;
+      for (const id of ids) {
+        const { error: rowErr } = await sb.from(table).delete().eq('id', id);
+        if (rowErr) { failCount += 1; lastErr = rowErr; }
+        else okCount += 1;
+      }
     } catch (err) {
       failCount += ids.length;
       lastErr = err;
