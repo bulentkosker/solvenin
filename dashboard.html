@@ -790,7 +790,7 @@ tr:hover td { background: var(--gray50); }
 
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="onboarding_company_name">Company Name</span> *</label>
-      <input type="text" id="onboarding-company-name" placeholder="Acme Corp" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+      <input type="text" id="onboarding-company-name" data-i18n-placeholder="placeholder_company_name" placeholder="Acme Corp" style="width:100%;padding:11px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;font-size:14px;font-family:inherit;outline:none">
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);margin-bottom:5px;letter-spacing:.3px"><span data-i18n="label_country">Country</span> *</label>
@@ -868,22 +868,22 @@ tr:hover td { background: var(--gray50); }
     <div class="topbar-title" id="page-title" data-i18n="page_dashboard">Dashboard</div>
     <div class="topbar-search">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search anything...">
+      <input type="text" data-i18n-placeholder="placeholder_search_anything" placeholder="Search anything...">
     </div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">
         🔔
         <div class="notif-dot"></div>
       </div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
 
   <!-- TICKER -->
   <div class="ticker-wrap">
-    <div class="ticker-track" id="ticker-track"><span style="color:rgba(255,255,255,0.3);padding:0 16px;font-size:12px">Loading rates...</span></div>
-    <div class="ticker-gear" onclick="openTickerSettings()" title="Customize">⚙</div>
+    <div class="ticker-track" id="ticker-track"><span style="color:rgba(255,255,255,0.3);padding:0 16px;font-size:12px" data-i18n="ticker_loading">Loading rates...</span></div>
+    <div class="ticker-gear" onclick="openTickerSettings()" data-i18n-title="title_customize" title="Customize">⚙</div>
   </div>
 
   <!-- STAT SETTINGS MODAL -->
@@ -892,28 +892,28 @@ tr:hover td { background: var(--gray50); }
       <h3>📊 <span data-i18n="dash_customize_cards">Customize Cards</span></h3>
       <p data-i18n="dash_customize_desc">Select up to 4 cards to display</p>
       <div id="stat-options-list"></div>
-      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveStatSettings()" data-action="save">Save</button>
-      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('stat-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveStatSettings()" data-action="save" data-i18n="btn_save">Save</button>
+      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('stat-modal').classList.remove('open')" data-i18n="btn_cancel">Cancel</button>
     </div>
   </div>
 
   <!-- TICKER MODAL -->
   <div class="ticker-modal" id="ticker-modal">
     <div class="ticker-box">
-      <h3>💹 Customize Ticker</h3>
-      <div class="t-group-title">Base Currency</div>
+      <h3>💹 <span data-i18n="ticker_customize_title">Customize Ticker</span></h3>
+      <div class="t-group-title" data-i18n="ticker_base_currency">Base Currency</div>
       <select id="t-base-select" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;margin-bottom:4px"></select>
-      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">All forex shown as: 1 [base] = X [currency]</p>
-      <div class="t-group-title">Forex</div>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px" data-i18n="ticker_forex_format">All forex shown as: 1 [base] = X [currency]</p>
+      <div class="t-group-title" data-i18n="ticker_forex">Forex</div>
       <div id="t-forex"></div>
-      <div class="t-group-title">Crypto</div>
+      <div class="t-group-title" data-i18n="ticker_crypto">Crypto</div>
       <div id="t-crypto"></div>
-      <div class="t-group-title">Commodities</div>
+      <div class="t-group-title" data-i18n="ticker_commodities">Commodities</div>
       <div id="t-commodity"></div>
-      <div class="t-group-title">Oil API Key (optional)</div>
-      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Brent oil price sourced from Yahoo Finance (free, no API key required).</p>
-      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()" data-action="save">Save</button>
-      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')">Cancel</button>
+      <div class="t-group-title" data-i18n="ticker_oil_api_optional">Oil API Key (optional)</div>
+      <p style="font-size:11px;color:#94a3b8;margin-bottom:12px" data-i18n="ticker_oil_source_note">Brent oil price sourced from Yahoo Finance (free, no API key required).</p>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTickerSettings()" data-action="save" data-i18n="btn_save">Save</button>
+      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('ticker-modal').classList.remove('open')" data-i18n="btn_cancel">Cancel</button>
     </div>
   </div>
 
