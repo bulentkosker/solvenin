@@ -1610,6 +1610,25 @@ tr:hover .action-btns { opacity:1; }
   </div>
 </div>
 
+<!-- Trash Bulk-Delete Skipped Modal — opened automatically when a bulk
+     hard-delete had to skip rows. Lists each skipped record with its
+     blocking child counts so the user can act on them one by one. -->
+<div class="modal-overlay" id="trash-skipped-modal">
+  <div class="modal" style="width:640px;max-width:94vw">
+    <div class="modal-head">
+      <div class="modal-title" data-i18n="trash_skipped_title">Atlanan Kayıtlar</div>
+      <button class="modal-close" onclick="closeModal('trash-skipped-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <p style="font-size:13px;color:var(--gray700);margin:0 0 10px" data-i18n="trash_skipped_msg">Aşağıdaki kayıtlar bağlı kayıtları olduğu için silinemedi.</p>
+      <div id="trash-skipped-list" style="max-height:60vh;overflow-y:auto;border:1px solid var(--gray200);border-radius:8px;font-size:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('trash-skipped-modal')" data-i18n="btn_close">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <!-- Trash Cascade Delete Modal -->
 <div class="modal-overlay" id="trash-cascade-modal">
   <div class="modal" style="width:520px;max-width:92vw">
@@ -4136,6 +4155,74 @@ async function _trashListTrashedRefChildren(table, parentId) {
   return out;
 }
 
+// Batched dependency check — for one parent table + many parent ids,
+// runs ONE query per child table per kind (active / trashed) in parallel
+// and returns Map<parentId, [{table, count, kind, sample?}]>. This is
+// what makes bulk delete fast: 50 parents × 10 child tables collapses
+// from 500 sequential queries (~minute) to ~10 parallel ones (~second).
+async function _trashBatchCheckChildren(parentTable, parentIds) {
+  const defs = TRASH_CHILD_DEFS[parentTable] || [];
+  const blockers = new Map();
+  const addBlocker = (pid, entry) => {
+    if (!blockers.has(pid)) blockers.set(pid, []);
+    blockers.get(pid).push(entry);
+  };
+
+  // Each child table contributes 2 queries (active + trashed) — all run
+  // in parallel via flatMap into Promise.all.
+  await Promise.all(defs.flatMap(def => {
+    if (def.owned) return [];
+    const nameField = _TRASH_CHILD_NAME_FIELDS[def.table];
+
+    const activePromise = sb.from(def.table)
+      .select(def.fk)
+      .in(def.fk, parentIds)
+      .is('deleted_at', null)
+      .limit(50000)
+      .then(({ data, error }) => {
+        if (error) return;
+        const counts = new Map();
+        (data || []).forEach(r => {
+          const pid = r[def.fk];
+          counts.set(pid, (counts.get(pid) || 0) + 1);
+        });
+        counts.forEach((count, pid) => addBlocker(pid, { table: def.table, count, kind: 'active' }));
+      });
+
+    const trashedCols = nameField
+      ? `id, ${def.fk}, deleted_at, ${nameField}`
+      : `id, ${def.fk}, deleted_at`;
+    const trashedPromise = sb.from(def.table)
+      .select(trashedCols)
+      .in(def.fk, parentIds)
+      .not('deleted_at', 'is', null)
+      .limit(50000)
+      .then(({ data, error }) => {
+        if (error) return;
+        const byParent = new Map();
+        (data || []).forEach(r => {
+          const pid = r[def.fk];
+          if (!byParent.has(pid)) byParent.set(pid, []);
+          byParent.get(pid).push({
+            id: r.id,
+            label: nameField ? (r[nameField] || r.id) : r.id,
+            deleted_at: r.deleted_at,
+          });
+        });
+        byParent.forEach((rows, pid) => addBlocker(pid, {
+          table: def.table,
+          count: rows.length,
+          kind: 'trashed',
+          sample: rows.slice(0, 5),
+        }));
+      });
+
+    return [activePromise, trashedPromise];
+  }));
+
+  return blockers;
+}
+
 async function _trashCascadeHardDelete(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   for (const def of defs) {
@@ -4187,37 +4274,79 @@ async function bulkHardDeleteRecycle() {
   const msg = (t('confirm_bulk_hard_delete')||'{n} kaydı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.').replace('{n}', sel.length);
   if (!await showConfirm(msg, t('btn_hard_delete')||'Kalıcı Sil')) return;
 
-  // Per-record decisioning — bulk only deletes "clean" rows. Anything
-  // with active reference children OR trashed reference children is
-  // skipped so the user can review/cascade them one by one.
-  const skipped = [];
-  const okList = [];
+  // Group selection by parent table — one batch check per table.
+  const selByTable = {};
   for (const { type, id } of sel) {
-    const table = RECYCLE_TABLE_MAP[type];
-    if (!table) { skipped.push({ type, id }); continue; }
-    const activeBlocker = await _trashCheckActiveChildren(table, [id]);
-    if (activeBlocker) { skipped.push({ type, id }); continue; }
-    const trashedChildren = await _trashListTrashedRefChildren(table, id);
-    if (trashedChildren.length) { skipped.push({ type, id }); continue; }
-    okList.push({ table, id, type });
+    const tbl = RECYCLE_TABLE_MAP[type];
+    if (!tbl) continue;
+    (selByTable[tbl] = selByTable[tbl] || []).push({ type, id });
   }
 
-  // Group OK rows by table for one cascade + delete per table.
-  const groups = {};
-  okList.forEach(({ table, id }) => { (groups[table] = groups[table] || []).push(id); });
+  _trashSetLoading(t('trash_loading_check') || 'Bağımlılıklar kontrol ediliyor…');
+
+  let tableChecks;
+  try {
+    // All parent tables checked in parallel; each batch checker fires its
+    // own per-child-table queries in parallel too.
+    tableChecks = await Promise.all(
+      Object.entries(selByTable).map(async ([table, items]) => {
+        const ids = items.map(x => x.id);
+        const blockers = await _trashBatchCheckChildren(table, ids);
+        return { table, items, blockers };
+      })
+    );
+  } catch (err) {
+    _trashClearLoading();
+    console.error('[trash] dependency check failed:', err);
+    showToast(getErrorMessage(err), 'error');
+    return;
+  }
+
+  // Partition into skipped (any blocker) vs ok (clean).
+  const skipped = [];
+  const okByTable = {};
+  for (const { table, items, blockers } of tableChecks) {
+    for (const item of items) {
+      const blockList = blockers.get(item.id) || [];
+      if (blockList.length) {
+        const rec = (allDeletedRecords || []).find(r => r.id === item.id);
+        skipped.push({
+          type: item.type,
+          id: item.id,
+          label: rec?.label || item.id,
+          extra: rec?.extra || '',
+          blockers: blockList,
+        });
+      } else {
+        (okByTable[table] = okByTable[table] || []).push(item.id);
+      }
+    }
+  }
+
+  // Delete the clean rows — one cascade + delete per parent table, all
+  // tables in parallel.
+  _trashSetLoading(t('trash_loading_delete') || 'Siliniyor…');
   let okCount = 0, failCount = 0, lastErr = null;
-  for (const [table, ids] of Object.entries(groups)) {
-    await _trashCascadeHardDelete(table, ids);
-    const { error } = await sb.from(table).delete().in('id', ids);
-    if (error) { failCount += ids.length; lastErr = error; }
-    else okCount += ids.length;
-  }
+  await Promise.all(Object.entries(okByTable).map(async ([table, ids]) => {
+    try {
+      await _trashCascadeHardDelete(table, ids);
+      const { error } = await sb.from(table).delete().in('id', ids);
+      if (error) { failCount += ids.length; lastErr = error; }
+      else okCount += ids.length;
+    } catch (err) {
+      failCount += ids.length;
+      lastErr = err;
+    }
+  }));
 
+  _trashClearLoading();
+
+  // Toast summary; modal carries the per-record blocker breakdown.
   const skippedCount = skipped.length;
   if (okCount && skippedCount) {
-    const text = (t('toast_bulk_delete_partial')||'{success} silindi, {skipped} bağlı kayıtları olduğu için silinemedi')
+    const text = (t('toast_bulk_delete_partial')||'{success} kayıt silindi, {skipped} bağlı kayıtları olduğu için silinemedi')
       .replace('{success}', okCount).replace('{skipped}', skippedCount);
-    showToast(text, 'error');
+    showToast(text, 'warning');
   } else if (okCount) {
     showToast(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'} ✓`, 'success');
   } else if (skippedCount) {
@@ -4230,7 +4359,11 @@ async function bulkHardDeleteRecycle() {
     showToast(`${failCount} ${t('toast_failed_count')||'başarısız'}: ${getErrorMessage(lastErr)}`, 'error');
   }
 
-  _trashPendingReselect = skipped;
+  // Skipped rows: persist the selection across reload AND open the
+  // detail modal automatically so the user sees the breakdown without
+  // having to click anything.
+  _trashPendingReselect = skipped.map(s => ({ type: s.type, id: s.id }));
+  if (skippedCount) _openTrashSkippedModal(skipped);
   await loadRecycleBin();
 }
 
@@ -4253,22 +4386,45 @@ async function hardDeleteRecord(type, id, label) {
   const table = RECYCLE_TABLE_MAP[type];
   if (!table) return;
 
+  // Use the same batch checker as bulk so single + bulk stay consistent
+  // (and active/trashed are detected in one parallel round-trip).
+  _trashSetLoading(t('trash_loading_check') || 'Bağımlılıklar kontrol ediliyor…');
+  let blockerList;
+  try {
+    const blockers = await _trashBatchCheckChildren(table, [id]);
+    blockerList = blockers.get(id) || [];
+  } catch (err) {
+    _trashClearLoading();
+    showToast(getErrorMessage(err), 'error');
+    return;
+  }
+  _trashClearLoading();
+
+  const activeBlockers = blockerList.filter(b => b.kind === 'active');
+  const trashedBlockers = blockerList.filter(b => b.kind === 'trashed');
+
   // Active reference children → still hard-block. The user has to clean
   // those up first (they may be in use elsewhere).
-  const blocker = await _trashCheckActiveChildren(table, [id]);
-  if (blocker) {
-    showToast((t('toast_blocked_by_active')||'Silinemez — aktif ilişki:') + ' ' + blocker, 'error');
+  if (activeBlockers.length) {
+    const summary = activeBlockers.map(b => `${b.count} ${_trashChildLabel(b.table)}`).join(', ');
+    showToast((t('toast_blocked_by_active')||'Silinemez — aktif ilişki:') + ' ' + summary, 'error');
     return;
   }
 
   // Trashed reference children → show cascade confirmation modal with
   // the list, so the user knows exactly what will go with the parent.
-  const trashedChildren = await _trashListTrashedRefChildren(table, id);
-  if (trashedChildren.length) {
+  if (trashedBlockers.length) {
+    const trashedChildren = trashedBlockers.flatMap(b =>
+      (b.sample || []).map(s => ({ table: b.table, ...s }))
+    );
     _openTrashCascadeModal(label, trashedChildren, async () => {
-      await _trashCascadeHardDelete(table, [id]);
-      const { error } = await sb.from(table).delete().eq('id', id);
-      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+      _trashSetLoading(t('trash_loading_delete') || 'Siliniyor…');
+      try {
+        await _trashCascadeHardDelete(table, [id]);
+        const { error } = await sb.from(table).delete().eq('id', id);
+        if (error) { _trashClearLoading(); showToast(getErrorMessage(error), 'error'); return; }
+      } catch (err) { _trashClearLoading(); showToast(getErrorMessage(err), 'error'); return; }
+      _trashClearLoading();
       showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
       await loadRecycleBin();
     });
@@ -4277,11 +4433,84 @@ async function hardDeleteRecord(type, id, label) {
 
   // No related records — plain confirm + delete.
   if (!await showConfirm(`${t('confirm_hard_delete')||'Kalıcı olarak sil'} "${label}"? ${t('confirm_hard_delete_sub')||'Bu işlem geri alınamaz.'}`, t('btn_hard_delete')||'Kalıcı Sil')) return;
-  await _trashCascadeHardDelete(table, [id]);
-  const { error } = await sb.from(table).delete().eq('id', id);
-  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  _trashSetLoading(t('trash_loading_delete') || 'Siliniyor…');
+  try {
+    await _trashCascadeHardDelete(table, [id]);
+    const { error } = await sb.from(table).delete().eq('id', id);
+    if (error) { _trashClearLoading(); showToast(getErrorMessage(error), 'error'); return; }
+  } catch (err) { _trashClearLoading(); showToast(getErrorMessage(err), 'error'); return; }
+  _trashClearLoading();
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
   await loadRecycleBin();
+}
+
+// Friendly labels for the parent type column — same map renderRecycleBin
+// builds inline, lifted here so the skipped/cascade modals reuse it.
+function _trashTypeLabel(type) {
+  const map = {
+    product: t('rl_product') || 'Ürün',
+    contact: t('rl_contact') || 'Cari',
+    sales_order: t('rl_sales_order') || 'Satış',
+    purchase_order: t('rl_purchase_order') || 'Satın Alma',
+    stock_movement: t('rl_stock_movement') || 'Stok Hareketi',
+    cash_register: t('rl_cash_register') || 'Kasa',
+    bank_account: t('rl_bank_account') || 'Banka Hesabı',
+    coa_account: t('rl_coa_account') || 'Hesap',
+  };
+  return map[type] || type;
+}
+
+// Full-screen blocking spinner — used during the batch dependency
+// check and cascade-delete loop so the user knows work is happening.
+function _trashSetLoading(text) {
+  let el = document.getElementById('trash-loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'trash-loading-overlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:12px;padding:18px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.2);display:flex;align-items:center;gap:14px;font-size:14px;color:var(--gray800);font-weight:500">
+        <span style="display:inline-block;width:18px;height:18px;border:2.5px solid var(--gray200);border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite"></span>
+        <span id="trash-loading-text"></span>
+      </div>
+    `;
+    document.body.appendChild(el);
+  }
+  document.getElementById('trash-loading-text').textContent = text || (t('lbl_loading') || 'Loading…');
+  el.style.display = 'flex';
+}
+
+function _trashClearLoading() {
+  const el = document.getElementById('trash-loading-overlay');
+  if (el) el.style.display = 'none';
+}
+
+// Opens the skipped-records modal with a per-record breakdown of which
+// child tables are blocking the bulk delete (and how many rows of each).
+function _openTrashSkippedModal(skipped) {
+  const listEl = document.getElementById('trash-skipped-list');
+  if (!listEl) return;
+  listEl.innerHTML = (skipped || []).map(s => {
+    const blockerLines = (s.blockers || []).map(b => {
+      const kindStyle = b.kind === 'active'
+        ? 'color:#dc2626;background:#fee2e2'
+        : 'color:#b45309;background:#fef3c7';
+      const kindText = b.kind === 'active'
+        ? (t('trash_kind_active') || 'aktif')
+        : (t('trash_kind_trashed') || 'çöpteki');
+      return `<li style="margin:2px 0">${b.count} ${escRec(_trashChildLabel(b.table))} <span style="font-size:11px;padding:1px 6px;border-radius:8px;${kindStyle}">${escRec(kindText)}</span></li>`;
+    }).join('');
+    return `
+      <div style="padding:10px 14px;border-bottom:1px solid var(--gray100)">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+          <span class="badge badge-gray">${escRec(_trashTypeLabel(s.type))}</span>
+          <span style="font-weight:600;color:var(--gray800)">${escRec((s.label||'') + (s.extra||''))}</span>
+        </div>
+        <ul style="margin:0;padding-left:18px;color:var(--gray600);font-size:12px">${blockerLines}</ul>
+      </div>
+    `;
+  }).join('');
+  openModal('trash-skipped-modal');
 }
 
 function _openTrashCascadeModal(parentLabel, children, onConfirm) {
