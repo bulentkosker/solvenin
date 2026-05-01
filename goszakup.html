@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBhMGYxZSIvPjx0ZXh0IHg9IjYiIHk9IjIzIiBmb250LWZhbWlseT0iSW50ZXIsc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPnM8L3RleHQ+PGNpcmNsZSBjeD0iMjUiIGN5PSIyMiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg==">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solvenin — Goszakup</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n/loader.js"></script>
+<script src="feature-flags.js"></script>
+<script src="modules-config.js"></script>
+<script src="utils.js"></script>
+<style>
+:root{--primary:#1e40af;--primary-dark:#1a2744;--white:#fff;--bg:#f5f7fb;--gray50:#f8fafc;--gray100:#f1f5f9;--gray200:#e2e8f0;--gray300:#cbd5e1;--gray400:#94a3b8;--gray500:#64748b;--gray600:#475569;--gray700:#334155;--gray800:#1a2744;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#8b5cf6;--blue-light:#eff6ff;--font-display:'Outfit',sans-serif;--font-body:'DM Sans',sans-serif;--sidebar-w:220px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-height:100vh;display:flex}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+.topbar{height:56px;background:var(--white);border-bottom:1px solid var(--gray200);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:40}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.content{padding:16px;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:2px solid var(--gray200);margin-bottom:12px;gap:4px}
+.tab{padding:10px 16px;border:none;background:none;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tab.active{color:var(--primary);font-weight:600;border-bottom-color:var(--primary)}
+.tab-pane{display:none;flex:1;flex-direction:column;overflow:hidden}
+.tab-pane.active{display:flex}
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#1a3a9e}
+.btn-outline{background:var(--white);border:1px solid var(--gray200);color:var(--gray600)}.btn-outline:hover{background:var(--gray50)}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-sm{padding:5px 10px;font-size:11px}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+input[type=text],input[type=number],input[type=date],select,textarea{font-family:inherit;padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:13px;color:var(--gray800);background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)}
+.list-card{background:#fff;border:1px solid var(--gray200);border-radius:10px;overflow:auto;flex:1;min-height:0}
+.match-row{padding:12px 16px;border-bottom:1px solid var(--gray100);display:flex;gap:12px;align-items:center;cursor:pointer}
+.match-row:hover{background:var(--gray50)}
+.match-row.unread{background:rgba(59,130,246,0.04)}
+.match-row.unread .dot{background:var(--primary)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gray300);flex:0 0 auto}
+.match-row .title{font-weight:600;color:var(--gray800);margin-bottom:2px}
+.match-row .meta{font-size:11px;color:var(--gray500);display:flex;gap:8px;flex-wrap:wrap}
+.match-row .right{margin-left:auto;display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-gray{background:var(--gray100);color:var(--gray600)}
+.badge-blue{background:var(--blue-light);color:var(--primary)}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-orange{background:#fef3c7;color:#92400e}
+.sub-card{background:#fff;border:1px solid var(--gray200);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.sub-card h4{font-size:14px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sub-card .actions{margin-left:auto;display:flex;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--gray100);color:var(--gray700);font-size:11px;margin:2px 4px 2px 0}
+.chip-input{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:1px solid var(--gray200);border-radius:8px;background:#fff;min-height:38px;align-items:center}
+.chip-input input{border:none;outline:none;flex:1;min-width:80px;padding:4px 6px;font-size:12px;background:transparent}
+.chip .x{cursor:pointer;font-weight:700;color:var(--gray500)}
+.chip .x:hover{color:var(--red)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:14px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(8px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--gray200);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal-title{font-family:var(--font-display);font-weight:700;font-size:16px}
+.modal-close{background:none;border:none;font-size:20px;color:var(--gray500);cursor:pointer}
+.modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--gray200);display:flex;gap:8px;justify-content:flex-end}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;color:var(--gray600);text-transform:uppercase;letter-spacing:0.3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--gray50);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gray500);text-transform:uppercase;letter-spacing:0.3px;border-bottom:1px solid var(--gray200);position:sticky;top:0;z-index:1}
+td{padding:10px 14px;border-bottom:1px solid var(--gray100)}
+tr:hover td{background:var(--gray50)}
+.empty-state{padding:60px 20px;text-align:center;color:var(--gray400);font-size:13px}
+#loading-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s}
+.loading-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px}
+.loading-logo span{color:#38bdf8}
+.checkbox-list{max-height:200px;overflow-y:auto;border:1px solid var(--gray200);border-radius:8px;padding:6px 8px;background:#fff}
+.checkbox-list label{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;cursor:pointer}
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-top:1px solid var(--gray100);font-size:12px;color:var(--gray600);background:#fff}
+.kz-block{display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:12px;padding:60px 20px;text-align:center}
+.kz-block .icon{font-size:48px;opacity:0.5}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.sb-open{transform:translateX(0)}.main{margin-left:0!important;width:100%!important}.topbar{padding-left:56px!important}.content{padding:10px!important}.form-grid{grid-template-columns:1fr}}
+</style>
+<script src="cache.js"></script>
+<script src="sidebar.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div id="loading-screen"><div class="loading-logo">solvenin<span>.</span></div></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">🏛️ <span data-i18n="title_goszakup">İhale İzleme</span></div>
+    <div style="flex:1"></div>
+    <span id="gz-stats" style="font-size:12px;color:var(--gray500)"></span>
+  </header>
+
+  <!-- KZ-only guard — shown when company.country_code !== 'KZ' -->
+  <div class="kz-block" id="kz-only" style="display:none">
+    <div class="icon">🏛️</div>
+    <div style="font-size:18px;font-weight:600">Goszakup.gov.kz</div>
+    <div style="font-size:13px;color:var(--gray500);max-width:480px;line-height:1.6" data-i18n="toast_kz_only">Bu özellik yalnızca KZ şirketler için kullanılabilir</div>
+  </div>
+
+  <div class="content" id="gz-main" style="display:none">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('matches', this)" data-i18n="tab_matches">📌 Eşleşmelerim</button>
+      <button class="tab" onclick="switchTab('subscriptions', this)" data-i18n="tab_subscriptions">🔔 Aboneliklerim</button>
+      <button class="tab" onclick="switchTab('search', this)" data-i18n="tab_search">🔍 Tüm İhaleler</button>
+    </div>
+
+    <!-- ===== TAB: MATCHES ===== -->
+    <div class="tab-pane active" id="pane-matches">
+      <div class="toolbar">
+        <label style="font-size:12px;display:flex;gap:6px;align-items:center;cursor:pointer">
+          <input type="checkbox" id="m-unread-only" checked onchange="loadMatches()"> <span data-i18n="filter_unread_only">Sadece okunmamışlar</span>
+        </label>
+        <select id="m-subscription" onchange="loadMatches()" style="font-size:12px">
+          <option value="" data-i18n="filter_all_subscriptions">Tüm abonelikler</option>
+        </select>
+        <select id="m-days" onchange="loadMatches()" style="font-size:12px">
+          <option value="7">7 gün</option>
+          <option value="30" selected>30 gün</option>
+          <option value="90">90 gün</option>
+        </select>
+      </div>
+      <div class="list-card" id="matches-list"></div>
+    </div>
+
+    <!-- ===== TAB: SUBSCRIPTIONS ===== -->
+    <div class="tab-pane" id="pane-subscriptions">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="openSubscriptionForm()"><span data-i18n="btn_new_subscription">+ Yeni Abonelik</span></button>
+      </div>
+      <div id="subscriptions-list" style="overflow:auto;flex:1;min-height:0"></div>
+    </div>
+
+    <!-- ===== TAB: SEARCH ===== -->
+    <div class="tab-pane" id="pane-search">
+      <div class="toolbar">
+        <input type="text" id="s-query" placeholder="🔍 anahtar kelime…" oninput="onSearchQueryChange()" style="width:240px">
+        <select id="s-region" onchange="loadSearch()" style="font-size:12px">
+          <option value="" data-i18n="lbl_regions">Bölgeler</option>
+        </select>
+        <input type="number" id="s-min" placeholder="Min KZT" lang="en" style="width:120px">
+        <input type="number" id="s-max" placeholder="Max KZT" lang="en" style="width:120px">
+        <button class="btn btn-outline btn-sm" onclick="loadSearch()" data-i18n="btn_search">Ara</button>
+        <button class="btn btn-outline btn-sm" onclick="saveSearchAsSubscription()" data-i18n="btn_save_as_subscription">Abonelik olarak kaydet</button>
+      </div>
+      <div class="list-card" id="search-list" style="display:flex;flex-direction:column">
+        <div style="overflow:auto;flex:1" id="search-table-wrap"></div>
+        <div class="pagination" id="search-pagination" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SUBSCRIPTION FORM MODAL ===== -->
+<div class="modal-overlay" id="sub-modal">
+  <div class="modal" style="width:640px">
+    <div class="modal-head">
+      <div class="modal-title" data-i18n="title_subscription_form">Abonelik</div>
+      <button class="modal-close" onclick="closeModal('sub-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label data-i18n="lbl_subscription_name">Abonelik Adı</label>
+          <input type="text" id="sf-name" placeholder="Hidrolik silindir takibi">
+        </div>
+        <div class="field full">
+          <label data-i18n="lbl_keywords">Anahtar Kelimeler</label>
+          <div class="chip-input" id="sf-keywords-chips" data-target="sf-keywords">
+            <input type="text" data-i18n-placeholder="placeholder_keywords" placeholder="enter veya virgülle ekle…">
+          </div>
+          <input type="hidden" id="sf-keywords">
+        </div>
+        <div class="field full">
+          <label data-i18n="lbl_exclude_keywords">Hariç Kelimeler</label>
+          <div class="chip-input" id="sf-exclude-chips" data-target="sf-exclude">
+            <input type="text" data-i18n-placeholder="placeholder_keywords" placeholder="enter veya virgülle ekle…">
+          </div>
+          <input type="hidden" id="sf-exclude">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_regions">Bölgeler</label>
+          <div class="checkbox-list" id="sf-regions"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_kato_codes">Kategoriler</label>
+          <div class="checkbox-list" id="sf-katos">
+            <div style="color:var(--gray400);font-size:11px;padding:4px">—</div>
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_amount_min">En Az (KZT)</label>
+          <input type="number" id="sf-min" lang="en" placeholder="0">
+        </div>
+        <div class="field">
+          <label data-i18n="lbl_amount_max">En Çok (KZT)</label>
+          <input type="number" id="sf-max" lang="en" placeholder="∞">
+        </div>
+        <div class="field full">
+          <label data-i18n="lbl_customer_bins">Müşteri BIN'leri</label>
+          <div class="chip-input" id="sf-bins-chips" data-target="sf-bins">
+            <input type="text" placeholder="123456789012">
+          </div>
+          <input type="hidden" id="sf-bins">
+        </div>
+        <div class="field full">
+          <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:12px">
+            <input type="checkbox" id="sf-notify-app" checked> <span data-i18n="lbl_notify_in_app">Uygulama içi bildirim</span>
+          </label>
+          <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:12px;color:var(--gray400)">
+            <input type="checkbox" id="sf-notify-email" disabled> <span data-i18n="lbl_notify_email">Email bildirim (yakında)</span>
+          </label>
+          <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:12px">
+            <input type="checkbox" id="sf-active" checked> <span data-i18n="lbl_active">Aktif</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('sub-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveSubscription()" data-i18n="btn_save">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TENDER DETAIL MODAL ===== -->
+<div class="modal-overlay" id="tender-modal">
+  <div class="modal" style="width:720px">
+    <div class="modal-head">
+      <div class="modal-title" id="td-title">—</div>
+      <button class="modal-close" onclick="closeModal('tender-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="td-body"></div>
+    <div class="modal-footer">
+      <a id="td-link" href="#" target="_blank" rel="noopener" class="btn btn-outline" data-i18n="btn_open_on_goszakup">goszakup.gov.kz'da aç</a>
+      <button class="btn btn-primary" onclick="closeModal('tender-modal')" data-i18n="btn_close">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://ocjynwjydygvyjvijiye.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9janlud2p5ZHlndnlqdmlqaXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTA0NTMsImV4cCI6MjA5MzEyNjQ1M30.MAlK1pz3pVBWv78qMAFURaf74Kh15RrvlU9Ujl2rWXQ');
+window._supabase = sb;
+
+let companyId = null, currentUser = null;
+let subscriptions = [], regions = [];
+let editingSubId = null;
+let _searchPage = 1;
+const SEARCH_PAGE_SIZE = 50;
+let _searchDebounce = null;
+
+function isKzCompany() {
+  if (!companyId) return false;
+  return localStorage.getItem('companyCountry_' + companyId) === 'KZ';
+}
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  currentUser = session.user;
+
+  const { data: companies } = await (window.tenantCache ? window.tenantCache.getMyCompanies(sb) : sb.rpc('get_my_companies'));
+  if (!companies?.length) { hideLoading(); return; }
+  const saved = localStorage.getItem('currentCompanyId');
+  const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
+  companyId = active.company_id;
+
+  // Country gate — sidebar.js caches companyCountry_<id>; if missing,
+  // fetch the company row directly so the page works even on first
+  // load before sidebar resolves.
+  if (!localStorage.getItem('companyCountry_' + companyId)) {
+    const { data } = await sb.from('companies').select('country_code').eq('id', companyId).maybeSingle();
+    if (data?.country_code) localStorage.setItem('companyCountry_' + companyId, data.country_code);
+  }
+  if (!isKzCompany()) {
+    document.getElementById('kz-only').style.display = 'flex';
+    hideLoading();
+    return;
+  }
+  document.getElementById('gz-main').style.display = 'flex';
+
+  await Promise.all([loadRegions(), loadSubscriptions()]);
+  await loadMatches();
+
+  const savedLang = localStorage.getItem('solvenin_lang') || 'en';
+  if (typeof setLang === 'function') setLang(savedLang);
+
+  hideLoading();
+}
+
+function hideLoading() {
+  const ls = document.getElementById('loading-screen');
+  if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-' + name)?.classList.add('active');
+  if (name === 'matches') loadMatches();
+  else if (name === 'subscriptions') renderSubscriptions();
+  else if (name === 'search') loadSearch();
+}
+
+function fmtKzt(n) {
+  if (n == null) return '—';
+  const num = Number(n) || 0;
+  return new Intl.NumberFormat('ru-RU').format(num) + ' ₸';
+}
+
+function relDays(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const diff = Math.ceil((d - Date.now()) / 86400000);
+  if (diff < 0) return { text: t('badge_finished') || 'Bitti', cls: 'badge-gray' };
+  if (diff === 0) return { text: '0 gün', cls: 'badge-red' };
+  if (diff <= 3) return { text: (t('badge_remaining_days') || '{n} gün').replace('{n}', diff), cls: 'badge-red' };
+  if (diff <= 7) return { text: (t('badge_remaining_days') || '{n} gün').replace('{n}', diff), cls: 'badge-orange' };
+  return { text: (t('badge_remaining_days') || '{n} gün').replace('{n}', diff), cls: 'badge-green' };
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ===== REGIONS =====
+async function loadRegions() {
+  const { data } = await sb.from('goszakup_regions').select('code, name_ru, name_kz').order('name_ru');
+  regions = data || [];
+  // Region filter on Search tab
+  const sRegion = document.getElementById('s-region');
+  if (sRegion) {
+    sRegion.innerHTML = `<option value="">${t('lbl_regions')||'Bölgeler'}</option>` +
+      regions.map(r => `<option value="${escHtml(r.code)}">${escHtml(r.name_ru)}</option>`).join('');
+  }
+  // Region multiselect in subscription form
+  const sfReg = document.getElementById('sf-regions');
+  if (sfReg) {
+    sfReg.innerHTML = regions.map(r =>
+      `<label><input type="checkbox" value="${escHtml(r.code)}" data-name="${escHtml(r.name_ru||'')}"> ${escHtml(r.name_ru||r.code)}</label>`
+    ).join('') || '<div style="color:var(--gray400);font-size:11px;padding:4px">—</div>';
+  }
+}
+
+// ===== MATCHES =====
+async function loadMatches() {
+  const list = document.getElementById('matches-list');
+  if (!list) return;
+  list.innerHTML = `<div class="empty-state">${t('loading')||'Loading…'}</div>`;
+
+  const unreadOnly = document.getElementById('m-unread-only')?.checked;
+  const subId = document.getElementById('m-subscription')?.value || '';
+  const days = parseInt(document.getElementById('m-days')?.value || '30', 10);
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+
+  // company_id lives on subscriptions and tenders, not matches — use an
+  // !inner relationship on subscriptions to scope the query and a second
+  // join to grab tender details for display.
+  let q = sb.from('goszakup_matches')
+    .select(`
+      id, matched_keywords, match_score, is_read, is_dismissed, is_starred, created_at,
+      subscription:goszakup_subscriptions!inner(id, name, company_id),
+      tender:goszakup_tenders!inner(id, external_id, title_ru, title_kz, customer_name_ru, customer_bin, total_sum, currency, end_date, region_name_ru, status_name_ru, raw_data)
+    `)
+    .eq('subscription.company_id', companyId)
+    .eq('is_dismissed', false)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (unreadOnly) q = q.eq('is_read', false);
+  if (subId) q = q.eq('subscription_id', subId);
+  const { data, error } = await q;
+  if (error) { console.error(error); list.innerHTML = `<div class="empty-state" style="color:var(--red)">${escHtml(getErrorMessage(error))}</div>`; return; }
+
+  // Update header stats
+  const stats = document.getElementById('gz-stats');
+  if (stats) {
+    const total = (data || []).length;
+    const unread = (data || []).filter(m => !m.is_read).length;
+    stats.textContent = `${unread} / ${total}`;
+  }
+
+  if (!data?.length) { list.innerHTML = `<div class="empty-state">${escHtml(t('goszakup_no_matches')||'Henüz eşleşme yok.')}</div>`; return; }
+
+  list.innerHTML = data.map(m => {
+    const tnd = m.tender || {};
+    const sub = m.subscription || {};
+    const rd = relDays(tnd.end_date);
+    const kws = Array.isArray(m.matched_keywords) ? m.matched_keywords : [];
+    return `
+      <div class="match-row ${!m.is_read ? 'unread' : ''}" data-id="${escHtml(m.id)}" data-tender="${escHtml(tnd.id||'')}" onclick="openTenderDetail('${escHtml(tnd.id||'')}','${escHtml(m.id)}')">
+        <span class="dot"></span>
+        <div style="flex:1;min-width:0">
+          <div class="title">${escHtml(tnd.title_ru || tnd.title_kz || tnd.external_id || '—')}</div>
+          <div class="meta">
+            <span>👤 ${escHtml(tnd.customer_name_ru || tnd.customer_bin || '—')}</span>
+            <span>📍 ${escHtml(tnd.region_name_ru || '—')}</span>
+            <span>💰 ${fmtKzt(tnd.total_sum)}</span>
+            <span class="badge badge-blue">${escHtml(sub.name || '')}</span>
+            ${kws.length ? `<span style="color:var(--gray400)">→ ${kws.map(k => escHtml(k)).join(', ')}</span>` : ''}
+          </div>
+        </div>
+        <div class="right">
+          ${rd ? `<span class="badge ${rd.cls}">${escHtml(rd.text)}</span>` : ''}
+          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();toggleStar('${escHtml(m.id)}',${m.is_starred?'true':'false'})" title="${escHtml(t('btn_star')||'Yıldızla')}">${m.is_starred ? '⭐' : '☆'}</button>
+          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();dismissMatch('${escHtml(m.id)}')" title="${escHtml(t('btn_dismiss')||'İlgilenmiyorum')}" style="color:var(--red)">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function openTenderDetail(tenderId, matchId) {
+  if (!tenderId) return;
+  // Mark match as read once detail is opened (fire-and-forget — UI
+  // already showed the row, mismatch with DB on a transient error
+  // self-heals on next loadMatches).
+  if (matchId) {
+    sb.from('goszakup_matches').update({ is_read: true }).eq('id', matchId).then(() => {
+      const row = document.querySelector(`.match-row[data-id="${matchId}"]`);
+      if (row) row.classList.remove('unread');
+    });
+  }
+  const { data: tender } = await sb.from('goszakup_tenders').select('*').eq('id', tenderId).maybeSingle();
+  if (!tender) return;
+  const { data: lots } = await sb.from('goszakup_lots').select('*').eq('tender_id', tenderId).order('lot_number');
+
+  document.getElementById('td-title').textContent = tender.title_ru || tender.title_kz || tender.external_id || '—';
+  const lotsHtml = (lots || []).length
+    ? `<table style="margin-top:8px"><thead><tr><th>#</th><th>${escHtml(t('col_tender')||'Lot')}</th><th>Adet</th><th style="text-align:right">${escHtml(t('col_amount')||'Tutar')}</th></tr></thead><tbody>
+        ${lots.map(l => `<tr><td>${escHtml(l.lot_number||'')}</td><td>${escHtml(l.name_ru||l.name_kz||'')}</td><td>${escHtml(l.count||'—')}</td><td style="text-align:right">${fmtKzt(l.total_sum)}</td></tr>`).join('')}
+       </tbody></table>`
+    : '';
+  const link = 'https://goszakup.gov.kz/ru/announce/index/' + encodeURIComponent(tender.external_id || '');
+  document.getElementById('td-link').href = link;
+
+  document.getElementById('td-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:10px">
+      <div><strong>${escHtml(t('col_customer')||'Müşteri')}:</strong> ${escHtml(tender.customer_name_ru||'—')} (${escHtml(tender.customer_bin||'—')})</div>
+      <div><strong>${escHtml(t('col_amount')||'Tutar')}:</strong> ${fmtKzt(tender.total_sum)}</div>
+      <div><strong>${escHtml(t('col_region')||'Bölge')}:</strong> ${escHtml(tender.region_name_ru||'—')}</div>
+      <div><strong>${escHtml(t('col_status')||'Durum')}:</strong> ${escHtml(tender.status_name_ru||tender.status_code||'—')}</div>
+      <div><strong>Açılış:</strong> ${tender.start_date ? new Date(tender.start_date).toLocaleDateString() : '—'}</div>
+      <div><strong>${escHtml(t('col_deadline')||'Son Tarih')}:</strong> ${tender.end_date ? new Date(tender.end_date).toLocaleDateString() : '—'}</div>
+    </div>
+    ${tender.description_ru ? `<div style="font-size:12px;color:var(--gray700);background:var(--gray50);padding:8px 10px;border-radius:6px;line-height:1.6">${escHtml(tender.description_ru)}</div>` : ''}
+    ${lotsHtml}
+  `;
+  openModal('tender-modal');
+}
+
+async function toggleStar(matchId, current) {
+  const next = current !== true && current !== 'true';
+  await sb.from('goszakup_matches').update({ is_starred: next }).eq('id', matchId);
+  loadMatches();
+}
+
+async function dismissMatch(matchId) {
+  if (!await window.showConfirm(t('btn_dismiss')||'İlgilenmiyorum?', t('btn_dismiss')||'Sil')) return;
+  await sb.from('goszakup_matches').update({ is_dismissed: true }).eq('id', matchId);
+  showToast(t('toast_match_dismissed')||'Eşleşme kaldırıldı', 'success');
+  loadMatches();
+}
+
+// ===== SUBSCRIPTIONS =====
+async function loadSubscriptions() {
+  const { data } = await sb.from('goszakup_subscriptions')
+    .select('*')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+  subscriptions = data || [];
+  // Refresh the matches subscription filter
+  const sel = document.getElementById('m-subscription');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">${escHtml(t('filter_all_subscriptions')||'Tüm abonelikler')}</option>` +
+      subscriptions.map(s => `<option value="${escHtml(s.id)}">${escHtml(s.name)}</option>`).join('');
+    sel.value = cur || '';
+  }
+  renderSubscriptions();
+}
+
+function renderSubscriptions() {
+  const wrap = document.getElementById('subscriptions-list');
+  if (!wrap) return;
+  if (!subscriptions.length) {
+    wrap.innerHTML = `<div class="empty-state">${escHtml(t('goszakup_no_subscriptions')||'Henüz abonelik yok.')}</div>`;
+    return;
+  }
+  wrap.innerHTML = subscriptions.map(s => {
+    const kws = Array.isArray(s.keywords) ? s.keywords : [];
+    const ex = Array.isArray(s.exclude_keywords) ? s.exclude_keywords : [];
+    const regs = Array.isArray(s.regions) ? s.regions : [];
+    const bins = Array.isArray(s.customer_bins) ? s.customer_bins : [];
+    return `
+      <div class="sub-card">
+        <h4>
+          ${s.is_active ? '<span class="badge badge-green">●</span>' : '<span class="badge badge-gray">○</span>'}
+          ${escHtml(s.name)}
+          <div class="actions">
+            <button class="btn btn-sm btn-outline" onclick="editSubscription('${escHtml(s.id)}')">✏️</button>
+            <button class="btn btn-sm btn-outline" onclick="deleteSubscription('${escHtml(s.id)}')" style="color:var(--red)">🗑</button>
+          </div>
+        </h4>
+        ${kws.length ? `<div style="margin:4px 0">${kws.map(k => `<span class="chip">${escHtml(k)}</span>`).join('')}</div>` : ''}
+        ${ex.length ? `<div style="margin:4px 0;font-size:11px"><span style="color:var(--red)">−</span> ${ex.map(k => `<span class="chip" style="background:#fee2e2;color:#991b1b">${escHtml(k)}</span>`).join('')}</div>` : ''}
+        <div style="font-size:11px;color:var(--gray500);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
+          ${regs.length ? `<span>📍 ${regs.length} bölge</span>` : ''}
+          ${(s.min_amount||s.max_amount) ? `<span>💰 ${fmtKzt(s.min_amount)} – ${fmtKzt(s.max_amount)}</span>` : ''}
+          ${bins.length ? `<span>👤 ${bins.length} BIN</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openSubscriptionForm(prefill) {
+  editingSubId = null;
+  document.getElementById('sf-name').value = '';
+  document.getElementById('sf-min').value = '';
+  document.getElementById('sf-max').value = '';
+  document.getElementById('sf-active').checked = true;
+  document.getElementById('sf-notify-app').checked = true;
+  setChips('sf-keywords', []);
+  setChips('sf-exclude', []);
+  setChips('sf-bins', []);
+  document.querySelectorAll('#sf-regions input[type=checkbox]').forEach(cb => cb.checked = false);
+  if (prefill) {
+    if (prefill.name) document.getElementById('sf-name').value = prefill.name;
+    if (prefill.keywords) setChips('sf-keywords', prefill.keywords);
+    if (prefill.regions) {
+      const set = new Set(prefill.regions);
+      document.querySelectorAll('#sf-regions input[type=checkbox]').forEach(cb => cb.checked = set.has(cb.value));
+    }
+    if (prefill.min_amount != null) document.getElementById('sf-min').value = prefill.min_amount;
+    if (prefill.max_amount != null) document.getElementById('sf-max').value = prefill.max_amount;
+  }
+  openModal('sub-modal');
+}
+
+function editSubscription(id) {
+  const s = subscriptions.find(x => x.id === id);
+  if (!s) return;
+  editingSubId = id;
+  document.getElementById('sf-name').value = s.name || '';
+  document.getElementById('sf-min').value = s.min_amount ?? '';
+  document.getElementById('sf-max').value = s.max_amount ?? '';
+  document.getElementById('sf-active').checked = !!s.is_active;
+  document.getElementById('sf-notify-app').checked = s.notify_in_app !== false;
+  setChips('sf-keywords', Array.isArray(s.keywords) ? s.keywords : []);
+  setChips('sf-exclude', Array.isArray(s.exclude_keywords) ? s.exclude_keywords : []);
+  setChips('sf-bins', Array.isArray(s.customer_bins) ? s.customer_bins : []);
+  const regSet = new Set(Array.isArray(s.regions) ? s.regions : []);
+  document.querySelectorAll('#sf-regions input[type=checkbox]').forEach(cb => cb.checked = regSet.has(cb.value));
+  openModal('sub-modal');
+}
+
+async function saveSubscription() {
+  const name = document.getElementById('sf-name').value.trim();
+  if (!name) { showToast(t('lbl_subscription_name')+': required', 'error'); return; }
+  const keywords = getChips('sf-keywords');
+  const exclude = getChips('sf-exclude');
+  const bins = getChips('sf-bins');
+  const regs = Array.from(document.querySelectorAll('#sf-regions input[type=checkbox]:checked')).map(cb => cb.value);
+  const minA = parseFloat(document.getElementById('sf-min').value) || null;
+  const maxA = parseFloat(document.getElementById('sf-max').value) || null;
+  const payload = {
+    company_id: companyId,
+    user_id: currentUser.id,
+    name,
+    keywords, exclude_keywords: exclude,
+    regions: regs, customer_bins: bins,
+    min_amount: minA, max_amount: maxA,
+    is_active: document.getElementById('sf-active').checked,
+    notify_in_app: document.getElementById('sf-notify-app').checked,
+    updated_at: new Date().toISOString(),
+  };
+  let err;
+  if (editingSubId) {
+    ({ error: err } = await sb.from('goszakup_subscriptions').update(payload).eq('id', editingSubId));
+  } else {
+    ({ error: err } = await sb.from('goszakup_subscriptions').insert(payload));
+  }
+  if (err) { showToast(getErrorMessage(err), 'error'); return; }
+  closeModal('sub-modal');
+  showToast(t('toast_subscription_saved')||'Abonelik kaydedildi', 'success');
+  await loadSubscriptions();
+}
+
+async function deleteSubscription(id) {
+  if (!await window.showConfirm(t('confirm_delete')||'Silinsin mi?', t('btn_delete')||'Sil')) return;
+  // Soft-delete — keeps historical matches readable.
+  const { error } = await sb.from('goszakup_subscriptions')
+    .update({ deleted_at: new Date().toISOString(), is_active: false })
+    .eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(t('toast_subscription_deleted')||'Abonelik silindi', 'success');
+  await loadSubscriptions();
+}
+
+// ===== CHIP INPUTS =====
+// Chip inputs are wrapper divs with data-target="<hidden-input-id>".
+// Values stored as JSON in the hidden input.
+function setChips(targetId, arr) {
+  const hidden = document.getElementById(targetId);
+  if (!hidden) return;
+  hidden.value = JSON.stringify(arr || []);
+  const wrap = document.querySelector(`[data-target="${targetId}"]`);
+  if (!wrap) return;
+  // Preserve the trailing input element
+  const input = wrap.querySelector('input[type=text]');
+  wrap.innerHTML = '';
+  (arr || []).forEach(v => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `${escHtml(v)} <span class="x">×</span>`;
+    chip.querySelector('.x').onclick = () => {
+      const cur = getChips(targetId).filter(x => x !== v);
+      setChips(targetId, cur);
+    };
+    wrap.appendChild(chip);
+  });
+  if (input) wrap.appendChild(input);
+}
+
+function getChips(targetId) {
+  try { return JSON.parse(document.getElementById(targetId)?.value || '[]'); }
+  catch (e) { return []; }
+}
+
+function _bindChipInputs() {
+  document.querySelectorAll('.chip-input').forEach(wrap => {
+    const targetId = wrap.dataset.target;
+    if (!targetId) return;
+    const input = wrap.querySelector('input[type=text]');
+    if (!input) return;
+    const commit = () => {
+      const raw = input.value.trim();
+      if (!raw) return;
+      raw.split(',').map(s => s.trim()).filter(Boolean).forEach(v => {
+        const cur = getChips(targetId);
+        if (!cur.includes(v)) cur.push(v);
+        setChips(targetId, cur);
+      });
+      input.value = '';
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(); }
+      else if (e.key === 'Backspace' && !input.value) {
+        const cur = getChips(targetId);
+        cur.pop();
+        setChips(targetId, cur);
+      }
+    });
+    input.addEventListener('blur', commit);
+  });
+}
+
+// ===== SEARCH =====
+function onSearchQueryChange() {
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(() => { _searchPage = 1; loadSearch(); }, 250);
+}
+
+async function loadSearch() {
+  const wrap = document.getElementById('search-table-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `<div class="empty-state">${t('loading')||'Loading…'}</div>`;
+  const q = (document.getElementById('s-query')?.value || '').trim();
+  const region = document.getElementById('s-region')?.value || '';
+  const minA = parseFloat(document.getElementById('s-min')?.value);
+  const maxA = parseFloat(document.getElementById('s-max')?.value);
+
+  let query = sb.from('goszakup_tenders')
+    .select('id, external_id, title_ru, title_kz, customer_name_ru, customer_bin, total_sum, region_name_ru, region_code, end_date, status_name_ru', { count: 'exact' })
+    .eq('company_id', companyId)
+    .order('publish_date', { ascending: false });
+  if (q) query = query.or(`title_ru.ilike.%${q}%,title_kz.ilike.%${q}%,customer_name_ru.ilike.%${q}%`);
+  if (region) query = query.eq('region_code', region);
+  if (!isNaN(minA)) query = query.gte('total_sum', minA);
+  if (!isNaN(maxA)) query = query.lte('total_sum', maxA);
+
+  const from = (_searchPage - 1) * SEARCH_PAGE_SIZE;
+  const to = from + SEARCH_PAGE_SIZE - 1;
+  const { data, count, error } = await query.range(from, to);
+  if (error) { wrap.innerHTML = `<div class="empty-state" style="color:var(--red)">${escHtml(getErrorMessage(error))}</div>`; return; }
+
+  if (!data?.length) { wrap.innerHTML = `<div class="empty-state">${escHtml(t('goszakup_no_results')||'Sonuç bulunamadı.')}</div>`; }
+  else {
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th data-i18n="col_tender">İhale</th>
+        <th data-i18n="col_customer">Müşteri</th>
+        <th style="text-align:right" data-i18n="col_amount">Tutar</th>
+        <th data-i18n="col_region">Bölge</th>
+        <th data-i18n="col_deadline">Son Tarih</th>
+      </tr></thead>
+      <tbody>${data.map(r => `<tr style="cursor:pointer" onclick="openTenderDetail('${escHtml(r.id)}')">
+        <td><strong>${escHtml(r.title_ru || r.title_kz || '—')}</strong><div style="font-size:11px;color:var(--gray400)">${escHtml(r.external_id||'')}</div></td>
+        <td>${escHtml(r.customer_name_ru || r.customer_bin || '—')}</td>
+        <td style="text-align:right;font-weight:600">${fmtKzt(r.total_sum)}</td>
+        <td>${escHtml(r.region_name_ru || '—')}</td>
+        <td style="font-size:11px;color:var(--gray500)">${r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // Pagination
+  const pag = document.getElementById('search-pagination');
+  if (pag) {
+    const total = count || 0;
+    const totalPages = Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE));
+    pag.style.display = total > SEARCH_PAGE_SIZE ? 'flex' : 'none';
+    pag.innerHTML = `
+      <button class="btn btn-sm btn-outline" ${_searchPage<=1?'disabled':''} onclick="_searchPage--;loadSearch()">${escHtml(t('btn_prev')||'◀ Önceki')}</button>
+      <span>${(t('trash_page_info')||'Sayfa {current} / {total}').replace('{current}', _searchPage).replace('{total}', totalPages)} · ${total}</span>
+      <button class="btn btn-sm btn-outline" ${_searchPage>=totalPages?'disabled':''} onclick="_searchPage++;loadSearch()">${escHtml(t('btn_next')||'Sonraki ▶')}</button>
+    `;
+  }
+}
+
+function saveSearchAsSubscription() {
+  const q = (document.getElementById('s-query')?.value || '').trim();
+  const region = document.getElementById('s-region')?.value || '';
+  const minA = parseFloat(document.getElementById('s-min')?.value);
+  const maxA = parseFloat(document.getElementById('s-max')?.value);
+  openSubscriptionForm({
+    name: q ? `"${q}"` : 'Yeni abonelik',
+    keywords: q ? [q] : [],
+    regions: region ? [region] : [],
+    min_amount: isNaN(minA) ? null : minA,
+    max_amount: isNaN(maxA) ? null : maxA,
+  });
+  // Subscription form opens on the form modal — switch tab too so user
+  // sees the new entry after save.
+  const subTabBtn = document.querySelectorAll('.tab')[1];
+  if (subTabBtn) switchTab('subscriptions', subTabBtn);
+}
+
+// Local toast — utils.js may not expose one for every page.
+function showToast(msg, type) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none';
+    document.body.appendChild(container);
+  }
+  const el = document.createElement('div');
+  el.style.cssText = 'padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.2);max-width:380px;pointer-events:auto;background:' + (type==='error'?'#ef4444':'#22c55e');
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { _bindChipInputs(); init(); });
+else { _bindChipInputs(); init(); }
+</script>
+</body>
+</html>
