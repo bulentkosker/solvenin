@@ -596,7 +596,7 @@ tr:hover .action-btns { opacity:1; }
               <div class="currency-chips" id="active-currency-chips"></div>
               <div class="add-currency-row">
                 <select id="add-currency-select">
-                  <option value="">Add currency...</option>
+                  <option value="" data-i18n="opt_add_currency">Add currency...</option>
                   <option value="USD">USD — US Dollar</option>
 <option value="EUR">EUR — Euro</option>
 <option value="GBP">GBP — British Pound</option>
@@ -1856,6 +1856,13 @@ async function init() {
       const coCountry = document.getElementById('co-country');
       if (coCountry) coCountry.value = companyData.country_code;
     }
+
+    // Apply i18n to the now-fully-rendered page. Without this, every
+    // [data-i18n] element keeps the HTML fallback default, which produced
+    // the mixed-locale sidebar bug (Company / Stok Ayarları side by side).
+    const savedLang = localStorage.getItem('solvenin_lang') || 'tr';
+    if (typeof setLang === 'function') setLang(savedLang);
+    else if (typeof applyTranslations === 'function') applyTranslations();
   } catch (e) {
     console.error('init() error:', e);
     showToast(getErrorMessage(e), 'error');
@@ -1881,8 +1888,21 @@ async function loadCountriesForModal() {
     const { data } = await sb.from('localizations').select('country_code, country_name').order('country_name');
     if (!data || !data.length) return;
     _countriesList = data;
-    const optionsHtml = data.map(c =>
-      `<option value="${c.country_code}">${c.country_name}</option>`
+    // Localize country names via Intl.DisplayNames so the dropdown matches
+    // the active UI language. Falls back to the DB country_name if Intl
+    // doesn't recognise the ISO code (or if the API isn't available).
+    const _uiLang = (typeof detectLang === 'function' ? detectLang() : (localStorage.getItem('solvenin_lang') || 'en'));
+    let _displayNames = null;
+    try { _displayNames = new Intl.DisplayNames([_uiLang], { type: 'region' }); } catch(_) {}
+    const _localized = (c) => {
+      if (!_displayNames) return c.country_name;
+      try { return _displayNames.of(c.country_code) || c.country_name; }
+      catch(_) { return c.country_name; }
+    };
+    // Re-sort by localized label
+    const _sorted = data.slice().sort((a,b) => _localized(a).localeCompare(_localized(b), _uiLang));
+    const optionsHtml = _sorted.map(c =>
+      `<option value="${c.country_code}">${_localized(c)}</option>`
     ).join('');
     // Populate new-company modal select
     const modalSel = document.getElementById('new-company-country');
