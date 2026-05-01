@@ -353,6 +353,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
         <button class="settings-nav-item" onclick="switchSection('keyboard', this)"><span class="settings-nav-icon">⌨️</span> <span data-i18n="nav_keyboard">Klavye Kısayolları</span></button>
         <button class="settings-nav-item" onclick="switchSection('data', this)"><span class="settings-nav-icon">💾</span> <span data-i18n="nav_data_management">Veri Yönetimi</span></button>
+        <button class="settings-nav-item" id="nav-goszakup" style="display:none" onclick="switchSection('goszakup', this)"><span class="settings-nav-icon">🏛️</span> <span data-i18n="card_goszakup_settings">Goszakup.gov.kz</span></button>
         <button class="settings-nav-item" onclick="switchSection('recycle', this)"><span class="settings-nav-icon">🗑️</span> <span data-i18n="nav_recycle_bin">Recycle Bin</span></button>
       </div>
 
@@ -1382,6 +1383,62 @@ tr:hover .action-btns { opacity:1; }
         </div>
       </div>
 
+      <!-- ===== GOSZAKUP (KZ ONLY) ===== -->
+      <div class="settings-section" id="section-goszakup">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="card_goszakup_settings">Goszakup.gov.kz Entegrasyonu</div>
+              <div class="settings-card-desc" data-i18n="desc_goszakup_settings">Kazakistan devlet ihale platformundan otomatik tender izleme için API token girin.</div>
+            </div>
+            <button class="btn-outline" type="button" onclick="openGoszakupTokenHelp()"><span data-i18n="btn_how_to_get_token">Token Nasıl Alınır?</span></button>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group" style="flex:2">
+                <label data-i18n="lbl_api_token">API Token</label>
+                <input type="password" id="gz-token" autocomplete="off" placeholder="ya0_…">
+              </div>
+              <div class="form-group">
+                <label data-i18n="lbl_sync_lookback">Geriye Senkronizasyon (gün)</label>
+                <select id="gz-lookback">
+                  <option value="1">1</option>
+                  <option value="3">3</option>
+                  <option value="7" selected>7</option>
+                  <option value="14">14</option>
+                  <option value="30">30</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:0 0 140px">
+                <label data-i18n="lbl_enabled">Aktif</label>
+                <label class="toggle" style="margin-top:8px"><input type="checkbox" id="gz-enabled"><span class="track"></span><span class="thumb"></span></label>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:6px;align-items:center;flex-wrap:wrap">
+              <button class="btn-primary" onclick="saveGoszakupSettings()" data-action="save"><span data-i18n="btn_save">Kaydet</span></button>
+              <button class="btn-outline" onclick="syncGoszakupNow()" id="gz-sync-btn"><span data-i18n="btn_sync_now">Şimdi Senkronize Et</span></button>
+              <div id="gz-sync-status" style="font-size:12px;color:var(--gray500);margin-left:auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TOKEN HELP MODAL ===== -->
+      <div class="modal-overlay" id="goszakup-help-modal">
+        <div class="modal" style="width:520px;max-width:94vw">
+          <div class="modal-head">
+            <div class="modal-title" data-i18n="goszakup_token_help_title">Token nasıl alınır?</div>
+            <button class="modal-close" onclick="closeModal('goszakup-help-modal')">✕</button>
+          </div>
+          <div class="modal-body" style="padding:16px 20px">
+            <pre id="gz-help-body" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.7;color:var(--gray700);margin:0"></pre>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary" onclick="closeModal('goszakup-help-modal')" data-i18n="btn_close">Kapat</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== RECYCLE BIN ===== -->
       <div class="settings-section" id="section-recycle">
         <div class="settings-card">
@@ -1833,10 +1890,119 @@ function switchSection(name, el) {
   if (name === 'users') loadUsers();
   if (name === 'currency') loadExchangeRates();
   if (name === 'data') loadBackupHistory();
+  if (name === 'goszakup') loadGoszakupSettings();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
   if(el) el.classList.add('active');
+}
+
+// ===== GOSZAKUP =====
+function isKzCompany() {
+  if (!companyId) return false;
+  const cc = localStorage.getItem('companyCountry_' + companyId);
+  return cc === 'KZ';
+}
+
+// Show the Goszakup nav button only for KZ companies. Called once after
+// the country code is known (sidebar.js caches it during loadSidebarData,
+// so we re-check on init and on companyChanged events).
+function applyGoszakupVisibility() {
+  const btn = document.getElementById('nav-goszakup');
+  if (!btn) return;
+  btn.style.display = isKzCompany() ? '' : 'none';
+}
+
+async function loadGoszakupSettings() {
+  if (!companyId) return;
+  if (!isKzCompany()) {
+    showToast(t('toast_kz_only') || 'Bu özellik yalnızca KZ şirketler için kullanılabilir', 'error');
+    return;
+  }
+  const helpBody = document.getElementById('gz-help-body');
+  if (helpBody && !helpBody.textContent) helpBody.textContent = t('goszakup_token_help_body') || '';
+  const { data } = await sb.from('goszakup_settings')
+    .select('api_token, is_enabled, sync_lookback_days, last_sync_at, last_sync_status, last_sync_error, last_synced_count')
+    .eq('company_id', companyId).maybeSingle();
+  if (data) {
+    document.getElementById('gz-token').value = data.api_token || '';
+    document.getElementById('gz-lookback').value = String(data.sync_lookback_days || 7);
+    document.getElementById('gz-enabled').checked = !!data.is_enabled;
+  } else {
+    document.getElementById('gz-token').value = '';
+    document.getElementById('gz-lookback').value = '7';
+    document.getElementById('gz-enabled').checked = false;
+  }
+  _renderGoszakupSyncStatus(data || null);
+}
+
+function _renderGoszakupSyncStatus(s) {
+  const el = document.getElementById('gz-sync-status');
+  if (!el) return;
+  if (!s || !s.last_sync_at) {
+    el.innerHTML = `<span style="color:var(--gray400)">${t('sync_status_never')||'henüz çalışmadı'}</span>`;
+    return;
+  }
+  const when = new Date(s.last_sync_at).toLocaleString();
+  const statusKey = 'sync_status_' + (s.last_sync_status || 'success');
+  const color = s.last_sync_status === 'failed' || s.last_sync_status === 'auth_failed'
+    ? 'var(--red)' : 'var(--green)';
+  const errLine = s.last_sync_error ? `<div style="color:var(--red);font-size:11px;margin-top:2px">${s.last_sync_error}</div>` : '';
+  el.innerHTML = `
+    <div>${when} · <strong style="color:${color}">${t(statusKey)||s.last_sync_status||''}</strong> · ${s.last_synced_count||0}</div>
+    ${errLine}
+  `;
+}
+
+async function saveGoszakupSettings() {
+  if (!companyId) return;
+  if (!isKzCompany()) { showToast(t('toast_kz_only')||'KZ-only', 'error'); return; }
+  const payload = {
+    company_id: companyId,
+    api_token: document.getElementById('gz-token').value.trim() || null,
+    is_enabled: document.getElementById('gz-enabled').checked,
+    sync_lookback_days: parseInt(document.getElementById('gz-lookback').value, 10) || 7,
+    updated_at: new Date().toISOString(),
+  };
+  // Upsert on company_id — one settings row per tenant.
+  const { error } = await sb.from('goszakup_settings')
+    .upsert(payload, { onConflict: 'company_id' });
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(t('toast_settings_saved') || (t('btn_save')+' ✓') || 'Saved ✓', 'success');
+}
+
+async function syncGoszakupNow() {
+  if (!companyId) return;
+  if (!isKzCompany()) { showToast(t('toast_kz_only')||'KZ-only', 'error'); return; }
+  const tokenInput = document.getElementById('gz-token').value.trim();
+  if (!tokenInput) { showToast(t('toast_token_required')||'Önce API token girin', 'error'); return; }
+
+  const btn = document.getElementById('gz-sync-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  showToast(t('toast_sync_started')||'Senkronizasyon başladı…', 'success');
+  try {
+    const { data, error } = await sb.functions.invoke('goszakup-sync', {
+      body: { company_id: companyId },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    const newCount = data?.new || 0;
+    showToast((t('toast_sync_completed')||'Sync OK: {new}').replace('{new}', newCount), 'success');
+  } catch (err) {
+    const msg = err?.message || getErrorMessage(err) || 'failed';
+    showToast((t('toast_sync_failed')||'Sync failed: {error}').replace('{error}', msg), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    // Refresh the status row whether we succeeded or not — the edge
+    // function writes last_sync_status either way.
+    await loadGoszakupSettings();
+  }
+}
+
+function openGoszakupTokenHelp() {
+  const body = document.getElementById('gz-help-body');
+  if (body) body.textContent = t('goszakup_token_help_body') || '';
+  openModal('goszakup-help-modal');
 }
 
 // ===== INIT =====
@@ -1897,7 +2063,11 @@ async function init() {
     if (companyData?.country_code) {
       const coCountry = document.getElementById('co-country');
       if (coCountry) coCountry.value = companyData.country_code;
+      // Cache for Goszakup nav gating + light up the KZ-only nav button
+      // on this paint without waiting for sidebar.js' refetch.
+      try { localStorage.setItem('companyCountry_'+companyId, companyData.country_code); } catch (e) {}
     }
+    applyGoszakupVisibility();
 
     // Apply i18n to the now-fully-rendered page. Without this, every
     // [data-i18n] element keeps the HTML fallback default, which produced
