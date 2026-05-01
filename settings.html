@@ -1401,6 +1401,8 @@ tr:hover .action-btns { opacity:1; }
                 <option value="cash_register" data-i18n="recycle_type_cash_registers">Cash Registers</option>
                 <option value="bank_account" data-i18n="recycle_type_bank_accounts">Bank Accounts</option>
                 <option value="coa_account" data-i18n="recycle_type_coa_accounts">COA Accounts</option>
+                <option value="crm_opportunity" data-i18n="recycle_type_crm_opportunities">CRM Opportunities</option>
+                <option value="crm_quote" data-i18n="recycle_type_crm_quotes">CRM Quotes</option>
               </select>
             </div>
           </div>
@@ -3830,10 +3832,14 @@ async function loadRecycleBin() {
     sb.from('cash_registers').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
     sb.from('bank_accounts').select('id,account_name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
     sb.from('chart_of_accounts').select('id,name,deleted_at,deleted_by').eq('company_id', companyId).not('deleted_at', 'is', null),
+    // crm_opportunities and crm_quotes have no deleted_by column — omit it
+    // from the select (the row will fall back to '—' in the Deleted By column).
+    sb.from('crm_opportunities').select('id,title,deleted_at').eq('company_id', companyId).not('deleted_at', 'is', null),
+    sb.from('crm_quotes').select('id,quote_number,deleted_at').eq('company_id', companyId).not('deleted_at', 'is', null),
   ]);
 
-  const types = ['product','contact','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account'];
-  const labelFields = ['name','name','order_number','order_number','type','name','account_name','name'];
+  const types = ['product','contact','sales_order','purchase_order','stock_movement','cash_register','bank_account','coa_account','crm_opportunity','crm_quote'];
+  const labelFields = ['name','name','order_number','order_number','type','name','account_name','name','title','quote_number'];
 
   allDeletedRecords = [];
   queries.forEach(({ data }, i) => {
@@ -3898,6 +3904,7 @@ function renderRecycleBin(records) {
     sales_order: t('rl_sales_order') || 'Satış', purchase_order: t('rl_purchase_order') || 'Satın Alma',
     stock_movement: t('rl_stock_movement') || 'Stok Hareketi', cash_register: t('rl_cash_register') || 'Kasa',
     bank_account: t('rl_bank_account') || 'Banka Hesabı', coa_account: t('rl_coa_account') || 'Hesap',
+    crm_opportunity: t('rl_crm_opportunity') || '🎯 Fırsat', crm_quote: t('rl_crm_quote') || '📋 Teklif',
   };
 
   // Stats — total / filtered
@@ -4032,7 +4039,13 @@ const RECYCLE_TABLE_MAP = {
   sales_order: 'sales_orders', purchase_order: 'purchase_orders',
   stock_movement: 'stock_movements', cash_register: 'cash_registers',
   bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
+  crm_opportunity: 'crm_opportunities', crm_quote: 'crm_quotes',
 };
+
+// Tables whose schemas don't carry a `deleted_by` column. Restore must
+// omit the field from its UPDATE so the request doesn't fail with PGRST
+// 42703. Soft-delete from the owning module already skips the field.
+const TABLES_WITHOUT_DELETED_BY = new Set(['crm_opportunities', 'crm_quotes']);
 
 // Children to inspect when a parent row is permanently removed from trash.
 // Two relationship kinds:
@@ -4127,6 +4140,16 @@ const TRASH_CHILD_DEFS = {
     { table: 'data_import_lines', fk: 'matched_account_id', noSoftDelete: true },
     { table: 'journal_lines',     fk: 'account_id',         noSoftDelete: true },
   ],
+  // CRM opportunities: crm_activities/crm_reminders cascade in DB
+  // (CASCADE rule, no deleted_at), so we don't enumerate them. Quotes
+  // and sales_orders both have deleted_at and a NO ACTION FK — they
+  // block the hard-delete unless soft-deleted alongside.
+  crm_opportunities: [
+    { table: 'crm_quotes',   fk: 'opportunity_id' },
+    { table: 'sales_orders', fk: 'opportunity_id' },
+  ],
+  // crm_quote_items cascade in DB on hard-delete, no enumeration needed.
+  crm_quotes: [],
   stock_movements: [],
 };
 
@@ -4171,7 +4194,7 @@ const _TRASH_CHILD_NAME_FIELDS = {
   sales_orders: 'order_number', purchase_orders: 'order_number',
   bank_transactions: 'description', cash_transactions: 'description',
   contact_transactions: 'description', crm_opportunities: 'title',
-  crm_quotes: 'quote_number',
+  crm_quotes: 'quote_number', chart_of_accounts: 'name',
 };
 
 async function _trashListTrashedRefChildren(table, parentId) {
@@ -4305,7 +4328,10 @@ async function bulkRestoreRecycle() {
   for (const [table, ids] of Object.entries(groups)) {
     // Restore = clear deleted_at only. is_active stays as it was —
     // a deleted-while-archived record stays archived after restore.
-    const { error } = await sb.from(table).update({ deleted_at: null, deleted_by: null }).in('id', ids);
+    const update = TABLES_WITHOUT_DELETED_BY.has(table)
+      ? { deleted_at: null }
+      : { deleted_at: null, deleted_by: null };
+    const { error } = await sb.from(table).update(update).in('id', ids);
     if (error) { failCount += ids.length; lastErr = error; }
     else okCount += ids.length;
   }
@@ -4430,15 +4456,12 @@ async function bulkHardDeleteRecycle() {
 }
 
 async function restoreRecord(type, id) {
-  const tableMap = {
-    product: 'products', contact: 'contacts', customer: 'contacts', supplier: 'contacts',
-    sales_order: 'sales_orders', purchase_order: 'purchase_orders',
-    stock_movement: 'stock_movements', cash_register: 'cash_registers',
-    bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
-  };
-  const table = tableMap[type];
+  const table = RECYCLE_TABLE_MAP[type];
   if (!table) { showToast('Bilinmeyen kayıt türü: ' + type, 'error'); return; }
-  const { error } = await sb.from(table).update({ deleted_at: null, deleted_by: null }).eq('id', id);
+  const update = TABLES_WITHOUT_DELETED_BY.has(table)
+    ? { deleted_at: null }
+    : { deleted_at: null, deleted_by: null };
+  const { error } = await sb.from(table).update(update).eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_restored')||'Kayıt geri yüklendi ✓', 'success');
   await loadRecycleBin();
@@ -4518,6 +4541,8 @@ function _trashTypeLabel(type) {
     cash_register: t('rl_cash_register') || 'Kasa',
     bank_account: t('rl_bank_account') || 'Banka Hesabı',
     coa_account: t('rl_coa_account') || 'Hesap',
+    crm_opportunity: t('rl_crm_opportunity') || '🎯 Fırsat',
+    crm_quote: t('rl_crm_quote') || '📋 Teklif',
   };
   return map[type] || type;
 }

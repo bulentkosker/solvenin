@@ -168,6 +168,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     </div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <button class="btn btn-outline btn-sm" onclick="editOpp()" data-i18n="crm_btn_edit">✏️ Düzenle</button>
+      <button class="btn btn-outline btn-sm" onclick="deleteOpp()" style="color:var(--red);border-color:var(--red)" data-i18n="crm_btn_delete">🗑️ Sil</button>
     </div>
 
     <!-- Drawer Tabs -->
@@ -325,7 +326,7 @@ async function init() {
 }
 
 async function loadOpps() {
-  const { data } = await sb.from('crm_opportunities').select('*, contacts(name)').eq('company_id', companyId).order('created_at', { ascending: false });
+  const { data } = await sb.from('crm_opportunities').select('*, contacts(name)').eq('company_id', companyId).is('deleted_at', null).order('created_at', { ascending: false });
   opps = data || [];
   // Load last activity for each
   const ids = opps.map(o => o.id);
@@ -708,7 +709,7 @@ async function saveQuote() {
 }
 
 async function loadQuotes(oppId) {
-  const { data } = await sb.from('crm_quotes').select('*').eq('opportunity_id', oppId).order('created_at', { ascending: false });
+  const { data } = await sb.from('crm_quotes').select('*').eq('opportunity_id', oppId).is('deleted_at', null).order('created_at', { ascending: false });
   const list = document.getElementById('dr-quotes-list');
   const statusColors = { draft:'var(--gray500)', sent:'var(--primary)', accepted:'var(--green)', rejected:'var(--red)', expired:'var(--orange)' };
   const statusLabels = { draft:t('crm_qstat_draft'), sent:t('crm_qstat_sent'), accepted:t('crm_qstat_accepted'), rejected:t('crm_qstat_rejected'), expired:t('crm_qstat_expired') };
@@ -721,6 +722,7 @@ async function loadQuotes(oppId) {
     <div style="display:flex;gap:4px;align-items:center">
       <span style="font-size:10px;font-weight:600;color:${statusColors[q.status]||'var(--gray500)'}">${statusLabels[q.status]||q.status}</span>
       <button class="btn btn-outline btn-sm" onclick="viewQuotePDF('${q.id}')" title="PDF">📄</button>
+      <button class="btn btn-outline btn-sm" onclick="deleteQuote('${q.id}')" title="${t('btn_delete')||'Sil'}" style="color:var(--red);border-color:var(--red)">🗑️</button>
       ${q.status === 'accepted' && !q.converted_to_order_id ? `<button class="btn btn-primary btn-sm" onclick="convertQuoteToOrder('${q.id}')">🛒</button>` : ''}
       ${q.status === 'draft' ? `<select onchange="updateQuoteStatus('${q.id}',this.value);this.value=''" style="padding:2px 6px;border:1px solid var(--gray200);border-radius:4px;font-size:10px">
         <option value="">${t('crm_qstat_change')}</option><option value="sent">${t('crm_qstat_sent')}</option><option value="accepted">${t('crm_qstat_accepted')}</option><option value="rejected">${t('crm_qstat_rejected')}</option>
@@ -776,6 +778,79 @@ async function convertQuoteToOrder(quoteId) {
   renderAll();
   loadQuotes(selectedOppId);
   showToast(t('crm_toast_quote_converted') + ': ' + orderNumber, 'success');
+}
+
+async function deleteQuote(quoteId) {
+  // Block when the quote was already converted to an active sales order —
+  // deleting the quote then would orphan the audit trail. The user must
+  // delete the order first (which will independently land in trash).
+  const { data: q } = await sb.from('crm_quotes')
+    .select('id, quote_number, converted_to_order_id')
+    .eq('id', quoteId).maybeSingle();
+  if (!q) return;
+  if (q.converted_to_order_id) {
+    const { data: ord } = await sb.from('sales_orders')
+      .select('order_number, deleted_at')
+      .eq('id', q.converted_to_order_id).maybeSingle();
+    if (ord && !ord.deleted_at) {
+      const msg = (t('crm_toast_quote_converted_block') || 'Bu teklif satış faturasına dönüştürülmüş ({order}). Önce faturayı silin.')
+        .replace('{order}', ord.order_number || q.converted_to_order_id);
+      showToast(msg, 'error');
+      return;
+    }
+  }
+  const ok = await window.showConfirm(
+    t('crm_confirm_delete_quote') || 'Bu teklifi çöp kutusuna taşımak istediğinize emin misiniz?',
+    t('btn_delete') || 'Sil'
+  );
+  if (!ok) return;
+  const { error } = await sb.from('crm_quotes')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', quoteId);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(t('crm_toast_quote_trashed') || 'Teklif çöp kutusuna taşındı', 'success');
+  loadQuotes(selectedOppId);
+}
+
+async function deleteOpp() {
+  if (!selectedOppId) return;
+  const opp = opps.find(x => x.id === selectedOppId);
+  if (!opp) return;
+  // Active sales orders pointing at this opportunity hard-block soft-delete.
+  // (FK is NO ACTION, so a future hard-delete from trash would also fail —
+  // surface it now so the user resolves the order first.)
+  const { data: orders } = await sb.from('sales_orders')
+    .select('order_number')
+    .eq('opportunity_id', selectedOppId)
+    .is('deleted_at', null);
+  if (orders && orders.length) {
+    const list = orders.map(o => o.order_number).filter(Boolean).join(', ');
+    const msg = (t('crm_toast_opp_blocked_orders') || 'Bu fırsata bağlı aktif satış faturaları var: {orders}. Önce onları silin.')
+      .replace('{orders}', list);
+    showToast(msg, 'error');
+    return;
+  }
+  const ok = await window.showConfirm(
+    t('crm_confirm_delete_opp') || 'Bu fırsat ve bağlı tekliflerini çöp kutusuna taşımak istediğinize emin misiniz?',
+    t('btn_delete') || 'Sil'
+  );
+  if (!ok) return;
+  const now = new Date().toISOString();
+  // Cascade soft-delete linked active quotes — they exist for this
+  // opportunity and shouldn't outlive it. Trashed ones stay where they
+  // are. crm_activities/crm_reminders cascade in DB on hard-delete and
+  // have no deleted_at, so we leave them.
+  await sb.from('crm_quotes')
+    .update({ deleted_at: now })
+    .eq('opportunity_id', selectedOppId)
+    .is('deleted_at', null);
+  const { error } = await sb.from('crm_opportunities')
+    .update({ deleted_at: now })
+    .eq('id', selectedOppId);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  closeDrawer();
+  showToast(t('crm_toast_opp_trashed') || 'Fırsat çöp kutusuna taşındı', 'success');
+  loadOpps();
 }
 
 async function viewQuotePDF(quoteId) {
