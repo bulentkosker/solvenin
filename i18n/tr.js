@@ -1795,6 +1795,7 @@ window.T.tr = {
     title_add_department:'Departman Ekle', lbl_department_name:'Departman Adı *', placeholder_dept_example:'Muhasebe',
     title_add_position:'Pozisyon Ekle', lbl_position_name:'Pozisyon Adı *', placeholder_position_example:'Muhasebeci', lbl_department:'Departman',
     title_delete_confirm:'Silme Onayı', btn_approve:'Onayla',
+    nav_keyboard:'Klavye Kısayolları', nav_invoice_settings:'Fatura Ayarları', nav_pos_settings:'POS Ayarları', nav_data_management:'Veri Yönetimi',
     toast_name_required_full:'Ad ve soyad zorunludur', toast_invalid_salary:'Geçerli bir maaş girin', toast_qr_failed:'QR oluşturulamadı', toast_qr_scanner_load_failed:'QR tarayıcı yüklenemedi', toast_camera_failed:'Kamera açılamadı', toast_employee_not_found:'Çalışan bulunamadı', toast_add_employee_first:'Önce çalışan ekleyin',
     toast_payroll_item_updated:'Bordro kalemi güncellendi ✓', toast_leave_approved:'İzin onaylandı ✓', toast_emp_daterange_required:'Çalışan ve tarih aralığı zorunludur', toast_leave_saved:'İzin talebi kaydedildi ✓',
     toast_leave_type_name_required:'İzin türü adı zorunludur', toast_leave_type_saved:'İzin türü kaydedildi ✓', toast_emp_date_required:'Çalışan ve tarih zorunludur', toast_attendance_added:'Devam kaydı eklendi ✓',
