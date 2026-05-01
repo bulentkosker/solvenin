@@ -242,8 +242,8 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
     <div class="topbar-title" data-i18n="page_purchasing">Purchasing</div>
     <div style="flex:1"></div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
@@ -566,7 +566,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
 <div class="modal-overlay" id="supplier-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
-      <div class="modal-title" id="supplier-modal-title">Add Supplier</div>
+      <div class="modal-title" id="supplier-modal-title" data-i18n="title_add_supplier">Add Supplier</div>
       <button class="modal-close" onclick="closeModal('supplier-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -583,8 +583,8 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('supplier-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSupplier()" data-action="save">Save Supplier</button>
+      <button class="btn btn-outline" onclick="closeModal('supplier-modal')" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()" data-action="save" data-i18n="btn_save_supplier">Save Supplier</button>
     </div>
   </div>
 </div>
@@ -604,31 +604,31 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
       <div id="receive-items"></div>
       <div class="field" style="margin-top:16px">
         <label data-i18n="label_warehouse">Warehouse</label>
-        <select id="receive-warehouse"><option value="">Select warehouse</option></select>
+        <select id="receive-warehouse"><option value="" data-i18n="opt_select_warehouse">Select warehouse</option></select>
       </div>
       <div class="field" style="margin-top:12px">
         <label data-i18n="label_notes">Notes</label>
-        <textarea id="receive-notes" placeholder="Optional receiving notes..."></textarea>
+        <textarea id="receive-notes" data-i18n-placeholder="placeholder_receiving_notes" placeholder="Optional receiving notes..."></textarea>
       </div>
       <!-- PAYMENT SECTION -->
       <div style="margin-top:20px;padding:14px 16px;background:var(--blue-light);border-radius:12px;border:1px solid rgba(59,130,246,0.2)">
-        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:12px">💳 Payment (Optional)</div>
+        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:12px" data-i18n="card_payment_optional">💳 Payment (Optional)</div>
         <div class="form-group">
           <label data-i18n="label_pay_method">Payment Method</label>
           <select id="recv-pay-method" onchange="onRecvPayMethodChange()">
-            <option value="">No payment now</option>
-            <option value="cash">💵 Cash (Register)</option>
-            <option value="bank">🏦 Bank Transfer</option>
-            <option value="other">📌 Other</option>
+            <option value="" data-i18n="opt_no_payment_now">No payment now</option>
+            <option value="cash" data-i18n="opt_pay_cash_register">💵 Cash (Register)</option>
+            <option value="bank" data-i18n="opt_pay_bank_transfer">🏦 Bank Transfer</option>
+            <option value="other" data-i18n="opt_pay_other">📌 Other</option>
           </select>
         </div>
         <div class="form-group" id="recv-register-row" style="display:none">
           <label data-i18n="label_cash_register">Cash Register *</label>
-          <select id="recv-pay-register"><option value="">Select register...</option></select>
+          <select id="recv-pay-register"><option value="" data-i18n="opt_select_register">Select register...</option></select>
         </div>
         <div class="form-group" id="recv-account-row" style="display:none">
           <label data-i18n="label_bank_account">Bank Account *</label>
-          <select id="recv-pay-account"><option value="">Select account...</option></select>
+          <select id="recv-pay-account"><option value="" data-i18n="opt_select_account">Select account...</option></select>
         </div>
         <div class="form-group" id="recv-amount-row" style="display:none">
           <label data-i18n="col_amount">Amount Paid</label>
@@ -636,7 +636,7 @@ document.addEventListener('langChanged', _purchasingRefreshLang);
         </div>
         <div class="form-group" id="recv-ref-row" style="display:none">
           <label data-i18n="col_ref">Reference</label>
-          <input type="text" id="recv-pay-ref" placeholder="Dekont no, açıklama...">
+          <input type="text" id="recv-pay-ref" data-i18n-placeholder="placeholder_payment_ref" placeholder="Dekont no, açıklama...">
         </div>
       </div>
     </div>

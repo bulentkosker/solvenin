@@ -1783,6 +1783,10 @@ window.T.tr = {
     lbl_root_cause:'Kök Neden', filter_all_priority:'Tüm Öncelikler', title_history:'Geçmiş',
     col_planned:'Planlanan', col_completed:'Tamamlanan', col_cost:'Maliyet',
     title_add_customer:'Müşteri Ekle', title_invoice_preview:'Fatura Önizleme',
+    title_add_supplier:'Tedarikçi Ekle', btn_save_supplier:'Tedarikçiyi Kaydet',
+    opt_select_warehouse:'Depo seçin', placeholder_receiving_notes:'Opsiyonel teslim alma notları...', card_payment_optional:'💳 Ödeme (Opsiyonel)',
+    opt_no_payment_now:'Şimdi ödeme yok', opt_pay_cash_register:'💵 Nakit (Kasa)', opt_pay_bank_transfer:'🏦 Banka Havalesi', opt_pay_other:'📌 Diğer',
+    opt_select_register:'Kasa seçin...', opt_select_account:'Hesap seçin...', placeholder_payment_ref:'Dekont no, açıklama...',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));

@@ -1853,6 +1853,10 @@ window.T.en = {
     lbl_root_cause:'Root Cause', filter_all_priority:'All Priority', title_history:'History',
     col_planned:'Planned', col_completed:'Completed', col_cost:'Cost',
     title_add_customer:'Add Customer', title_invoice_preview:'Invoice Preview',
+    title_add_supplier:'Add Supplier', btn_save_supplier:'Save Supplier',
+    opt_select_warehouse:'Select warehouse', placeholder_receiving_notes:'Optional receiving notes...', card_payment_optional:'💳 Payment (Optional)',
+    opt_no_payment_now:'No payment now', opt_pay_cash_register:'💵 Cash (Register)', opt_pay_bank_transfer:'🏦 Bank Transfer', opt_pay_other:'📌 Other',
+    opt_select_register:'Select register...', opt_select_account:'Select account...', placeholder_payment_ref:'Receipt no, description...',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));
