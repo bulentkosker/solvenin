@@ -1775,6 +1775,8 @@ window.T.tr = {
     acc_inherit_from_parent:'— Üst hesaptan devral —', acc_current_asset:'Dönen Varlık', acc_fixed_asset:'Duran Varlık', acc_current_liability:'Kısa Vadeli Yükümlülük', acc_long_term_liability:'Uzun Vadeli Yükümlülük', acc_equity:'Özkaynak', acc_operating_revenue:'Faaliyet Geliri', acc_other_revenue:'Diğer Gelirler', acc_cogs:'Satılan Mal Maliyeti', acc_operating_expense:'Faaliyet Gideri',
     tax_type_vat:'KDV', tax_type_sales_tax:'Satış Vergisi', tax_type_withholding:'Stopaj', tax_type_none_exempt:'Yok / Muaf',
     title_load_coa_from_template:'📥 Şablondan Hesap Planı Oluştur', btn_load_template:'📥 Yükle', lbl_select_country_coa:'Ülke Hesap Planı Seçin', title_post:'İşle',
+    card_transactions:'Hareketler', filter_tx_in:'Giriş', filter_tx_out:'Çıkış', filter_all_accounts:'Tüm Hesaplar',
+    placeholder_currency_search:'Para birimi ara... (ör. TRY, USD, EUR)', placeholder_optional_description:'Opsiyonel açıklama',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));

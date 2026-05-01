@@ -266,8 +266,8 @@
   <header class="topbar">
     <div class="topbar-title" data-i18n="nav_cashbank">Cash & Bank</div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
@@ -336,7 +336,7 @@
       <div id="cash-detail" style="display:none">
         <div class="card">
           <div class="card-header">
-            <div class="card-title" id="cash-detail-title">Transactions</div>
+            <div class="card-title" id="cash-detail-title" data-i18n="card_transactions">Transactions</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="exportCashCSV()">⬆️ Export</button>
               <button class="btn btn-primary btn-sm" onclick="openCashTxModal()">
@@ -352,9 +352,9 @@
                   <input type="text" id="cash-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterCashTx()">
                 </div>
                 <select class="filter-select" id="cash-type-filter" onchange="filterCashTx()">
-                  <option value="">All Types</option>
-                  <option value="in">In</option>
-                  <option value="out">Out</option>
+                  <option value="" data-i18n="filter_all_types">All Types</option>
+                  <option value="in" data-i18n="filter_tx_in">In</option>
+                  <option value="out" data-i18n="filter_tx_out">Out</option>
                 </select>
                 <select class="filter-select" id="cash-coa-filter" onchange="filterCashTx()">
                   <option value="">Tüm Hesaplar</option>
@@ -410,7 +410,7 @@
       <div id="bank-detail" style="display:none">
         <div class="card">
           <div class="card-header">
-            <div class="card-title" id="bank-detail-title">Transactions</div>
+            <div class="card-title" id="bank-detail-title" data-i18n="card_transactions">Transactions</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="exportBankCSV()">⬆️ Export</button>
               <button class="btn btn-primary btn-sm" onclick="openBankTxModal()">
@@ -426,9 +426,9 @@
                   <input type="text" id="bank-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterBankTx()">
                 </div>
                 <select class="filter-select" id="bank-type-filter" onchange="filterBankTx()">
-                  <option value="">All Types</option>
-                  <option value="in">In</option>
-                  <option value="out">Out</option>
+                  <option value="" data-i18n="filter_all_types">All Types</option>
+                  <option value="in" data-i18n="filter_tx_in">In</option>
+                  <option value="out" data-i18n="filter_tx_out">Out</option>
                 </select>
                 <select class="filter-select" id="bank-coa-filter" onchange="filterBankTx()">
                   <option value="">Tüm Hesaplar</option>
@@ -474,12 +474,12 @@
                 <input type="text" id="all-search" placeholder="Search..." data-i18n-placeholder="search_placeholder" oninput="filterAllTx()">
               </div>
               <select class="filter-select" id="all-account-filter" onchange="filterAllTx()">
-                <option value="">All Accounts</option>
+                <option value="" data-i18n="filter_all_accounts">All Accounts</option>
               </select>
               <select class="filter-select" id="all-type-filter" onchange="filterAllTx()">
-                <option value="">All Types</option>
-                <option value="in">In</option>
-                <option value="out">Out</option>
+                <option value="" data-i18n="filter_all_types">All Types</option>
+                <option value="in" data-i18n="filter_tx_in">In</option>
+                <option value="out" data-i18n="filter_tx_out">Out</option>
               </select>
               <input type="date" class="filter-select" id="all-date-from" onchange="filterAllTx()">
               <input type="date" class="filter-select" id="all-date-to" onchange="filterAllTx()">
@@ -549,7 +549,7 @@
         <div class="form-group">
           <label data-i18n="label_currency">Currency *</label>
           <div style="position:relative">
-            <input type="text" id="reg-currency-input" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
+            <input type="text" id="reg-currency-input" data-i18n-placeholder="placeholder_currency_search" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
               oninput="filterCurrencyList('reg-currency-list', this.value)" onfocus="showCurrencyList('reg-currency-list')"
               style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;font-family:var(--font-body)">
             <input type="hidden" id="reg-currency">
@@ -563,7 +563,7 @@
       </div>
       <div class="form-group">
         <label data-i18n="label_description">Description</label>
-        <input type="text" id="reg-desc" placeholder="Optional description">
+        <input type="text" id="reg-desc" data-i18n-placeholder="placeholder_optional_description" placeholder="Optional description">
       </div>
     </div>
     <div class="modal-footer">
@@ -706,7 +706,7 @@
         <div class="form-group">
           <label data-i18n="label_currency">Currency *</label>
           <div style="position:relative">
-            <input type="text" id="acc-currency-input" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
+            <input type="text" id="acc-currency-input" data-i18n-placeholder="placeholder_currency_search" placeholder="Search currency... (e.g. USD, EUR, TRY)" autocomplete="off"
               oninput="filterCurrencyList('acc-currency-list', this.value)" onfocus="showCurrencyList('acc-currency-list')"
               style="width:100%;padding:9px 12px;border:1px solid var(--gray200);border-radius:10px;font-size:13px;outline:none;font-family:var(--font-body)">
             <input type="hidden" id="acc-currency">

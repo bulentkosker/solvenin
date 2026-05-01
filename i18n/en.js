@@ -1845,6 +1845,8 @@ window.T.en = {
     acc_inherit_from_parent:'— Inherit from parent —', acc_current_asset:'Current Asset', acc_fixed_asset:'Fixed Asset', acc_current_liability:'Current Liability', acc_long_term_liability:'Long-term Liability', acc_equity:'Equity', acc_operating_revenue:'Operating Revenue', acc_other_revenue:'Other Revenue', acc_cogs:'Cost of Goods Sold', acc_operating_expense:'Operating Expense',
     tax_type_vat:'VAT', tax_type_sales_tax:'Sales Tax', tax_type_withholding:'Withholding', tax_type_none_exempt:'None / Exempt',
     title_load_coa_from_template:'📥 Load Chart of Accounts from Template', btn_load_template:'📥 Load', lbl_select_country_coa:'Select country chart of accounts', title_post:'Post',
+    card_transactions:'Transactions', filter_tx_in:'In', filter_tx_out:'Out', filter_all_accounts:'All Accounts',
+    placeholder_currency_search:'Search currency... (e.g. USD, EUR, TRY)', placeholder_optional_description:'Optional description',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));
