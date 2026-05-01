@@ -505,6 +505,10 @@
             { key: 'nav_reports', href: 'reports-crm.html' },
           ]
         },
+        // Country-gated: KZ public-procurement tender monitoring. The
+        // `country` flag is checked in filteredNav against the cached
+        // companyCountry_<id> entry — non-KZ companies never see it.
+        { icon: '🏛️', key: 'nav_tenders', href: 'goszakup.html', country: 'KZ' },
         { icon: '🖥️', key: 'nav_pos', href: 'pos.html' },
         {
           icon: '💰', key: 'nav_sales', href: 'sales.html',
@@ -679,6 +683,20 @@
     return _enabledModules.has(mod);
   }
 
+  // Country gate for nav items that ship per-jurisdiction (Goszakup KZ,
+  // future TR/RU/etc.). Returns true when the cached company country
+  // matches; false (hide) when unknown — gated items only show after
+  // the company row has been fetched and cached.
+  function isCountryAllowed(item) {
+    if (!item.country) return true;
+    try {
+      const cid = localStorage.getItem('currentCompanyId');
+      if (!cid) return false;
+      const cc = localStorage.getItem('companyCountry_' + cid);
+      return cc === item.country;
+    } catch (e) { return false; }
+  }
+
   // Produce a filtered NAV array by removing items/children for disabled modules.
   function filteredNav() {
     const out = [];
@@ -686,12 +704,13 @@
       const items = [];
       section.items.forEach(item => {
         if (item.alwaysVisible) { items.push(item); return; }
+        if (!isCountryAllowed(item)) return;
 
         if (item.children) {
           // Accordion parent — gated by its own module
           if (!isNavKeyAllowed(item.key)) return;
           // Filter children too (for cross-cutting like nav_reports)
-          const kids = item.children.filter(c => isNavKeyAllowed(c.key));
+          const kids = item.children.filter(c => isNavKeyAllowed(c.key) && isCountryAllowed(c));
           if (kids.length === 0) return;
           items.push({ ...item, children: kids });
         } else {
@@ -988,10 +1007,10 @@
       const [compData, profileRes] = await Promise.all([
         cacheT
           ? cacheT.fetch('company.'+companyId, async () => {
-              const r = await sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single();
+              const r = await sb.from('companies').select('name, base_currency, country_code, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single();
               return r.error ? null : r.data;
             })
-          : sb.from('companies').select('name, base_currency, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single().then(r => r.data),
+          : sb.from('companies').select('name, base_currency, country_code, is_frozen, freeze_reason, subscription_status, subscription_end, max_users, plan, logo_url').eq('id', companyId).single().then(r => r.data),
         sb.from('profiles').select('plan').eq('id', user.id).single()
       ]);
       // Adapter: keep downstream { error, data } shape so existing
@@ -1063,6 +1082,16 @@
         if (company.base_currency) {
           localStorage.setItem('baseCurrency', company.base_currency);
           document.dispatchEvent(new CustomEvent('currencyLoaded', { detail: company.base_currency }));
+        }
+        // Country-gated nav items (e.g. Goszakup tenders for KZ only) read
+        // this from localStorage on every page render — re-evaluate the
+        // sidebar after we cache it so the gate flips on the same paint.
+        if (company.country_code) {
+          const prevCountry = localStorage.getItem('companyCountry_'+companyId);
+          localStorage.setItem('companyCountry_'+companyId, company.country_code);
+          if (prevCountry !== company.country_code) {
+            try { rerenderSidebar(); } catch(e) {}
+          }
         }
         // Cache logo for fast access from other pages / PDF generators
         try {
