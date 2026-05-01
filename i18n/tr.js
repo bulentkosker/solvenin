@@ -1745,6 +1745,30 @@ window.T.tr = {
 <li>Bütçe ile gerçekleşmenin zaman içindeki karşılaştırma grafiği</li>
 <li>Birden fazla projeye yüzdesel dağıtılabilen ortak giderler</li>
 </ul>`,
+    // ===== Parity sync: keys previously only in en.js =====
+    no_products_found:'Ürün bulunamadı', no_products_sub:'Filtreleri ayarlamayı deneyin veya yeni bir ürün ekleyin.',
+    items:'öğe', showing:'Gösterilen', of:'/',
+    adj_in_short:'Stok Girişi', adj_out_short:'Stok Çıkışı', adj_adjust_short:'Düzelt',
+    col_note:'Not',
+    toast_product_updated:'Ürün güncellendi!', toast_product_added:'Ürün eklendi!', toast_stock_updated:'Stok güncellendi!', toast_product_deleted:'Ürün silindi', toast_csv_exported:'CSV dışa aktarıldı!',
+    stat_low_stock_sub:'ürün stok takviyesi gerekiyor', stat_out_sub:'ürün tükendi',
+    nav_customers:'Müşteriler', stat_paid_invoices:'Ödenen Faturalar', stat_pending:'Bekleyen', search_customers:'Müşteri ara...', col_order:'Sipariş', label_customer_name:'Müşteri Adı *',
+    pay_cash:'Nakit', pay_bank:'Banka', pay_card:'Kart', pay_other:'Diğer', pay_paid:'Ödendi', pay_partial:'Kısmi', pay_unpaid:'Ödenmedi',
+    no_orders:'Sipariş bulunamadı', no_customers_sub:'İlk müşterinizi ekleyin.', btn_add_customer:'+ Müşteri Ekle',
+    collected:'tahsil edildi', btn_view_invoice:'Faturayı Görüntüle', btn_record_payment:'Ödeme Kaydet',
+    toast_order_deleted:'Sipariş silindi', toast_customer_name_required:'Müşteri adı zorunludur', toast_customer_updated:'Müşteri güncellendi ✓', toast_customer_added:'Müşteri eklendi ✓', toast_customer_deleted:'Müşteri silindi', toast_pdf_downloaded:'PDF indirildi ✓',
+    across_all_categories:'tüm kategoriler genelinde', vs_last_month_short:'geçen aya göre', stat_employees:'Aktif Çalışanlar',
+    card_revenue_overview:'Gelir Özeti', card_revenue_sub:'Aylık satış performansı', card_notifications:'Bildirimler', card_notif_sub:'3 okunmamış bildirim', card_recent:'Son Hareketler', card_recent_sub:'Son satışlar ve alışlar', card_quick:'Hızlı Erişim', card_quick_sub:'İstediğiniz modüle gidin',
+    nav_hr_short:'İK', period_7d:'7 gün', period_30d:'30 gün', period_90d:'90 gün',
+    toast_supplier_deleted:'Tedarikçi silindi',
+    sub_unlock_title:'Solvenin\'in tüm gücünü açın', sub_unlock_sub:'Ücretsiz Plan\'dasınız. Sınırsız kayıt, tüm modüller ve öncelikli destek için yükseltin.',
+    sub_details_sub:'Mevcut plan bilgileriniz', sub_usage_sub:'Kaynak tüketiminiz', sub_invoices_sub:'Geçmiş ödemeleriniz ve faturalarınız',
+    col_invoice:'Fatura', no_active_sub:'Aktif abonelik yok', billed:'Faturalandı', users_label:'kullanıcı', user_singular:'kullanıcı', next_billing_short:'Sonraki ödeme', current:'Mevcut', unlimited:'Sınırsız', not_available:'Mevcut değil', btn_select_plan:'Planı Seç',
+    feat_1_user:'1 kullanıcı', feat_basic_modules:'Temel modüller', feat_100_records:'Aylık 100 kayıt', feat_unlimited_users:'Sınırsız kullanıcı', feat_all_modules:'Tüm modüller', feat_pdf:'PDF fatura', feat_priority_support:'Öncelikli destek', feat_everything_standard:'Standart\'taki her şey', feat_multi_company:'Çoklu şirket', feat_api:'API ve Webhook',
+    toast_sub_activated:'🎉 Abonelik aktifleştirildi! Solvenin\'e hoş geldiniz.', toast_opening_portal:'Kullanıcı sayısını güncellemek için ödeme portalı açılıyor...', toast_opening_customer_portal:'Müşteri portalı açılıyor...', toast_portal_coming_soon:'Müşteri portalı yakında. Faturalama değişiklikleri için support@solvenin.com ile iletişime geçin.', toast_invoice_coming_soon:'Fatura indirme yakında. support@solvenin.com ile iletişime geçin.', toast_cancelled:'İptal talebi alındı. Planınız fatura döneminin sonuna kadar aktif kalacak.',
+    acc_opening_balance:'Açılış Bakiyesi', account:'Hesap',
+    add_cash_transaction:'Kasa Hareketi Ekle', add_bank_transaction:'Banka Hareketi Ekle', add_bank:'Banka Ekle', add_bank_account:'Banka Hesabı Ekle',
+    nav_accounting_link:'Muhasebe', nav_accounting_full:'Muhasebe',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));

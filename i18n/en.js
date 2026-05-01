@@ -1833,6 +1833,12 @@ window.T.en = {
 <li>Time-series chart comparing budget vs. actual</li>
 <li>Shared expenses split proportionally across multiple projects</li>
 </ul>`,
+    // ===== Parity sync: keys previously only in tr.js =====
+    all_transactions:'All transactions',
+    customer_added:'Customer added ✓', customer_deleted:'Customer deleted', customer_updated:'Customer updated ✓',
+    order_deleted:'Order deleted', pdf_downloaded:'PDF downloaded ✓', product_deleted:'Product deleted',
+    quantity:'Quantity', select_customer:'Select customer', supplier_deleted:'Supplier deleted',
+    col_prod_desc:'Product / Description',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));
