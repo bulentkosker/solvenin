@@ -253,8 +253,8 @@ tr:hover td{background:var(--gray50)}
     <div class="topbar-title" data-i18n="page_sales">Sales & Invoicing</div>
     <div style="flex:1"></div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
@@ -554,7 +554,7 @@ tr:hover td{background:var(--gray50)}
 <div class="modal-overlay" id="customer-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
-      <div class="modal-title" id="customer-modal-title">Add Customer</div>
+      <div class="modal-title" id="customer-modal-title" data-i18n="title_add_customer">Add Customer</div>
       <button class="modal-close" onclick="closeModal('customer-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -570,7 +570,7 @@ tr:hover td{background:var(--gray50)}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('customer-modal')">Cancel</button>
+      <button class="btn btn-outline" onclick="closeModal('customer-modal')" data-i18n="btn_cancel">Cancel</button>
       <button class="btn btn-primary" onclick="saveCustomer()" data-action="save"><span data-i18n="btn_save_customer">Save Customer</span></button>
     </div>
   </div>
@@ -641,7 +641,7 @@ tr:hover td{background:var(--gray50)}
 <div class="modal-overlay" id="invoice-modal">
   <div class="modal" style="max-width:860px">
     <div class="modal-header">
-      <div class="modal-title">Invoice Preview</div>
+      <div class="modal-title" data-i18n="title_invoice_preview">Invoice Preview</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary btn-sm" onclick="savePDF()" data-action="save">⬇ PDF</button>
         <button class="btn btn-outline btn-sm" onclick="printPDF()">🖨️</button>
@@ -1121,8 +1121,8 @@ function renderCustomers(list) {
       <td><code style="font-size:11px">${c.tax_number||'—'}</code></td>
       <td><span class="badge badge-blue">${orderCount}</span></td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-outline btn-icon" onclick="editCustomer('${c.id}')" title="Edit">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
+        <button class="btn btn-sm btn-outline btn-icon" onclick="editCustomer('${c.id}')" title="${t('btn_edit')||'Edit'}">✏️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCustomer('${c.id}')" title="${t('title_delete')||'Delete'}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');

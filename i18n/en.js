@@ -1852,6 +1852,7 @@ window.T.en = {
     ticker_forex:'Forex', ticker_crypto:'Crypto', ticker_commodities:'Commodities', ticker_oil_api_optional:'Oil API Key (optional)', ticker_oil_source_note:'Brent oil price sourced from Yahoo Finance (free, no API key required).',
     lbl_root_cause:'Root Cause', filter_all_priority:'All Priority', title_history:'History',
     col_planned:'Planned', col_completed:'Completed', col_cost:'Cost',
+    title_add_customer:'Add Customer', title_invoice_preview:'Invoice Preview',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));

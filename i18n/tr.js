@@ -1782,6 +1782,7 @@ window.T.tr = {
     ticker_forex:'Döviz', ticker_crypto:'Kripto', ticker_commodities:'Emtia', ticker_oil_api_optional:'Petrol API Anahtarı (opsiyonel)', ticker_oil_source_note:'Brent petrol fiyatı Yahoo Finance\'tan alınıyor (ücretsiz, API anahtarı gerekmez).',
     lbl_root_cause:'Kök Neden', filter_all_priority:'Tüm Öncelikler', title_history:'Geçmiş',
     col_planned:'Planlanan', col_completed:'Tamamlanan', col_cost:'Maliyet',
+    title_add_customer:'Müşteri Ekle', title_invoice_preview:'Fatura Önizleme',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));
