@@ -1679,7 +1679,9 @@ async function saveOrder() {
         company_id: companyId,
         product_id: i.product_id,
         warehouse_id: i.warehouse_id || null,
-        type: 'sale',
+        // 'out' to stay consistent with POS / refunds / manual-out paths.
+        // reference_type='sales_order' already disambiguates the source.
+        type: 'out',
         quantity: i.qty,
         sales_order_id: orderId,
         reference_type: 'sales_order',
