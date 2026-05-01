@@ -176,7 +176,7 @@ tr:hover .row-actions{opacity:1}
   <header class="topbar">
     <div class="topbar-title" data-i18n="page_hr">HR & Payroll</div>
     <div style="flex:1"></div>
-    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" id="sb-notif-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
   </header>
 
   <div class="content">
@@ -430,12 +430,12 @@ tr:hover .row-actions{opacity:1}
         <div class="field"><label>Net Maaş (Tahmini)</label>
           <div id="e-net-preview" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--green);font-size:14px;background:var(--green-light)">—</div>
         </div>
-        <div class="field full"><label>Notlar</label><textarea id="e-notes" placeholder="Ek bilgiler..."></textarea></div>
+        <div class="field full"><label data-i18n="lbl_notes">Notlar</label><textarea id="e-notes" data-i18n-placeholder="placeholder_additional_info" placeholder="Ek bilgiler..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('emp-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveEmployee()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('emp-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveEmployee()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -497,18 +497,18 @@ tr:hover .row-actions{opacity:1}
         <div class="field"><label>Diğer Kesintiler</label><input type="number" lang="en" id="pi-deductions" value="0" min="0" step="0.01" oninput="calcPayPreview()"></div>
         <div class="field"><label>Vergi Oranı (%)</label><input type="number" lang="en" id="pi-tax-rate" min="0" max="100" step="0.1" oninput="calcPayPreview()"></div>
         <div class="field"><label>Sigorta Oranı (%)</label><input type="number" lang="en" id="pi-ins-rate" min="0" max="100" step="0.1" oninput="calcPayPreview()"></div>
-        <div class="field full"><label>Notlar</label><textarea id="pi-notes" style="min-height:56px"></textarea></div>
+        <div class="field full"><label data-i18n="lbl_notes">Notlar</label><textarea id="pi-notes" style="min-height:56px"></textarea></div>
       </div>
       <div class="pay-summary" id="pay-preview">
-        <div class="pay-summary-item"><label>Brüt</label><span id="prev-gross">—</span></div>
-        <div class="pay-summary-item"><label>Vergi</label><span id="prev-tax">—</span></div>
-        <div class="pay-summary-item"><label>Sigorta</label><span id="prev-ins">—</span></div>
-        <div class="pay-summary-item"><label style="color:var(--green)">Net</label><span id="prev-net" style="color:var(--green)">—</span></div>
+        <div class="pay-summary-item"><label data-i18n="lbl_gross">Brüt</label><span id="prev-gross">—</span></div>
+        <div class="pay-summary-item"><label data-i18n="lbl_tax">Vergi</label><span id="prev-tax">—</span></div>
+        <div class="pay-summary-item"><label data-i18n="lbl_insurance">Sigorta</label><span id="prev-ins">—</span></div>
+        <div class="pay-summary-item"><label style="color:var(--green)" data-i18n="lbl_net">Net</label><span id="prev-net" style="color:var(--green)">—</span></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('payitem-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="savePayItem()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('payitem-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="savePayItem()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -552,7 +552,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="field">
         <label data-i18n="lbl_reference">Referans</label>
-        <input type="text" id="paypay-ref" placeholder="Dekont no, açıklama...">
+        <input type="text" id="paypay-ref" data-i18n-placeholder="placeholder_payment_ref" placeholder="Dekont no, açıklama...">
       </div>
     </div>
     <div class="modal-footer">
@@ -578,19 +578,19 @@ tr:hover .row-actions{opacity:1}
         <div class="field"><label>Gün Sayısı</label>
           <div id="lr-days-display" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--blue)">—</div>
         </div>
-        <div class="field"><label>Durum</label>
+        <div class="field"><label data-i18n="col_status">Durum</label>
           <select id="lr-status">
-            <option value="pending">Bekliyor</option>
-            <option value="approved">Onaylandı</option>
-            <option value="rejected">Reddedildi</option>
+            <option value="pending" data-i18n="leave_status_pending">Bekliyor</option>
+            <option value="approved" data-i18n="leave_status_approved">Onaylandı</option>
+            <option value="rejected" data-i18n="leave_status_rejected">Reddedildi</option>
           </select>
         </div>
-        <div class="field full"><label>Açıklama</label><textarea id="lr-reason" placeholder="İzin sebebi..."></textarea></div>
+        <div class="field full"><label data-i18n="lbl_reason">Açıklama</label><textarea id="lr-reason" data-i18n-placeholder="placeholder_leave_reason" placeholder="İzin sebebi..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('leave-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveLeaveRequest()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('leave-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveLeaveRequest()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -599,18 +599,18 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="leavetype-modal">
   <div class="modal" style="max-width:380px">
     <div class="modal-header">
-      <div class="modal-title" id="leavetype-modal-title">İzin Türü</div>
+      <div class="modal-title" id="leavetype-modal-title" data-i18n="title_leave_type">İzin Türü</div>
       <button class="modal-close" onclick="closeModal('leavetype-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid cols-1">
-        <div class="field"><label>İzin Türü Adı *</label><input type="text" id="lt-name" placeholder="Yıllık İzin"></div>
-        <div class="field"><label>Yıllık Gün Hakkı</label><input type="number" lang="en" id="lt-days" placeholder="14" min="0"></div>
+        <div class="field"><label data-i18n="lbl_leave_type_name">İzin Türü Adı *</label><input type="text" id="lt-name" data-i18n-placeholder="placeholder_annual_leave" placeholder="Yıllık İzin"></div>
+        <div class="field"><label data-i18n="lbl_annual_days">Yıllık Gün Hakkı</label><input type="number" lang="en" id="lt-days" placeholder="14" min="0"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('leavetype-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveLeaveType()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('leavetype-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveLeaveType()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -619,33 +619,33 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="att-modal">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
-      <div class="modal-title" id="att-modal-title">Devam Kaydı</div>
+      <div class="modal-title" id="att-modal-title" data-i18n="title_attendance">Devam Kaydı</div>
       <button class="modal-close" onclick="closeModal('att-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field full"><label>Çalışan *</label><select id="att-emp"></select></div>
-        <div class="field"><label>Tarih *</label><input type="date" id="att-date-input"></div>
+        <div class="field full"><label data-i18n="lbl_employee_required">Çalışan *</label><select id="att-emp"></select></div>
+        <div class="field"><label data-i18n="lbl_date_required">Tarih *</label><input type="date" id="att-date-input"></div>
         <div class="field" style="visibility:hidden"></div>
-        <div class="field"><label>Giriş Saati</label><input type="time" id="att-checkin" oninput="calcAttOvertime()"></div>
-        <div class="field"><label>Çıkış Saati</label><input type="time" id="att-checkout" oninput="calcAttOvertime()"></div>
-        <div class="field"><label>Fazla Mesai (saat)</label>
+        <div class="field"><label data-i18n="lbl_check_in_time">Giriş Saati</label><input type="time" id="att-checkin" oninput="calcAttOvertime()"></div>
+        <div class="field"><label data-i18n="lbl_check_out_time">Çıkış Saati</label><input type="time" id="att-checkout" oninput="calcAttOvertime()"></div>
+        <div class="field"><label data-i18n="lbl_overtime_hours">Fazla Mesai (saat)</label>
           <div id="att-overtime-display" style="padding:9px 12px;border:1px solid var(--gray100);border-radius:9px;font-weight:700;color:var(--orange)">—</div>
         </div>
-        <div class="field"><label>Durum</label>
+        <div class="field"><label data-i18n="col_status">Durum</label>
           <select id="att-status">
-            <option value="present">Geldi</option>
-            <option value="absent">Gelmedi</option>
-            <option value="late">Geç Geldi</option>
-            <option value="half">Yarım Gün</option>
+            <option value="present" data-i18n="att_present">Geldi</option>
+            <option value="absent" data-i18n="att_absent">Gelmedi</option>
+            <option value="late" data-i18n="att_late">Geç Geldi</option>
+            <option value="half" data-i18n="att_half">Yarım Gün</option>
           </select>
         </div>
-        <div class="field full"><label>Notlar</label><textarea id="att-notes" style="min-height:56px"></textarea></div>
+        <div class="field full"><label data-i18n="lbl_notes">Notlar</label><textarea id="att-notes" style="min-height:56px"></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('att-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveAttendance()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('att-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveAttendance()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -654,17 +654,17 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="dept-modal">
   <div class="modal" style="max-width:360px">
     <div class="modal-header">
-      <div class="modal-title" id="dept-modal-title">Departman Ekle</div>
+      <div class="modal-title" id="dept-modal-title" data-i18n="title_add_department">Departman Ekle</div>
       <button class="modal-close" onclick="closeModal('dept-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid cols-1">
-        <div class="field"><label>Departman Adı *</label><input type="text" id="dept-name" placeholder="Muhasebe"></div>
+        <div class="field"><label data-i18n="lbl_department_name">Departman Adı *</label><input type="text" id="dept-name" data-i18n-placeholder="placeholder_dept_example" placeholder="Muhasebe"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('dept-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveDept()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('dept-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveDept()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -673,18 +673,18 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="pos-modal">
   <div class="modal" style="max-width:360px">
     <div class="modal-header">
-      <div class="modal-title" id="pos-modal-title">Pozisyon Ekle</div>
+      <div class="modal-title" id="pos-modal-title" data-i18n="title_add_position">Pozisyon Ekle</div>
       <button class="modal-close" onclick="closeModal('pos-modal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid cols-1">
-        <div class="field"><label>Pozisyon Adı *</label><input type="text" id="pos-name" placeholder="Muhasebeci"></div>
-        <div class="field"><label>Departman</label><select id="pos-dept-select"></select></div>
+        <div class="field"><label data-i18n="lbl_position_name">Pozisyon Adı *</label><input type="text" id="pos-name" data-i18n-placeholder="placeholder_position_example" placeholder="Muhasebeci"></div>
+        <div class="field"><label data-i18n="lbl_department">Departman</label><select id="pos-dept-select"></select></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('pos-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="savePosition()" data-action="save">Kaydet</button>
+      <button class="btn btn-outline" onclick="closeModal('pos-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="savePosition()" data-action="save" data-i18n="btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -693,15 +693,15 @@ tr:hover .row-actions{opacity:1}
 <div class="modal-overlay" id="delete-modal">
   <div class="modal" style="max-width:360px">
     <div class="modal-header">
-      <div class="modal-title">Silme Onayı</div>
+      <div class="modal-title" data-i18n="title_delete_confirm">Silme Onayı</div>
       <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
     </div>
     <div class="modal-body">
       <p id="delete-msg" style="font-size:14px;color:var(--gray600);line-height:1.6"></p>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('delete-modal')">İptal</button>
-      <button class="btn btn-danger" onclick="confirmDelete()">Sil</button>
+      <button class="btn btn-outline" onclick="closeModal('delete-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-danger" onclick="confirmDelete()" data-i18n="btn_delete">Sil</button>
     </div>
   </div>
 </div>
@@ -1037,9 +1037,9 @@ function calcNetPreview() {
 async function saveEmployee() {
   const firstName = document.getElementById('e-firstname').value.trim();
   const lastName = document.getElementById('e-lastname').value.trim();
-  if (!firstName || !lastName) { showToast('Ad ve soyad zorunludur', 'error'); return; }
+  if (!firstName || !lastName) { showToast(t("toast_name_required_full")||"Ad ve soyad zorunludur", "error"); return; }
   const salary = parseNum(document.getElementById('e-salary').value);
-  if (salary <= 0) { showToast('Geçerli bir maaş girin', 'error'); return; }
+  if (salary <= 0) { showToast(t("toast_invalid_salary")||"Geçerli bir maaş girin", "error"); return; }
   const payload = {
     company_id: companyId,
     first_name: firstName,
@@ -1082,7 +1082,7 @@ function openQRModal(empId) {
   const qrData = `solvenin_emp:${e.id}`;
   const canvas = document.getElementById('qr-canvas');
   QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#0a0f1e', light: '#ffffff' } }, err => {
-    if (err) showToast('QR oluşturulamadı', 'error');
+    if (err) showToast(t("toast_qr_failed")||"QR oluşturulamadı", "error");
   });
   openModal('qr-modal');
 }
@@ -1110,14 +1110,14 @@ function openScanner() {
   openModal('scanner-modal');
   document.getElementById('scanner-result').style.display = 'none';
   setTimeout(() => {
-    if (typeof Html5Qrcode === 'undefined') { showToast('QR tarayıcı yüklenemedi', 'error'); return; }
+    if (typeof Html5Qrcode === 'undefined') { showToast(t("toast_qr_scanner_load_failed")||"QR tarayıcı yüklenemedi", "error"); return; }
     html5QrScanner = new Html5Qrcode('qr-reader');
     html5QrScanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decoded) => handleScannedQR(decoded),
       () => {}
-    ).catch(err => showToast('Kamera açılamadı: ' + err, 'error'));
+    ).catch(err => showToast((t("toast_camera_failed")||"Kamera açılamadı") + ": " + err, "error"));
   }, 300);
 }
 function stopScanner() {
@@ -1131,7 +1131,7 @@ async function handleScannedQR(decoded) {
   if (!decoded.startsWith('solvenin_emp:')) return;
   const empId = decoded.replace('solvenin_emp:', '');
   const emp = employees.find(e => e.id === empId);
-  if (!emp) { showToast('Çalışan bulunamadı', 'error'); return; }
+  if (!emp) { showToast(t("toast_employee_not_found")||"Çalışan bulunamadı", "error"); return; }
   const today = new Date().toISOString().slice(0,10);
   const now = new Date().toTimeString().slice(0,5);
   // Check if already has check-in today
@@ -1242,7 +1242,7 @@ function renderPayrollItems() {
 async function generatePayroll() {
   const year = parseInt(document.getElementById('pr-year').value);
   const month = parseInt(document.getElementById('pr-month').value);
-  if (!employees.length) { showToast('Önce çalışan ekleyin', 'error'); return; }
+  if (!employees.length) { showToast(t("toast_add_employee_first")||"Önce çalışan ekleyin", "error"); return; }
   // Skip employees that already have a payroll row for this period.
   const existing = new Set(payrollItems.map(p => p.employee_id));
   const toInsert = employees
@@ -1598,7 +1598,7 @@ async function savePayItem() {
     showToast(getErrorMessage(error) || error.message, 'error');
     return;
   }
-  showToast('Bordro kalemi güncellendi ✓', 'success');
+  showToast(t("toast_payroll_item_updated")||"Bordro kalemi güncellendi ✓", "success");
   closeModal('payitem-modal');
   await loadPayrolls();
 }
@@ -1640,9 +1640,9 @@ function renderLeaveRequests() {
       <td><span class="badge ${statusMap[r.status]||'badge-gray'}">${statusLbl[r.status]||r.status}</span></td>
       <td style="font-size:12px;color:var(--gray400);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason||'—'}</td>
       <td><div class="row-actions">
-        <button class="btn btn-sm btn-success btn-icon" onclick="quickApproveLeave('${r.id}')" title="Onayla" ${r.status!=='pending'?'style="display:none"':''}>✓</button>
+        <button class="btn btn-sm btn-success btn-icon" onclick="quickApproveLeave('${r.id}')" title="${t('btn_approve')||'Onayla'}" ${r.status!=='pending'?'style="display:none"':''}>✓</button>
         <button class="btn btn-sm btn-outline btn-icon" onclick="openLeaveModal('${r.id}')" title="Düzenle">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leave','${r.id}','bu izin talebini')" title="Sil">🗑️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leave','${r.id}','bu izin talebini')" title="${t('title_delete')||'Sil'}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1650,7 +1650,7 @@ function renderLeaveRequests() {
 async function quickApproveLeave(id) {
   const { error } = await sb.from('leave_requests').update({ status: 'approved', approved_by: currentUser?.id, approved_at: new Date().toISOString() }).eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('İzin onaylandı ✓', 'success');
+  showToast(t("toast_leave_approved")||"İzin onaylandı ✓", "success");
   await loadLeaveRequests();
   renderLeaveRequests();
   updateStats();
@@ -1681,7 +1681,7 @@ async function saveLeaveRequest() {
   const typeId = document.getElementById('lr-type').value;
   const start = document.getElementById('lr-start').value;
   const end = document.getElementById('lr-end').value;
-  if (!empId || !start || !end) { showToast('Çalışan ve tarih aralığı zorunludur', 'error'); return; }
+  if (!empId || !start || !end) { showToast(t("toast_emp_daterange_required")||"Çalışan ve tarih aralığı zorunludur", "error"); return; }
   const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
   const payload = { company_id: companyId, employee_id: empId, leave_type_id: typeId || null, start_date: start, end_date: end, days, status: document.getElementById('lr-status').value, reason: document.getElementById('lr-reason').value.trim() || null };
   let error;
@@ -1691,7 +1691,7 @@ async function saveLeaveRequest() {
     ({ error } = await sb.from('leave_requests').insert(payload));
   }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('İzin talebi kaydedildi ✓', 'success');
+  showToast(t("toast_leave_saved")||"İzin talebi kaydedildi ✓", "success");
   closeModal('leave-modal');
   await loadLeaveRequests();
   renderLeaveRequests();
@@ -1709,7 +1709,7 @@ function renderLeaveTypes() {
     <td><span class="badge ${lt.is_active ? 'badge-green' : 'badge-gray'}">${lt.is_active ? 'Aktif' : 'Pasif'}</span></td>
     <td><div class="row-actions">
       <button class="btn btn-sm btn-outline btn-icon" onclick="openLeaveTypeModal('${lt.id}')" title="Düzenle">✏️</button>
-      <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leavetype','${lt.id}','${lt.name}')" title="Sil">🗑️</button>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('leavetype','${lt.id}','${lt.name}')" title="${t('title_delete')||'Sil'}">🗑️</button>
     </div></td>
   </tr>`).join('');
 }
@@ -1723,7 +1723,7 @@ function openLeaveTypeModal(id = null) {
 }
 async function saveLeaveType() {
   const name = document.getElementById('lt-name').value.trim();
-  if (!name) { showToast('İzin türü adı zorunludur', 'error'); return; }
+  if (!name) { showToast(t("toast_leave_type_name_required")||"İzin türü adı zorunludur", "error"); return; }
   const payload = { company_id: companyId, name, days_per_year: parseInt(document.getElementById('lt-days').value) || null, is_active: true };
   let error;
   if (editingLeaveTypeId) {
@@ -1732,7 +1732,7 @@ async function saveLeaveType() {
     ({ error } = await sb.from('leave_types').insert(payload));
   }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('İzin türü kaydedildi ✓', 'success');
+  showToast(t("toast_leave_type_saved")||"İzin türü kaydedildi ✓", "success");
   closeModal('leavetype-modal');
   await loadLeaveTypes();
   renderLeaveTypes();
@@ -1765,7 +1765,7 @@ function renderAttendance() {
       <td style="font-size:12px;color:var(--gray400)">${a.notes||'—'}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openAttModal('${a.id}')" title="Düzenle">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('att','${a.id}','bu devam kaydını')" title="Sil">🗑️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('att','${a.id}','bu devam kaydını')" title="${t('title_delete')||'Sil'}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1796,7 +1796,7 @@ function calcAttOvertime() {
 async function saveAttendance() {
   const empId = document.getElementById('att-emp').value;
   const date = document.getElementById('att-date-input').value;
-  if (!empId || !date) { showToast('Çalışan ve tarih zorunludur', 'error'); return; }
+  if (!empId || !date) { showToast(t("toast_emp_date_required")||"Çalışan ve tarih zorunludur", "error"); return; }
   const ci = document.getElementById('att-checkin').value || null;
   const co = document.getElementById('att-checkout').value || null;
   const std = parseFloat(document.getElementById('standard-hours').value) || 8;
@@ -1810,7 +1810,7 @@ async function saveAttendance() {
     ({ error } = await sb.from('attendance').insert(payload));
   }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Devam kaydı eklendi ✓', 'success');
+  showToast(t("toast_attendance_added")||"Devam kaydı eklendi ✓", "success");
   closeModal('att-modal');
   await loadAttendance();
   renderAttendance();
@@ -1831,7 +1831,7 @@ function renderDepts() {
       <td><span class="badge badge-blue">${empCount} kişi</span></td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openDeptModal('${d.id}')" title="Düzenle">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('dept','${d.id}','${d.name}')" title="Sil">🗑️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('dept','${d.id}','${d.name}')" title="${t('title_delete')||'Sil'}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1845,7 +1845,7 @@ function openDeptModal(id = null) {
 }
 async function saveDept() {
   const name = document.getElementById('dept-name').value.trim();
-  if (!name) { showToast('Departman adı zorunludur', 'error'); return; }
+  if (!name) { showToast(t("toast_dept_name_required")||"Departman adı zorunludur", "error"); return; }
   const payload = { company_id: companyId, name, is_active: true };
   let error;
   if (editingDeptId) {
@@ -1854,7 +1854,7 @@ async function saveDept() {
     ({ error } = await sb.from('departments').insert(payload));
   }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Departman kaydedildi ✓', 'success');
+  showToast(t("toast_dept_saved")||"Departman kaydedildi ✓", "success");
   closeModal('dept-modal');
   await loadDepts();
   renderDepts();
@@ -1873,7 +1873,7 @@ function renderPositions() {
       <td>${dept?.name || '—'}</td>
       <td><div class="row-actions">
         <button class="btn btn-sm btn-outline btn-icon" onclick="openPositionModal('${p.id}')" title="Düzenle">✏️</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('pos','${p.id}','${p.name}')" title="Sil">🗑️</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="openDeleteModal('pos','${p.id}','${p.name}')" title="${t('title_delete')||'Sil'}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1888,7 +1888,7 @@ function openPositionModal(id = null) {
 }
 async function savePosition() {
   const name = document.getElementById('pos-name').value.trim();
-  if (!name) { showToast('Pozisyon adı zorunludur', 'error'); return; }
+  if (!name) { showToast(t("toast_pos_name_required")||"Pozisyon adı zorunludur", "error"); return; }
   const payload = { company_id: companyId, name, department_id: document.getElementById('pos-dept-select').value || null, is_active: true };
   let error;
   if (editingPosId) {
@@ -1897,7 +1897,7 @@ async function savePosition() {
     ({ error } = await sb.from('positions').insert(payload));
   }
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
-  showToast('Pozisyon kaydedildi ✓', 'success');
+  showToast(t("toast_pos_saved")||"Pozisyon kaydedildi ✓", "success");
   closeModal('pos-modal');
   await loadPositions();
   renderPositions();
@@ -1952,7 +1952,7 @@ async function openDeleteModal(type, id, name) {
       if (!error) { await loadAttendance(); renderAttendance(); updateStats(); }
     }
     if (error) { showToast(getErrorMessage(error), 'error'); return; }
-    showToast('Silindi ✓', 'success');
+    showToast(t("toast_deleted")||"Silindi ✓", "success");
     closeModal('delete-modal');
   };
   openModal('delete-modal');

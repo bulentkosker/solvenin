@@ -1857,6 +1857,18 @@ window.T.en = {
     opt_select_warehouse:'Select warehouse', placeholder_receiving_notes:'Optional receiving notes...', card_payment_optional:'💳 Payment (Optional)',
     opt_no_payment_now:'No payment now', opt_pay_cash_register:'💵 Cash (Register)', opt_pay_bank_transfer:'🏦 Bank Transfer', opt_pay_other:'📌 Other',
     opt_select_register:'Select register...', opt_select_account:'Select account...', placeholder_payment_ref:'Receipt no, description...',
+    placeholder_additional_info:'Additional info...', lbl_gross:'Gross', lbl_tax:'Tax', lbl_insurance:'Insurance', lbl_net:'Net',
+    leave_status_pending:'Pending', leave_status_approved:'Approved', leave_status_rejected:'Rejected', lbl_reason:'Reason', placeholder_leave_reason:'Leave reason...',
+    title_leave_type:'Leave Type', lbl_leave_type_name:'Leave Type Name *', placeholder_annual_leave:'Annual Leave', lbl_annual_days:'Annual Days',
+    title_attendance:'Attendance Record', lbl_employee_required:'Employee *', lbl_date_required:'Date *', lbl_check_in_time:'Check-in Time', lbl_check_out_time:'Check-out Time', lbl_overtime_hours:'Overtime (hours)',
+    att_present:'Present', att_absent:'Absent', att_late:'Late', att_half:'Half Day',
+    title_add_department:'Add Department', lbl_department_name:'Department Name *', placeholder_dept_example:'Accounting',
+    title_add_position:'Add Position', lbl_position_name:'Position Name *', placeholder_position_example:'Accountant', lbl_department:'Department',
+    title_delete_confirm:'Delete Confirmation', btn_approve:'Approve',
+    toast_name_required_full:'First and last name required', toast_invalid_salary:'Enter a valid salary', toast_qr_failed:'QR generation failed', toast_qr_scanner_load_failed:'QR scanner could not load', toast_camera_failed:'Camera could not open', toast_employee_not_found:'Employee not found', toast_add_employee_first:'Add an employee first',
+    toast_payroll_item_updated:'Payroll item updated ✓', toast_leave_approved:'Leave approved ✓', toast_emp_daterange_required:'Employee and date range required', toast_leave_saved:'Leave request saved ✓',
+    toast_leave_type_name_required:'Leave type name required', toast_leave_type_saved:'Leave type saved ✓', toast_emp_date_required:'Employee and date required', toast_attendance_added:'Attendance recorded ✓',
+    toast_dept_name_required:'Department name required', toast_dept_saved:'Department saved ✓', toast_pos_name_required:'Position name required', toast_pos_saved:'Position saved ✓',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));

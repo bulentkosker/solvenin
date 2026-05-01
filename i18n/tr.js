@@ -1787,6 +1787,18 @@ window.T.tr = {
     opt_select_warehouse:'Depo seçin', placeholder_receiving_notes:'Opsiyonel teslim alma notları...', card_payment_optional:'💳 Ödeme (Opsiyonel)',
     opt_no_payment_now:'Şimdi ödeme yok', opt_pay_cash_register:'💵 Nakit (Kasa)', opt_pay_bank_transfer:'🏦 Banka Havalesi', opt_pay_other:'📌 Diğer',
     opt_select_register:'Kasa seçin...', opt_select_account:'Hesap seçin...', placeholder_payment_ref:'Dekont no, açıklama...',
+    placeholder_additional_info:'Ek bilgiler...', lbl_gross:'Brüt', lbl_tax:'Vergi', lbl_insurance:'Sigorta', lbl_net:'Net',
+    leave_status_pending:'Bekliyor', leave_status_approved:'Onaylandı', leave_status_rejected:'Reddedildi', lbl_reason:'Açıklama', placeholder_leave_reason:'İzin sebebi...',
+    title_leave_type:'İzin Türü', lbl_leave_type_name:'İzin Türü Adı *', placeholder_annual_leave:'Yıllık İzin', lbl_annual_days:'Yıllık Gün Hakkı',
+    title_attendance:'Devam Kaydı', lbl_employee_required:'Çalışan *', lbl_date_required:'Tarih *', lbl_check_in_time:'Giriş Saati', lbl_check_out_time:'Çıkış Saati', lbl_overtime_hours:'Fazla Mesai (saat)',
+    att_present:'Geldi', att_absent:'Gelmedi', att_late:'Geç Geldi', att_half:'Yarım Gün',
+    title_add_department:'Departman Ekle', lbl_department_name:'Departman Adı *', placeholder_dept_example:'Muhasebe',
+    title_add_position:'Pozisyon Ekle', lbl_position_name:'Pozisyon Adı *', placeholder_position_example:'Muhasebeci', lbl_department:'Departman',
+    title_delete_confirm:'Silme Onayı', btn_approve:'Onayla',
+    toast_name_required_full:'Ad ve soyad zorunludur', toast_invalid_salary:'Geçerli bir maaş girin', toast_qr_failed:'QR oluşturulamadı', toast_qr_scanner_load_failed:'QR tarayıcı yüklenemedi', toast_camera_failed:'Kamera açılamadı', toast_employee_not_found:'Çalışan bulunamadı', toast_add_employee_first:'Önce çalışan ekleyin',
+    toast_payroll_item_updated:'Bordro kalemi güncellendi ✓', toast_leave_approved:'İzin onaylandı ✓', toast_emp_daterange_required:'Çalışan ve tarih aralığı zorunludur', toast_leave_saved:'İzin talebi kaydedildi ✓',
+    toast_leave_type_name_required:'İzin türü adı zorunludur', toast_leave_type_saved:'İzin türü kaydedildi ✓', toast_emp_date_required:'Çalışan ve tarih zorunludur', toast_attendance_added:'Devam kaydı eklendi ✓',
+    toast_dept_name_required:'Departman adı zorunludur', toast_dept_saved:'Departman kaydedildi ✓', toast_pos_name_required:'Pozisyon adı zorunludur', toast_pos_saved:'Pozisyon kaydedildi ✓',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));
