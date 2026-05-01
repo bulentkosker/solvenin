@@ -159,7 +159,7 @@ tr:hover .row-actions{opacity:1}
   <header class="topbar">
     <div class="topbar-title" data-i18n="page_maintenance">Maintenance</div>
     <div style="flex:1"></div>
-    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" id="sb-notif-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
   </header>
 
   <div class="content">
@@ -436,11 +436,11 @@ tr:hover .row-actions{opacity:1}
           <input type="number" lang="en" id="fa-resolution" min="0" step="0.5">
         </div>
         <div class="field full">
-          <label>Description</label>
+          <label data-i18n="lbl_description">Description</label>
           <textarea id="fa-desc" rows="2"></textarea>
         </div>
         <div class="field full">
-          <label>Root Cause</label>
+          <label data-i18n="lbl_root_cause">Root Cause</label>
           <textarea id="fa-cause" rows="2"></textarea>
         </div>
       </div>
@@ -641,7 +641,7 @@ function renderWOs() {
         <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
       </select>
       <select class="filter-select" id="wo-prio-f" onchange="renderWOs()">
-        <option value="">All Priority</option>
+        <option value="" data-i18n="filter_all_priority">All Priority</option>
         <option value="low" data-i18n="priority_low">Low</option>
         <option value="medium" data-i18n="priority_medium">Medium</option>
         <option value="high" data-i18n="priority_high">High</option>
@@ -708,7 +708,7 @@ function renderEquipment() {
           <td><span class="badge ${eqBadge[e.status]||'badge-gray'}">${e.status||'—'}</span></td>
           <td style="color:${e.next_maintenance && new Date(e.next_maintenance) < new Date() ? 'var(--red)' : 'var(--gray500)'}">${e.next_maintenance||'—'}</td>
           <td><div class="row-actions">
-            <button class="btn btn-sm btn-outline btn-icon" onclick="showHistory('${e.id}')" title="History">📋</button>
+            <button class="btn btn-sm btn-outline btn-icon" onclick="showHistory('${e.id}')" title="${t('title_history')||'History'}">📋</button>
             <button class="btn btn-sm btn-outline btn-icon" onclick="openEquipModal('${e.id}')" title="${t('btn_edit')}">✏️</button>
             <button class="btn btn-sm btn-danger btn-icon" onclick="deleteEquip('${e.id}')" title="${t('lbl_delete')||'Delete'}">🗑️</button>
           </div></td>
@@ -760,7 +760,7 @@ function renderFailures() {
         <th data-i18n="col_equip">Equipment</th>
         <th data-i18n="col_date">Date</th>
         <th data-i18n="col_failure_type">Failure Type</th>
-        <th>Description</th>
+        <th data-i18n="lbl_description">Description</th>
         <th data-i18n="col_resolution_h">Resolution (h)</th>
         <th></th>
       </tr></thead>
@@ -828,7 +828,7 @@ async function showHistory(equipId) {
   document.getElementById('hist-modal-body').innerHTML = `
     <div class="table-wrap"><table>
       <thead><tr>
-        <th>WO #</th><th>Type</th><th>Status</th><th>Planned</th><th>Completed</th><th>Cost</th>
+        <th>${t('col_wo_number')||'WO #'}</th><th>${t('col_type')||'Type'}</th><th>${t('col_status')||'Status'}</th><th>${t('col_planned')||'Planned'}</th><th>${t('col_completed')||'Completed'}</th><th>${t('col_cost')||'Cost'}</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;

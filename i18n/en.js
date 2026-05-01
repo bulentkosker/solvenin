@@ -1850,6 +1850,8 @@ window.T.en = {
     placeholder_company_name:'Acme Corp', placeholder_search_anything:'Search anything...', title_customize:'Customize', ticker_loading:'Loading rates...',
     ticker_customize_title:'Customize Ticker', ticker_base_currency:'Base Currency', ticker_forex_format:'All forex shown as: 1 [base] = X [currency]',
     ticker_forex:'Forex', ticker_crypto:'Crypto', ticker_commodities:'Commodities', ticker_oil_api_optional:'Oil API Key (optional)', ticker_oil_source_note:'Brent oil price sourced from Yahoo Finance (free, no API key required).',
+    lbl_root_cause:'Root Cause', filter_all_priority:'All Priority', title_history:'History',
+    col_planned:'Planned', col_completed:'Completed', col_cost:'Cost',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));

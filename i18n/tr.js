@@ -1780,6 +1780,8 @@ window.T.tr = {
     placeholder_company_name:'Acme A.Ş.', placeholder_search_anything:'Her şeyde ara...', title_customize:'Özelleştir', ticker_loading:'Kurlar yükleniyor...',
     ticker_customize_title:'Şerit Çubuğunu Özelleştir', ticker_base_currency:'Baz Para Birimi', ticker_forex_format:'Tüm dövizler şu şekilde gösterilir: 1 [baz] = X [para birimi]',
     ticker_forex:'Döviz', ticker_crypto:'Kripto', ticker_commodities:'Emtia', ticker_oil_api_optional:'Petrol API Anahtarı (opsiyonel)', ticker_oil_source_note:'Brent petrol fiyatı Yahoo Finance\'tan alınıyor (ücretsiz, API anahtarı gerekmez).',
+    lbl_root_cause:'Kök Neden', filter_all_priority:'Tüm Öncelikler', title_history:'Geçmiş',
+    col_planned:'Planlanan', col_completed:'Tamamlanan', col_cost:'Maliyet',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));
