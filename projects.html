@@ -213,7 +213,7 @@ tr:hover .row-actions{opacity:1}
   <header class="topbar">
     <div class="topbar-title" data-i18n="page_projects">Projects</div>
     <div style="flex:1"></div>
-    <div class="topbar-btn" id="sb-notif-btn" title="Notifications">🔔</div>
+    <div class="topbar-btn" id="sb-notif-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
   </header>
 
   <div class="content">
@@ -232,7 +232,7 @@ tr:hover .row-actions{opacity:1}
       </div>
 
       <div class="filters-row">
-        <div class="search-box">🔍 <input type="text" id="proj-search" placeholder="Search projects..." oninput="renderProjects()"></div>
+        <div class="search-box">🔍 <input type="text" id="proj-search" data-i18n-placeholder="placeholder_search_projects" placeholder="Search projects..." oninput="renderProjects()"></div>
         <select class="filter-select" id="proj-status" onchange="renderProjects()">
           <option value="" data-i18n="all_status">All Status</option>
           <option value="planning" data-i18n="status_draft">Planning</option>
@@ -242,7 +242,7 @@ tr:hover .row-actions{opacity:1}
           <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
         </select>
         <select class="filter-select" id="proj-priority" onchange="renderProjects()">
-          <option value="">All Priority</option>
+          <option value="" data-i18n="filter_all_priority">All Priority</option>
           <option value="low" data-i18n="priority_low">Low</option>
           <option value="medium" data-i18n="priority_medium">Medium</option>
           <option value="high" data-i18n="priority_high">High</option>
@@ -397,7 +397,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field">
           <label data-i18n="col_assignee">Assignee</label>
-          <input type="text" id="t-assignee" placeholder="Name or email">
+          <input type="text" id="t-assignee" data-i18n-placeholder="placeholder_name_or_email" placeholder="Name or email">
         </div>
         <div class="field">
           <label data-i18n="col_deadline">Deadline</label>
@@ -443,7 +443,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field">
           <label data-i18n="col_assignee">Person</label>
-          <input type="text" id="tl-person" placeholder="Name">
+          <input type="text" id="tl-person" data-i18n-placeholder="placeholder_name" placeholder="Name">
         </div>
         <div class="field full">
           <label data-i18n="label_notes">Description</label>
@@ -481,7 +481,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="field full">
           <label data-i18n="lbl_category">Category</label>
-          <input type="text" id="ex-category" placeholder="Labour, Materials, Travel...">
+          <input type="text" id="ex-category" data-i18n-placeholder="placeholder_expense_category" placeholder="Labour, Materials, Travel...">
         </div>
       </div>
     </div>
