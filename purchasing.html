@@ -1214,38 +1214,60 @@ async function confirmInvoice() {
   closeModal('invoice-confirm-modal');
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
 
-  // Create stock movements (in) for each item
-  try {
-    const { data: items, error: itemsErr } = await sb.from('purchase_order_items').select('product_id, quantity').eq('order_id', id);
-    console.log('[purchasing] Invoice items for', id, ':', JSON.stringify(items), itemsErr?.message);
-    const { data: { user } } = await sb.auth.getUser();
-    const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
-    console.log('[purchasing] Default warehouse:', defaultWh);
-    const order = orders.find(o => o.id === id);
-    if (items?.length) {
-      const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
-      const movements = items.filter(i => i.product_id && !serviceIds.has(i.product_id)).map(i => ({
-        company_id: companyId,
-        product_id: i.product_id,
-        warehouse_id: defaultWh,
-        type: 'in',
-        quantity: i.quantity,
-        purchase_order_id: orderId,
-        reference_type: 'purchase_order',
-        reference: order?.order_number || 'PO',
-        notes: 'Alış faturası stok girişi',
-        created_by: user?.id,
-      }));
-      if (movements.length) {
-        const { error: smErr } = await sb.from('stock_movements').insert(movements);
-        if (smErr) console.error('Stock movement error:', smErr);
-        else console.log('[purchasing] Stock movements created:', movements.length);
-      }
-    }
-  } catch (e) { console.error('Stock movement error:', e); }
+  // Invoicing a PO is when goods are considered received — mirror that
+  // into stock_movements + received_qty. The shared helper is idempotent
+  // so re-invoicing or status round-trips don't duplicate.
+  await _createPoStockMovements(id);
 
   showToast(t('toast_invoiced') || 'Fatura oluşturuldu', 'success');
   await loadOrders();
+}
+
+// Idempotent stock-movement creator for a purchase order. Skips when
+// movements already exist for the order, when no movable items remain
+// (services excluded), or when the items table comes back empty.
+async function _createPoStockMovements(orderId) {
+  if (!orderId) return;
+  try {
+    const { count: existingCount } = await sb.from('stock_movements')
+      .select('id', { count: 'exact', head: true })
+      .eq('purchase_order_id', orderId);
+    if ((existingCount || 0) > 0) return;
+
+    const { data: items } = await sb.from('purchase_order_items')
+      .select('id, product_id, quantity, warehouse_id')
+      .eq('order_id', orderId);
+    if (!items?.length) return;
+    const { data: { user } } = await sb.auth.getUser();
+    const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
+    const order = orders.find(o => o.id === orderId);
+    const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
+    const movableItems = items.filter(i => i.product_id && !serviceIds.has(i.product_id));
+    if (!movableItems.length) return;
+
+    const movements = movableItems.map(i => ({
+      company_id: companyId,
+      product_id: i.product_id,
+      warehouse_id: i.warehouse_id || defaultWh,
+      type: 'in',
+      quantity: i.quantity,
+      purchase_order_id: orderId,
+      reference_type: 'purchase_order',
+      reference: order?.order_number || 'PO',
+      notes: 'Alış faturası stok girişi',
+      created_by: user?.id,
+    }));
+    const { error: smErr } = await sb.from('stock_movements').insert(movements);
+    if (smErr) { console.error('[purchasing] stock movement insert error:', smErr); return; }
+
+    // Mirror invoiced quantity into received_qty so the PO's received
+    // column reflects what just landed in stock.
+    for (const it of movableItems) {
+      await sb.from('purchase_order_items')
+        .update({ received_qty: it.quantity })
+        .eq('id', it.id);
+    }
+  } catch (e) { console.error('[purchasing] _createPoStockMovements error:', e); }
 }
 
 function filterSuppliers() {
@@ -1799,33 +1821,15 @@ async function saveOrder() {
   const { data: savedItemsData, error: itemsErr } = await sb.from('purchase_order_items').insert(itemsPayload).select();
   if (itemsErr) { console.error('[purchasing] Items insert error:', itemsErr.message); showToast(getErrorMessage(itemsErr), 'error'); }
 
-  // Create stock movements when status becomes 'received'
-  if (status === 'received' && prevStatus !== 'received') {
-    const defaultWh = warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || null;
-    const orderNumber = document.getElementById('o-number').value || 'PO-'+orderId;
-    const serviceIds = new Set(products.filter(p => p.is_service).map(p => p.id));
-    const movements = validItems
-      .filter(i => i.product_id && i.qty > 0 && !serviceIds.has(i.product_id))
-      .map(i => ({
-        company_id: companyId,
-        product_id: i.product_id,
-        warehouse_id: i.warehouse_id || defaultWh,
-        type: 'in',
-        quantity: i.qty,
-        purchase_order_id: orderId,
-        reference_type: 'purchase_order',
-        reference: orderNumber,
-        notes: document.getElementById('o-notes').value.trim() || null,
-        created_by: user.id
-      }));
-    if (movements.length) {
-      await sb.from('stock_movements').insert(movements);
-      if (savedItemsData) {
-        for (const item of savedItemsData) {
-          await sb.from('purchase_order_items').update({ received_qty: item.quantity }).eq('id', item.id);
-        }
-      }
-    }
+  // Stock movements when transitioning into invoiced/paid. Was guarded
+  // on status === 'received' which never matches the current PO flow
+  // (draft → confirmed → invoiced → paid), so saving a fresh order
+  // directly as 'invoiced' produced zero movements. Routed through the
+  // same idempotent helper as confirmInvoice for consistency.
+  const isInvoicedNow = ['invoiced','paid'].includes(status);
+  const wasInvoicedBefore = ['invoiced','paid'].includes(prevStatus || '');
+  if (isInvoicedNow && !wasInvoicedBefore) {
+    await _createPoStockMovements(orderId);
   }
 
   showToast(editingOrderId ? t('po_updated') : t('po_created'), 'success');
