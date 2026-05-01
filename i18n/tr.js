@@ -1799,6 +1799,7 @@ window.T.tr = {
     title_add_product:'Ürün Ekle', placeholder_optional_note:'Opsiyonel not...',
     placeholder_doc_ref_example:'Belge no, dekont no vb.', lbl_description_required:'Açıklama *', placeholder_manual_tx_example:'Açılış bakiyesi, virman, düzeltme vb.',
     placeholder_search_projects:'Proje ara...', placeholder_name_or_email:'Ad veya e-posta', placeholder_name:'Ad', placeholder_expense_category:'İşçilik, Malzeme, Seyahat...',
+    title_order_detail:'Sipariş Detayı',
     toast_name_required_full:'Ad ve soyad zorunludur', toast_invalid_salary:'Geçerli bir maaş girin', toast_qr_failed:'QR oluşturulamadı', toast_qr_scanner_load_failed:'QR tarayıcı yüklenemedi', toast_camera_failed:'Kamera açılamadı', toast_employee_not_found:'Çalışan bulunamadı', toast_add_employee_first:'Önce çalışan ekleyin',
     toast_payroll_item_updated:'Bordro kalemi güncellendi ✓', toast_leave_approved:'İzin onaylandı ✓', toast_emp_daterange_required:'Çalışan ve tarih aralığı zorunludur', toast_leave_saved:'İzin talebi kaydedildi ✓',
     toast_leave_type_name_required:'İzin türü adı zorunludur', toast_leave_type_saved:'İzin türü kaydedildi ✓', toast_emp_date_required:'Çalışan ve tarih zorunludur', toast_attendance_added:'Devam kaydı eklendi ✓',

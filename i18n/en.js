@@ -1869,6 +1869,7 @@ window.T.en = {
     title_add_product:'Add Product', placeholder_optional_note:'Optional note...',
     placeholder_doc_ref_example:'Document no, receipt no, etc.', lbl_description_required:'Description *', placeholder_manual_tx_example:'Opening balance, transfer, adjustment, etc.',
     placeholder_search_projects:'Search projects...', placeholder_name_or_email:'Name or email', placeholder_name:'Name', placeholder_expense_category:'Labour, Materials, Travel...',
+    title_order_detail:'Order Detail',
     toast_name_required_full:'First and last name required', toast_invalid_salary:'Enter a valid salary', toast_qr_failed:'QR generation failed', toast_qr_scanner_load_failed:'QR scanner could not load', toast_camera_failed:'Camera could not open', toast_employee_not_found:'Employee not found', toast_add_employee_first:'Add an employee first',
     toast_payroll_item_updated:'Payroll item updated ✓', toast_leave_approved:'Leave approved ✓', toast_emp_daterange_required:'Employee and date range required', toast_leave_saved:'Leave request saved ✓',
     toast_leave_type_name_required:'Leave type name required', toast_leave_type_saved:'Leave type saved ✓', toast_emp_date_required:'Employee and date required', toast_attendance_added:'Attendance recorded ✓',
