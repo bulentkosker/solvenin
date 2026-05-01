@@ -279,8 +279,8 @@ tr:hover .action-btns { opacity:1; }
       <input type="text" placeholder="Search products, SKU, category..." data-i18n-placeholder="placeholder_search_products" id="global-search" oninput="filterTable()">
     </div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
@@ -468,7 +468,7 @@ tr:hover .action-btns { opacity:1; }
 <div class="modal-overlay" id="product-modal">
   <div class="modal" style="width:700px">
     <div class="modal-head">
-      <div class="modal-title" id="modal-title">Add Product</div>
+      <div class="modal-title" id="modal-title" data-i18n="title_add_product">Add Product</div>
       <button class="modal-close" onclick="closeModalSafe('product-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -787,7 +787,7 @@ tr:hover .action-btns { opacity:1; }
       <div class="form-row full">
         <div class="form-group">
           <label><span data-i18n="label_adj_note">Note</span> <span id="adj-note-req" style="color:var(--red);display:none">*</span></label>
-          <textarea id="adj-note" placeholder="Optional note..." style="min-height:60px"></textarea>
+          <textarea id="adj-note" data-i18n-placeholder="placeholder_optional_note" placeholder="Optional note..." style="min-height:60px"></textarea>
         </div>
       </div>
       <div style="font-size:11px;color:var(--gray500);background:var(--gray50);padding:10px 12px;border-radius:8px;line-height:1.5">

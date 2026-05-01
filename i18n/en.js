@@ -1866,6 +1866,7 @@ window.T.en = {
     title_add_position:'Add Position', lbl_position_name:'Position Name *', placeholder_position_example:'Accountant', lbl_department:'Department',
     title_delete_confirm:'Delete Confirmation', btn_approve:'Approve',
     nav_keyboard:'Keyboard Shortcuts', nav_invoice_settings:'Invoice Settings', nav_pos_settings:'POS Settings', nav_data_management:'Data Management',
+    title_add_product:'Add Product', placeholder_optional_note:'Optional note...',
     toast_name_required_full:'First and last name required', toast_invalid_salary:'Enter a valid salary', toast_qr_failed:'QR generation failed', toast_qr_scanner_load_failed:'QR scanner could not load', toast_camera_failed:'Camera could not open', toast_employee_not_found:'Employee not found', toast_add_employee_first:'Add an employee first',
     toast_payroll_item_updated:'Payroll item updated ✓', toast_leave_approved:'Leave approved ✓', toast_emp_daterange_required:'Employee and date range required', toast_leave_saved:'Leave request saved ✓',
     toast_leave_type_name_required:'Leave type name required', toast_leave_type_saved:'Leave type saved ✓', toast_emp_date_required:'Employee and date required', toast_attendance_added:'Attendance recorded ✓',
