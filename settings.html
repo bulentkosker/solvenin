@@ -3935,10 +3935,20 @@ const RECYCLE_TABLE_MAP = {
   bank_account: 'bank_accounts', coa_account: 'chart_of_accounts',
 };
 
-// Children to inspect (active = blocker) and cascade hard-delete (soft-
-// deleted only) when a parent row is permanently removed from the trash.
+// Children to inspect when a parent row is permanently removed from trash.
+// Two relationship kinds:
+//   owned:true   → the row exists ONLY because the parent does (line items,
+//                  payments for the parent order, stock movements caused
+//                  by the parent order). These never block permanent-delete
+//                  and are cascade-deleted regardless of their deleted_at
+//                  state — leaving them behind would orphan FKs.
+//   owned:false  → the child is an independent business record that merely
+//                  references the parent (e.g. sales_orders.customer_id).
+//                  Active rows BLOCK the permanent-delete; soft-deleted
+//                  rows cascade with the parent.
 // All listed child tables have a `deleted_at` column (verified at design time).
 const TRASH_CHILD_DEFS = {
+  // Reference children — block on active, cascade soft-deleted only.
   contacts: [
     { table: 'sales_orders',         fk: 'customer_id' },
     { table: 'purchase_orders',      fk: 'supplier_id' },
@@ -3948,20 +3958,26 @@ const TRASH_CHILD_DEFS = {
     { table: 'crm_opportunities',    fk: 'contact_id'  },
     { table: 'crm_quotes',           fk: 'contact_id'  },
   ],
+  // Owned children — items, payments, and movements that exist solely as
+  // part of the parent order. Soft-delete on the parent does not always
+  // cascade to these (sales.html:deleteOrder accounting-ON path leaves
+  // them active), so the trash check used to over-block. owned:true makes
+  // them cascade-delete regardless of state.
   sales_orders: [
-    { table: 'sales_order_items', fk: 'order_id'        },
-    { table: 'payments',          fk: 'order_id'        },
-    { table: 'stock_movements',   fk: 'sales_order_id'  },
-    { table: 'bank_transactions', fk: 'sales_order_id'  },
-    { table: 'cash_transactions', fk: 'sales_order_id'  },
+    { table: 'sales_order_items', fk: 'order_id',        owned: true },
+    { table: 'payments',          fk: 'order_id',        owned: true },
+    { table: 'stock_movements',   fk: 'sales_order_id',  owned: true },
+    { table: 'bank_transactions', fk: 'sales_order_id',  owned: true },
+    { table: 'cash_transactions', fk: 'sales_order_id',  owned: true },
   ],
   purchase_orders: [
-    { table: 'purchase_order_items', fk: 'order_id'           },
-    { table: 'payments',             fk: 'purchase_order_id'  },
-    { table: 'stock_movements',      fk: 'purchase_order_id'  },
-    { table: 'bank_transactions',    fk: 'purchase_order_id'  },
-    { table: 'cash_transactions',    fk: 'purchase_order_id'  },
+    { table: 'purchase_order_items', fk: 'order_id',           owned: true },
+    { table: 'payments',             fk: 'purchase_order_id',  owned: true },
+    { table: 'stock_movements',      fk: 'purchase_order_id',  owned: true },
+    { table: 'bank_transactions',    fk: 'purchase_order_id',  owned: true },
+    { table: 'cash_transactions',    fk: 'purchase_order_id',  owned: true },
   ],
+  // Products: history is kept by reference, not owned — block on active.
   products: [
     { table: 'stock_movements',      fk: 'product_id' },
     { table: 'sales_order_items',    fk: 'product_id' },
@@ -3997,6 +4013,9 @@ async function _trashCheckActiveChildren(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   const blockers = [];
   for (const def of defs) {
+    // Owned children are part of the parent — they never block, they
+    // always cascade with it.
+    if (def.owned) continue;
     const { count } = await sb.from(def.table).select('id', { count: 'exact', head: true })
       .in(def.fk, ids).is('deleted_at', null);
     if ((count || 0) > 0) blockers.push(`${count} ${_trashChildLabel(def.table)}`);
@@ -4007,9 +4026,16 @@ async function _trashCheckActiveChildren(table, ids) {
 async function _trashCascadeHardDelete(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   for (const def of defs) {
-    // Only purge already-soft-deleted children — active ones were caught
-    // by _trashCheckActiveChildren above and the parent delete was refused.
-    await sb.from(def.table).delete().in(def.fk, ids).not('deleted_at', 'is', null);
+    let q = sb.from(def.table).delete().in(def.fk, ids);
+    // Reference children: only purge already-soft-deleted rows. Active
+    // ones were caught by the blocker check above and the parent delete
+    // was refused.
+    // Owned children: purge regardless of state — soft-delete on the
+    // parent did not always propagate (e.g. accounting-ON order delete
+    // leaves items active), and we must clean them up to avoid FK
+    // violations when the parent is removed.
+    if (!def.owned) q = q.not('deleted_at', 'is', null);
+    await q;
   }
 }
 
