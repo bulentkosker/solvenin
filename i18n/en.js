@@ -1839,6 +1839,12 @@ window.T.en = {
     order_deleted:'Order deleted', pdf_downloaded:'PDF downloaded ✓', product_deleted:'Product deleted',
     quantity:'Quantity', select_customer:'Select customer', supplier_deleted:'Supplier deleted',
     col_prod_desc:'Product / Description',
+    placeholder_coa_search:'Search account... (code or name)',
+    je_all_types:'All Types', je_type_manual:'Manual', je_type_sale_invoice:'Sale Invoice', je_type_purchase_invoice:'Purchase Invoice', je_type_cash:'Cash', je_type_bank:'Bank',
+    je_all_status:'All Status', je_status_posted:'Posted', je_status_draft:'Draft',
+    acc_inherit_from_parent:'— Inherit from parent —', acc_current_asset:'Current Asset', acc_fixed_asset:'Fixed Asset', acc_current_liability:'Current Liability', acc_long_term_liability:'Long-term Liability', acc_equity:'Equity', acc_operating_revenue:'Operating Revenue', acc_other_revenue:'Other Revenue', acc_cogs:'Cost of Goods Sold', acc_operating_expense:'Operating Expense',
+    tax_type_vat:'VAT', tax_type_sales_tax:'Sales Tax', tax_type_withholding:'Withholding', tax_type_none_exempt:'None / Exempt',
+    title_load_coa_from_template:'📥 Load Chart of Accounts from Template', btn_load_template:'📥 Load', lbl_select_country_coa:'Select country chart of accounts', title_post:'Post',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'en' }));

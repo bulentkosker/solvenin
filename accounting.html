@@ -246,8 +246,8 @@
   <header class="topbar">
     <div class="topbar-title" data-i18n="nav_accounting">Accounting</div>
     <div class="topbar-actions">
-      <div class="topbar-btn" title="Notifications">🔔</div>
-      <div class="topbar-btn" title="Help">❓</div>
+      <div class="topbar-btn" data-i18n-title="title_notifications" title="Notifications">🔔</div>
+      <div class="topbar-btn" data-i18n-title="title_help" title="Help">❓</div>
     </div>
   </header>
 
@@ -310,7 +310,7 @@
       <div class="toolbar">
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="coa-search" placeholder="Hesap ara... (kod veya isim)" oninput="setCoaSearch(this.value)">
+          <input type="text" id="coa-search" data-i18n-placeholder="placeholder_coa_search" placeholder="Hesap ara... (kod veya isim)" oninput="setCoaSearch(this.value)">
         </div>
         <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray600);white-space:nowrap;margin-left:12px">
           <input type="checkbox" id="coa-only-active" checked onchange="renderCOA()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
@@ -336,19 +336,19 @@
           <input type="text" id="je-search" placeholder="Search entries..." data-i18n-placeholder="placeholder_je_search" oninput="filterJournal()">
         </div>
         <select class="filter-select" id="je-type-filter" onchange="filterJournal()">
-          <option value="">All Types</option>
-          <option value="manual">Manual</option>
-          <option value="invoice_sale">Sale Invoice</option>
-          <option value="invoice_purchase">Purchase Invoice</option>
-          <option value="cash">Cash</option>
-          <option value="bank">Bank</option>
+          <option value="" data-i18n="je_all_types">All Types</option>
+          <option value="manual" data-i18n="je_type_manual">Manual</option>
+          <option value="invoice_sale" data-i18n="je_type_sale_invoice">Sale Invoice</option>
+          <option value="invoice_purchase" data-i18n="je_type_purchase_invoice">Purchase Invoice</option>
+          <option value="cash" data-i18n="je_type_cash">Cash</option>
+          <option value="bank" data-i18n="je_type_bank">Bank</option>
         </select>
         <input type="date" class="filter-select" id="je-date-from" onchange="filterJournal()">
         <input type="date" class="filter-select" id="je-date-to" onchange="filterJournal()">
         <select class="filter-select" id="je-posted-filter" onchange="filterJournal()">
-          <option value="">All Status</option>
-          <option value="true">Posted</option>
-          <option value="false">Draft</option>
+          <option value="" data-i18n="je_all_status">All Status</option>
+          <option value="true" data-i18n="je_status_posted">Posted</option>
+          <option value="false" data-i18n="je_status_draft">Draft</option>
         </select>
       </div>
       <div class="table-wrap">
@@ -482,16 +482,16 @@
         <div class="form-group">
           <label data-i18n="label_subtype">Subtype</label>
           <select id="acc-subtype">
-            <option value="">— Parent'tan miras —</option>
-            <option value="current_asset">Current Asset</option>
-            <option value="fixed_asset">Fixed Asset</option>
-            <option value="current_liability">Current Liability</option>
-            <option value="long_term_liability">Long-term Liability</option>
-            <option value="equity">Equity</option>
-            <option value="operating_revenue">Operating Revenue</option>
-            <option value="other_revenue">Other Revenue</option>
-            <option value="cogs">Cost of Goods Sold</option>
-            <option value="operating_expense">Operating Expense</option>
+            <option value="" data-i18n="acc_inherit_from_parent">— Parent'tan miras —</option>
+            <option value="current_asset" data-i18n="acc_current_asset">Current Asset</option>
+            <option value="fixed_asset" data-i18n="acc_fixed_asset">Fixed Asset</option>
+            <option value="current_liability" data-i18n="acc_current_liability">Current Liability</option>
+            <option value="long_term_liability" data-i18n="acc_long_term_liability">Long-term Liability</option>
+            <option value="equity" data-i18n="acc_equity">Equity</option>
+            <option value="operating_revenue" data-i18n="acc_operating_revenue">Operating Revenue</option>
+            <option value="other_revenue" data-i18n="acc_other_revenue">Other Revenue</option>
+            <option value="cogs" data-i18n="acc_cogs">Cost of Goods Sold</option>
+            <option value="operating_expense" data-i18n="acc_operating_expense">Operating Expense</option>
           </select>
         </div>
         <div class="form-group">
@@ -590,10 +590,10 @@
         <div class="form-group">
           <label data-i18n="col_type">Type</label>
           <select id="tax-type">
-            <option value="vat">VAT</option>
-            <option value="sales_tax">Sales Tax</option>
-            <option value="withholding">Withholding</option>
-            <option value="none">None / Exempt</option>
+            <option value="vat" data-i18n="tax_type_vat">VAT</option>
+            <option value="sales_tax" data-i18n="tax_type_sales_tax">Sales Tax</option>
+            <option value="withholding" data-i18n="tax_type_withholding">Withholding</option>
+            <option value="none" data-i18n="tax_type_none_exempt">None / Exempt</option>
           </select>
         </div>
       </div>
@@ -666,8 +666,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('merge-account-modal')">İptal</button>
-      <button class="btn btn-primary" id="merge-account-save" onclick="confirmMergeAccount()">Birleştir</button>
+      <button class="btn btn-outline" onclick="closeModal('merge-account-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" id="merge-account-save" onclick="confirmMergeAccount()" data-i18n="btn_merge">Birleştir</button>
     </div>
   </div>
 </div>
@@ -676,15 +676,15 @@
 <div class="modal-overlay" id="coa-template-modal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">📥 Şablondan Hesap Planı Oluştur</div>
+      <div class="modal-title" data-i18n="title_load_coa_from_template">📥 Şablondan Hesap Planı Oluştur</div>
       <button class="modal-close" onclick="closeModal('coa-template-modal')">✕</button>
     </div>
     <div class="modal-body" id="coa-template-body">
-      Yükleniyor...
+      <span data-i18n="lbl_loading">Yükleniyor...</span>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('coa-template-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="loadCoaFromTemplate()" data-action="save">📥 Yükle</button>
+      <button class="btn btn-outline" onclick="closeModal('coa-template-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="loadCoaFromTemplate()" data-action="save" data-i18n="btn_load_template">📥 Yükle</button>
     </div>
   </div>
 </div>
@@ -831,7 +831,7 @@ async function showCoaTemplateModal() {
   openModal('coa-template-modal');
   document.getElementById('coa-template-body').innerHTML = `
     <div class="form-group">
-      <label>Ülke Hesap Planı Seçin</label>
+      <label>${t('lbl_select_country_coa')||'Ülke Hesap Planı Seçin'}</label>
       <select id="coa-country-select" style="width:100%;padding:10px;border:1px solid var(--gray200);border-radius:8px;font-size:14px">
         ${opts}
       </select>
@@ -1421,7 +1421,7 @@ function filterJournal() {
     <td class="credit-col">${fmtNum(e.total_credit)}</td>
     <td>${e.is_posted ? `<span class="badge badge-green">${t('status_posted')}</span>` : `<span class="badge badge-gray">${t('status_draft')}</span>`}</td>
     <td><div class="row-actions">
-      ${!e.is_posted ? `<button class="btn btn-sm btn-success btn-icon" onclick="postEntry('${e.id}')" title="Post">✓</button>` : ''}
+      ${!e.is_posted ? `<button class="btn btn-sm btn-success btn-icon" onclick="postEntry('${e.id}')" title="${t('title_post')||'Post'}">✓</button>` : ''}
       <button class="btn btn-sm btn-danger btn-icon" onclick="deleteEntry('${e.id}')">🗑️</button>
     </div></td>
   </tr>`).join('');

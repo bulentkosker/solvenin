@@ -1769,6 +1769,12 @@ window.T.tr = {
     acc_opening_balance:'Açılış Bakiyesi', account:'Hesap',
     add_cash_transaction:'Kasa Hareketi Ekle', add_bank_transaction:'Banka Hareketi Ekle', add_bank:'Banka Ekle', add_bank_account:'Banka Hesabı Ekle',
     nav_accounting_link:'Muhasebe', nav_accounting_full:'Muhasebe',
+    placeholder_coa_search:'Hesap ara... (kod veya isim)',
+    je_all_types:'Tüm Türler', je_type_manual:'Manuel', je_type_sale_invoice:'Satış Faturası', je_type_purchase_invoice:'Alış Faturası', je_type_cash:'Kasa', je_type_bank:'Banka',
+    je_all_status:'Tüm Durumlar', je_status_posted:'İşlendi', je_status_draft:'Taslak',
+    acc_inherit_from_parent:'— Üst hesaptan devral —', acc_current_asset:'Dönen Varlık', acc_fixed_asset:'Duran Varlık', acc_current_liability:'Kısa Vadeli Yükümlülük', acc_long_term_liability:'Uzun Vadeli Yükümlülük', acc_equity:'Özkaynak', acc_operating_revenue:'Faaliyet Geliri', acc_other_revenue:'Diğer Gelirler', acc_cogs:'Satılan Mal Maliyeti', acc_operating_expense:'Faaliyet Gideri',
+    tax_type_vat:'KDV', tax_type_sales_tax:'Satış Vergisi', tax_type_withholding:'Stopaj', tax_type_none_exempt:'Yok / Muaf',
+    title_load_coa_from_template:'📥 Şablondan Hesap Planı Oluştur', btn_load_template:'📥 Yükle', lbl_select_country_coa:'Ülke Hesap Planı Seçin', title_post:'İşle',
 };
 try {
   window.dispatchEvent(new CustomEvent('i18n-loaded', { detail: 'tr' }));
