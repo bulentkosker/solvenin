@@ -1404,6 +1404,7 @@ tr:hover .action-btns { opacity:1; }
               </select>
             </div>
           </div>
+          <div id="recycle-stats" style="padding:10px 16px;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--gray700)"></div>
           <div id="recycle-bulk-bar" style="display:none;padding:10px 16px;background:var(--blue-light,#eff6ff);border-bottom:1px solid var(--gray200);align-items:center;justify-content:space-between;gap:12px">
             <div style="font-size:13px;color:var(--gray800)"><strong id="recycle-bulk-count">0</strong> <span data-i18n="recycle_bulk_selected">kayıt seçildi</span></div>
             <div style="display:flex;gap:8px">
@@ -1428,6 +1429,7 @@ tr:hover .action-btns { opacity:1; }
                 <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--gray400)">Loading...</td></tr>
               </tbody>
             </table>
+            <div id="recycle-pagination" style="display:none;padding:12px 16px;border-top:1px solid var(--gray100);align-items:center;justify-content:space-between;gap:12px;font-size:13px"></div>
           </div>
         </div>
       </div>
@@ -1604,6 +1606,25 @@ tr:hover .action-btns { opacity:1; }
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('tax-modal')" data-i18n="btn_cancel">Cancel</button>
       <button class="btn-primary" onclick="saveTax()" data-action="save" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trash Cascade Delete Modal -->
+<div class="modal-overlay" id="trash-cascade-modal">
+  <div class="modal" style="width:520px;max-width:92vw">
+    <div class="modal-head">
+      <div class="modal-title" data-i18n="modal_cascade_delete_title">Bağlı kayıtlar birlikte silinecek</div>
+      <button class="modal-close" onclick="closeModal('trash-cascade-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <p style="font-size:13px;color:var(--gray700);margin:0 0 10px" data-i18n="modal_cascade_delete_msg">Bu kayıtla birlikte aşağıdaki çöpteki kayıtlar da kalıcı silinecek:</p>
+      <div id="trash-cascade-parent" style="font-size:13px;font-weight:600;color:var(--gray800);margin:6px 0 12px;padding:8px 10px;background:var(--gray50);border-radius:6px"></div>
+      <div id="trash-cascade-list" style="max-height:280px;overflow-y:auto;border:1px solid var(--gray200);border-radius:8px;font-size:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('trash-cascade-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" style="background:var(--red);border-color:var(--red)" id="trash-cascade-confirm" data-i18n="btn_delete_all_cascade">Hepsini Kalıcı Sil</button>
     </div>
   </div>
 </div>
@@ -3830,9 +3851,22 @@ async function loadRecycleBin() {
   filterRecycleBin();
 }
 
+let _trashCurrentPage = 1;
+const _TRASH_PAGE_SIZE = 50;
+
 function filterRecycleBin() {
+  _trashCurrentPage = 1;
   const filter = document.getElementById('recycle-filter')?.value || '';
   const records = filter ? allDeletedRecords.filter(r => r.type === filter) : allDeletedRecords;
+  renderRecycleBin(records);
+}
+
+function _trashGoPage(direction) {
+  const filter = document.getElementById('recycle-filter')?.value || '';
+  const records = filter ? allDeletedRecords.filter(r => r.type === filter) : allDeletedRecords;
+  const totalPages = Math.max(1, Math.ceil(records.length / _TRASH_PAGE_SIZE));
+  if (direction === 'prev' && _trashCurrentPage > 1) _trashCurrentPage--;
+  else if (direction === 'next' && _trashCurrentPage < totalPages) _trashCurrentPage++;
   renderRecycleBin(records);
 }
 
@@ -3847,13 +3881,33 @@ function renderRecycleBin(records) {
     bank_account: t('rl_bank_account') || 'Banka Hesabı', coa_account: t('rl_coa_account') || 'Hesap',
   };
 
+  // Stats — total / filtered
+  const statsEl = document.getElementById('recycle-stats');
+  if (statsEl) {
+    const filter = document.getElementById('recycle-filter')?.value || '';
+    const total = allDeletedRecords.length;
+    const shown = records.length;
+    if (filter && shown !== total) {
+      statsEl.textContent = (t('trash_filtered_count') || '{shown} of {total} records').replace('{shown}', shown).replace('{total}', total);
+    } else {
+      statsEl.textContent = (t('trash_total_count') || '{count} records total').replace('{count}', total);
+    }
+  }
+
+  // Pagination slice
+  const totalPages = Math.max(1, Math.ceil(records.length / _TRASH_PAGE_SIZE));
+  if (_trashCurrentPage > totalPages) _trashCurrentPage = totalPages;
+  const startIdx = (_trashCurrentPage - 1) * _TRASH_PAGE_SIZE;
+  const pageRecords = records.slice(startIdx, startIdx + _TRASH_PAGE_SIZE);
+
   if (!records.length) {
     tbody.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--gray400)">🗑️ ${t('recycle_bin_empty')||'Recycle bin is empty'}</td></tr>`;
+    _renderTrashPagination(records.length, totalPages);
     updateBulkRecycleBar();
     return;
   }
 
-  tbody.innerHTML = records.map(r => `
+  tbody.innerHTML = pageRecords.map(r => `
     <tr style="border-bottom:1px solid var(--gray100)">
       <td style="padding:10px 12px;text-align:center"><input type="checkbox" class="recycle-row-check" data-type="${escRec(r.type)}" data-id="${escRec(r.id)}" style="cursor:pointer"></td>
       <td style="padding:10px 16px"><span class="badge badge-gray">${escRec(typeLabels[r.type] || r.type)}</span></td>
@@ -3866,7 +3920,33 @@ function renderRecycleBin(records) {
       </td>
     </tr>`).join('');
   const sa = document.getElementById('recycle-select-all'); if (sa) { sa.checked = false; sa.indeterminate = false; }
+  // Restore the checked state for rows the bulk delete had to skip, so
+  // the user sees exactly which records are still pending. One-shot —
+  // cleared after applying.
+  if (_trashPendingReselect && _trashPendingReselect.length) {
+    const keys = new Set(_trashPendingReselect.map(s => `${s.type}::${s.id}`));
+    document.querySelectorAll('.recycle-row-check').forEach(cb => {
+      if (keys.has(`${cb.dataset.type}::${cb.dataset.id}`)) cb.checked = true;
+    });
+    _trashPendingReselect = null;
+  }
+  _renderTrashPagination(records.length, totalPages);
   updateBulkRecycleBar();
+}
+
+function _renderTrashPagination(totalRecords, totalPages) {
+  const el = document.getElementById('recycle-pagination');
+  if (!el) return;
+  if (totalRecords <= _TRASH_PAGE_SIZE) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  const info = (t('trash_page_info') || 'Page {current} / {total}').replace('{current}', _trashCurrentPage).replace('{total}', totalPages);
+  const prevDisabled = _trashCurrentPage <= 1 ? 'disabled' : '';
+  const nextDisabled = _trashCurrentPage >= totalPages ? 'disabled' : '';
+  el.innerHTML = `
+    <button class="btn btn-sm btn-outline" ${prevDisabled} onclick="_trashGoPage('prev')">${t('btn_prev')||'◀ Önceki'}</button>
+    <div style="color:var(--gray600)">${escRec(info)}</div>
+    <button class="btn btn-sm btn-outline" ${nextDisabled} onclick="_trashGoPage('next')">${t('btn_next')||'Sonraki ▶'}</button>
+  `;
 }
 
 function escRec(s) {
@@ -4023,6 +4103,39 @@ async function _trashCheckActiveChildren(table, ids) {
   return blockers.length ? blockers.join(', ') : null;
 }
 
+// Lists trashed reference children of one parent — used by the cascade
+// modal (single delete) and as a "skip in bulk" signal. Owned children
+// are excluded; they cascade silently regardless of state.
+const _TRASH_CHILD_NAME_FIELDS = {
+  sales_orders: 'order_number', purchase_orders: 'order_number',
+  bank_transactions: 'description', cash_transactions: 'description',
+  contact_transactions: 'description', crm_opportunities: 'title',
+  crm_quotes: 'quote_number',
+};
+
+async function _trashListTrashedRefChildren(table, parentId) {
+  const defs = TRASH_CHILD_DEFS[table] || [];
+  const out = [];
+  for (const def of defs) {
+    if (def.owned) continue;
+    const nameField = _TRASH_CHILD_NAME_FIELDS[def.table];
+    const cols = nameField ? `id, deleted_at, ${nameField}` : 'id, deleted_at';
+    const { data, error } = await sb.from(def.table)
+      .select(cols)
+      .eq(def.fk, parentId)
+      .not('deleted_at', 'is', null)
+      .limit(100);
+    if (error) continue;
+    (data || []).forEach(r => out.push({
+      table: def.table,
+      id: r.id,
+      label: nameField ? (r[nameField] || r.id) : r.id,
+      deleted_at: r.deleted_at,
+    }));
+  }
+  return out;
+}
+
 async function _trashCascadeHardDelete(table, ids) {
   const defs = TRASH_CHILD_DEFS[table] || [];
   for (const def of defs) {
@@ -4063,33 +4176,61 @@ async function bulkRestoreRecycle() {
   await loadRecycleBin();
 }
 
+// Survives loadRecycleBin re-render — restored as checkbox state in
+// renderRecycleBin so the user can see which rows the bulk delete had to
+// skip (active references or trashed children).
+let _trashPendingReselect = null;
+
 async function bulkHardDeleteRecycle() {
   const sel = getRecycleSelection();
   if (!sel.length) return;
   const msg = (t('confirm_bulk_hard_delete')||'{n} kaydı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.').replace('{n}', sel.length);
   if (!await showConfirm(msg, t('btn_hard_delete')||'Kalıcı Sil')) return;
+
+  // Per-record decisioning — bulk only deletes "clean" rows. Anything
+  // with active reference children OR trashed reference children is
+  // skipped so the user can review/cascade them one by one.
+  const skipped = [];
+  const okList = [];
+  for (const { type, id } of sel) {
+    const table = RECYCLE_TABLE_MAP[type];
+    if (!table) { skipped.push({ type, id }); continue; }
+    const activeBlocker = await _trashCheckActiveChildren(table, [id]);
+    if (activeBlocker) { skipped.push({ type, id }); continue; }
+    const trashedChildren = await _trashListTrashedRefChildren(table, id);
+    if (trashedChildren.length) { skipped.push({ type, id }); continue; }
+    okList.push({ table, id, type });
+  }
+
+  // Group OK rows by table for one cascade + delete per table.
   const groups = {};
-  sel.forEach(({ type, id }) => {
-    const tbl = RECYCLE_TABLE_MAP[type];
-    if (!tbl) return;
-    (groups[tbl] = groups[tbl] || []).push(id);
-  });
-  let okCount = 0, blockedCount = 0, failCount = 0, lastErr = null;
+  okList.forEach(({ table, id }) => { (groups[table] = groups[table] || []).push(id); });
+  let okCount = 0, failCount = 0, lastErr = null;
   for (const [table, ids] of Object.entries(groups)) {
-    const blocker = await _trashCheckActiveChildren(table, ids);
-    if (blocker) { blockedCount += ids.length; continue; }
     await _trashCascadeHardDelete(table, ids);
     const { error } = await sb.from(table).delete().in('id', ids);
     if (error) { failCount += ids.length; lastErr = error; }
     else okCount += ids.length;
   }
-  const parts = [];
-  if (okCount) parts.push(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'}`);
-  if (blockedCount) parts.push(`${blockedCount} ${t('toast_blocked_active_children')||'aktif ilişki nedeniyle silinemedi'}`);
-  if (failCount) parts.push(`${failCount} ${t('toast_failed_count')||'başarısız'}`);
-  const isError = (blockedCount || failCount) && !okCount;
-  showToast(parts.join(' · ') + (okCount && !blockedCount && !failCount ? ' ✓' : ''), isError ? 'error' : (okCount ? 'success' : 'error'));
-  if (isError && failCount && lastErr) console.error('[trash] last error:', lastErr);
+
+  const skippedCount = skipped.length;
+  if (okCount && skippedCount) {
+    const text = (t('toast_bulk_delete_partial')||'{success} silindi, {skipped} bağlı kayıtları olduğu için silinemedi')
+      .replace('{success}', okCount).replace('{skipped}', skippedCount);
+    showToast(text, 'error');
+  } else if (okCount) {
+    showToast(`${okCount} ${t('toast_hard_deleted_count')||'kayıt kalıcı silindi'} ✓`, 'success');
+  } else if (skippedCount) {
+    const text = (t('toast_bulk_delete_skipped_all')||'{skipped} kayıt bağlı kayıtları olduğu için silinemedi')
+      .replace('{skipped}', skippedCount);
+    showToast(text, 'error');
+  }
+  if (failCount && lastErr) {
+    console.error('[trash] bulk delete error:', lastErr);
+    showToast(`${failCount} ${t('toast_failed_count')||'başarısız'}: ${getErrorMessage(lastErr)}`, 'error');
+  }
+
+  _trashPendingReselect = skipped;
   await loadRecycleBin();
 }
 
@@ -4109,19 +4250,61 @@ async function restoreRecord(type, id) {
 }
 
 async function hardDeleteRecord(type, id, label) {
-  if (!await showConfirm(`${t('confirm_hard_delete')||'Kalıcı olarak sil'} "${label}"? ${t('confirm_hard_delete_sub')||'Bu işlem geri alınamaz.'}`, t('btn_hard_delete')||'Kalıcı Sil')) return;
   const table = RECYCLE_TABLE_MAP[type];
   if (!table) return;
+
+  // Active reference children → still hard-block. The user has to clean
+  // those up first (they may be in use elsewhere).
   const blocker = await _trashCheckActiveChildren(table, [id]);
   if (blocker) {
     showToast((t('toast_blocked_by_active')||'Silinemez — aktif ilişki:') + ' ' + blocker, 'error');
     return;
   }
+
+  // Trashed reference children → show cascade confirmation modal with
+  // the list, so the user knows exactly what will go with the parent.
+  const trashedChildren = await _trashListTrashedRefChildren(table, id);
+  if (trashedChildren.length) {
+    _openTrashCascadeModal(label, trashedChildren, async () => {
+      await _trashCascadeHardDelete(table, [id]);
+      const { error } = await sb.from(table).delete().eq('id', id);
+      if (error) { showToast(getErrorMessage(error), 'error'); return; }
+      showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
+      await loadRecycleBin();
+    });
+    return;
+  }
+
+  // No related records — plain confirm + delete.
+  if (!await showConfirm(`${t('confirm_hard_delete')||'Kalıcı olarak sil'} "${label}"? ${t('confirm_hard_delete_sub')||'Bu işlem geri alınamaz.'}`, t('btn_hard_delete')||'Kalıcı Sil')) return;
   await _trashCascadeHardDelete(table, [id]);
   const { error } = await sb.from(table).delete().eq('id', id);
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
   showToast(t('toast_hard_deleted')||'Permanently deleted', 'success');
   await loadRecycleBin();
+}
+
+function _openTrashCascadeModal(parentLabel, children, onConfirm) {
+  const parentEl = document.getElementById('trash-cascade-parent');
+  const listEl = document.getElementById('trash-cascade-list');
+  const okBtn = document.getElementById('trash-cascade-confirm');
+  if (!parentEl || !listEl || !okBtn) return;
+  parentEl.textContent = parentLabel || '';
+  listEl.innerHTML = children.map(c => `
+    <div style="padding:8px 12px;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;gap:12px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;min-width:0">
+        <span class="badge badge-gray" style="flex:0 0 auto">${escRec(_trashChildLabel(c.table))}</span>
+        <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escRec(c.label || '')}</span>
+      </div>
+      <span style="color:var(--gray500);font-size:11px;flex:0 0 auto">${c.deleted_at ? escRec(new Date(c.deleted_at).toLocaleString()) : '—'}</span>
+    </div>
+  `).join('');
+  // Replace handler each time so prior bindings don't fire.
+  okBtn.onclick = async () => {
+    closeModal('trash-cascade-modal');
+    try { await onConfirm(); } catch (err) { console.error('[trash] cascade confirm error:', err); }
+  };
+  openModal('trash-cascade-modal');
 }
 
 // ===== MODULES =====
