@@ -349,6 +349,7 @@ tr:hover .action-btns { opacity:1; }
         <button class="settings-nav-item" onclick="switchSection('modules', this)"><span class="settings-nav-icon">🧩</span> <span data-i18n="nav_modules">Modules</span></button>
         <button class="settings-nav-item" onclick="switchSection('invoice-settings', this)"><span class="settings-nav-icon">🧾</span> <span data-i18n="nav_invoice_settings">Fatura Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('integrations', this)"><span class="settings-nav-icon">📒</span> <span data-i18n="nav_integrations">Muhasebe Ayarları</span></button>
+        <button class="settings-nav-item" onclick="switchSection('sales-reps-settings', this)"><span class="settings-nav-icon">🎯</span> <span data-i18n="card_sales_rep_settings">Pazarlamacı Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('pos-settings', this)"><span class="settings-nav-icon">🖥️</span> <span data-i18n="nav_pos_settings">POS Ayarları</span></button>
         <button class="settings-nav-item" onclick="switchSection('users', this)" id="nav-users"><span class="settings-nav-icon">👥</span> <span data-i18n="nav_users">Users</span></button>
         <button class="settings-nav-item" onclick="switchSection('keyboard', this)"><span class="settings-nav-icon">⌨️</span> <span data-i18n="nav_keyboard">Klavye Kısayolları</span></button>
@@ -1027,6 +1028,43 @@ tr:hover .action-btns { opacity:1; }
                   <option value="ru">Русский</option>
                   <option value="de">Deutsch</option>
                 </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SALES REP SETTINGS ===== -->
+      <div class="settings-section" id="section-sales-reps-settings">
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div>
+              <div class="settings-card-title" data-i18n="card_sales_rep_settings">Pazarlamacı Ayarları</div>
+              <div class="settings-card-desc" data-i18n="desc_sales_rep_settings">Komisyon oranlarının ve hak ediş kurallarının varsayılanlarını ayarlayın.</div>
+            </div>
+            <button class="btn-primary" onclick="saveSalesRepSettings()" data-action="save"><span data-i18n="btn_save_changes">Save Changes</span></button>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group" style="max-width:320px">
+                <label data-i18n="lbl_default_commission">Varsayılan Komisyon Oranı (%)</label>
+                <input type="number" lang="en" id="sr-default-commission" min="0" max="100" step="0.1" value="5.00">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="lbl_commission_earned_when">Komisyon Ne Zaman Hak Edilir?</label>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;font-size:13px">
+                  <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+                    <input type="radio" name="sr-earned-when" value="invoice_issued"> <span data-i18n="opt_invoice_issued">Fatura Kesildiğinde</span>
+                  </label>
+                  <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+                    <input type="radio" name="sr-earned-when" value="fully_paid" checked> <span data-i18n="opt_fully_paid">Tamamı Tahsil Edildiğinde (önerilen)</span>
+                  </label>
+                  <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+                    <input type="radio" name="sr-earned-when" value="partially_paid"> <span data-i18n="opt_partially_paid">Kısmi Tahsilatta Oranlı</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -1921,6 +1959,7 @@ function switchSection(name, el) {
   if (name === 'currency') loadExchangeRates();
   if (name === 'data') loadBackupHistory();
   if (name === 'goszakup') loadGoszakupSettings();
+  if (name === 'sales-reps-settings') loadSalesRepSettings();
   document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
@@ -2033,6 +2072,41 @@ function openGoszakupTokenHelp() {
   const body = document.getElementById('gz-help-body');
   if (body) body.textContent = t('goszakup_token_help_body') || '';
   openModal('goszakup-help-modal');
+}
+
+// ===== SALES REP SETTINGS =====
+async function loadSalesRepSettings() {
+  if (!companyId) return;
+  const { data } = await sb.from('sales_rep_settings')
+    .select('default_commission_rate, commission_earned_when')
+    .eq('company_id', companyId).maybeSingle();
+  // Defaults match the DB column defaults (5.00 / 'fully_paid') so a
+  // company without a row yet sees sensible values pre-filled.
+  document.getElementById('sr-default-commission').value =
+    data?.default_commission_rate != null ? data.default_commission_rate : '5';
+  const earned = data?.commission_earned_when || 'fully_paid';
+  document.querySelectorAll('input[name=sr-earned-when]').forEach(r => {
+    r.checked = r.value === earned;
+  });
+}
+
+async function saveSalesRepSettings() {
+  if (!companyId) return;
+  const rate = parseFloat(document.getElementById('sr-default-commission').value);
+  const earnedEl = document.querySelector('input[name=sr-earned-when]:checked');
+  const earned = earnedEl?.value || 'fully_paid';
+  if (isNaN(rate) || rate < 0 || rate > 100) {
+    showToast(t('err_commission_rate_range') || 'Komisyon oranı 0–100 arasında olmalıdır', 'error');
+    return;
+  }
+  const { error } = await sb.from('sales_rep_settings').upsert({
+    company_id: companyId,
+    default_commission_rate: rate,
+    commission_earned_when: earned,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'company_id' });
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(t('toast_settings_saved') || 'Ayarlar kaydedildi', 'success');
 }
 
 // ===== INIT =====
