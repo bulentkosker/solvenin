@@ -1689,6 +1689,36 @@ tr:hover .action-btns { opacity:1; }
 </div>
 
 <!-- Trash Cascade Delete Modal -->
+<!-- Account Permissions Modal — KZ/non-admin users get a per-account
+     matrix; owner/admin see a full-access notice and a disabled form. -->
+<div class="modal-overlay" id="account-perms-modal">
+  <div class="modal" style="width:760px;max-width:96vw">
+    <div class="modal-head">
+      <div class="modal-title" id="ap-title" data-i18n="title_user_account_perms">Hesap Yetkileri</div>
+      <button class="modal-close" onclick="closeModal('account-perms-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <p style="font-size:12px;color:var(--gray500);margin:0 0 12px;line-height:1.6" data-i18n="desc_admin_full_access">Owner ve admin kullanıcılar tüm hesaplara otomatik erişir.</p>
+      <div id="ap-admin-notice" style="display:none;padding:12px 14px;background:var(--gray50);border:1px solid var(--gray200);border-radius:8px;font-size:13px;color:var(--gray700)"></div>
+      <div id="ap-form" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button type="button" class="btn-outline" onclick="_apSetAll(true)" data-i18n="btn_grant_all">Tümüne tam yetki</button>
+          <button type="button" class="btn-outline" onclick="_apSetAll(false)" data-i18n="btn_revoke_all">Tümünü kaldır</button>
+        </div>
+        <div id="ap-matrix" style="border:1px solid var(--gray200);border-radius:8px;overflow:auto;max-height:50vh"></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--gray100);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:600;color:var(--gray600)" data-i18n="lbl_pos_assigned_register">POS Atanmış Kasa</label>
+          <select id="ap-pos-register" style="font-size:13px;padding:6px 10px;border:1px solid var(--gray200);border-radius:8px"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('account-perms-modal')" data-i18n="btn_cancel">İptal</button>
+      <button class="btn-primary" id="ap-save-btn" onclick="saveAccountPerms()" data-i18n="btn_save">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="trash-cascade-modal">
   <div class="modal" style="width:520px;max-width:92vw">
     <div class="modal-head">
@@ -5518,6 +5548,7 @@ async function loadUsers() {
             ${['owner','admin','manager','employee','accountant'].map(r => `<option value="${r}" ${r===m.role?'selected':''} ${r==='owner'?'disabled':''}>${r}</option>`).join('')}
           </select>
           ${!isOwner&&!isSelf ? `<a href="user-permissions.html?user=${m.user_id}" style="padding:4px 8px;border:1px solid #1e40af;border-radius:6px;font-size:11px;background:#fff;color:#1e40af;cursor:pointer;font-weight:500;text-decoration:none;display:inline-block">${t('btn_permissions') || 'İzinler'}</a>` : ''}
+          <button style="padding:4px 8px;border:1px solid var(--gray200);border-radius:6px;font-size:11px;background:#fff;color:var(--gray700);cursor:pointer;font-weight:500" onclick='openAccountPermsModal(${JSON.stringify(m.user_id)}, ${JSON.stringify(m.role)}, ${JSON.stringify(displayName)})'>🔐 ${t('btn_account_permissions') || 'Hesap Yetkileri'}</button>
           ${!isOwner&&!isSelf ? (suspended
             ? `<button style="padding:4px 8px;border:1px solid #86efac;border-radius:6px;font-size:11px;background:#f0fdf4;color:#166534;cursor:pointer" onclick="toggleSuspend('${m.user_id}', false)">${t('btn_unsuspend') || 'Aktif Et'}</button>`
             : `<button style="padding:4px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:11px;background:#fffbeb;color:#92400e;cursor:pointer" onclick="toggleSuspend('${m.user_id}', true)">${t('btn_suspend') || 'Askıya Al'}</button>`
@@ -5641,6 +5672,144 @@ async function confirmRemoveUser() {
   showToast(t('toast_user_removed') || 'Kullanıcı çıkarıldı', 'success');
   closeRemoveUserModal();
   await loadUsers();
+}
+
+// ===== ACCOUNT PERMISSIONS =====
+// Per-user matrix of (cash_register|bank_account) × (view, balance,
+// create_tx, edit, delete). Owner/admin bypass at the DB layer (the
+// access RPCs return everything for them) — the modal reflects that
+// by disabling the form and showing a notice.
+let _apContext = null; // { userId, role, banksById }
+
+async function openAccountPermsModal(userId, role, displayName) {
+  _apContext = { userId, role: role || '', banksById: {} };
+  const titleEl = document.getElementById('ap-title');
+  if (titleEl) titleEl.textContent = (t('title_user_account_perms') || '{name} için Hesap Yetkileri').replace('{name}', displayName || '');
+
+  const isAdmin = role === 'owner' || role === 'admin';
+  const adminNotice = document.getElementById('ap-admin-notice');
+  const form = document.getElementById('ap-form');
+  const saveBtn = document.getElementById('ap-save-btn');
+
+  if (isAdmin) {
+    adminNotice.style.display = '';
+    adminNotice.textContent = t('msg_user_is_admin') || 'Bu kullanıcı admin/owner. Tüm hesaplara tam erişim var.';
+    form.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = 'none';
+    openModal('account-perms-modal');
+    return;
+  }
+  adminNotice.style.display = 'none';
+  form.style.display = '';
+  if (saveBtn) saveBtn.style.display = '';
+
+  // Pre-fetch the structural lists + existing perms + POS assignment in
+  // parallel; the modal stays empty for the round-trip but it's small.
+  const [regsRes, accsRes, banksRes, permsRes, cuRes] = await Promise.all([
+    sb.from('cash_registers').select('id, name, currency_code').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('name'),
+    sb.from('bank_accounts').select('id, account_name, currency_code, bank_id').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('account_name'),
+    sb.from('banks').select('id, name').eq('company_id', companyId).is('deleted_at', null),
+    sb.from('account_permissions').select('account_type, account_id, can_view, can_view_balance, can_create_transaction, can_edit, can_delete').eq('company_id', companyId).eq('user_id', userId),
+    sb.from('company_users').select('pos_assigned_register_id').eq('company_id', companyId).eq('user_id', userId).maybeSingle(),
+  ]);
+  const registers = regsRes.data || [];
+  const accounts  = accsRes.data || [];
+  const banksById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
+  _apContext.banksById = banksById;
+
+  // Index existing perms by (account_type, account_id) so the matrix
+  // can pre-fill checkboxes without an extra pass per row.
+  const permKey = (type, id) => `${type}::${id}`;
+  const existingPerms = {};
+  (permsRes.data || []).forEach(p => { existingPerms[permKey(p.account_type, p.account_id)] = p; });
+
+  const buildRow = (type, id, label, currency) => {
+    const p = existingPerms[permKey(type, id)] || {};
+    const cb = (key, def = false) => `<input type="checkbox" class="ap-cb" data-type="${type}" data-id="${id}" data-key="${key}" ${(p[key] === undefined ? def : p[key]) ? 'checked' : ''}>`;
+    return `<tr>
+      <td style="padding:8px 12px;font-size:12px"><strong>${escRec(label)}</strong> <span style="color:var(--gray400);font-size:11px">${escRec(currency || '')}</span></td>
+      <td style="text-align:center">${cb('can_view')}</td>
+      <td style="text-align:center">${cb('can_view_balance')}</td>
+      <td style="text-align:center">${cb('can_create_transaction')}</td>
+      <td style="text-align:center">${cb('can_edit')}</td>
+      <td style="text-align:center">${cb('can_delete')}</td>
+    </tr>`;
+  };
+
+  const headerHtml = `<thead><tr style="background:var(--gray50)">
+    <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--gray500);font-weight:600">Hesap</th>
+    <th style="font-size:11px;color:var(--gray500);font-weight:600">${t('col_view') || 'Görüntüle'}</th>
+    <th style="font-size:11px;color:var(--gray500);font-weight:600">${t('col_balance') || 'Bakiye'}</th>
+    <th style="font-size:11px;color:var(--gray500);font-weight:600">${t('col_create_tx') || 'Hareket Ekle'}</th>
+    <th style="font-size:11px;color:var(--gray500);font-weight:600">${t('col_edit') || 'Düzenle'}</th>
+    <th style="font-size:11px;color:var(--gray500);font-weight:600">${t('col_delete') || 'Sil'}</th>
+  </tr></thead>`;
+
+  const cashRows = registers.map(r => buildRow('cash_register', r.id, '💵 ' + r.name, r.currency_code)).join('');
+  const bankRows = accounts.map(a => {
+    const bank = banksById[a.bank_id];
+    const label = '🏦 ' + (bank ? bank.name + ' · ' : '') + a.account_name;
+    return buildRow('bank_account', a.id, label, a.currency_code);
+  }).join('');
+
+  document.getElementById('ap-matrix').innerHTML = `<table style="width:100%;border-collapse:collapse">${headerHtml}<tbody>${cashRows}${bankRows}</tbody></table>`;
+
+  // POS assigned register dropdown — only cash_registers are valid POS
+  // targets. None=Atanmamış is the default for non-admins.
+  const posSel = document.getElementById('ap-pos-register');
+  const assignedId = cuRes.data?.pos_assigned_register_id || '';
+  posSel.innerHTML = `<option value="">${escRec(t('lbl_pos_none') || 'Atanmamış')}</option>` +
+    registers.map(r => `<option value="${escRec(r.id)}" ${r.id === assignedId ? 'selected' : ''}>${escRec(r.name)} (${escRec(r.currency_code)})</option>`).join('');
+
+  openModal('account-perms-modal');
+}
+
+// "Tümüne tam yetki" / "Tümünü kaldır" — flips every checkbox in the
+// matrix so admins don't have to touch each row.
+function _apSetAll(value) {
+  document.querySelectorAll('.ap-cb').forEach(cb => { cb.checked = !!value; });
+}
+
+async function saveAccountPerms() {
+  if (!_apContext || !_apContext.userId) return;
+  const userId = _apContext.userId;
+
+  // Group checkbox state back into per-row payloads keyed by account.
+  const rowsByKey = {};
+  document.querySelectorAll('#ap-matrix .ap-cb').forEach(cb => {
+    const key = `${cb.dataset.type}::${cb.dataset.id}`;
+    if (!rowsByKey[key]) rowsByKey[key] = { account_type: cb.dataset.type, account_id: cb.dataset.id };
+    rowsByKey[key][cb.dataset.key] = cb.checked;
+  });
+  const rows = Object.values(rowsByKey).map(r => ({
+    company_id: companyId,
+    user_id: userId,
+    account_type: r.account_type,
+    account_id: r.account_id,
+    can_view: !!r.can_view,
+    can_view_balance: !!r.can_view_balance,
+    can_create_transaction: !!r.can_create_transaction,
+    can_edit: !!r.can_edit,
+    can_delete: !!r.can_delete,
+    granted_by: currentUser?.id || null,
+    granted_at: new Date().toISOString(),
+  }));
+
+  if (rows.length) {
+    const { error } = await sb.from('account_permissions')
+      .upsert(rows, { onConflict: 'company_id,user_id,account_type,account_id' });
+    if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  }
+
+  // POS register assignment — empty string ⇒ NULL (unassign).
+  const posVal = document.getElementById('ap-pos-register').value || null;
+  const { error: cuErr } = await sb.from('company_users')
+    .update({ pos_assigned_register_id: posVal })
+    .eq('company_id', companyId).eq('user_id', userId);
+  if (cuErr) { showToast(getErrorMessage(cuErr), 'error'); return; }
+
+  showToast(t('toast_perms_saved') || 'Yetkiler kaydedildi', 'success');
+  closeModal('account-perms-modal');
 }
 
 // ===== EMPLOYEE RATE DEFAULTS (payroll_settings table) =====
