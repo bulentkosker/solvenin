@@ -1006,6 +1006,7 @@ function renderAll() {
   applyFilters();
   renderMovements();
   populateAdjustSelect();
+  if (window.attachContextMenu) attachContextMenu('#inventory-tbody');
 }
 
 function updateStats() {

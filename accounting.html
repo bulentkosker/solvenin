@@ -933,6 +933,7 @@ function setCoaSearch(q) {
 
 function renderCOA() {
   const container = document.getElementById('coa-container');
+  if (window.attachContextMenu) attachContextMenu(container, '.coa-account-row');
   const types = ['asset','liability','equity','revenue','expense','cost'];
 
   // Case-insensitive contains match across code + name + name_local so
@@ -1664,6 +1665,7 @@ async function saveTaxRate() {
 
 function renderTaxTable() {
   const tbody = document.getElementById('tax-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   const onlyActive = document.getElementById('tax-only-active')?.checked !== false;
   const list = onlyActive ? taxRates.filter(tx => tx.is_active !== false) : taxRates;
   if (!list.length) {

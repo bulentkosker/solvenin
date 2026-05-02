@@ -511,6 +511,7 @@ function fmtMoney(n) {
 
 function renderContacts(list) {
   const tbody = document.getElementById('contacts-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon" style="font-size:40px">👤</div><h3>${t('no_contacts') || 'Henüz cari yok'}</h3><p>${t('no_contacts_sub') || 'İlk carinizi ekleyin.'}</p><button class="btn btn-primary" onclick="openContactModal()">${t('btn_new_contact') || '+ Yeni Cari'}</button></div></td></tr>`;
     return;

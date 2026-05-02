@@ -536,3 +536,39 @@ window.formDirtyTracker = (function() {
   return { init, reset, isDirty, confirmClose, closeModalSafe };
 })();
 window.closeModalSafe = window.formDirtyTracker.closeModalSafe;
+
+// ===== RIGHT-CLICK → KEBAB MENU =====
+// Bind a contextmenu listener on a list container so right-clicking a
+// row triggers .click() on that row's kebab (.dot-menu-btn by default).
+// Idempotent — safe to call after every re-render; the flag on the
+// container prevents stacked listeners.
+//
+// Browser menu still fires when:
+//   - the user right-clicked outside any row (header, padding, empty)
+//   - the row has no kebab button (read-only lists)
+//   - the target is a link, input/textarea/select (form fields keep
+//     their native copy/paste / open-in-new-tab affordances)
+//
+// Usage:
+//   attachContextMenu('#contacts-tbody');             // defaults: tr + .dot-menu-btn
+//   attachContextMenu(el, '.account-card', '.dot-menu-btn');
+window.attachContextMenu = function(container, rowSelector = 'tr', kebabSelector = '.dot-menu-btn') {
+  const root = typeof container === 'string' ? document.querySelector(container) : container;
+  if (!root) return;
+  if (root._contextMenuAttached) return;
+  root._contextMenuAttached = true;
+
+  root.addEventListener('contextmenu', (e) => {
+    // Form fields and links: leave native behaviour alone.
+    if (e.target.closest('a[href], input, textarea, select, button[type=submit]')) return;
+
+    const row = e.target.closest(rowSelector);
+    if (!row || !root.contains(row)) return;
+
+    const kebab = row.querySelector(kebabSelector);
+    if (!kebab) return;
+
+    e.preventDefault();
+    kebab.click();
+  });
+};

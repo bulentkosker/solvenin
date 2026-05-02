@@ -942,6 +942,7 @@ window.addEventListener('resize', closeDotMenus);
 // ===== EMPLOYEES =====
 function renderEmployees() {
   const tbody = document.getElementById('emp-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   const search = document.getElementById('emp-search').value.toLowerCase();
   const deptFilter = document.getElementById('emp-dept-filter').value;
   const statusFilter = document.getElementById('emp-status-filter').value;

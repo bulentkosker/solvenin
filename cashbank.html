@@ -1222,6 +1222,7 @@ document.addEventListener('click', (e) => {
 // ===== CASH GRID =====
 function renderCashGrid() {
   const grid = document.getElementById('cash-grid');
+  if (window.attachContextMenu) attachContextMenu(grid, '.account-card');
   const onlyActive = document.getElementById('cash-only-active')?.checked !== false;
   const list = onlyActive ? registers.filter(r => r.is_active !== false) : registers;
   const cards = list.map(r => {
@@ -1354,6 +1355,7 @@ function renderCoaCell(tx) {
 // ===== BANK TREE =====
 function renderBankTree() {
   const tree = document.getElementById('bank-tree');
+  if (window.attachContextMenu) attachContextMenu(tree, '.account-row');
   if (!banks.length) {
     tree.innerHTML = `<div class="empty-state" style="padding:32px"><div class="empty-state-icon">🏦</div><h3>${t('no_banks')}</h3><p>${t('no_banks_sub')}</p></div>`;
     return;

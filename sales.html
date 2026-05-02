@@ -1035,6 +1035,7 @@ function refreshStatusLabels() {
 
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💰</div><h3>${t('no_orders_found')||'No orders found'}</h3><p>${t('no_orders_sub')||'Create your first order.'}</p><button class="btn btn-primary" onclick="openOrderModal()"><span data-i18n="btn_new_order"><span data-i18n="btn_new_order">+ New Order</span></button></div></td></tr>`;
     return;
@@ -1070,6 +1071,7 @@ function renderOrders(list) {
 
 function renderInvoices(list) {
   const tbody = document.getElementById('invoices-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧾</div><h3>${t('no_invoices')||'Henüz fatura yok'}</h3></div></td></tr>`;
     return;
@@ -1107,6 +1109,7 @@ function renderInvoices(list) {
 
 function renderCustomers(list) {
   const tbody = document.getElementById('customers-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><h3><span data-i18n="no_customers">No customers yet</span></h3><p>Add your first customer.</p><button class="btn btn-primary" onclick="openCustomerModal()"><span data-i18n="btn_add_customer">+ Add Customer</span></button></div></td></tr>`;
     return;
@@ -1130,6 +1133,7 @@ function renderCustomers(list) {
 
 function renderPayments(list) {
   const tbody = document.getElementById('payments-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💳</div><h3>${t('no_payments')||'No payments yet'}</h3></div></td></tr>`;
     return;

@@ -999,6 +999,7 @@ document.addEventListener('click', (e) => {
 // ===== RENDER =====
 function renderOrders(list) {
   const tbody = document.getElementById('orders-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🛒</div><h3>${t('no_po_found')}</h3><p>${t('no_po_sub')}</p><button class="btn btn-primary" onclick="openOrderModal()">${t('btn_new_po')}</button></div></td></tr>`;
     return;
@@ -1033,6 +1034,7 @@ function renderOrders(list) {
 
 function renderInvoices(list) {
   const tbody = document.getElementById('invoices-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧾</div><h3>${t('no_invoices')||'Henüz fatura yok'}</h3></div></td></tr>`;
     return;
@@ -1070,6 +1072,7 @@ function renderInvoices(list) {
 
 function renderSuppliers(list) {
   const tbody = document.getElementById('suppliers-tbody');
+  if (window.attachContextMenu) attachContextMenu(tbody);
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><h3>${t('no_suppliers')}</h3><p>${t('no_suppliers_sub')}</p><button class="btn btn-primary" onclick="openSupplierModal()">${t('btn_add_supplier')}</button></div></td></tr>`;
     return;
