@@ -1035,12 +1035,19 @@ function updateStats() {
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
   document.getElementById('stat-out').textContent = out;
+  // Alert is the "Düşük Stoğu Gör →" entry point — its link routes to
+  // filterByStatus('low'), which only matches getStockStatus 'low' or
+  // 'critical'. Counting `low + out` here used to make the alert show
+  // a number that included out-of-stock rows the linked list never
+  // surfaced, so users clicked into an empty page. Keep the count and
+  // the visibility aligned with what the link actually filters; out-
+  // of-stock has its own dedicated stat-out card.
   const _alertEl = document.getElementById('low-stock-alert-text');
   if (_alertEl) {
     const _tpl = (typeof t === 'function' ? t('inv_low_stock_alert') : '{n} items are running low on stock and need restocking');
-    _alertEl.textContent = _tpl.replace('{n}', (low + out));
+    _alertEl.textContent = _tpl.replace('{n}', low);
   }
-  document.getElementById('low-stock-alert').style.display = (low + out) > 0 ? 'flex' : 'none';
+  document.getElementById('low-stock-alert').style.display = low > 0 ? 'flex' : 'none';
 }
 
 // Re-render stats when language changes so {n} placeholder gets re-applied with new locale text
