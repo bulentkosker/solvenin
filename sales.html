@@ -485,12 +485,6 @@ tr:hover td{background:var(--gray50)}
         <input id="o-discount" type="text" class="num-input" placeholder="0" onfocus="numFocus(this)" onblur="numBlur(this)" oninput="fmtInput(this);recalcOrder()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;text-align:right;">
       </div>
       <div>
-        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;">Satış Temsilcisi</div>
-        <select id="o-assigned" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
-          <option value="">Seç...</option>
-        </select>
-      </div>
-      <div>
         <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_project">Proje</div>
         <select id="o-project" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
           <option value="" data-i18n="ph_select_project">Proje seç (opsiyonel)</option>
@@ -853,10 +847,10 @@ async function init() {
 // ===== LOAD =====
 async function loadOrders() {
   let q = sb.from('sales_orders').select('*, contacts(name)').eq('company_id', companyId).eq('is_active', true);
-  // Role-based filtering: employees only see own orders
-  if (currentUserRole === 'employee' || currentUserRole === 'sales_rep') {
-    q = q.eq('assigned_to', currentUserId);
-  }
+  // Role-based filtering used to lean on sales_orders.assigned_to, but
+  // that column was dropped — the new sales_rep_id + linked_sales_rep_id
+  // relationship is the canonical owner filter (lands with the C4
+  // user→rep linking commit).
   const { data } = await q.order('created_at', { ascending: false });
   orders = data || [];
   if (currentView === 'invoices') filterInvoices();
@@ -1391,18 +1385,6 @@ async function _loadSalesRepEarnedWhen() {
   }
 }
 
-async function loadCompanyUsers() {
-  const sel = document.getElementById('o-assigned');
-  if (!sel || sel.dataset.loaded) return;
-  const { data: cu } = await sb.from('company_users').select('user_id,role').eq('company_id', companyId).eq('status', 'active');
-  const userIds = (cu||[]).map(u => u.user_id);
-  if (!userIds.length) return;
-  const { data: profiles } = await sb.from('profiles').select('id,full_name').in('id', userIds);
-  const nameMap = {}; (profiles||[]).forEach(p => nameMap[p.id] = p.full_name);
-  sel.innerHTML = '<option value="">— Temsilci Yok —</option>' + (cu||[]).map(u => `<option value="${u.user_id}">${nameMap[u.user_id] || u.user_id.substring(0,8)}</option>`).join('');
-  sel.dataset.loaded = '1';
-}
-
 // Cache + dropdown populator for the Pazarlamacı (sales_rep) selector.
 // Loaded once per modal open; the form falls back to the company's
 // default rate when no rep is selected and to the rep's own rate when
@@ -1466,14 +1448,6 @@ function openOrderModal() {
   document.getElementById('o-sales-rep').value = '';
   document.getElementById('o-commission-rate').value = '';
   loadSalesRepsForOrder();
-  loadCompanyUsers().then(() => {
-    const sel = document.getElementById('o-assigned');
-    if (sel && currentUserRole && ['employee','sales_rep'].includes(currentUserRole)) {
-      sel.value = currentUserId || '';
-    } else if (sel) {
-      sel.value = '';
-    }
-  });
   document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
   const dueDays = invoiceSettings.default_due_days ?? 30;
   const due = new Date(); due.setDate(due.getDate() + dueDays);
@@ -1710,7 +1684,6 @@ async function saveOrder() {
     currency_code: fxCur !== baseCurrency ? fxCur : null,
     exchange_rate: fxRate,
     notes: document.getElementById('o-notes').value.trim() || null,
-    assigned_to: document.getElementById('o-assigned')?.value || null,
     project_id: document.getElementById('o-project')?.value || null,
     // Sales rep snapshot — commission_rate is the resolved figure at
     // save time; commission_amount = total × rate / 100. Status starts
@@ -1942,10 +1915,6 @@ async function editOrder(id) {
   await loadSalesRepsForOrder();
   document.getElementById('o-sales-rep').value = order.sales_rep_id || '';
   document.getElementById('o-commission-rate').value = order.commission_rate != null ? order.commission_rate : '';
-  loadCompanyUsers().then(() => {
-    const sel = document.getElementById('o-assigned');
-    if (sel) sel.value = order.assigned_to || '';
-  });
   // Currency
   initCurrencyDropdown();
   const fxCur = order.currency_code || baseCurrency;
