@@ -1737,17 +1737,22 @@ tr:hover .action-btns { opacity:1; }
     </div>
     <div class="modal-body" style="padding:16px 20px">
       <p style="font-size:12px;color:var(--gray500);margin:0 0 12px;line-height:1.6" data-i18n="desc_admin_full_access">Owner ve admin kullanıcılar tüm hesaplara otomatik erişir.</p>
-      <div id="ap-admin-notice" style="display:none;padding:12px 14px;background:var(--gray50);border:1px solid var(--gray200);border-radius:8px;font-size:13px;color:var(--gray700)"></div>
+      <div id="ap-admin-notice" style="display:none;padding:12px 14px;background:var(--gray50);border:1px solid var(--gray200);border-radius:8px;font-size:13px;color:var(--gray700);margin-bottom:14px"></div>
       <div id="ap-form" style="display:none">
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <button type="button" class="btn-outline" onclick="_apSetAll(true)" data-i18n="btn_grant_all">Tümüne tam yetki</button>
           <button type="button" class="btn-outline" onclick="_apSetAll(false)" data-i18n="btn_revoke_all">Tümünü kaldır</button>
         </div>
         <div id="ap-matrix" style="border:1px solid var(--gray200);border-radius:8px;overflow:auto;max-height:50vh"></div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--gray100);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <label style="font-size:12px;font-weight:600;color:var(--gray600)" data-i18n="lbl_pos_assigned_register">POS Atanmış Kasa</label>
-          <select id="ap-pos-register" style="font-size:13px;padding:6px 10px;border:1px solid var(--gray200);border-radius:8px"></select>
-        </div>
+      </div>
+      <!-- POS register assignment lives outside #ap-form because the
+           account-permissions matrix is hidden for owner/admin (DB
+           bypasses account_permissions for them), but the assigned
+           POS register is still meaningful per-user regardless of
+           role — every cashier needs one. -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--gray100);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:12px;font-weight:600;color:var(--gray600)" data-i18n="lbl_pos_assigned_register">POS Atanmış Kasa</label>
+        <select id="ap-pos-register" style="font-size:13px;padding:6px 10px;border:1px solid var(--gray200);border-radius:8px"></select>
       </div>
     </div>
     <div class="modal-footer">
@@ -5765,31 +5770,47 @@ async function openAccountPermsModal(userId, role, displayName) {
   const form = document.getElementById('ap-form');
   const saveBtn = document.getElementById('ap-save-btn');
 
+  // Save button stays visible for both roles — admins still use this
+  // modal to set their POS register assignment, the form (matrix) is
+  // just hidden for them since DB bypasses account_permissions.
+  if (saveBtn) saveBtn.style.display = '';
+
+  // Always fetch cash_registers + the user's pos_assigned_register_id;
+  // that's all the admin path needs. Non-admins additionally fetch
+  // bank_accounts / banks / account_permissions to build the matrix.
+  const adminFetches = [
+    sb.from('cash_registers').select('id, name, currency_code').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('name'),
+    sb.from('company_users').select('pos_assigned_register_id').eq('company_id', companyId).eq('user_id', userId).maybeSingle(),
+  ];
+  const nonAdminFetches = isAdmin ? [] : [
+    sb.from('bank_accounts').select('id, account_name, currency_code, bank_id').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('account_name'),
+    sb.from('banks').select('id, name').eq('company_id', companyId).is('deleted_at', null),
+    sb.from('account_permissions').select('account_type, account_id, can_view, can_view_balance, can_create_transaction, can_edit, can_delete').eq('company_id', companyId).eq('user_id', userId),
+  ];
+  const results = await Promise.all([...adminFetches, ...nonAdminFetches]);
+  const regsRes = results[0];
+  const cuRes   = results[1];
+  const accsRes  = isAdmin ? { data: [] } : results[2];
+  const banksRes = isAdmin ? { data: [] } : results[3];
+  const permsRes = isAdmin ? { data: [] } : results[4];
+
+  const registers = regsRes.data || [];
+  const accounts  = accsRes.data || [];
+  const banksById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
+  _apContext.banksById = banksById;
+
   if (isAdmin) {
+    // Admin notice replaces the matrix; POS register dropdown still
+    // populates below so admins can pick their own POS register too.
     adminNotice.style.display = '';
     adminNotice.textContent = t('msg_user_is_admin') || 'Bu kullanıcı admin/owner. Tüm hesaplara tam erişim var.';
     form.style.display = 'none';
-    if (saveBtn) saveBtn.style.display = 'none';
+    _apPopulatePosRegister(registers, cuRes.data?.pos_assigned_register_id);
     openModal('account-perms-modal');
     return;
   }
   adminNotice.style.display = 'none';
   form.style.display = '';
-  if (saveBtn) saveBtn.style.display = '';
-
-  // Pre-fetch the structural lists + existing perms + POS assignment in
-  // parallel; the modal stays empty for the round-trip but it's small.
-  const [regsRes, accsRes, banksRes, permsRes, cuRes] = await Promise.all([
-    sb.from('cash_registers').select('id, name, currency_code').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('name'),
-    sb.from('bank_accounts').select('id, account_name, currency_code, bank_id').eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('account_name'),
-    sb.from('banks').select('id, name').eq('company_id', companyId).is('deleted_at', null),
-    sb.from('account_permissions').select('account_type, account_id, can_view, can_view_balance, can_create_transaction, can_edit, can_delete').eq('company_id', companyId).eq('user_id', userId),
-    sb.from('company_users').select('pos_assigned_register_id').eq('company_id', companyId).eq('user_id', userId).maybeSingle(),
-  ]);
-  const registers = regsRes.data || [];
-  const accounts  = accsRes.data || [];
-  const banksById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
-  _apContext.banksById = banksById;
 
   // Index existing perms by (account_type, account_id) so the matrix
   // can pre-fill checkboxes without an extra pass per row.
@@ -5828,14 +5849,19 @@ async function openAccountPermsModal(userId, role, displayName) {
 
   document.getElementById('ap-matrix').innerHTML = `<table style="width:100%;border-collapse:collapse">${headerHtml}<tbody>${cashRows}${bankRows}</tbody></table>`;
 
-  // POS assigned register dropdown — only cash_registers are valid POS
-  // targets. None=Atanmamış is the default for non-admins.
-  const posSel = document.getElementById('ap-pos-register');
-  const assignedId = cuRes.data?.pos_assigned_register_id || '';
-  posSel.innerHTML = `<option value="">${escRec(t('lbl_pos_none') || 'Atanmamış')}</option>` +
-    registers.map(r => `<option value="${escRec(r.id)}" ${r.id === assignedId ? 'selected' : ''}>${escRec(r.name)} (${escRec(r.currency_code)})</option>`).join('');
+  _apPopulatePosRegister(registers, cuRes.data?.pos_assigned_register_id);
 
   openModal('account-perms-modal');
+}
+
+// Builds the POS register <select>. Shared between admin and non-admin
+// paths so the dropdown is always actionable, regardless of role.
+function _apPopulatePosRegister(registers, assignedId) {
+  const posSel = document.getElementById('ap-pos-register');
+  if (!posSel) return;
+  const id = assignedId || '';
+  posSel.innerHTML = `<option value="">${escRec(t('lbl_pos_none') || 'Atanmamış')}</option>` +
+    (registers || []).map(r => `<option value="${escRec(r.id)}" ${r.id === id ? 'selected' : ''}>${escRec(r.name)} (${escRec(r.currency_code)})</option>`).join('');
 }
 
 // "Tümüne tam yetki" / "Tümünü kaldır" — flips every checkbox in the
