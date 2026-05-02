@@ -1098,7 +1098,7 @@ function renderReps() {
         <div class="dot-menu" onclick="event.stopPropagation()">
           <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
           <div class="dot-menu-list">
-            <button class="dot-menu-item" onclick="closeDotMenus();editRep('${r.id}')">✏️ ${t('crm_btn_edit')||'Düzenle'}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();editRep('${r.id}')">✏️ ${t('btn_edit')||'Düzenle'}</button>
             <button class="dot-menu-item" onclick="closeDotMenus();toggleRepActive('${r.id}')">${r.is_active === false ? '✅ ' + (t('btn_set_active')||'Aktif Yap') : '⏸️ ' + (t('btn_set_inactive')||'Pasif Yap')}</button>
             <button class="dot-menu-item danger" onclick="closeDotMenus();deleteRep('${r.id}','${(r.name||'').replace(/'/g, "\\'")}')">🗑️ ${t('btn_delete')||'Sil'}</button>
           </div>
