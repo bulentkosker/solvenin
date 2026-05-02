@@ -168,51 +168,51 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   <div class="content">
     <!-- Sol: Rapor menüsü -->
     <nav class="report-nav" id="report-nav">
-      <div class="report-nav-section">📦 STOK</div>
-      <div class="report-nav-item active" onclick="switchReport('stock',this)">Stok Durumu</div>
-      <div class="report-nav-item" onclick="switchReport('stock_movements',this)">Ürün Hareketleri</div>
-      <div class="report-nav-item" onclick="switchReport('low_stock',this)">Düşük Stok</div>
-      <div class="report-nav-item" onclick="switchReport('stock_value',this)">Stok Değeri</div>
-      <div class="report-nav-item" onclick="switchReport('stock_by_category',this)">Kategori Bazlı</div>
-      <div class="report-nav-item" onclick="switchReport('product_profitability',this)">Ürün Karlılığı</div>
+      <div class="report-nav-section" data-module="inventory">📦 STOK</div>
+      <div class="report-nav-item active" data-module="inventory" onclick="switchReport('stock',this)">Stok Durumu</div>
+      <div class="report-nav-item" data-module="inventory" onclick="switchReport('stock_movements',this)">Ürün Hareketleri</div>
+      <div class="report-nav-item" data-module="inventory" onclick="switchReport('low_stock',this)">Düşük Stok</div>
+      <div class="report-nav-item" data-module="inventory" onclick="switchReport('stock_value',this)">Stok Değeri</div>
+      <div class="report-nav-item" data-module="inventory" onclick="switchReport('stock_by_category',this)">Kategori Bazlı</div>
+      <div class="report-nav-item" data-module="inventory" onclick="switchReport('product_profitability',this)">Ürün Karlılığı</div>
 
-      <div class="report-nav-section">💰 SATIŞ</div>
-      <div class="report-nav-item" onclick="switchReport('sales',this)">Satış Özeti</div>
-      <div class="report-nav-item" onclick="switchReport('sales_by_customer',this)">Müşteri Bazlı</div>
-      <div class="report-nav-item" onclick="switchReport('sales_by_product',this)">Ürün Bazlı</div>
-      <div class="report-nav-item" onclick="switchReport('top_products',this)">En Çok Satan</div>
-      <div class="report-nav-item" onclick="switchReport('top_customers',this)">En Çok Alan</div>
-      <div class="report-nav-item" onclick="switchReport('sales_by_rep',this)">Temsilci Raporu</div>
+      <div class="report-nav-section" data-module="sales">💰 SATIŞ</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('sales',this)">Satış Özeti</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('sales_by_customer',this)">Müşteri Bazlı</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('sales_by_product',this)">Ürün Bazlı</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('top_products',this)">En Çok Satan</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('top_customers',this)">En Çok Alan</div>
+      <div class="report-nav-item" data-module="sales" onclick="switchReport('sales_by_rep',this)">Temsilci Raporu</div>
 
-      <div class="report-nav-section">🛒 SATIN ALMA</div>
-      <div class="report-nav-item" onclick="switchReport('purchase_summary',this)">Alış Özeti</div>
-      <div class="report-nav-item" onclick="switchReport('purchase_by_supplier',this)">Tedarikçi Bazlı</div>
-      <div class="report-nav-item" onclick="switchReport('purchase_by_product',this)">Ürün Bazlı</div>
-      <div class="report-nav-item" onclick="switchReport('top_suppliers',this)">En Çok Alınan</div>
+      <div class="report-nav-section" data-module="purchasing">🛒 SATIN ALMA</div>
+      <div class="report-nav-item" data-module="purchasing" onclick="switchReport('purchase_summary',this)">Alış Özeti</div>
+      <div class="report-nav-item" data-module="purchasing" onclick="switchReport('purchase_by_supplier',this)">Tedarikçi Bazlı</div>
+      <div class="report-nav-item" data-module="purchasing" onclick="switchReport('purchase_by_product',this)">Ürün Bazlı</div>
+      <div class="report-nav-item" data-module="purchasing" onclick="switchReport('top_suppliers',this)">En Çok Alınan</div>
 
-      <div class="report-nav-section">👥 CARİ</div>
-      <div class="report-nav-item" onclick="switchReport('receivables',this)">Borçlu Listesi</div>
-      <div class="report-nav-item" onclick="switchReport('payables',this)">Alacaklı Listesi</div>
-      <div class="report-nav-item" onclick="switchReport('statement',this)">Cari Ekstre</div>
-      <div class="report-nav-item" onclick="switchReport('contact_aging',this)">Cari Yaşlandırma</div>
-      <div class="report-nav-item" onclick="switchReport('contact_summary',this)">Cari Özet</div>
+      <div class="report-nav-section" data-module="sales|purchasing">👥 CARİ</div>
+      <div class="report-nav-item" data-module="sales|purchasing" onclick="switchReport('receivables',this)">Borçlu Listesi</div>
+      <div class="report-nav-item" data-module="sales|purchasing" onclick="switchReport('payables',this)">Alacaklı Listesi</div>
+      <div class="report-nav-item" data-module="sales|purchasing" onclick="switchReport('statement',this)">Cari Ekstre</div>
+      <div class="report-nav-item" data-module="sales|purchasing" onclick="switchReport('contact_aging',this)">Cari Yaşlandırma</div>
+      <div class="report-nav-item" data-module="sales|purchasing" onclick="switchReport('contact_summary',this)">Cari Özet</div>
 
-      <div class="report-nav-section">🏦 FİNANS</div>
-      <div class="report-nav-item" onclick="switchReport('cashbank',this)">Kasa/Banka Hareket</div>
-      <div class="report-nav-item" onclick="switchReport('cash_flow',this)">Nakit Akışı</div>
-      <div class="report-nav-item" onclick="switchReport('balances',this)">Hesap Bakiyeleri</div>
-      <div class="report-nav-item" onclick="switchReport('payment_methods',this)">Ödeme Yöntemleri</div>
-      <div class="report-nav-item" onclick="switchReport('coa_movements',this)">Hesap Hareket Raporu</div>
+      <div class="report-nav-section" data-module="cash_bank">🏦 FİNANS</div>
+      <div class="report-nav-item" data-module="cash_bank" onclick="switchReport('cashbank',this)">Kasa/Banka Hareket</div>
+      <div class="report-nav-item" data-module="cash_bank" onclick="switchReport('cash_flow',this)">Nakit Akışı</div>
+      <div class="report-nav-item" data-module="cash_bank" onclick="switchReport('balances',this)">Hesap Bakiyeleri</div>
+      <div class="report-nav-item" data-module="cash_bank" onclick="switchReport('payment_methods',this)">Ödeme Yöntemleri</div>
+      <div class="report-nav-item" data-module="cash_bank" onclick="switchReport('coa_movements',this)">Hesap Hareket Raporu</div>
 
-      <div class="report-nav-section">📊 MUHASEBE</div>
-      <div class="report-nav-item" onclick="switchReport('journal',this)">Yevmiye Defteri</div>
-      <div class="report-nav-item" onclick="switchReport('ledger',this)">Büyük Defter</div>
-      <div class="report-nav-item" onclick="switchReport('trial',this)">Mizan</div>
+      <div class="report-nav-section" data-module="accounting">📊 MUHASEBE</div>
+      <div class="report-nav-item" data-module="accounting" onclick="switchReport('journal',this)">Yevmiye Defteri</div>
+      <div class="report-nav-item" data-module="accounting" onclick="switchReport('ledger',this)">Büyük Defter</div>
+      <div class="report-nav-item" data-module="accounting" onclick="switchReport('trial',this)">Mizan</div>
 
-      <div class="report-nav-section">🎯 CRM</div>
-      <div class="report-nav-item" onclick="switchReport('crm_pipeline',this)">Pipeline Özeti</div>
-      <div class="report-nav-item" onclick="switchReport('crm_won_lost',this)">Kazanılan/Kaybedilen</div>
-      <div class="report-nav-item" onclick="switchReport('crm_rep_performance',this)">Temsilci Performansı</div>
+      <div class="report-nav-section" data-module="crm">🎯 CRM</div>
+      <div class="report-nav-item" data-module="crm" onclick="switchReport('crm_pipeline',this)">Pipeline Özeti</div>
+      <div class="report-nav-item" data-module="crm" onclick="switchReport('crm_won_lost',this)">Kazanılan/Kaybedilen</div>
+      <div class="report-nav-item" data-module="crm" onclick="switchReport('crm_rep_performance',this)">Temsilci Performansı</div>
     </nav>
 
     <!-- Sağ: Rapor içeriği -->
@@ -286,6 +286,14 @@ async function init() {
   const { data: comp } = await sb.from('companies').select('base_currency').eq('id', companyId).single();
   baseCurrency = comp?.base_currency || 'KZT';
 
+  // Cache module perms before rendering — applyModulePermsToNav reads
+  // the cache to hide whole sections the user can't view. The DB does
+  // not gate underlying tables by module (RLS scopes by company), so
+  // the UI guard is what keeps a sales-only user out of the
+  // accounting / cash_bank report list.
+  await loadModulePerms();
+  applyModulePermsToNav();
+
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
 
@@ -304,6 +312,64 @@ async function init() {
     if (match) switchReport(match[1], firstVisible);
   } else {
     switchReport('stock', document.querySelector('.report-nav-item.active'));
+  }
+}
+
+// ===== MODULE PERMISSIONS =====
+window._modulePerms = {};
+
+async function loadModulePerms() {
+  if (!companyId) return;
+  try {
+    const { data } = await sb.rpc('get_my_module_permissions', { p_company_id: companyId });
+    const out = {};
+    (data || []).forEach(row => {
+      out[row.module] = {
+        view: !!row.can_view, create: !!row.can_create,
+        edit: !!row.can_edit, delete: !!row.can_delete,
+      };
+    });
+    window._modulePerms = out;
+  } catch (e) {
+    console.error('loadModulePerms failed:', e);
+    window._modulePerms = {};
+  }
+}
+
+function hasModulePerm(module, perm = 'view') {
+  const m = window._modulePerms?.[module];
+  if (!m) return false;
+  return !!m[perm];
+}
+
+// data-module supports OR semantics ("sales|purchasing") for reports
+// like Cari that satisfy either pillar.
+function _moduleAllowed(value) {
+  if (!value) return true;
+  const mods = String(value).split('|').map(s => s.trim()).filter(Boolean);
+  if (!mods.length) return true;
+  return mods.some(m => hasModulePerm(m, 'view'));
+}
+
+function applyModulePermsToNav() {
+  const nav = document.getElementById('report-nav');
+  if (!nav) return;
+  // Hide individual items first.
+  nav.querySelectorAll('.report-nav-item').forEach(el => {
+    el.style.display = _moduleAllowed(el.dataset.module) ? '' : 'none';
+  });
+  // Then sweep section headers — hide any whose siblings up to the
+  // next section are all hidden. Section headers are followed by a
+  // sequence of items; we walk forward and check.
+  const children = Array.from(nav.children);
+  for (let i = 0; i < children.length; i++) {
+    const el = children[i];
+    if (!el.classList.contains('report-nav-section')) continue;
+    let anyVisible = false;
+    for (let j = i + 1; j < children.length && !children[j].classList.contains('report-nav-section'); j++) {
+      if (children[j].style.display !== 'none') { anyVisible = true; break; }
+    }
+    el.style.display = anyVisible && _moduleAllowed(el.dataset.module) ? '' : 'none';
   }
 }
 
@@ -700,15 +766,20 @@ async function loadWarehouses() {
   if (sel) sel.innerHTML = '<option value="">Tüm Depolar</option>' + (data||[]).map(w => `<option value="${w.id}">${w.name}</option>`).join('');
 }
 async function loadAccounts() {
+  // Reports' account filter respects account_permissions — finance
+  // reports should only let users pivot on cash/bank rows they're
+  // actually allowed to view.
   const [cr, ba] = await Promise.all([
-    sb.from('cash_registers').select('id,name').eq('company_id', companyId).eq('is_active', true),
-    sb.from('bank_accounts').select('id,account_name').eq('company_id', companyId).eq('is_active', true)
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
   ]);
   const sel = document.getElementById('f-account');
   if (!sel) return;
+  const regs = (cr.data || []).filter(r => r.is_active !== false);
+  const accs = (ba.data || []).filter(a => a.is_active !== false);
   sel.innerHTML = '<option value="">Tüm Hesaplar</option>' +
-    (cr.data||[]).map(r => `<option value="cash:${r.id}">💵 ${r.name}</option>`).join('') +
-    (ba.data||[]).map(a => `<option value="bank:${a.id}">🏦 ${a.account_name}</option>`).join('');
+    regs.map(r => `<option value="cash:${r.id}">💵 ${r.name}</option>`).join('') +
+    accs.map(a => `<option value="bank:${a.id}">🏦 ${a.account_name}</option>`).join('');
 }
 async function loadContacts() {
   const { data } = await sb.from('contacts').select('id,name,is_customer,is_supplier').eq('company_id', companyId).eq('is_active', true).order('name');
@@ -1683,15 +1754,27 @@ async function reportCashFlow() {
 
 // ===== FİNANS: Hesap Bakiyeleri =====
 async function reportBalances() {
+  // Access RPCs filter to rows the user can see and null out balances
+  // for can_view_balance=false. The total at the bottom only sums
+  // visible balances; '***' is shown per row when hidden.
   const [cashRes, bankRes] = await Promise.all([
-    sb.from('cash_registers').select('name,currency_code,current_balance').eq('company_id', companyId).eq('is_active', true),
-    sb.from('bank_accounts').select('account_name,currency_code,current_balance').eq('company_id', companyId).eq('is_active', true)
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
   ]);
   const headers = [{key:'name',label:'HESAP'},{key:'type',label:'TÜR'},{key:'currency',label:'PARA BİRİMİ'},{key:'balance',label:'BAKİYE',align:'text-right'}];
+  const hidden = (typeof t === 'function' ? t('balance_hidden') : null) || '***';
   let total = 0;
   const rows = [
-    ...(cashRes.data||[]).map(c => { total += parseFloat(c.current_balance||0); return { name: c.name, type: '💵 Kasa', currency: c.currency_code||'—', balance: fmt(c.current_balance) }; }),
-    ...(bankRes.data||[]).map(b => { total += parseFloat(b.current_balance||0); return { name: b.account_name, type: '🏦 Banka', currency: b.currency_code||'—', balance: fmt(b.current_balance) }; })
+    ...((cashRes.data || []).filter(c => c.is_active !== false).map(c => {
+      const canSee = c.can_view_balance !== false;
+      if (canSee) total += parseFloat(c.current_balance || 0);
+      return { name: c.name, type: '💵 Kasa', currency: c.currency_code || '—', balance: canSee ? fmt(c.current_balance) : hidden };
+    })),
+    ...((bankRes.data || []).filter(b => b.is_active !== false).map(b => {
+      const canSee = b.can_view_balance !== false;
+      if (canSee) total += parseFloat(b.current_balance || 0);
+      return { name: b.account_name, type: '🏦 Banka', currency: b.currency_code || '—', balance: canSee ? fmt(b.current_balance) : hidden };
+    })),
   ];
   renderTable(headers, rows, { name:'TOPLAM', type:'', currency:'', balance: fmt(total) });
 }
