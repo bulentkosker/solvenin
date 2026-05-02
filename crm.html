@@ -155,6 +155,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
     </div>
 
     <!-- SALES REPS PANE -->
+    <!-- IMPORTANT: do not use class="list-view" on this wrapper — that
+         class is `display:none` by default and only shown via the
+         pipeline's setView('list') toggle. Reps pane uses inline
+         styles instead so the table renders the moment the tab opens. -->
     <div id="pane-reps" class="crm-pane" style="display:none;flex:1;flex-direction:column;min-height:0">
       <div class="toolbar">
         <input type="text" id="reps-search" oninput="renderReps()" placeholder="🔍 Pazarlamacı ara..." style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:240px">
@@ -162,16 +166,16 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
           <input type="checkbox" id="reps-only-active" checked onchange="renderReps()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
         </label>
       </div>
-      <div class="list-view" style="overflow:auto;flex:1">
-        <table>
-          <thead><tr>
-            <th data-i18n="label_name">AD</th>
-            <th data-i18n="label_phone">TELEFON</th>
-            <th data-i18n="label_email">EMAIL</th>
-            <th class="text-right" data-i18n="lbl_commission_rate">KOMİSYON %</th>
-            <th data-i18n="lbl_linked_employee">PERSONEL</th>
-            <th data-i18n="col_status">DURUM</th>
-            <th></th>
+      <div style="overflow:auto;flex:1">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--gray50)">
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="label_name">AD</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="label_phone">TELEFON</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="label_email">EMAIL</th>
+            <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="lbl_commission_rate">KOMİSYON %</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="lbl_linked_employee">PERSONEL</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray400);text-transform:uppercase;border-bottom:1px solid var(--gray200)" data-i18n="col_status">DURUM</th>
+            <th style="border-bottom:1px solid var(--gray200)"></th>
           </tr></thead>
           <tbody id="reps-tbody"></tbody>
         </table>
