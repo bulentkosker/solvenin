@@ -1213,10 +1213,13 @@ function hasModulePerm(module, perm = 'view') {
 // reorder_point=0 / min_stock=0 are interpreted as "not tracked", not
 // "trigger at zero" — otherwise products that legitimately sell down
 // to 0 (the EKMEK / bread case in the field) get flagged forever.
+// Archived (is_active=false) rows also skip — they're not being sold
+// so the alert shouldn't pester the user about them.
 function _isLowStock(p) {
-  const qty = parseFloat(p?.quantity || 0);
-  const rp = p?.reorder_point != null ? parseFloat(p.reorder_point) : null;
-  const ms = p?.min_stock != null ? parseFloat(p.min_stock) : null;
+  if (!p || p.is_active === false) return false;
+  const qty = parseFloat(p.quantity || 0);
+  const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+  const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
   if (rp != null && rp > 0) return qty <= rp;
   if (ms != null && ms > 0) return qty <= ms;
   return false;
@@ -1573,7 +1576,7 @@ async function loadDashboardStats(){
       sb.from('payments').select('id,amount,order_id').eq('company_id', companyId).is('deleted_at', null),
       sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true).is('deleted_at', null),
       sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId).is('deleted_at', null),
-      sb.from('products').select('id,quantity,min_stock,reorder_point').eq('company_id', companyId).is('deleted_at', null),
+      sb.from('products').select('id,quantity,min_stock,reorder_point,is_active').eq('company_id', companyId).is('deleted_at', null),
     ]);
 
     const orders    = ordersRes.data || [];

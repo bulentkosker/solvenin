@@ -1009,22 +1009,28 @@ function renderAll() {
 }
 
 function updateStats() {
-  // Services don't count toward stock metrics
+  // Services don't count toward stock metrics. Stock value uses every
+  // physical row (archived rows still hold inventory worth tracking),
+  // but the low/out alert counters skip archived products — those
+  // aren't being sold so flagging them as "needs restocking" was the
+  // bug behind ANKA GROUP's 8/0 mismatch (7 archived KIRMIZI/YESIL/
+  // BULGUR/mercimek with qty=0 padded the count).
   const physical = products.filter(p => !p.is_service);
+  const physicalActive = physical.filter(p => p.is_active !== false);
   const total = products.length;
   const totalValue = physical.reduce((s, p) => s + p.stock * p.unit_cost, 0);
   // Same rule as dashboard: a row only counts as "low" when at least
   // one threshold is explicitly tracked (NOT NULL and > 0). reorder
   // _point=0 / min_stock=0 = "not tracked" — products that legitimately
   // sell down to 0 don't get permanently flagged.
-  const low = physical.filter(p => {
+  const low = physicalActive.filter(p => {
     const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
     const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
     if (rp != null && rp > 0) return p.stock <= rp;
     if (ms != null && ms > 0) return p.stock <= ms;
     return false;
   }).length;
-  const out = physical.filter(p => p.stock === 0).length;
+  const out = physicalActive.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('stat-low').textContent = low;
