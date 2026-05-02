@@ -254,6 +254,7 @@ function buildNav() {
     { key: 'companies', icon: '🏢', label: 'Şirketler', roles: ['superadmin','support','partner','partner_manager'] },
     { key: 'trash', icon: '🗑️', label: 'Çöp Kutusu', roles: ['superadmin','support'] },
     { key: 'users', icon: '👥', label: 'Kullanıcılar', roles: ['superadmin','support'] },
+    { key: 'orphan_users', icon: '👤', label: 'Orphan Kullanıcılar', roles: ['superadmin'] },
     { key: 'demos', icon: '🎯', label: 'Demolar', roles: ['superadmin','support','partner'] },
     { key: 'flags', icon: '🚩', label: 'Feature Flags', roles: ['superadmin','support'] },
     { key: 'repair', icon: '🔧', label: 'Veri Onarım', roles: ['superadmin','support'] },
@@ -288,6 +289,7 @@ function switchPage(key) {
   else if (key === 'companies') renderCompanies();
   else if (key === 'trash') renderTrash();
   else if (key === 'users') renderUsers();
+  else if (key === 'orphan_users') renderOrphanUsers();
   else if (key === 'demos') renderDemos();
   else if (key === 'flags') renderFlags();
   else if (key === 'repair') renderRepair();
@@ -1231,6 +1233,120 @@ function toggleUserGroup(companyName) {
   if (_usersExpanded.has(companyName)) _usersExpanded.delete(companyName);
   else _usersExpanded.add(companyName);
   renderUsersTable();
+}
+
+// ===== ORPHAN USERS =====
+// Auth users with no company_users membership. The standard "remove
+// from company" flow keeps the auth user around for re-invite, so a
+// user who's been removed from every tenant ends up here. This tab
+// hard-deletes (auth.users + profiles + service_panel_logs row) via
+// the SECURITY DEFINER RPC sp_delete_orphan_user.
+let _orphanUsers = [];
+
+async function renderOrphanUsers() {
+  const content = document.getElementById('sp-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray400)">⏳ Yükleniyor...</div>';
+  const { data, error } = await sb.rpc('sp_orphan_users');
+  if (error) {
+    content.innerHTML = `<div style="padding:30px;color:#dc2626">Hata: ${escapeHtml(error.message || String(error))}</div>`;
+    return;
+  }
+  _orphanUsers = data || [];
+  renderOrphanUsersTable();
+}
+
+function renderOrphanUsersTable() {
+  const content = document.getElementById('sp-content');
+  const rows = _orphanUsers;
+  const desc = `<div style="font-size:13px;color:var(--gray500);margin-bottom:14px;line-height:1.6">
+    Hiçbir şirkete üye olmayan kullanıcılar. Bu hesaplar önceki üyeliklerinden kalmış olabilir.
+    <strong>Tamamen Sil</strong> ile auth.users + profiles kalıcı olarak temizlenir; aynı email ile yeniden kayıt olunabilir.
+  </div>`;
+
+  if (!rows.length) {
+    content.innerHTML = desc + `
+      <div style="padding:60px 20px;text-align:center;color:var(--gray400);background:#fff;border:1px solid var(--gray200);border-radius:12px">
+        ✅ Orphan kullanıcı yok
+      </div>`;
+    return;
+  }
+
+  const trs = rows.map(u => `
+    <tr>
+      <td style="font-weight:500">${escapeHtml(u.email || '—')}</td>
+      <td>${escapeHtml(u.full_name || '—')}</td>
+      <td style="color:var(--gray500);font-size:11px">${u.created_at ? fmtDate(u.created_at) : '—'}</td>
+      <td style="color:var(--gray500);font-size:11px">${u.last_sign_in_at ? fmtDate(u.last_sign_in_at) : '<span style="color:var(--gray400)">hiç giriş yapmadı</span>'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fecaca"
+                onclick="confirmDeleteOrphan('${escapeHtml(u.id)}', '${escapeHtml((u.email || '').replace(/'/g, "&#39;"))}')">
+          🗑️ Tamamen Sil
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  content.innerHTML = `
+    ${desc}
+    <div style="font-size:12px;color:var(--gray500);margin-bottom:8px">${rows.length} kullanıcı</div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr>
+          <th>EMAIL</th>
+          <th>AD</th>
+          <th>HESAP OLUŞTURMA</th>
+          <th>SON GİRİŞ</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${trs}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function confirmDeleteOrphan(userId, email) {
+  // Modal body uses textContent-like escaping via the existing openModal
+  // helper (which writes innerHTML, so we escape manually here).
+  const safeEmail = escapeHtml(email || '');
+  openModal('Hesabı Tamamen Sil', `
+    <div style="font-size:13px;line-height:1.7;color:var(--gray700)">
+      <p><strong>${safeEmail}</strong> adresindeki kullanıcı hesabı tamamen silinecek.</p>
+      <p style="margin-top:8px;color:#dc2626"><strong>Bu işlem GERİ ALINAMAZ.</strong></p>
+      <p style="margin-top:8px;color:var(--gray500);font-size:12px">Kullanıcı bu email ile yeniden kayıt olabilir.</p>
+    </div>
+  `, [
+    { text: 'İptal', cls: 'btn-outline', onclick: 'closeModal()' },
+    { text: '🗑️ Tamamen Sil', cls: 'btn-danger', onclick: `deleteOrphanUser('${userId}', '${safeEmail.replace(/'/g, "\\'")}')` },
+  ]);
+}
+
+async function deleteOrphanUser(userId, email) {
+  closeModal();
+  const { data, error } = await sb.rpc('sp_delete_orphan_user', { p_user_id: userId });
+  if (error) {
+    const msg = error.message || String(error);
+    if (msg.includes('Unauthorized')) {
+      showToast('Yetkisiz işlem', 'error');
+    } else if (msg.includes('company memberships')) {
+      // Race: someone re-invited the user between list load and click.
+      showToast('Bu kullanıcı hâlâ bir şirketin üyesi, silinemez', 'error');
+    } else {
+      showToast('Hata: ' + msg, 'error');
+    }
+    return;
+  }
+  if (data && data.success === false) {
+    showToast('Hata: ' + (data.error || 'unknown'), 'error');
+    return;
+  }
+  showToast('Hesap silindi: ' + (email || data?.email || ''), 'success');
+  await renderOrphanUsers();
+}
+
+// Tiny HTML escaper local to this module — sp doesn't import a shared
+// one. Mirrors the pattern used in settings.html#escRec.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ===== DEMOS =====
