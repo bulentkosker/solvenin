@@ -1013,7 +1013,17 @@ function updateStats() {
   const physical = products.filter(p => !p.is_service);
   const total = products.length;
   const totalValue = physical.reduce((s, p) => s + p.stock * p.unit_cost, 0);
-  const low = physical.filter(p => p.stock > 0 && (p.reorder_point != null ? p.stock <= p.reorder_point : (p.min_stock != null && p.stock <= p.min_stock))).length;
+  // Same rule as dashboard: a row only counts as "low" when at least
+  // one threshold is explicitly tracked (NOT NULL and > 0). reorder
+  // _point=0 / min_stock=0 = "not tracked" — products that legitimately
+  // sell down to 0 don't get permanently flagged.
+  const low = physical.filter(p => {
+    const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+    const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
+    if (rp != null && rp > 0) return p.stock <= rp;
+    if (ms != null && ms > 0) return p.stock <= ms;
+    return false;
+  }).length;
   const out = physical.filter(p => p.stock === 0).length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-value').textContent = (window.getCurrencySymbol ? window.getCurrencySymbol() : '$') + totalValue.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
@@ -1032,9 +1042,11 @@ document.addEventListener('langChanged', () => { if (typeof products !== 'undefi
 
 function getStockStatus(p) {
   if (p.stock <= 0) return 'out';
-  if (p.min_stock != null && p.stock <= p.min_stock) return 'critical';
-  if (p.reorder_point != null && p.stock <= p.reorder_point) return 'low';
-  if (p.min_stock != null && p.stock <= p.min_stock) return 'low';
+  // critical: under min_stock; low: under reorder_point. Both
+  // thresholds gated by `> 0` so a 0 / NULL value means "not tracked"
+  // and never trips the badge.
+  if (p.min_stock != null && p.min_stock > 0 && p.stock <= p.min_stock) return 'critical';
+  if (p.reorder_point != null && p.reorder_point > 0 && p.stock <= p.reorder_point) return 'low';
   return 'in_stock';
 }
 

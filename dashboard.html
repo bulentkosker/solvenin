@@ -1207,6 +1207,21 @@ function hasModulePerm(module, perm = 'view') {
   return !!m[perm];
 }
 
+// Single source of truth for "low stock" — used by the stat card count,
+// the notification list, and the alerts panel. A row only counts when
+// at least one threshold is explicitly tracked (NOT NULL and > 0):
+// reorder_point=0 / min_stock=0 are interpreted as "not tracked", not
+// "trigger at zero" — otherwise products that legitimately sell down
+// to 0 (the EKMEK / bread case in the field) get flagged forever.
+function _isLowStock(p) {
+  const qty = parseFloat(p?.quantity || 0);
+  const rp = p?.reorder_point != null ? parseFloat(p.reorder_point) : null;
+  const ms = p?.min_stock != null ? parseFloat(p.min_stock) : null;
+  if (rp != null && rp > 0) return qty <= rp;
+  if (ms != null && ms > 0) return qty <= ms;
+  return false;
+}
+
 // ===== ONBOARDING / DELETED ACCOUNT GATE =====
 async function showOnboarding() {
   // Hide loading screen and chrome
@@ -1591,14 +1606,7 @@ async function loadDashboardStats(){
 
     const totalPurch    = purchases.reduce((s,p) => s + parseFloat(p.total||0), 0);
     const thisMoPurch   = purchases.filter(p => p.created_at >= thisMonthStart).reduce((s,p) => s + parseFloat(p.total||0), 0);
-    const lowStock      = products.filter(p => {
-      const qty = parseFloat(p.quantity||0);
-      const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
-      const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
-      if (rp != null) return qty <= rp;
-      if (ms != null) return qty <= ms;
-      return false;
-    }).length;
+    const lowStock = products.filter(_isLowStock).length;
 
     // This-month order count & purchase diff
     const thisMoOrders = activeOrders.filter(o => o.created_at >= thisMonthStart);
@@ -1708,14 +1716,7 @@ async function loadDashboardStats(){
 
     const notifContainer = document.getElementById('notif-list-container');
     if (notifContainer && allProducts) {
-      const lowStockItems = allProducts.filter(p => {
-        const qty = parseFloat(p.quantity||0);
-        const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
-        const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
-        if (rp != null) return qty <= rp;
-        if (ms != null && ms > 0) return qty <= ms;
-        return false;
-      });
+      const lowStockItems = allProducts.filter(_isLowStock);
       if (lowStockItems.length === 0) {
         notifContainer.innerHTML = `<div class="notif-item"><div class="notif-body"><div class="notif-desc" style="color:var(--gray400);text-align:center;padding:16px">${t('no_data')||'No notifications'}</div></div></div>`;
       } else {
@@ -1991,22 +1992,18 @@ async function loadAlerts(){
       sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','overdue']).lt('due_date', todayStr).order('due_date',{ascending:true}).limit(10),
       sb.from('sales_orders').select('id, total, due_date, contacts(name)').eq('company_id', companyId).is('deleted_at', null).in('status', ['invoiced','confirmed']).gte('due_date', todayStr).lte('due_date', in7).order('due_date',{ascending:true}).limit(10),
     ]);
-    const lows = (prods.data||[]).filter(p => {
-      const qty = parseFloat(p.quantity||0);
-      const rp = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
-      const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
-      if (rp != null) return qty <= rp;
-      if (ms != null && ms > 0) return qty <= ms;
-      return false;
-    }).slice(0,8);
+    const lows = (prods.data || []).filter(_isLowStock).slice(0, 8);
     const rows = [];
     lows.forEach(p => {
       const qty = parseFloat(p.quantity||0);
       const ms = p.min_stock != null ? parseFloat(p.min_stock) : null;
-      const isCritical = ms != null && qty <= ms;
+      // Critical = under min_stock (not just any threshold). Same > 0
+      // guard as the entry filter — min_stock=0 means "not tracked".
+      const isCritical = ms != null && ms > 0 && qty <= ms;
       const ico = isCritical ? '🔴' : '🟡';
       const label = isCritical ? (t('stock_critical')||'Kritik') : (t('stock_order_needed')||'Sipariş Ver');
-      const threshold = p.reorder_point != null ? p.reorder_point : p.min_stock;
+      const rpVal = p.reorder_point != null ? parseFloat(p.reorder_point) : null;
+      const threshold = (rpVal != null && rpVal > 0) ? p.reorder_point : p.min_stock;
       rows.push(`<div class="alert-row low-stock"><span class="a-ico">${ico}</span><div class="a-body"><div class="a-title">${p.name}</div><div class="a-sub">${label} · ${p.quantity}/${threshold}</div></div></div>`);
     });
     (overdueOrders.data||[]).forEach(o => {
