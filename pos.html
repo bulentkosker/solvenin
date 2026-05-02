@@ -373,13 +373,25 @@ async function init() {
   // POS register comes from get_my_pos_register: returns the user's
   // pos_assigned_register_id (non-admins must have one), or for
   // owner/admin without an explicit assignment the first active
-  // register (RPC auto-picks). Empty result → show the access-denied
-  // screen instead of the picker; non-admin users can't choose
-  // a register on their own.
+  // register (RPC auto-picks). Empty result → access-denied screen.
   const { data: posReg } = await sb.rpc('get_my_pos_register', { p_company_id: companyId });
   const assigned = (posReg && posReg.length) ? posReg[0] : null;
   if (!assigned || !assigned.register_id) {
-    _showPosAccessDenied();
+    // Disambiguate why so the screen says something useful — without
+    // this the same "ask admin" copy fired for owners on a company
+    // that simply has no cash registers yet.
+    const [{ data: companyRow }, { count: regCount }, { data: cuRow }] = await Promise.all([
+      sb.from('companies').select('name').eq('id', companyId).maybeSingle(),
+      sb.from('cash_registers').select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId).is('deleted_at', null).eq('is_active', true),
+      sb.from('company_users').select('role').eq('company_id', companyId)
+        .eq('user_id', currentUser.id).maybeSingle(),
+    ]);
+    _showPosAccessDenied({
+      companyName: companyRow?.name || '',
+      hasAnyRegister: (regCount || 0) > 0,
+      role: cuRow?.role || '',
+    });
     return;
   }
   selectedRegister = {
@@ -390,20 +402,46 @@ async function init() {
   await startSession();
 }
 
-function _showPosAccessDenied() {
-  // Block screen — POS won't proceed without an assigned register. The
-  // existing register-modal styles work as a non-dismissible card.
+function _showPosAccessDenied(ctx) {
+  // Three failure modes:
+  //   1. Company has no cash_registers at all → owner needs to create
+  //      one first (Cashbank → + Add Register).
+  //   2. Company has registers but the user has no assignment AND
+  //      isn't an owner/admin (auto-pick RPC didn't fire) → admin
+  //      must assign one via Settings → Users → 🔐 Hesap Yetkileri.
+  //   3. Owner/admin without assignment but no active registers
+  //      either → falls into mode 1.
+  // Knowing which mode we're in lets the screen point the user to
+  // the right next step instead of generic "ask admin" copy.
+  const { companyName = '', hasAnyRegister = false, role = '' } = ctx || {};
+  const isAdmin = role === 'owner' || role === 'admin';
+  const company = companyName ? `<strong>${companyName}</strong>` : t('lbl_company') || 'Şirket';
+
+  let title, body, primary;
+  if (!hasAnyRegister) {
+    title = t('pos_no_register_in_company_title') || 'Bu şirkette kasa yok';
+    body = (t('pos_no_register_in_company') || '{company} için henüz hiç kasa tanımlanmamış. Cashbank → + Kasa Ekle\'den bir kasa oluşturun.').replace('{company}', company);
+    primary = `<button onclick="window.location.href='cashbank.html'" style="background:var(--primary);color:#fff">${t('btn_open_cashbank') || 'Cashbank Aç'}</button>`;
+  } else if (isAdmin) {
+    title = t('pos_assign_register_title') || 'Kasa Atanmamış';
+    body = (t('pos_assign_self') || 'Bu şirkette ({company}) bir POS kasası atanmamış. Settings → Kullanıcılar → 🔐 Hesap Yetkileri\'nden kendinize bir kasa atayın.').replace('{company}', company);
+    primary = `<button onclick="window.location.href='settings.html#users'" style="background:var(--primary);color:#fff">${t('btn_open_settings') || 'Ayarları Aç'}</button>`;
+  } else {
+    title = t('pos_no_register_assigned_title') || 'Kasa Atanmamış';
+    body = (t('pos_no_register_assigned_company') || 'Bu şirkette ({company}) size bir POS kasası atanmamış. Yöneticinizden bir kasa atanmasını isteyin.').replace('{company}', company);
+    primary = `<button onclick="window.location.href='dashboard.html'" style="background:var(--primary);color:#fff">${t('btn_back') || 'Geri Dön'}</button>`;
+  }
+
   const modal = document.getElementById('register-modal');
   modal.classList.add('open');
   modal.innerHTML = `
-    <div class="pmc" style="max-width:440px;text-align:center">
+    <div class="pmc" style="max-width:480px;text-align:center">
       <div style="font-size:42px;margin-bottom:8px">🔒</div>
-      <h3 style="margin-bottom:10px">${t('pos_no_register_assigned_title') || 'Kasa Atanmamış'}</h3>
-      <p style="color:var(--gray600);font-size:13px;line-height:1.6;margin-bottom:18px">
-        ${t('pos_no_register_assigned') || 'POS kullanmak için yöneticinizden bir kasa atanmasını isteyin.'}
-      </p>
-      <div class="pm-actions" style="justify-content:center">
-        <button onclick="window.location.href='dashboard.html'" style="background:var(--primary);color:#fff" data-i18n="btn_back">Geri Dön</button>
+      <h3 style="margin-bottom:10px">${title}</h3>
+      <p style="color:var(--gray600);font-size:13px;line-height:1.6;margin-bottom:18px">${body}</p>
+      <div class="pm-actions" style="justify-content:center;gap:8px">
+        ${primary}
+        <button onclick="window.location.href='dashboard.html'" style="background:var(--gray100);color:var(--gray700)">${t('btn_back') || 'Geri Dön'}</button>
       </div>
     </div>
   `;
