@@ -497,6 +497,18 @@ tr:hover td{background:var(--gray50)}
         </select>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;">
+      <div style="grid-column:span 2;">
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="nav_sales_reps">Pazarlamacı</div>
+        <select id="o-sales-rep" onchange="_onOrderRepChange()" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;">
+          <option value="" data-i18n="lbl_no_rep_link">Yok</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;" data-i18n="lbl_commission_rate">Komisyon (%)</div>
+        <input id="o-commission-rate" type="number" lang="en" min="0" max="100" step="0.1" placeholder="" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;height:28px;box-sizing:border-box;background:white;text-align:right;" readonly>
+      </div>
+    </div>
   </div>
 
   <!-- Ürün tablosu wrapper -->
@@ -818,7 +830,7 @@ async function init() {
   if (profRes.data?.plan) userPlan = profRes.data.plan;
   console.log('[sales] companyName:', companyName, 'plan:', userPlan);
 
-  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts(), loadProjects()]);
+  await Promise.all([loadCustomers(), loadProducts(), loadWarehouses(), loadTaxRates(), loadOrders(), loadPayments(), loadCashBankAccounts(), loadProjects(), _loadSalesRepEarnedWhen()]);
   await loadVatRefs();
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -1223,7 +1235,7 @@ function updateCustomerSelects() {
     customerQA = QA.create(container, {
       items,
       placeholder: t('placeholder_search_customers') || 'Müşteri ara...',
-      onSelect(id) { document.getElementById('o-customer').value = id; setContactCurrency(id); renderProjectSelect(); },
+      onSelect(id) { document.getElementById('o-customer').value = id; setContactCurrency(id); renderProjectSelect(); _autoSelectCustomerRep(id); },
       onAdd(query) { openQACustomerModal(query); },
       addLabel(q) { return `+ "${q}" ${t('lbl_customer_add_new') || 'müşteri ekle'}`; },
     });
@@ -1364,6 +1376,21 @@ function setContactCurrency(contactId) {
   onCurrencyChange();
 }
 
+// Lazy: fetch sales_rep_settings.commission_earned_when once so the
+// save path can decide whether a brand-new invoiced order should land
+// at 'earned' immediately or wait at 'pending' for payment.
+async function _loadSalesRepEarnedWhen() {
+  try {
+    const { data } = await sb.from('sales_rep_settings')
+      .select('commission_earned_when')
+      .eq('company_id', companyId)
+      .maybeSingle();
+    window._salesRepEarnedWhen = data?.commission_earned_when || 'fully_paid';
+  } catch (e) {
+    window._salesRepEarnedWhen = 'fully_paid';
+  }
+}
+
 async function loadCompanyUsers() {
   const sel = document.getElementById('o-assigned');
   if (!sel || sel.dataset.loaded) return;
@@ -1376,6 +1403,54 @@ async function loadCompanyUsers() {
   sel.dataset.loaded = '1';
 }
 
+// Cache + dropdown populator for the Pazarlamacı (sales_rep) selector.
+// Loaded once per modal open; the form falls back to the company's
+// default rate when no rep is selected and to the rep's own rate when
+// the contact has no special override (handled by the resolve RPC at
+// save time).
+let _salesRepsCache = null;
+async function loadSalesRepsForOrder() {
+  const sel = document.getElementById('o-sales-rep');
+  if (!sel) return;
+  if (_salesRepsCache) return;
+  const { data } = await sb.from('sales_reps').select('id, name, commission_rate')
+    .eq('company_id', companyId).is('deleted_at', null).eq('is_active', true).order('name');
+  _salesRepsCache = data || [];
+  const placeholder = `<option value="">${t('lbl_no_rep_link') || 'Yok'}</option>`;
+  sel.innerHTML = placeholder + _salesRepsCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+}
+
+// Auto-fill the rep + commission_rate when the customer has a default
+// rep assigned. resolve_commission_rate walks contact-special →
+// rep-default → company-default. Fires when the customer is picked
+// and again whenever the user manually changes the rep dropdown.
+async function _resolveOrderCommission() {
+  const customerId = document.getElementById('o-customer')?.value || null;
+  const repId = document.getElementById('o-sales-rep')?.value || null;
+  const rateEl = document.getElementById('o-commission-rate');
+  if (!rateEl) return;
+  if (!repId) { rateEl.value = ''; return; }
+  const { data, error } = await sb.rpc('resolve_commission_rate', {
+    p_company_id: companyId,
+    p_contact_id: customerId,
+    p_sales_rep_id: repId,
+  });
+  if (error) { console.warn('resolve_commission_rate:', error.message); rateEl.value = ''; return; }
+  rateEl.value = data != null ? data : '';
+}
+
+function _onOrderRepChange() { _resolveOrderCommission(); }
+
+// Hooked from the customer-picker; pre-selects the customer's
+// default_sales_rep_id so the user doesn't have to pick twice.
+async function _autoSelectCustomerRep(customerId) {
+  if (!customerId) { _resolveOrderCommission(); return; }
+  const { data: c } = await sb.from('contacts').select('default_sales_rep_id').eq('id', customerId).maybeSingle();
+  const sel = document.getElementById('o-sales-rep');
+  if (sel && c?.default_sales_rep_id) sel.value = c.default_sales_rep_id;
+  _resolveOrderCommission();
+}
+
 function openOrderModal() {
   console.log('[sales] openOrderModal called');
   editingOrderId = null;
@@ -1386,6 +1461,11 @@ function openOrderModal() {
   const projSel = document.getElementById('o-project'); if (projSel) projSel.value = '';
   renderProjectSelect();
   document.getElementById('o-number').value = generateNextNumber(invoiceSettings.sales_number_format || 'INV0001', orders);
+  // Reset rep + commission for fresh order; loadSalesRepsForOrder is
+  // idempotent (cached on first call).
+  document.getElementById('o-sales-rep').value = '';
+  document.getElementById('o-commission-rate').value = '';
+  loadSalesRepsForOrder();
   loadCompanyUsers().then(() => {
     const sel = document.getElementById('o-assigned');
     if (sel && currentUserRole && ['employee','sales_rep'].includes(currentUserRole)) {
@@ -1632,6 +1712,36 @@ async function saveOrder() {
     notes: document.getElementById('o-notes').value.trim() || null,
     assigned_to: document.getElementById('o-assigned')?.value || null,
     project_id: document.getElementById('o-project')?.value || null,
+    // Sales rep snapshot — commission_rate is the resolved figure at
+    // save time; commission_amount = total × rate / 100. Status starts
+    // 'pending' for unpaid orders and 'earned' when the company's
+    // commission_earned_when=invoice_issued AND status is invoiced.
+    // We keep _earnedWhen lazy-loaded once per page from
+    // sales_rep_settings.commission_earned_when.
+    sales_rep_id: document.getElementById('o-sales-rep')?.value || null,
+    commission_rate: (() => {
+      const v = document.getElementById('o-commission-rate')?.value;
+      const n = parseFloat(v);
+      return isNaN(n) ? null : n;
+    })(),
+    commission_amount: (() => {
+      const v = document.getElementById('o-commission-rate')?.value;
+      const r = parseFloat(v);
+      if (isNaN(r) || !document.getElementById('o-sales-rep')?.value) return null;
+      const baseTotal = isForeign ? localTotal : total;
+      return Math.round((baseTotal * r / 100) * 100) / 100;
+    })(),
+    commission_status: (() => {
+      if (!document.getElementById('o-sales-rep')?.value) return null;
+      // 'invoice_issued' setting marks commission earned the moment
+      // the order is invoiced; otherwise it stays pending until the
+      // payment flow flips it (Phase 2 work — manual for MVP).
+      const earnedAt = window._salesRepEarnedWhen || 'fully_paid';
+      if (earnedAt === 'invoice_issued' && (submittedStatus === 'invoiced' || submittedStatus === 'paid')) {
+        return 'earned';
+      }
+      return 'pending';
+    })(),
     created_by: user.id
   };
   // Mark as invoice once status reaches invoiced/paid (flag never resets)
@@ -1826,6 +1936,12 @@ async function editOrder(id) {
   taxSel.value = matchOpt ? matchOpt.value : '';
   document.getElementById('o-discount').value = order.discount ? fmtNum(order.discount) : '';
   document.getElementById('o-notes').value = order.notes || '';
+  // Restore rep + persisted commission_rate from the snapshot stored
+  // when the order was last saved. We render the historical figure
+  // even when the rep / contact rates have since changed.
+  await loadSalesRepsForOrder();
+  document.getElementById('o-sales-rep').value = order.sales_rep_id || '';
+  document.getElementById('o-commission-rate').value = order.commission_rate != null ? order.commission_rate : '';
   loadCompanyUsers().then(() => {
     const sel = document.getElementById('o-assigned');
     if (sel) sel.value = order.assigned_to || '';

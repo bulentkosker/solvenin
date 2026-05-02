@@ -350,6 +350,14 @@ textarea{min-height:60px;resize:vertical}
         </div>
         <div class="field"><label data-i18n="col_payment_terms">Ödeme Vadesi (gün)</label><input type="number" lang="en" id="c-terms" value="30" min="0"></div>
         <div class="field"><label data-i18n="col_credit_limit">Kredi Limiti</label><input type="number" lang="en" id="c-credit" value="0" min="0" step="0.01"></div>
+        <div class="field"><label data-i18n="lbl_assigned_sales_rep">Atanmış Pazarlamacı</label>
+          <select id="c-sales-rep" onchange="_onContactRepChange()"><option value="" data-i18n="lbl_no_rep_link">Yok</option></select>
+        </div>
+        <div class="field" id="c-special-commission-row" style="display:none">
+          <label data-i18n="lbl_special_commission">Bu cari için özel komisyon oranı (%)</label>
+          <input type="number" lang="en" id="c-special-commission" min="0" max="100" step="0.1" placeholder="">
+          <div style="font-size:11px;color:var(--gray400);margin-top:4px" data-i18n="hint_special_commission">Boş bırakılırsa pazarlamacının kendi oranı uygulanır.</div>
+        </div>
         <div class="field full"><label data-i18n="col_address">Adres</label><textarea id="c-address"></textarea></div>
         <div class="field full"><label data-i18n="label_notes">Notlar</label><textarea id="c-notes"></textarea></div>
       </div>
@@ -407,7 +415,7 @@ async function init() {
 
   // loadContacts + loadBalances are independent — run in parallel so
   // page open is bounded by the slower of the two, not the sum.
-  await Promise.all([loadContacts(), loadBalances()]);
+  await Promise.all([loadContacts(), loadBalances(), _populateSalesRepDropdown()]);
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -587,6 +595,9 @@ function openContactModal() {
   document.getElementById('contact-modal-title').textContent = t('btn_new_contact') || 'Yeni Cari';
   document.getElementById('c-active').checked = true;
   document.getElementById('c-name').value = '';
+  document.getElementById('c-sales-rep').value = '';
+  document.getElementById('c-special-commission').value = '';
+  document.getElementById('c-special-commission-row').style.display = 'none';
   document.getElementById('c-is-customer').checked = true;
   document.getElementById('c-is-supplier').checked = false;
   // Personel checkbox sadece edit'te + is_employee=true ise görünür
@@ -631,8 +642,37 @@ function editContact(id) {
   document.getElementById('c-credit').value = c.credit_limit || 0;
   document.getElementById('c-address').value = c.address || '';
   document.getElementById('c-notes').value = c.notes || '';
+  document.getElementById('c-sales-rep').value = c.default_sales_rep_id || '';
+  document.getElementById('c-special-commission').value = c.sales_rep_commission_rate != null ? c.sales_rep_commission_rate : '';
+  // Special-rate row only meaningful when a rep is assigned.
+  document.getElementById('c-special-commission-row').style.display = c.default_sales_rep_id ? '' : 'none';
   if (window.formDirtyTracker) formDirtyTracker.init('contact-modal');
   openModal('contact-modal');
+}
+
+function _onContactRepChange() {
+  const sel = document.getElementById('c-sales-rep');
+  const row = document.getElementById('c-special-commission-row');
+  if (!row) return;
+  if (sel.value) row.style.display = '';
+  else {
+    row.style.display = 'none';
+    document.getElementById('c-special-commission').value = '';
+  }
+}
+
+async function _populateSalesRepDropdown() {
+  if (!companyId) return;
+  const { data } = await sb.from('sales_reps')
+    .select('id, name')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .eq('is_active', true)
+    .order('name');
+  const sel = document.getElementById('c-sales-rep');
+  if (!sel) return;
+  const placeholder = `<option value="">${t('lbl_no_rep_link') || 'Yok'}</option>`;
+  sel.innerHTML = placeholder + (data || []).map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 }
 
 async function saveContact() {
@@ -674,6 +714,17 @@ async function saveContact() {
     address: document.getElementById('c-address').value.trim() || null,
     notes: document.getElementById('c-notes').value.trim() || null,
     is_active: !!document.getElementById('c-active')?.checked,
+    default_sales_rep_id: document.getElementById('c-sales-rep').value || null,
+    sales_rep_commission_rate: (() => {
+      // Special rate only persists when a rep is assigned and a value
+      // is entered; otherwise the rep's own (or company default) rate
+      // applies via resolve_commission_rate.
+      const repId = document.getElementById('c-sales-rep').value;
+      const raw = document.getElementById('c-special-commission').value;
+      if (!repId || raw === '') return null;
+      const n = parseFloat(raw);
+      return isNaN(n) ? null : n;
+    })(),
   };
 
   try {
