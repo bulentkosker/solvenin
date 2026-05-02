@@ -111,37 +111,101 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--gray800);min-
   <header class="topbar">
     <div class="topbar-title">🎯 <span data-i18n="crm_title">CRM — Satış Pipeline</span></div>
     <div style="flex:1"></div>
-    <div class="view-toggle">
+    <div class="view-toggle" id="pipeline-view-toggle">
       <button class="active" onclick="setView('kanban',this)" data-i18n="crm_view_kanban">Kanban</button>
       <button onclick="setView('list',this)" data-i18n="crm_view_list">Liste</button>
     </div>
-    <button class="btn btn-primary" onclick="openOppModal()" data-i18n="crm_new_opportunity">+ Yeni Fırsat</button>
+    <button class="btn btn-primary" id="topbar-new-opp" onclick="openOppModal()" data-i18n="crm_new_opportunity">+ Yeni Fırsat</button>
+    <button class="btn btn-primary" id="topbar-new-rep" onclick="openRepModal()" style="display:none" data-i18n="title_new_sales_rep">+ Yeni Pazarlamacı</button>
   </header>
 
   <div class="content">
-    <div class="toolbar">
-      <input type="text" id="crm-search" placeholder="🔍 Fırsat ara..." data-i18n-placeholder="crm_search_placeholder" oninput="renderAll()" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:200px">
-      <select id="crm-filter-assigned" onchange="renderAll()" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:12px"><option value="" data-i18n="crm_filter_all_reps">Tüm Temsilciler</option></select>
+    <!-- CRM TOP TABS -->
+    <div style="display:flex;border-bottom:2px solid var(--gray200);margin-bottom:12px;gap:4px">
+      <button id="crm-tab-pipeline" class="crm-tab active" onclick="switchCrmTab('pipeline',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px;font-family:inherit" data-i18n="crm_tab_pipeline">🎯 Fırsatlar</button>
+      <button id="crm-tab-reps" class="crm-tab" onclick="switchCrmTab('reps',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray500);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit" data-i18n="nav_sales_reps">👥 Pazarlamacılar</button>
     </div>
 
-    <!-- KANBAN -->
-    <div class="kanban" id="kanban-view"></div>
+    <!-- PIPELINE PANE (existing) -->
+    <div id="pane-pipeline" class="crm-pane" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="toolbar">
+        <input type="text" id="crm-search" placeholder="🔍 Fırsat ara..." data-i18n-placeholder="crm_search_placeholder" oninput="renderAll()" style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:200px">
+        <select id="crm-filter-assigned" onchange="renderAll()" style="padding:6px 10px;border:1px solid var(--gray200);border-radius:8px;font-size:12px"><option value="" data-i18n="crm_filter_all_reps">Tüm Temsilciler</option></select>
+      </div>
 
-    <!-- LIST -->
-    <div class="list-view" id="list-view" style="overflow:auto;flex:1">
-      <table>
-        <thead><tr>
-          <th data-i18n="crm_col_customer">MÜŞTERİ</th>
-          <th data-i18n="crm_col_opportunity">FIRSAT</th>
-          <th data-i18n="crm_col_stage">AŞAMA</th>
-          <th data-i18n="crm_col_amount">TAHMİNİ TUTAR</th>
-          <th data-i18n="crm_col_probability">OLASILIK</th>
-          <th data-i18n="crm_col_assigned">TEMSİLCİ</th>
-          <th data-i18n="crm_col_close">KAPANIŞ</th>
-          <th data-i18n="crm_col_last_activity">SON AKTİVİTE</th>
-        </tr></thead>
-        <tbody id="list-tbody"></tbody>
-      </table>
+      <!-- KANBAN -->
+      <div class="kanban" id="kanban-view"></div>
+
+      <!-- LIST -->
+      <div class="list-view" id="list-view" style="overflow:auto;flex:1">
+        <table>
+          <thead><tr>
+            <th data-i18n="crm_col_customer">MÜŞTERİ</th>
+            <th data-i18n="crm_col_opportunity">FIRSAT</th>
+            <th data-i18n="crm_col_stage">AŞAMA</th>
+            <th data-i18n="crm_col_amount">TAHMİNİ TUTAR</th>
+            <th data-i18n="crm_col_probability">OLASILIK</th>
+            <th data-i18n="crm_col_assigned">TEMSİLCİ</th>
+            <th data-i18n="crm_col_close">KAPANIŞ</th>
+            <th data-i18n="crm_col_last_activity">SON AKTİVİTE</th>
+          </tr></thead>
+          <tbody id="list-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALES REPS PANE -->
+    <div id="pane-reps" class="crm-pane" style="display:none;flex:1;flex-direction:column;min-height:0">
+      <div class="toolbar">
+        <input type="text" id="reps-search" oninput="renderReps()" placeholder="🔍 Pazarlamacı ara..." style="padding:6px 12px;border:1px solid var(--gray200);border-radius:8px;font-size:12px;width:240px">
+        <label style="font-size:12px;display:flex;gap:6px;align-items:center;cursor:pointer">
+          <input type="checkbox" id="reps-only-active" checked onchange="renderReps()"> <span data-i18n="filter_only_active">Sadece aktifler</span>
+        </label>
+      </div>
+      <div class="list-view" style="overflow:auto;flex:1">
+        <table>
+          <thead><tr>
+            <th data-i18n="label_name">AD</th>
+            <th data-i18n="label_phone">TELEFON</th>
+            <th data-i18n="label_email">EMAIL</th>
+            <th class="text-right" data-i18n="lbl_commission_rate">KOMİSYON %</th>
+            <th data-i18n="lbl_linked_employee">PERSONEL</th>
+            <th data-i18n="col_status">DURUM</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="reps-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SALES REP MODAL -->
+<div class="modal-overlay" id="rep-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title" id="rep-modal-title" data-i18n="title_new_sales_rep">Yeni Pazarlamacı</span>
+      <button class="modal-close" onclick="closeModal('rep-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full"><label data-i18n="lbl_name_required">Ad *</label><input type="text" id="rep-name" placeholder="Ahmet Yılmaz"></div>
+        <div class="field"><label data-i18n="label_phone">Telefon</label><input type="text" id="rep-phone" placeholder="+90 ..."></div>
+        <div class="field"><label data-i18n="label_email">Email</label><input type="email" id="rep-email" placeholder="ahmet@..."></div>
+        <div class="field"><label data-i18n="lbl_commission_rate">Komisyon Oranı (%)</label><input type="number" lang="en" id="rep-commission" min="0" max="100" step="0.1" placeholder=""></div>
+        <div class="field"><label data-i18n="lbl_linked_employee">Bağlı Çalışan</label><select id="rep-employee"><option value="" data-i18n="placeholder_external_rep">Bordrosu yok / Dış pazarlamacı</option></select></div>
+        <div class="field full"><label data-i18n="lbl_notes">Notlar</label><textarea id="rep-notes" rows="2"></textarea></div>
+        <div class="field full">
+          <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="rep-active" checked> <span data-i18n="lbl_active">Aktif</span>
+          </label>
+          <div style="font-size:11px;color:var(--gray400);margin-top:4px" data-i18n="hint_commission_default">Boş bırakılırsa şirket varsayılan oranı uygulanır.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('rep-modal')" data-i18n="crm_btn_cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveRep()" data-i18n="crm_btn_save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -316,7 +380,7 @@ async function init() {
   const active = saved ? (companies.find(c => c.company_id === saved) || companies[0]) : companies[0];
   companyId = active.company_id;
 
-  await Promise.all([loadOpps(), loadContacts()]);
+  await Promise.all([loadOpps(), loadContacts(), loadSalesReps(), loadEmployees()]);
 
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
@@ -930,6 +994,183 @@ function showToast(msg, type) {
   document.body.appendChild(el);
   requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===== SALES REPS =====
+let salesReps = [], employees = [];
+let editingRepId = null;
+
+async function loadSalesReps() {
+  if (!companyId) return;
+  const { data } = await sb.from('sales_reps').select('*')
+    .eq('company_id', companyId).is('deleted_at', null).order('name');
+  salesReps = data || [];
+  // Renders only when the reps pane is being rendered; safe to call.
+  if (document.getElementById('reps-tbody')) renderReps();
+}
+
+async function loadEmployees() {
+  if (!companyId) return;
+  const { data } = await sb.from('employees')
+    .select('id, first_name, last_name')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .order('first_name');
+  employees = data || [];
+  // Populate the employee dropdown in the rep modal once.
+  const sel = document.getElementById('rep-employee');
+  if (sel) {
+    const placeholder = `<option value="">${t('placeholder_external_rep') || 'Bordrosu yok / Dış pazarlamacı'}</option>`;
+    sel.innerHTML = placeholder + employees.map(e => `<option value="${e.id}">${[e.first_name, e.last_name].filter(Boolean).join(' ')}</option>`).join('');
+  }
+}
+
+function switchCrmTab(tab, btn) {
+  document.querySelectorAll('.crm-tab').forEach(b => {
+    b.classList.remove('active');
+    b.style.color = 'var(--gray500)';
+    b.style.fontWeight = '500';
+    b.style.borderBottomColor = 'transparent';
+  });
+  if (btn) {
+    btn.classList.add('active');
+    btn.style.color = 'var(--primary)';
+    btn.style.fontWeight = '600';
+    btn.style.borderBottomColor = 'var(--primary)';
+  }
+  document.getElementById('pane-pipeline').style.display = tab === 'pipeline' ? 'flex' : 'none';
+  document.getElementById('pane-reps').style.display = tab === 'reps' ? 'flex' : 'none';
+  // Topbar: show the right "+ New" button + pipeline-only view toggle.
+  document.getElementById('pipeline-view-toggle').style.display = tab === 'pipeline' ? '' : 'none';
+  document.getElementById('topbar-new-opp').style.display = tab === 'pipeline' ? '' : 'none';
+  document.getElementById('topbar-new-rep').style.display = tab === 'reps' ? '' : 'none';
+  if (tab === 'reps') renderReps();
+}
+
+function renderReps() {
+  const tbody = document.getElementById('reps-tbody');
+  if (!tbody) return;
+  const q = (document.getElementById('reps-search')?.value || '').toLowerCase();
+  const onlyActive = document.getElementById('reps-only-active')?.checked !== false;
+  const list = salesReps.filter(r => {
+    if (onlyActive && r.is_active === false) return false;
+    if (q && !(r.name || '').toLowerCase().includes(q) && !(r.email || '').toLowerCase().includes(q) && !(r.phone || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><h3>${t('no_sales_reps') || 'Henüz pazarlamacı yok'}</h3><p>${t('no_sales_reps_sub') || 'İlk pazarlamacınızı ekleyin.'}</p></div></td></tr>`;
+    return;
+  }
+  const empById = Object.fromEntries(employees.map(e => [e.id, e]));
+  tbody.innerHTML = list.map(r => {
+    const emp = r.employee_id ? empById[r.employee_id] : null;
+    const empLabel = emp ? [emp.first_name, emp.last_name].filter(Boolean).join(' ') : '<span style="color:var(--gray400);font-size:11px">—</span>';
+    const rate = r.commission_rate != null ? r.commission_rate + '%' : '<span style="color:var(--gray400)">default</span>';
+    const status = r.is_active === false
+      ? `<span class="badge" style="background:#fef3c7;color:#92400e">${t('status_inactive')||'Pasif'}</span>`
+      : `<span class="badge" style="background:#dcfce7;color:#166534">${t('status_active')||'Aktif'}</span>`;
+    return `<tr>
+      <td><strong>${escapeRep(r.name)}</strong></td>
+      <td style="color:var(--gray500);font-size:12px">${escapeRep(r.phone || '—')}</td>
+      <td style="color:var(--gray500);font-size:12px">${escapeRep(r.email || '—')}</td>
+      <td class="text-right">${rate}</td>
+      <td>${empLabel}</td>
+      <td>${status}</td>
+      <td class="text-right">
+        <div class="dot-menu" onclick="event.stopPropagation()">
+          <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
+          <div class="dot-menu-list">
+            <button class="dot-menu-item" onclick="closeDotMenus();editRep('${r.id}')">✏️ ${t('crm_btn_edit')||'Düzenle'}</button>
+            <button class="dot-menu-item" onclick="closeDotMenus();toggleRepActive('${r.id}')">${r.is_active === false ? '✅ ' + (t('btn_set_active')||'Aktif Yap') : '⏸️ ' + (t('btn_set_inactive')||'Pasif Yap')}</button>
+            <button class="dot-menu-item danger" onclick="closeDotMenus();deleteRep('${r.id}','${(r.name||'').replace(/'/g, "\\'")}')">🗑️ ${t('btn_delete')||'Sil'}</button>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  if (window.attachContextMenu) attachContextMenu(tbody);
+}
+
+function escapeRep(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openRepModal() {
+  editingRepId = null;
+  document.getElementById('rep-modal-title').textContent = t('title_new_sales_rep') || 'Yeni Pazarlamacı';
+  document.getElementById('rep-name').value = '';
+  document.getElementById('rep-phone').value = '';
+  document.getElementById('rep-email').value = '';
+  document.getElementById('rep-commission').value = '';
+  document.getElementById('rep-employee').value = '';
+  document.getElementById('rep-notes').value = '';
+  document.getElementById('rep-active').checked = true;
+  openModal('rep-modal');
+}
+
+function editRep(id) {
+  const r = salesReps.find(x => x.id === id);
+  if (!r) return;
+  editingRepId = id;
+  document.getElementById('rep-modal-title').textContent = t('title_edit_sales_rep') || 'Pazarlamacıyı Düzenle';
+  document.getElementById('rep-name').value = r.name || '';
+  document.getElementById('rep-phone').value = r.phone || '';
+  document.getElementById('rep-email').value = r.email || '';
+  document.getElementById('rep-commission').value = r.commission_rate != null ? r.commission_rate : '';
+  document.getElementById('rep-employee').value = r.employee_id || '';
+  document.getElementById('rep-notes').value = r.notes || '';
+  document.getElementById('rep-active').checked = r.is_active !== false;
+  openModal('rep-modal');
+}
+
+async function saveRep() {
+  const name = document.getElementById('rep-name').value.trim();
+  if (!name) { showToast(t('toast_name_required') || 'İsim gerekli', 'error'); return; }
+  const rateRaw = document.getElementById('rep-commission').value;
+  const payload = {
+    company_id: companyId,
+    name,
+    phone: document.getElementById('rep-phone').value.trim() || null,
+    email: document.getElementById('rep-email').value.trim() || null,
+    commission_rate: rateRaw === '' ? null : parseFloat(rateRaw),
+    employee_id: document.getElementById('rep-employee').value || null,
+    notes: document.getElementById('rep-notes').value.trim() || null,
+    is_active: document.getElementById('rep-active').checked,
+    updated_at: new Date().toISOString(),
+  };
+  let err;
+  if (editingRepId) {
+    ({ error: err } = await sb.from('sales_reps').update(payload).eq('id', editingRepId));
+  } else {
+    payload.created_by = currentUser?.id || null;
+    ({ error: err } = await sb.from('sales_reps').insert(payload));
+  }
+  if (err) { showToast(getErrorMessage(err), 'error'); return; }
+  closeModal('rep-modal');
+  showToast(t('toast_saved') || 'Kaydedildi ✓', 'success');
+  await loadSalesReps();
+}
+
+async function toggleRepActive(id) {
+  const r = salesReps.find(x => x.id === id);
+  if (!r) return;
+  const { error } = await sb.from('sales_reps').update({ is_active: !(r.is_active !== false) }).eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  await loadSalesReps();
+}
+
+async function deleteRep(id, name) {
+  const ok = await window.showConfirm(
+    (t('confirm_delete_sales_rep') || '"{name}" pazarlamacısını çöp kutusuna taşımak istediğinize emin misiniz?').replace('{name}', name || ''),
+    t('btn_delete') || 'Sil'
+  );
+  if (!ok) return;
+  const { error } = await sb.from('sales_reps')
+    .update({ deleted_at: new Date().toISOString(), deleted_by: currentUser?.id || null })
+    .eq('id', id);
+  if (error) { showToast(getErrorMessage(error), 'error'); return; }
+  showToast(t('toast_sales_rep_deleted') || 'Pazarlamacı çöp kutusuna taşındı', 'success');
+  await loadSalesReps();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
