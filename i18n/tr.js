@@ -1193,6 +1193,8 @@ window.T.tr = {
     nav_users:'Kullanıcılar', users_add_title:'Kullanıcı Ekle', users_add_desc:'Şirketiniz için yeni bir kullanıcı hesabı oluşturun.',
     users_current_title:'Ekip Üyeleri',
     lbl_email:'E-posta', lbl_role:'Rol', lbl_fullname:'Ad Soyad', lbl_password:'Şifre',
+    toast_no_payment_account:'Ödeme yapacağınız hesap yok. Yöneticinizden yetki isteyin.',
+    dashboard_no_visible_data:'Bu şirkette görüntüleyecek veriniz yok',
     btn_account_permissions:'Hesap Yetkileri',
     title_user_account_perms:'{name} için Hesap Yetkileri',
     desc_admin_full_access:'Owner ve admin kullanıcılar tüm hesaplara otomatik erişir.',

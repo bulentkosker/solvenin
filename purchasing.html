@@ -1123,19 +1123,45 @@ function updateSupplierSelects() {
 }
 
 // ===== CASH & BANK INTEGRATION =====
+// Account dropdowns in receive + standalone payment modals honour
+// account_permissions via the access RPCs. Only rows where the user
+// can post a transaction surface; an empty list shows the "ask
+// admin" option text instead of a usable picker.
 async function loadCashBankAccounts() {
-  const { data: regs } = await sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true).order('name');
-  cashRegisters = regs || [];
-  const { data: accs } = await sb.from('bank_accounts')
-    .select('id,account_name,currency_code,bank_id,banks(name)')
-    .eq('company_id', companyId).eq('is_active', true).order('account_name');
-  bankAccounts = accs || [];
+  const [regsRes, accsRes] = await Promise.all([
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
+  ]);
+  cashRegisters = (regsRes.data || []).filter(r => r.is_active !== false && r.can_create_transaction !== false);
+  const accBase = (accsRes.data || []).filter(a => a.is_active !== false && a.can_create_transaction !== false);
 
+  let banksById = {};
+  if (accBase.length) {
+    const ids = accBase.map(a => a.id);
+    const { data: bidRows } = await sb.from('bank_accounts').select('id, bank_id').in('id', ids);
+    const bankIdMap = Object.fromEntries((bidRows || []).map(r => [r.id, r.bank_id]));
+    const bankIds = [...new Set(Object.values(bankIdMap).filter(Boolean))];
+    if (bankIds.length) {
+      const { data: bnks } = await sb.from('banks').select('id, name').in('id', bankIds);
+      banksById = Object.fromEntries((bnks || []).map(b => [b.id, b]));
+    }
+    bankAccounts = accBase.map(a => ({ ...a, bank_id: bankIdMap[a.id] || null, banks: banksById[bankIdMap[a.id]] || null }));
+  } else {
+    bankAccounts = [];
+  }
+
+  const emptyMsg = t('toast_no_payment_account') || 'Ödeme yapacağınız hesap yok. Yöneticinizden yetki isteyin.';
   const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
-  document.getElementById('recv-pay-register').innerHTML = `<option value="">${t('select_register')}</option>` + regOpts;
+  const regSel = document.getElementById('recv-pay-register');
+  if (regSel) regSel.innerHTML = cashRegisters.length
+    ? `<option value="">${t('select_register')}</option>` + regOpts
+    : `<option value="">${emptyMsg}</option>`;
 
-  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.banks?.name ? a.banks.name+' · ':'' }${a.account_name} (${a.currency_code})</option>`).join('');
-  document.getElementById('recv-pay-account').innerHTML = `<option value="">${t('select_account')}</option>` + accOpts;
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.banks?.name ? a.banks.name+' · ':''}${a.account_name} (${a.currency_code})</option>`).join('');
+  const accSel = document.getElementById('recv-pay-account');
+  if (accSel) accSel.innerHTML = bankAccounts.length
+    ? `<option value="">${t('select_account')}</option>` + accOpts
+    : `<option value="">${emptyMsg}</option>`;
 }
 
 function onRecvPayMethodChange() {
@@ -1283,11 +1309,17 @@ function openRecvPaymentModal(orderId, amount) {
   document.getElementById('po-pay-method').value = 'bank';
   document.getElementById('po-pay-ref').value = '';
   document.getElementById('po-pay-notes').value = '';
-  // Populate register/account dropdowns
+  // Populate register/account dropdowns from the same cache as the
+  // receive-payment modal — already filtered by account_permissions.
+  const emptyMsg = t('toast_no_payment_account') || 'Ödeme yapacağınız hesap yok. Yöneticinizden yetki isteyin.';
   const regOpts = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
-  document.getElementById('po-pay-register').innerHTML = `<option value="">${t('select_register')||'Kasa seç...'}</option>` + regOpts;
-  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.account_name} (${a.currency_code})</option>`).join('');
-  document.getElementById('po-pay-account').innerHTML = `<option value="">${t('select_account')||'Hesap seç...'}</option>` + accOpts;
+  document.getElementById('po-pay-register').innerHTML = cashRegisters.length
+    ? `<option value="">${t('select_register')||'Kasa seç...'}</option>` + regOpts
+    : `<option value="">${emptyMsg}</option>`;
+  const accOpts = bankAccounts.map(a => `<option value="${a.id}">${a.banks?.name ? a.banks.name+' · ':''}${a.account_name} (${a.currency_code})</option>`).join('');
+  document.getElementById('po-pay-account').innerHTML = bankAccounts.length
+    ? `<option value="">${t('select_account')||'Hesap seç...'}</option>` + accOpts
+    : `<option value="">${emptyMsg}</option>`;
   onPoPayMethodChange();
   openModal('po-payment-modal');
 }

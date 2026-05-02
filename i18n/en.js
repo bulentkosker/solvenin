@@ -1281,6 +1281,8 @@ window.T.en = {
     nav_users:'Users', users_add_title:'Add User', users_add_desc:'Create a new user account for your company.',
     users_current_title:'Team Members',
     lbl_email:'Email', lbl_role:'Role', lbl_fullname:'Full Name', lbl_password:'Password',
+    toast_no_payment_account:'No payment accounts available. Ask your administrator for access.',
+    dashboard_no_visible_data:'No data visible to you in this company',
     btn_account_permissions:'Account Permissions',
     title_user_account_perms:'Account Permissions for {name}',
     desc_admin_full_access:'Owner and admin users have automatic full access to all accounts.',
