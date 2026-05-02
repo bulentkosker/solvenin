@@ -1161,6 +1161,13 @@ async function init() {
   ls.style.opacity = '0';
   setTimeout(() => ls.style.display = 'none', 200);
 
+  // Cache module permissions before stats render — every widget reads
+  // hasModulePerm() to decide whether to fetch and render. Owner/admin
+  // get every module=true from the RPC; the helper falls back to
+  // closed-by-default if the cache is missing so a network blip
+  // doesn't accidentally expose data.
+  await loadModulePerms();
+
   await loadDashboardStats();
   loadTicker();
   initChart();
@@ -1169,6 +1176,35 @@ async function init() {
   const savedLang = localStorage.getItem('solvenin_lang') || 'en';
   if (typeof setLang === 'function') setLang(savedLang);
   else applyTranslations();
+}
+
+// ===== MODULE PERMISSIONS =====
+window._modulePerms = {};
+
+async function loadModulePerms() {
+  if (!companyId) return;
+  try {
+    const { data } = await sb.rpc('get_my_module_permissions', { p_company_id: companyId });
+    const out = {};
+    (data || []).forEach(row => {
+      out[row.module] = {
+        view: !!row.can_view,
+        create: !!row.can_create,
+        edit: !!row.can_edit,
+        delete: !!row.can_delete,
+      };
+    });
+    window._modulePerms = out;
+  } catch (e) {
+    console.error('loadModulePerms failed:', e);
+    window._modulePerms = {};
+  }
+}
+
+function hasModulePerm(module, perm = 'view') {
+  const m = window._modulePerms?.[module];
+  if (!m) return false;
+  return !!m[perm];
 }
 
 // ===== ONBOARDING / DELETED ACCOUNT GATE =====
@@ -1415,14 +1451,14 @@ document.addEventListener('companyLogoChanged', applyDashboardLogo);
 
 // ===== STAT CARDS =====
 const STAT_ALL = [
-  {id:'revenue',   icon:'💰', color:'blue',   i18n:'dash_total_revenue',    desc:'All-time sales total'},
-  {id:'orders',    icon:'📋', color:'green',  i18n:'dash_active_orders',    desc:'Non-cancelled orders'},
-  {id:'cash',      icon:'🏦', color:'orange', i18n:'dash_cash_balance',     desc:'Cash registers + bank accounts'},
-  {id:'pending',   icon:'⏳', color:'purple', i18n:'dash_pending_payments', desc:'Invoiced but not collected'},
-  {id:'customers', icon:'👥', color:'blue',   i18n:'dash_total_customers',  desc:'Total customers'},
-  {id:'purchases', icon:'🛒', color:'purple', i18n:'dash_total_purchases',  desc:'All-time purchase total'},
-  {id:'month_rev', icon:'📈', color:'green',  i18n:'dash_this_month_rev',   desc:'Revenue this month'},
-  {id:'low_stock', icon:'📦', color:'orange', i18n:'dash_low_stock',        desc:'Products below min stock'},
+  {id:'revenue',   icon:'💰', color:'blue',   i18n:'dash_total_revenue',    desc:'All-time sales total',                module:'sales'},
+  {id:'orders',    icon:'📋', color:'green',  i18n:'dash_active_orders',    desc:'Non-cancelled orders',                module:'sales'},
+  {id:'cash',      icon:'🏦', color:'orange', i18n:'dash_cash_balance',     desc:'Cash registers + bank accounts',      module:'cash_bank'},
+  {id:'pending',   icon:'⏳', color:'purple', i18n:'dash_pending_payments', desc:'Invoiced but not collected',          module:'sales'},
+  {id:'customers', icon:'👥', color:'blue',   i18n:'dash_total_customers',  desc:'Total customers',                     module:'sales'},
+  {id:'purchases', icon:'🛒', color:'purple', i18n:'dash_total_purchases',  desc:'All-time purchase total',             module:'purchasing'},
+  {id:'month_rev', icon:'📈', color:'green',  i18n:'dash_this_month_rev',   desc:'Revenue this month',                  module:'sales'},
+  {id:'low_stock', icon:'📦', color:'orange', i18n:'dash_low_stock',        desc:'Products below min stock',            module:'inventory'},
 ];
 const STAT_DEFAULTS = ['revenue','orders','cash','pending'];
 
@@ -1469,7 +1505,17 @@ document.getElementById('stat-modal').addEventListener('click', function(e){ if(
 function renderStatCards(data){
   const prefs = sPrefs();
   const grid = document.getElementById('stats-grid');
-  grid.innerHTML = prefs.slice(0,4).map(id => {
+  // Module-gated cards drop out before slicing to 4 so a user without
+  // sales perms sees the next-best-card instead of an empty slot.
+  const visibleIds = prefs.filter(id => {
+    const def = STAT_ALL.find(s => s.id === id);
+    return def && (!def.module || hasModulePerm(def.module, 'view'));
+  });
+  if (!visibleIds.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:32px;text-align:center;color:var(--gray400);font-size:13px">${t('dashboard_no_visible_data') || 'Bu şirkette görüntüleyecek veriniz yok'}</div>`;
+    return;
+  }
+  grid.innerHTML = visibleIds.slice(0,4).map(id => {
     const def = STAT_ALL.find(s => s.id === id);
     if(!def) return '';
     const val = data[id]?.val ?? '—';
@@ -1501,10 +1547,14 @@ async function loadDashboardStats(){
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
     const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+    // Cash/bank rows go through the access RPC so balances respect
+    // can_view_balance — current_balance comes back NULL for hidden
+    // rows and the totals below naturally exclude them. Other reads
+    // are gated by RLS at the table level for now (Phase B sweep).
     const [ordersRes, registersRes, accountsRes, paymentsRes, customersRes, purchasesRes, productsRes] = await Promise.all([
       sb.from('sales_orders').select('id,total,status,created_at').eq('company_id', companyId).is('deleted_at', null),
-      sb.from('cash_registers').select('current_balance').eq('company_id', companyId).eq('is_active', true),
-      sb.from('bank_accounts').select('current_balance').eq('company_id', companyId).eq('is_active', true),
+      sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+      sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
       sb.from('payments').select('id,amount,order_id').eq('company_id', companyId).is('deleted_at', null),
       sb.from('contacts').select('id, created_at').eq('company_id', companyId).eq('is_customer', true).is('deleted_at', null),
       sb.from('purchase_orders').select('id,total,created_at').eq('company_id', companyId).is('deleted_at', null),
@@ -1512,8 +1562,10 @@ async function loadDashboardStats(){
     ]);
 
     const orders    = ordersRes.data || [];
-    const registers = registersRes.data || [];
-    const bankAccts = accountsRes.data || [];
+    // Filter to active rows here — the cashbank module already does this
+    // for its grid; the totals card matches that semantics.
+    const registers = (registersRes.data || []).filter(r => r.is_active !== false);
+    const bankAccts = (accountsRes.data || []).filter(a => a.is_active !== false);
     const payments  = paymentsRes.data || [];
     const customers = customersRes.data || [];
     const purchases = purchasesRes.data || [];
@@ -1809,22 +1861,56 @@ async function loadCategoryRevenue(){
 async function loadCashBankStatus(){
   const wrap = document.getElementById('cash-bank-cards');
   if (!wrap) return;
+  // Module-gated: hide the section entirely when the user can't see
+  // cash_bank. The card container's surrounding panel is left alone
+  // so the layout grid doesn't collapse oddly — empty body is fine.
+  if (!hasModulePerm('cash_bank', 'view')) {
+    wrap.innerHTML = '';
+    return;
+  }
   try {
     const [regs, banks, ct, bt] = await Promise.all([
-      sb.from('cash_registers').select('id, name, current_balance, currency_code').eq('company_id', companyId).eq('is_active', true),
-      sb.from('bank_accounts').select('id, account_name, current_balance, currency_code, banks(name)').eq('company_id', companyId).eq('is_active', true),
+      sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+      sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
       sb.from('cash_transactions').select('register_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
       sb.from('bank_transactions').select('account_id, amount, type, transaction_date').eq('company_id', companyId).gte('transaction_date', new Date(Date.now()-7*86400000).toISOString()).is('deleted_at', null),
     ]);
     const cashTx = ct.data || []; const bankTx = bt.data || [];
+    const accBase = (banks.data || []).filter(a => a.is_active !== false);
+    let banksById = {};
+    if (accBase.length) {
+      const ids = accBase.map(a => a.id);
+      const { data: bidRows } = await sb.from('bank_accounts').select('id, bank_id').in('id', ids);
+      const bankIdMap = Object.fromEntries((bidRows || []).map(r => [r.id, r.bank_id]));
+      const bankIds = [...new Set(Object.values(bankIdMap).filter(Boolean))];
+      if (bankIds.length) {
+        const { data: bnks } = await sb.from('banks').select('id, name').in('id', bankIds);
+        banksById = Object.fromEntries((bnks || []).map(b => [b.id, b]));
+      }
+      accBase.forEach(a => { a.bank_id = bankIdMap[a.id] || null; });
+    }
+
     const cards = [];
-    (regs.data||[]).forEach(r => cards.push({ id:'c-'+r.id, kind:'💵', name:r.name, bal:r.current_balance, cur:r.currency_code, spark: spark7(cashTx.filter(t=>t.register_id===r.id)) }));
-    (banks.data||[]).forEach(b => cards.push({ id:'b-'+b.id, kind:'🏦', name:b.account_name+(b.banks?.name?` · ${b.banks.name}`:''), bal:b.current_balance, cur:b.currency_code, spark: spark7(bankTx.filter(t=>t.account_id===b.id)) }));
+    (regs.data||[]).filter(r => r.is_active !== false).forEach(r => cards.push({
+      id:'c-'+r.id, kind:'💵', name:r.name,
+      bal: r.can_view_balance === false ? null : r.current_balance,
+      cur: r.currency_code,
+      hidden: r.can_view_balance === false,
+      spark: r.can_view_balance === false ? new Array(7).fill(0) : spark7(cashTx.filter(t=>t.register_id===r.id)),
+    }));
+    accBase.forEach(b => cards.push({
+      id:'b-'+b.id, kind:'🏦',
+      name: b.account_name + (banksById[b.bank_id]?.name ? ` · ${banksById[b.bank_id].name}` : ''),
+      bal: b.can_view_balance === false ? null : b.current_balance,
+      cur: b.currency_code,
+      hidden: b.can_view_balance === false,
+      spark: b.can_view_balance === false ? new Array(7).fill(0) : spark7(bankTx.filter(t=>t.account_id===b.id)),
+    }));
     if (!cards.length){ wrap.innerHTML = `<div style="color:var(--gray400);padding:12px">${t('no_data')||'Aktif kasa veya banka yok'}</div>`; return; }
     wrap.innerHTML = cards.map(c => `
       <div class="cb-card">
         <div class="cb-name">${c.kind} ${c.name}</div>
-        <div class="cb-bal">${fmtMoneyCur(c.bal, c.cur)}</div>
+        <div class="cb-bal">${c.hidden ? (t('balance_hidden') || '***') : fmtMoneyCur(c.bal, c.cur)}</div>
         <div style="position:relative;height:40px"><canvas id="${c.id}-spark"></canvas></div>
       </div>`).join('');
     cards.forEach(c => {
