@@ -1062,17 +1062,23 @@ async function init() {
   // Load companies + data queries in parallel.
   // Load active + inactive (archive); soft-deleted excluded. Render shows
   // inactive rows with a "Pasif" badge so users can reactivate them.
-  const [, registersRes, banksRes, accountsRes, coaRes, defaultsRes] = await Promise.all([
+  // Cash registers + bank accounts come from access RPCs (filtered by
+  // account_permissions; owner/admin bypass at DB layer). The RPCs
+  // null out current_balance for can_view_balance=false rows so a UI
+  // bug can't accidentally leak balances. Bank rows lack bank_id, so
+  // we supplement that one non-sensitive field via a small follow-up
+  // query for the tree grouping in renderBankTree.
+  const [, registersRes, banksRes, bankAccessRes, coaRes, defaultsRes] = await Promise.all([
     loadCompanies(),
-    sb.from('cash_registers').select('*').eq('company_id', companyId).is('deleted_at', null).order('created_at'),
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
     sb.from('banks').select('*').eq('company_id', companyId).is('deleted_at', null).order('name'),
-    sb.from('bank_accounts').select('*').eq('company_id', companyId).is('deleted_at', null).order('account_name'),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
     sb.from('chart_of_accounts').select('id, code, name, name_local, type, parent_id').eq('company_id', companyId).in('type', ['revenue','expense','cost']).eq('is_active', true).is('deleted_at', null).order('code'),
     sb.from('companies').select('default_salary_account_id, default_advance_account_id, base_currency').eq('id', companyId).single(),
   ]);
   registers = registersRes.data || [];
   banks     = banksRes.data || [];
-  accounts  = accountsRes.data || [];
+  accounts  = await _attachBankIds(bankAccessRes.data || []);
   coaAll    = coaRes.data || [];
   coaById   = Object.fromEntries(coaAll.map(a => [a.id, a]));
   companyDefaults = {
@@ -1137,18 +1143,32 @@ function renderProjectSelects() {
   });
 }
 
+// Per-row access RPCs return the privacy-filtered slice the user can
+// see. They're the single source of truth for cashbank list rendering;
+// any direct SELECT * FROM cash_registers / bank_accounts here would
+// bypass account_permissions and leak balances on the wire.
 async function loadRegisters() {
-  // Load active + inactive (archive); soft-deleted excluded.
-  const { data } = await sb.from('cash_registers').select('*').eq('company_id', companyId).is('deleted_at', null).order('created_at');
+  const { data } = await sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId });
   registers = data || [];
   renderCashGrid();
+}
+
+// Bank tree groups accounts by bank — bank_id isn't returned by the
+// access RPC (it's not balance-sensitive), so we attach it via a tiny
+// supplementary read. RLS still enforces the company scope.
+async function _attachBankIds(rows) {
+  if (!rows.length) return rows;
+  const ids = rows.map(r => r.id);
+  const { data } = await sb.from('bank_accounts').select('id, bank_id').in('id', ids);
+  const map = Object.fromEntries((data || []).map(r => [r.id, r.bank_id]));
+  return rows.map(r => ({ ...r, bank_id: map[r.id] || null }));
 }
 
 async function loadBanks() {
   const { data: banksData } = await sb.from('banks').select('*').eq('company_id', companyId).is('deleted_at', null).order('name');
   banks = banksData || [];
-  const { data: accsData } = await sb.from('bank_accounts').select('*').eq('company_id', companyId).is('deleted_at', null).order('account_name');
-  accounts = accsData || [];
+  const { data: accsData } = await sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId });
+  accounts = await _attachBankIds(accsData || []);
   renderBankTree();
   updateAccountFilter();
   updateBankSelect();
@@ -1205,26 +1225,30 @@ function renderCashGrid() {
   const onlyActive = document.getElementById('cash-only-active')?.checked !== false;
   const list = onlyActive ? registers.filter(r => r.is_active !== false) : registers;
   const cards = list.map(r => {
+    // RPC returns NULL current_balance when can_view_balance=false. Show
+    // '***' so the user knows the row exists but the figure is hidden.
+    const canSee = r.can_view_balance !== false;
     const bal = parseFloat(r.current_balance || 0);
     const curr = currencies.find(c => c.code === r.currency_code);
     const symbol = curr?.symbol || r.currency_code;
     const isSelected = r.id === selectedRegisterId;
     const inactiveStyle = r.is_active === false ? 'background:var(--gray50,#f8fafc);' : '';
+    const balText = canSee ? `${symbol} ${fmtNum(Math.abs(bal))}` : '***';
+    const editBtn = r.can_edit !== false ? `<button class="dot-menu-item" onclick="closeDotMenus();editRegister('${r.id}')">✏️ ${t('btn_edit')}</button>` : '';
+    const toggleBtn = r.can_edit !== false ? `<button class="dot-menu-item" onclick="closeDotMenus();toggleRegisterActive('${r.id}')">${r.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>` : '';
+    const delBtn = r.can_delete !== false ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteRegister('${r.id}')">🗑️ ${t('btn_delete')}</button>` : '';
+    const dotMenu = (editBtn || toggleBtn || delBtn) ? `<div class="dot-menu" onclick="event.stopPropagation()">
+          <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
+          <div class="dot-menu-list">${editBtn}${toggleBtn}${delBtn}</div>
+        </div>` : '';
     return `<div class="account-card ${isSelected ? 'selected' : ''}" onclick="selectRegister('${r.id}')" style="${inactiveStyle}">
       <div class="account-card-header">
         <div class="account-icon cash">💵</div>
-        <div class="dot-menu" onclick="event.stopPropagation()">
-          <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
-          <div class="dot-menu-list">
-            <button class="dot-menu-item" onclick="closeDotMenus();editRegister('${r.id}')">✏️ ${t('btn_edit')}</button>
-            <button class="dot-menu-item" onclick="closeDotMenus();toggleRegisterActive('${r.id}')">${r.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>
-            <button class="dot-menu-item danger" onclick="closeDotMenus();deleteRegister('${r.id}')">🗑️ ${t('btn_delete')}</button>
-          </div>
-        </div>
+        ${dotMenu}
       </div>
       <div class="account-name">${r.name}${r.is_active===false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : ''}</div>
-      <div class="account-meta">${r.currency_code}${r.description ? ' · ' + r.description : ''}</div>
-      <div class="account-balance ${bal >= 0 ? 'positive' : 'negative'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
+      <div class="account-meta">${r.currency_code}</div>
+      <div class="account-balance ${canSee ? (bal >= 0 ? 'positive' : 'negative') : ''}">${balText}</div>
     </div>`;
   }).join('');
 
@@ -1340,27 +1364,31 @@ function renderBankTree() {
   tree.innerHTML = banksList.map(bank => {
     const bankAccounts = accounts.filter(a => a.bank_id === bank.id && (!onlyActive || a.is_active !== false));
     const accRows = bankAccounts.map(a => {
+      // Same privacy contract as cash registers: RPC nullifies
+      // current_balance when can_view_balance=false, render '***'.
+      const canSee = a.can_view_balance !== false;
       const bal = parseFloat(a.current_balance || 0);
       const curr = currencies.find(c => c.code === a.currency_code);
       const symbol = curr?.symbol || a.currency_code;
       const isSelected = a.id === selectedAccountId;
       const inactiveStyle = a.is_active === false ? 'background:var(--gray50,#f8fafc);color:var(--gray500)' : '';
       const inactiveBadge = a.is_active === false ? ` <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:500;margin-left:4px">${t('status_inactive')||'Pasif'}</span>` : '';
+      const balText = canSee ? `${symbol} ${fmtNum(Math.abs(bal))}` : '***';
+      const editBtn = a.can_edit !== false ? `<button class="dot-menu-item" onclick="closeDotMenus();editAccount('${a.id}')">✏️ ${t('btn_edit')}</button>` : '';
+      const toggleBtn = a.can_edit !== false ? `<button class="dot-menu-item" onclick="closeDotMenus();toggleAccountActive('${a.id}')">${a.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>` : '';
+      const delBtn = a.can_delete !== false ? `<button class="dot-menu-item danger" onclick="closeDotMenus();deleteAccount('${a.id}')">🗑️ ${t('btn_delete')}</button>` : '';
+      const dotMenu = (editBtn || toggleBtn || delBtn) ? `<div class="dot-menu" onclick="event.stopPropagation()">
+          <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
+          <div class="dot-menu-list">${editBtn}${toggleBtn}${delBtn}</div>
+        </div>` : '';
       return `<div class="account-row ${isSelected ? 'selected' : ''}" onclick="selectAccount('${a.id}')" style="${inactiveStyle}">
         <div class="account-row-info">
           <div class="account-row-name">${a.account_name}${inactiveBadge}</div>
           <div class="account-row-iban">${a.iban || a.account_number || '—'}</div>
         </div>
         <span class="badge badge-gray" style="font-size:11px">${a.currency_code}</span>
-        <div class="account-row-bal ${bal >= 0 ? 'amount-in' : 'amount-out'}">${symbol} ${fmtNum(Math.abs(bal))}</div>
-        <div class="dot-menu" onclick="event.stopPropagation()">
-          <button class="dot-menu-btn" onclick="toggleDotMenu(this)">⋮</button>
-          <div class="dot-menu-list">
-            <button class="dot-menu-item" onclick="closeDotMenus();editAccount('${a.id}')">✏️ ${t('btn_edit')}</button>
-            <button class="dot-menu-item" onclick="closeDotMenus();toggleAccountActive('${a.id}')">${a.is_active === false ? '✅ '+(t('btn_set_active')||'Aktif Yap') : '⏸️ '+(t('btn_set_inactive')||'Pasif Yap')}</button>
-            <button class="dot-menu-item danger" onclick="closeDotMenus();deleteAccount('${a.id}')">🗑️ ${t('btn_delete')}</button>
-          </div>
-        </div>
+        <div class="account-row-bal ${canSee ? (bal >= 0 ? 'amount-in' : 'amount-out') : ''}">${balText}</div>
+        ${dotMenu}
       </div>`;
     }).join('');
 
@@ -1529,7 +1557,7 @@ function filterAllTx() {
 }
 
 // ===== SAVE REGISTER =====
-function openRegisterModal(id = null) {
+async function openRegisterModal(id = null) {
   editingRegisterId = id;
   // Build currency list lazily
   if (!document.getElementById('reg-currency-list').children.length) {
@@ -1537,7 +1565,11 @@ function openRegisterModal(id = null) {
   }
   const title = document.getElementById('register-modal-title');
   if (id) {
-    const r = registers.find(x => x.id === id);
+    // Edit modal needs opening_balance + description, which the access
+    // RPC drops. Fetch the full row on demand — RLS gates this; the
+    // edit dot-menu only renders for users with can_edit anyway.
+    const { data: r } = await sb.from('cash_registers').select('*').eq('id', id).maybeSingle();
+    if (!r) { showToast(t('toast_not_found') || 'Kayıt bulunamadı', 'error'); return; }
     title.textContent = t('title_edit_register');
     document.getElementById('reg-name').value = r.name;
     setCurrency('reg-currency','reg-currency-input', r.currency_code);
@@ -1973,18 +2005,18 @@ async function populateTransferTargets(prefix) {
   if (!sel) return;
   sel.innerHTML = '<option value="">Yükleniyor…</option>';
 
-  // Fresh fetch so stale page-level globals (registers / accounts / banks)
-  // can't produce an empty dropdown — the Transfer flow runs rarely and
-  // two small queries are cheap insurance.
+  // Pull from the same access RPCs as the page-level globals so the
+  // Transfer dropdowns honour account_permissions. Filter to rows the
+  // user can actually post a transaction against — viewing-only access
+  // shouldn't let them initiate a transfer.
   const [regsRes, accsRes, banksRes] = await Promise.all([
-    sb.from('cash_registers').select('id, name, currency_code')
-      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('name'),
-    sb.from('bank_accounts').select('id, account_name, currency_code, bank_id')
-      .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null).order('account_name'),
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
     sb.from('banks').select('id, name').eq('company_id', companyId)
   ]);
-  const regs = regsRes.data || [];
-  const accs = accsRes.data || [];
+  const regs = (regsRes.data || []).filter(r => r.is_active !== false && r.can_create_transaction !== false);
+  const accsRaw = (accsRes.data || []).filter(a => a.is_active !== false && a.can_create_transaction !== false);
+  const accs = await _attachBankIds(accsRaw);
   const bkById = Object.fromEntries((banksRes.data || []).map(b => [b.id, b]));
 
   // Only exclude the SOURCE account — the one this modal books against.
@@ -2039,10 +2071,8 @@ async function populateConversionTargets() {
   if (!sel) return;
   sel.innerHTML = '<option value="">Yükleniyor…</option>';
 
-  const { data: accs } = await sb.from('bank_accounts')
-    .select('id, account_name, currency_code, bank_id')
-    .eq('company_id', companyId).eq('is_active', true).is('deleted_at', null)
-    .order('account_name');
+  const { data: accsRpc } = await sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId });
+  const accs = await _attachBankIds((accsRpc || []).filter(a => a.is_active !== false && a.can_create_transaction !== false));
   const { data: bnks } = await sb.from('banks').select('id, name').eq('company_id', companyId);
   const bkById = Object.fromEntries((bnks || []).map(b => [b.id, b]));
   const srcAcc = (accs || []).find(a => a.id === selectedAccountId);
@@ -2475,9 +2505,13 @@ function openAccountModal(preselectedBankId = null) {
   openModal('account-modal');
 }
 
-function editAccount(id) {
+async function editAccount(id) {
   editingAccountId = id;
-  const a = accounts.find(x => x.id === id);
+  // Mirror openRegisterModal — fetch the full row directly so the edit
+  // form has opening_balance / bank_id without piggybacking on the
+  // access RPC's sanitized output.
+  const { data: a } = await sb.from('bank_accounts').select('*').eq('id', id).maybeSingle();
+  if (!a) { showToast(t('toast_not_found') || 'Kayıt bulunamadı', 'error'); return; }
   document.getElementById('account-modal-title').textContent = t('title_edit_bank');
   document.getElementById('acc-bank').value = a.bank_id;
   document.getElementById('acc-name').value = a.account_name;
