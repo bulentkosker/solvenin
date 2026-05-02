@@ -370,22 +370,49 @@ async function init() {
   const ls = document.getElementById('loading-screen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 300); }
 
-  // Show register select
-  if (cashRegisters.length) {
-    document.getElementById('sel-register').innerHTML = cashRegisters.map(r => `<option value="${r.id}">${r.name} (${r.currency_code})</option>`).join('');
-    document.getElementById('register-modal').classList.add('open');
-  } else {
-    showToast(t('pos_toast_no_register'), 'error');
+  // POS register comes from get_my_pos_register: returns the user's
+  // pos_assigned_register_id (non-admins must have one), or for
+  // owner/admin without an explicit assignment the first active
+  // register (RPC auto-picks). Empty result → show the access-denied
+  // screen instead of the picker; non-admin users can't choose
+  // a register on their own.
+  const { data: posReg } = await sb.rpc('get_my_pos_register', { p_company_id: companyId });
+  const assigned = (posReg && posReg.length) ? posReg[0] : null;
+  if (!assigned || !assigned.register_id) {
+    _showPosAccessDenied();
+    return;
   }
+  selectedRegister = {
+    id: assigned.register_id,
+    name: assigned.register_name,
+    currency_code: assigned.currency_code,
+  };
+  await startSession();
+}
+
+function _showPosAccessDenied() {
+  // Block screen — POS won't proceed without an assigned register. The
+  // existing register-modal styles work as a non-dismissible card.
+  const modal = document.getElementById('register-modal');
+  modal.classList.add('open');
+  modal.innerHTML = `
+    <div class="pmc" style="max-width:440px;text-align:center">
+      <div style="font-size:42px;margin-bottom:8px">🔒</div>
+      <h3 style="margin-bottom:10px">${t('pos_no_register_assigned_title') || 'Kasa Atanmamış'}</h3>
+      <p style="color:var(--gray600);font-size:13px;line-height:1.6;margin-bottom:18px">
+        ${t('pos_no_register_assigned') || 'POS kullanmak için yöneticinizden bir kasa atanmasını isteyin.'}
+      </p>
+      <div class="pm-actions" style="justify-content:center">
+        <button onclick="window.location.href='dashboard.html'" style="background:var(--primary);color:#fff" data-i18n="btn_back">Geri Dön</button>
+      </div>
+    </div>
+  `;
 }
 
 async function startSession() {
-  const regId = document.getElementById('sel-register').value;
-  if (!regId) return;
-  selectedRegister = cashRegisters.find(r => r.id === regId);
-
+  if (!selectedRegister || !selectedRegister.id) return;
   const { data: ses, error } = await sb.from('pos_sessions').insert({
-    company_id: companyId, cash_register_id: regId,
+    company_id: companyId, cash_register_id: selectedRegister.id,
     cashier_id: currentUser.id, opened_by: currentUser.id, status: 'open',
   }).select('id').single();
   if (error) { showToast(getErrorMessage(error), 'error'); return; }
@@ -436,10 +463,16 @@ async function loadProducts() {
 }
 
 async function loadAccounts() {
-  const { data: regs } = await sb.from('cash_registers').select('id,name,currency_code').eq('company_id', companyId).eq('is_active', true);
-  cashRegisters = regs || [];
-  const { data: accs } = await sb.from('bank_accounts').select('id,account_name,currency_code').eq('company_id', companyId).eq('is_active', true);
-  bankAccounts = accs || [];
+  // Cash registers + bank accounts come through the access RPCs so a
+  // POS user without can_create_transaction can't accidentally book
+  // change against a register they shouldn't touch. selectedRegister
+  // is set up separately via get_my_pos_register.
+  const [regsRes, accsRes] = await Promise.all([
+    sb.rpc('get_my_accessible_cash_registers', { p_company_id: companyId }),
+    sb.rpc('get_my_accessible_bank_accounts', { p_company_id: companyId }),
+  ]);
+  cashRegisters = (regsRes.data || []).filter(r => r.is_active !== false);
+  bankAccounts = (accsRes.data || []).filter(a => a.is_active !== false);
 }
 
 // Lazy-create the per-company retail system contact ("Perakende Satışlar").
