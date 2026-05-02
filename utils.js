@@ -569,6 +569,46 @@ window.attachContextMenu = function(container, rowSelector = 'tr', kebabSelector
     if (!kebab) return;
 
     e.preventDefault();
+    const x = e.clientX, y = e.clientY;
     kebab.click();
+
+    // Reposition the dropdown at the cursor instead of anchoring it to
+    // the kebab button. Switch to fixed positioning so the coordinates
+    // are viewport-relative; clamp inside the viewport so the menu
+    // doesn't slide off-screen at the edges. A MutationObserver wipes
+    // the inline overrides as soon as toggleDotMenu drops the `.open`
+    // class — that way the next left-click on the kebab opens at its
+    // normal right:0/top:100% position.
+    const menu = kebab.closest('.dot-menu');
+    const list = menu?.querySelector('.dot-menu-list');
+    if (!menu || !list) return;
+    requestAnimationFrame(() => {
+      if (!menu.classList.contains('open')) return;
+      menu.classList.remove('up');
+      list.style.position = 'fixed';
+      list.style.left = x + 'px';
+      list.style.top = y + 'px';
+      list.style.right = 'auto';
+      list.style.bottom = 'auto';
+      list.style.margin = '0';
+      const rect = list.getBoundingClientRect();
+      if (rect.right > window.innerWidth - 4) {
+        list.style.left = Math.max(4, window.innerWidth - rect.width - 4) + 'px';
+      }
+      if (rect.bottom > window.innerHeight - 4) {
+        list.style.top = Math.max(4, window.innerHeight - rect.height - 4) + 'px';
+      }
+      const obs = new MutationObserver(() => {
+        if (menu.classList.contains('open')) return;
+        list.style.position = '';
+        list.style.left = '';
+        list.style.top = '';
+        list.style.right = '';
+        list.style.bottom = '';
+        list.style.margin = '';
+        obs.disconnect();
+      });
+      obs.observe(menu, { attributes: true, attributeFilter: ['class'] });
+    });
   });
 };
