@@ -384,13 +384,25 @@ async function init() {
       sb.from('companies').select('name').eq('id', companyId).maybeSingle(),
       sb.from('cash_registers').select('id', { count: 'exact', head: true })
         .eq('company_id', companyId).is('deleted_at', null).eq('is_active', true),
-      sb.from('company_users').select('role').eq('company_id', companyId)
-        .eq('user_id', currentUser.id).maybeSingle(),
+      sb.from('company_users').select('role, pos_assigned_register_id')
+        .eq('company_id', companyId).eq('user_id', currentUser.id).maybeSingle(),
     ]);
     _showPosAccessDenied({
       companyName: companyRow?.name || '',
       hasAnyRegister: (regCount || 0) > 0,
       role: cuRow?.role || '',
+      // Debug payload — surfaced as a small monospace strip so we can
+      // tell whether the empty RPC was caused by missing assignment,
+      // wrong company, or stale cache. Safe to leak: company id and
+      // assigned register id are already accessible to the caller via
+      // direct SELECT.
+      debug: {
+        userId: currentUser.id,
+        userEmail: currentUser.email || '',
+        companyId,
+        assigned: cuRow?.pos_assigned_register_id || null,
+        rpcRows: posReg ? posReg.length : 0,
+      },
     });
     return;
   }
@@ -413,7 +425,7 @@ function _showPosAccessDenied(ctx) {
   //      either → falls into mode 1.
   // Knowing which mode we're in lets the screen point the user to
   // the right next step instead of generic "ask admin" copy.
-  const { companyName = '', hasAnyRegister = false, role = '' } = ctx || {};
+  const { companyName = '', hasAnyRegister = false, role = '', debug = null } = ctx || {};
   const isAdmin = role === 'owner' || role === 'admin';
   const company = companyName ? `<strong>${companyName}</strong>` : t('lbl_company') || 'Şirket';
 
@@ -432,10 +444,20 @@ function _showPosAccessDenied(ctx) {
     primary = `<button onclick="window.location.href='dashboard.html'" style="background:var(--primary);color:#fff">${t('btn_back') || 'Geri Dön'}</button>`;
   }
 
+  // Tiny diagnostic strip — non-blocking, just shows what the page
+  // actually read. Helps when the screen state contradicts what the
+  // user thinks they saved (wrong active company, role mismatch,
+  // stale localStorage, …). Click to copy.
+  let debugStrip = '';
+  if (debug) {
+    const txt = `email=${debug.userEmail || debug.userId}  role=${role || '—'}  company=${companyName || debug.companyId}  assigned=${debug.assigned || 'null'}  rpcRows=${debug.rpcRows}`;
+    debugStrip = `<div style="margin-top:14px;padding:6px 10px;background:var(--gray100);border-radius:6px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;color:var(--gray600);text-align:left;word-break:break-all;cursor:pointer" title="Tıkla → kopyala" onclick="navigator.clipboard.writeText(this.textContent);this.style.background='#dcfce7';">${txt.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`;
+  }
+
   const modal = document.getElementById('register-modal');
   modal.classList.add('open');
   modal.innerHTML = `
-    <div class="pmc" style="max-width:480px;text-align:center">
+    <div class="pmc" style="max-width:520px;text-align:center">
       <div style="font-size:42px;margin-bottom:8px">🔒</div>
       <h3 style="margin-bottom:10px">${title}</h3>
       <p style="color:var(--gray600);font-size:13px;line-height:1.6;margin-bottom:18px">${body}</p>
@@ -443,6 +465,7 @@ function _showPosAccessDenied(ctx) {
         ${primary}
         <button onclick="window.location.href='dashboard.html'" style="background:var(--gray100);color:var(--gray700)">${t('btn_back') || 'Geri Dön'}</button>
       </div>
+      ${debugStrip}
     </div>
   `;
 }
